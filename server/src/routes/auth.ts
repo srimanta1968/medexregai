@@ -18,12 +18,14 @@ const handle =
     fn(req, res).catch(next);
   };
 
+// Routes carry their full path (/api/auth/...) so each is greppable and matches its
+// api_definition exactly; the router is mounted at the app root.
 export const authRouter = Router();
 
 // Public: these PROVIDE authentication (register, login, refresh, password reset).
 
 authRouter.post(
-  '/register',
+  '/api/auth/register',
   handle(async (req, res) => {
     const input = registerSchema.parse(req.body);
     const session = await authService.register(input);
@@ -32,7 +34,7 @@ authRouter.post(
 );
 
 authRouter.post(
-  '/login',
+  '/api/auth/login',
   handle(async (req, res) => {
     const input = loginSchema.parse(req.body);
     res.status(200).json({ success: true, data: await authService.login(input) });
@@ -40,7 +42,7 @@ authRouter.post(
 );
 
 authRouter.post(
-  '/refresh',
+  '/api/auth/refresh',
   handle(async (req, res) => {
     const { refreshToken } = refreshSchema.parse(req.body);
     res.status(200).json({ success: true, data: await authService.refresh(refreshToken) });
@@ -48,7 +50,7 @@ authRouter.post(
 );
 
 authRouter.post(
-  '/password-reset/request',
+  '/api/auth/password-reset/request',
   handle(async (req, res) => {
     const { email } = passwordResetRequestSchema.parse(req.body);
     await authService.requestPasswordReset(email);
@@ -60,7 +62,7 @@ authRouter.post(
 );
 
 authRouter.post(
-  '/password-reset/confirm',
+  '/api/auth/password-reset/confirm',
   handle(async (req, res) => {
     const { token, newPassword } = passwordResetConfirmSchema.parse(req.body);
     await authService.confirmPasswordReset(token, newPassword);
@@ -71,7 +73,7 @@ authRouter.post(
 // Protected: require a valid access token.
 
 authRouter.post(
-  '/logout',
+  '/api/auth/logout',
   authenticate,
   handle(async (req, res) => {
     const { userId } = requireAuth(req);
@@ -82,7 +84,7 @@ authRouter.post(
 );
 
 authRouter.get(
-  '/me',
+  '/api/auth/me',
   authenticate,
   handle(async (req, res) => {
     const { userId, orgId } = requireAuth(req);

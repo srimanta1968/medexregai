@@ -68,7 +68,7 @@ export function createApp(appConfig: AppConfig): Application {
     res.status(200).json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
   });
 
-  app.use('/api/auth', authRouter);
+  app.use(authRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });
