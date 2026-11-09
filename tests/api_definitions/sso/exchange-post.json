@@ -30,7 +30,9 @@
       "status": 403,
       "code": "NO_ACTIVE_MEMBERSHIP",
       "message": "not an active member of any firm",
-      "when": "account has no active membership"
+      "when": "account has no active membership",
+      "reproducible": false,
+      "notReproducibleReason": "Needs a real identity-provider round trip for an account with no active membership (no member-removal API until F10.2)."
     }
   ],
   "testCases": [

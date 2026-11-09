@@ -1,177 +1,32 @@
 {
-  "auth/me-get.json": {
-    "hash": "91c5b13a09b10517fe3f22af6edaeff3a97fa2e720a9ce6a543f07ac37127a20",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T22:57:57",
-    "route": [
-      "GET",
-      "/auth/me"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/auth/me was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
   "auth/register-post.json": {
-    "hash": "b05d6a8dd8507e89813025afc82d63253b794b4da8ee7f2a63f311ac04b7909f",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T22:57:57",
+    "hash": "57b919e70f887a398126e77ebe794b370fdb1977286c7a456f7d5e04ac6dd5a4",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-09T23:47:15",
     "route": [
       "POST",
       "/auth/register"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/auth/register was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
-  "invites/invites-get.json": {
-    "hash": "c13cf3eb37543898859265ce7b28f1c09e85b53abf91ecb7524be71c7f3c066a",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:03:01",
-    "route": [
-      "GET",
-      "/invites"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/invites was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "invites/invites-post.json": {
-    "hash": "6b1927d67da9fe08560862efabe3f8cf65dec4b7cbf6093c062f7448fa47af63",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:03:01",
+    "hash": "8f40ff4fb44c3d7346855475f9f2ae52847093d8ca1c8fc157b873d496e45020",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-09T23:47:15",
     "route": [
       "POST",
       "/invites"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/invites was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "invites/token-accept-post.json": {
-    "hash": "5845358db134805f7a33cd595c373b144acc2873fdc65cb1ce00cacfdc228972",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:03:01",
+    "hash": "32dc2b14f2a5280a81bb28f6c157664af5c52d639d1efe435b9072ee88d6c472",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-09T23:47:15",
     "route": [
       "POST",
       "/invites/:p/accept"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/invites/:token/accept was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
-  "invites/token-get.json": {
-    "hash": "9159bc8df5e7098be42c4418c721bfa70215078df9b82d91b454478181a3587c",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:03:01",
-    "route": [
-      "GET",
-      "/invites/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/invites/:token was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
-  "sso/exchange-post.json": {
-    "hash": "0e61029debf6441fc2a86c408834b066602acd91077143c735059d171ae67c2f",
-    "status": "findings",
-    "findingsCount": 2,
-    "verifiedAt": "2026-11-09T23:24:47",
-    "route": [
-      "POST",
-      "/auth/sso/exchange"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/auth/sso/exchange was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      },
-      {
-        "rule": "MUST-14",
-        "severity": "medium",
-        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
-      }
-    ]
-  },
-  "sso/provider-callback-get.json": {
-    "hash": "45a9fd6b8422970e7d9b90d01a24c420ddd9cb5e9581f5a2e8678206bf6227fd",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:24:30",
-    "route": [
-      "GET",
-      "/auth/sso/:p/callback"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/auth/sso/:provider/callback was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
-  "sso/provider-start-get.json": {
-    "hash": "821b1a282b721e7e44bda5aa3eb465df26452871145b36557c47dd811a3dea89",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:24:30",
-    "route": [
-      "GET",
-      "/auth/sso/:p/start"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/auth/sso/:provider/start was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
-    ]
-  },
-  "sso/providers-get.json": {
-    "hash": "95d6dd98970703a9ca0d75de06d4ac4b5ddf608266ccdcfe3137d39740b62a46",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-09T23:24:16",
-    "route": [
-      "GET",
-      "/auth/sso/providers"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/auth/sso/providers was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   }
 }

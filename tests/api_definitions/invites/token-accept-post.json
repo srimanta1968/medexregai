@@ -44,7 +44,9 @@
       "status": 409,
       "code": "ALREADY_MEMBER",
       "message": "You are already a member of this firm",
-      "when": "the account is already an active member"
+      "when": "the account is already an active member",
+      "reproducible": false,
+      "notReproducibleReason": "Only reachable by a race: create refuses to invite an active member (409 ALREADY_MEMBER on POST /api/invites, covered there) and refuses a second open invite (409 INVITE_PENDING), so no request sequence produces an open invite for someone who is already a member."
     }
   ],
   "testCases": [
@@ -99,6 +101,22 @@
       },
       "pathParams": {
         "token": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      }
+    },
+    {
+      "name": "401 - existing account, wrong password",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_CREDENTIALS",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_CREDENTIALS",
+        "messageContains": "Email or password is incorrect"
+      },
+      "pathParams": {
+        "token": "{{cache:invites.create.response.data.inviteToken@existing}}"
+      },
+      "payload": {
+        "password": "{{static:Not-The-Right-Password-1}}"
       }
     }
   ]

@@ -37,7 +37,9 @@
       "status": 403,
       "code": "NO_ACTIVE_MEMBERSHIP",
       "message": "This account is not an active member of any firm",
-      "when": "no active firm membership (needs a deactivated membership, not reproducible by request alone)"
+      "when": "no active firm membership (needs a deactivated membership, not reproducible by request alone)",
+      "reproducible": false,
+      "notReproducibleReason": "Needs an account whose every membership is deactivated; no API removes or deactivates members until member management (F10.2)."
     }
   ],
   "testCases": [

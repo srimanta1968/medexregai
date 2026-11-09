@@ -52,7 +52,7 @@
       "status": 403,
       "code": "FORBIDDEN",
       "message": "does not allow this action",
-      "when": "caller role lacks members:invite (editor, reviewer, viewer); proven on GET /api/invites with a reviewer token"
+      "when": "caller role lacks members:invite (editor, reviewer, viewer)"
     },
     {
       "status": 409,
@@ -89,7 +89,8 @@
             "role": "reviewer"
           }
         }
-      }
+      },
+      "capturesResponse": true
     },
     {
       "name": "401 - missing bearer token",
@@ -153,6 +154,68 @@
       "headers": {
         "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
       }
+    },
+    {
+      "name": "403 - reviewer may not invite",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN",
+        "messageContains": "does not allow this action"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "payload": {
+        "email": "{{dynamic:email}}",
+        "role": "viewer"
+      },
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC4",
+        "90f64f47-93e6-4285-b08a-3bf09d3c64c7#AC1"
+      ],
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "409 - invitee is already a member",
+      "testType": "negative",
+      "coversErrorCase": "409|ALREADY_MEMBER",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "ALREADY_MEMBER"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "email": "{{cache:auth.register.response.data.user.email}}",
+        "role": "viewer"
+      }
+    },
+    {
+      "name": "Owner invites someone who already has an account in another firm",
+      "captureAs": "existing",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2"
+      ],
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "email": "{{var:other_account_email}}",
+        "role": "viewer"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "invite": {
+            "role": "viewer"
+          }
+        }
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
     }
   ]
 }

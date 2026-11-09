@@ -33,7 +33,9 @@
       "status": 401,
       "code": "TOKEN_EXPIRED",
       "message": "Access token has expired",
-      "when": "access token past its expiry (not reproducible within one run)"
+      "when": "access token past its expiry (not reproducible within one run)",
+      "reproducible": false,
+      "notReproducibleReason": "Needs an access token older than JWT_EXPIRES_IN (15m); a run cannot mint one without waiting out the TTL. Malformed tokens are covered by the 401 UNAUTHORIZED case."
     }
   ],
   "testCases": [

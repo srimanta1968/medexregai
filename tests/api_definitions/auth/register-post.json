@@ -92,6 +92,22 @@
         "password": "{{static:Correct-Horse-Battery-9}}",
         "firmName": "{{static:Test Firm}}"
       }
+    },
+    {
+      "name": "409 - email already has an account",
+      "testType": "negative",
+      "coversErrorCase": "409|EMAIL_TAKEN",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "EMAIL_TAKEN"
+      },
+      "payload": {
+        "fullName": "{{static:Second Owner}}",
+        "email": "{{var:other_account_email}}",
+        "password": "{{static:Correct-Horse-Battery-9}}",
+        "firmName": "{{static:Second Firm}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
     }
   ]
 }
