@@ -1,41 +1,27 @@
 {
-  "generatedAt": "2026-11-09T23:13:08.442458Z",
-  "taskId": "a355f1df-e866-46d6-9f71-72f8e3b467f7",
+  "generatedAt": "2026-11-09T23:25:34.544574Z",
+  "taskId": "31a5d242-1313-4c20-9379-672f8cf35c5d",
   "gaps": [
     {
-      "criterionId": "a355f1df-e866-46d6-9f71-72f8e3b467f7#AC2",
-      "criterion": "A firm owner can invite a reviewer with a specific role by email",
+      "criterionId": "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1",
+      "criterion": "A user can sign in with Google or Microsoft SSO",
       "verdict": "partial",
-      "gap": "Sending the invite is a Gherkin scenario; accepting it on /invite/:token needs the emailed token, which a UI run cannot read (MAIL_TRANSPORT=log). Accept is covered by tests/api_definitions/invites/token-accept-post.json and was verified in the browser ad hoc.",
+      "gap": "Full flow verified only against a local OIDC mock (PKCE, RS256 ID token, state, nonce, linking, one-time exchange). Not yet run against real Google/Microsoft: no OAuth client credentials configured (SSO_GOOGLE_CLIENT_ID/SECRET, SSO_MICROSOFT_*). Committed artifacts cover providers listing, disabled-provider 404, exchange negatives and the no-account UI message.",
       "evidence": {
         "apiDefinitions": [
-          "tests/api_definitions/invites/invites-post.json",
-          "tests/api_definitions/invites/token-accept-post.json"
+          "tests/api_definitions/sso/providers-get.json",
+          "tests/api_definitions/sso/provider-start-get.json",
+          "tests/api_definitions/sso/provider-callback-get.json",
+          "tests/api_definitions/sso/exchange-post.json"
         ],
         "scenarios": [
-          "712ea966-2a91-4477-ba94-b7f828999c7b"
+          "eee48cd2-24d7-4912-884d-baf92fedd35e"
         ],
         "files": [
-          "client/src/pages/app/WorkspacePage.tsx",
-          "client/src/pages/auth/InviteAcceptPage.tsx"
-        ]
-      }
-    },
-    {
-      "criterionId": "a355f1df-e866-46d6-9f71-72f8e3b467f7#AC3",
-      "criterion": "A user can log in, log out and reset a forgotten password",
-      "verdict": "partial",
-      "gap": "Sign-in, sign-out and requesting a reset link are Gherkin scenarios; the /reset-password?token= page needs the emailed token, so choosing the new password is not in a committed UI run.",
-      "evidence": {
-        "apiDefinitions": [
-          "tests/api_definitions/auth/password-reset-confirm-post.json"
-        ],
-        "scenarios": [
-          "d862f8d6-4aa7-43f0-9748-4a78a1d1d34c",
-          "23128e22-7c6b-4ee7-9346-e7fac0b042c2"
-        ],
-        "files": [
-          "client/src/pages/auth/ResetPasswordPage.tsx"
+          "server/src/services/SsoService.ts",
+          "server/src/routes/sso.ts",
+          "client/src/components/auth/SsoButtons.tsx",
+          "client/src/pages/auth/SsoCompletePage.tsx"
         ]
       }
     }

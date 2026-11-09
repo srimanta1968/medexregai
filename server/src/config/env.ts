@@ -48,6 +48,18 @@ export interface LlmSettings {
   requestTimeoutMs: number;
 }
 
+export type SsoProviderId = 'google' | 'microsoft';
+
+/** One OIDC identity provider. Present only when its client id and secret are set. */
+export interface SsoProviderSettings {
+  id: SsoProviderId;
+  displayName: string;
+  /** OIDC issuer; discovery is read from <issuer>/.well-known/openid-configuration. */
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   port: number;
@@ -57,6 +69,8 @@ export interface AppConfig {
   /** Public URL of the web app, used to build links in emails (password reset). */
   appBaseUrl: string;
   mail: { transport: MailTransport; from: string };
+  /** Enabled SSO providers (empty when none is configured: SSO buttons are hidden). */
+  sso: SsoProviderSettings[];
   encryptionKey: string;
   bcryptRounds: number;
   corsOrigins: string[];
@@ -160,6 +174,36 @@ export function parseMailTransport(raw: string, nodeEnv: string): MailTransport 
   return raw;
 }
 
+/**
+ * Google and Microsoft sign-in. A provider is enabled when BOTH its client id and
+ * secret are set; setting only one is a configuration mistake and fails startup.
+ * Microsoft defaults to the "organizations" tenant (work and school accounts).
+ */
+export function parseSsoProviders(env: Env): SsoProviderSettings[] {
+  const candidates: { id: SsoProviderId; displayName: string; prefix: string; issuer: string }[] = [
+    { id: 'google', displayName: 'Google', prefix: 'SSO_GOOGLE', issuer: optionalEnv(env, 'SSO_GOOGLE_ISSUER', 'https://accounts.google.com') },
+    {
+      id: 'microsoft',
+      displayName: 'Microsoft',
+      prefix: 'SSO_MICROSOFT',
+      issuer: optionalEnv(env, 'SSO_MICROSOFT_ISSUER', `https://login.microsoftonline.com/${optionalEnv(env, 'SSO_MICROSOFT_TENANT', 'organizations')}/v2.0`),
+    },
+  ];
+  const enabled: SsoProviderSettings[] = [];
+  for (const c of candidates) {
+    const clientId = (env[`${c.prefix}_CLIENT_ID`] ?? '').trim();
+    const clientSecret = (env[`${c.prefix}_CLIENT_SECRET`] ?? '').trim();
+    if (!clientId && !clientSecret) {
+      continue;
+    }
+    if (!clientId || !clientSecret) {
+      throw new Error(`${c.prefix}_CLIENT_ID and ${c.prefix}_CLIENT_SECRET must be set together.`);
+    }
+    enabled.push({ id: c.id, displayName: c.displayName, issuer: c.issuer.replace(/\/+$/, ''), clientId, clientSecret });
+  }
+  return enabled;
+}
+
 /** Build the typed application config from an environment map. */
 export function loadConfig(env: Env): AppConfig {
   const jwtSecret = requireEnv(env, 'JWT_SECRET');
@@ -193,6 +237,7 @@ export function loadConfig(env: Env): AppConfig {
       transport: parseMailTransport(optionalEnv(env, 'MAIL_TRANSPORT', 'log'), nodeEnv),
       from: optionalEnv(env, 'MAIL_FROM', 'MedexRegAI <no-reply@localhost>'),
     },
+    sso: parseSsoProviders(env),
     encryptionKey: parseEncryptionKey(requireEnv(env, 'ENCRYPTION_KEY')),
     bcryptRounds: parsePositiveInt(optionalEnv(env, 'BCRYPT_ROUNDS', '12'), 'BCRYPT_ROUNDS'),
     corsOrigins: parseCorsOrigins(env.CORS_ORIGIN),

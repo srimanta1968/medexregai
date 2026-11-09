@@ -1,0 +1,50 @@
+{
+  "name": "GET /api/auth/sso/:provider/start - begin Google or Microsoft sign-in",
+  "description": "Public, browser navigation. Sets a signed httpOnly SameSite=Lax cookie holding state, nonce and the PKCE verifier (10 minutes) and answers 302 to the provider authorize URL (code flow, S256). A provider that is not configured returns 404 SSO_PROVIDER_DISABLED. Covers: a user can sign in with Google or Microsoft SSO.",
+  "endpoint": "/api/auth/sso/:provider/start",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 302,
+  "priority": 31,
+  "taskId": "31a5d242-1313-4c20-9379-672f8cf35c5d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+    "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+  ],
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "SSO_PROVIDER_DISABLED",
+      "message": "is not enabled",
+      "when": "provider unknown or not configured"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Redirects to the provider",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+        "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+      ],
+      "pathParams": {
+        "provider": "google"
+      },
+      "expectedStatus": 302
+    },
+    {
+      "name": "404 - provider not configured",
+      "testType": "negative",
+      "coversErrorCase": "404|SSO_PROVIDER_DISABLED",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "SSO_PROVIDER_DISABLED"
+      },
+      "pathParams": {
+        "provider": "{{static:github}}"
+      }
+    }
+  ],
+  "environmentNote": "Success redirects to the real identity provider, which needs configured OAuth credentials; the disabled-provider error is automated. The success case passes only where SSO_GOOGLE_CLIENT_ID/SECRET are set; elsewhere the route returns 404 SSO_PROVIDER_DISABLED."
+}

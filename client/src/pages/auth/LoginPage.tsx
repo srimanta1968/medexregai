@@ -1,7 +1,8 @@
 import { FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { AuthCard, Field, FormMessage, SubmitButton, TextLink } from '../../components/auth/AuthUi';
+import { SSO_ERROR_MESSAGES, SsoButtons } from '../../components/auth/SsoButtons';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { formValue, useSubmit } from './useForm';
 
@@ -11,6 +12,8 @@ export default function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
   const { busy, error, run } = useSubmit();
+  const [params] = useSearchParams();
+  const ssoError = params.get('sso_error');
   const from = (location.state as { from?: string } | null)?.from ?? '/app';
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -32,7 +35,13 @@ export default function LoginPage(): JSX.Element {
         </>
       }
     >
-      <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      {ssoError && (
+        <div className="mb-5">
+          <FormMessage tone="error">{SSO_ERROR_MESSAGES[ssoError] ?? SSO_ERROR_MESSAGES.provider_error}</FormMessage>
+        </div>
+      )}
+      <SsoButtons />
+      <form className="mt-5 space-y-5" onSubmit={onSubmit} noValidate>
         {error && <FormMessage tone="error">{error.message}</FormMessage>}
         <Field name="email" label="Work email" type="email" autoComplete="email" required />
         <Field name="password" label="Password" type="password" autoComplete="current-password" required />

@@ -1,40 +1,20 @@
 {
-  "updatedAt": "2026-11-09T23:03:01",
+  "updatedAt": "2026-11-09T23:24:47",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/invites/invites-get.json",
+      "file": "tests/api_definitions/sso/exchange-post.json",
       "rules": [
-        "CODE-MATCH"
+        "CODE-MATCH",
+        "MUST-14"
       ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/invites/invites-post.json",
-      "rules": [
-        "CODE-MATCH"
-      ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/invites/token-accept-post.json",
-      "rules": [
-        "CODE-MATCH"
-      ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/invites/token-get.json",
-      "rules": [
-        "CODE-MATCH"
-      ],
-      "findingsCount": 1
+      "findingsCount": 2
     }
   ],
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 4,
-    "findingsCount": 4
+    "withFindings": 1,
+    "findingsCount": 2
   }
 }

@@ -52,3 +52,10 @@ Feature: F0.1 Accounts, firms and invitations
     When I fill "email" with "${random_email}"
     And I click "Send reset link"
     Then I should see "a reset link is on its way"
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:eee48cd2-24d7-4912-884d-baf92fedd35e
+  Scenario: SSO sign-in without an account explains what to do
+    Given I navigate to "/login?sso_error=no_account"
+    Then I should see "There is no MedexRegAI account for that email yet."
+    And I should see "Welcome back to your firm workspace."

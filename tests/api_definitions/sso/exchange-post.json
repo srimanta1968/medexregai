@@ -1,0 +1,65 @@
+{
+  "name": "POST /api/auth/sso/exchange - trade the one-time SSO code for a session",
+  "description": "Public: the code (from the /sso/complete URL fragment, valid 2 minutes, single use) is the credential. Returns the same session shape as login (token, refreshToken, user, org, role) for the user's primary firm. Covers: a user can sign in with Google or Microsoft SSO.",
+  "endpoint": "/api/auth/sso/exchange",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 33,
+  "taskId": "31a5d242-1313-4c20-9379-672f8cf35c5d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+    "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "INVALID_SSO_CODE",
+      "message": "This sign-in link has expired",
+      "when": "unknown, expired or already used code"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "code is invalid",
+      "when": "code missing or shorter than 20 characters"
+    },
+    {
+      "status": 403,
+      "code": "NO_ACTIVE_MEMBERSHIP",
+      "message": "not an active member of any firm",
+      "when": "account has no active membership"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "401 - unknown or used code",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_SSO_CODE",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_SSO_CODE"
+      },
+      "payload": {
+        "code": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      },
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+        "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+      ]
+    },
+    {
+      "name": "400 - code missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {}
+    }
+  ],
+  "happyPathNote": "The success case needs a code minted by a real provider round trip; verified with a local OIDC mock (exchange 200, reuse 401)."
+}

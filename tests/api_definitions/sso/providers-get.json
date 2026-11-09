@@ -1,0 +1,30 @@
+{
+  "name": "GET /api/auth/sso/providers - list enabled SSO providers",
+  "description": "Public. Returns the identity providers the sign-in page should offer ({id, name}); a provider is listed only when its client id and secret are configured, so the list is empty in environments without SSO. Covers: a user can sign in with Google or Microsoft SSO (which buttons appear).",
+  "endpoint": "/api/auth/sso/providers",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 30,
+  "taskId": "31a5d242-1313-4c20-9379-672f8cf35c5d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+    "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+  ],
+  "errorCases": [],
+  "testCases": [
+    {
+      "name": "Lists configured providers",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
+        "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
+      ],
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    }
+  ]
+}

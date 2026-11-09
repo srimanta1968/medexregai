@@ -18,6 +18,7 @@ const SignUpPage = lazy(() => import('./pages/auth/SignUpPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const InviteAcceptPage = lazy(() => import('./pages/auth/InviteAcceptPage'));
+const SsoCompletePage = lazy(() => import('./pages/auth/SsoCompletePage'));
 const WorkspacePage = lazy(() => import('./pages/app/WorkspacePage'));
 
 function PageLoading(): JSX.Element {
@@ -47,6 +48,7 @@ export default function App(): JSX.Element {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/invite/:token" element={<InviteAcceptPage />} />
+            <Route path="/sso/complete" element={<SsoCompletePage />} />
             <Route
               path="/app"
               element={
