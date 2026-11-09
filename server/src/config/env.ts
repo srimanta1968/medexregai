@@ -128,6 +128,17 @@ export function parseEncryptionKey(raw: string): string {
   return raw.toLowerCase();
 }
 
+/** Request-log formats morgan understands. */
+export const LOG_FORMATS: readonly string[] = ['combined', 'common', 'dev', 'short', 'tiny'];
+
+/**
+ * Map LOG_FORMAT to a morgan format. Anything else (e.g. the "json" an older template
+ * shipped) would be printed literally on every request, so it falls back to "combined".
+ */
+export function parseLogFormat(raw: string): string {
+  return LOG_FORMATS.includes(raw) ? raw : 'combined';
+}
+
 /** Build the typed application config from an environment map. */
 export function loadConfig(env: Env): AppConfig {
   const jwtSecret = requireEnv(env, 'JWT_SECRET');
@@ -173,7 +184,7 @@ export function loadConfig(env: Env): AppConfig {
       requestTimeoutMs: parsePositiveInt(optionalEnv(env, 'AI_REQUEST_TIMEOUT_MS', '120000'), 'AI_REQUEST_TIMEOUT_MS'),
     },
     logLevel: optionalEnv(env, 'LOG_LEVEL', 'info'),
-    logFormat: optionalEnv(env, 'LOG_FORMAT', 'dev'),
+    logFormat: parseLogFormat(optionalEnv(env, 'LOG_FORMAT', 'dev')),
     rateLimit: {
       windowMs: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_WINDOW_MS', '900000'), 'RATE_LIMIT_WINDOW_MS'),
       maxRequests: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_MAX_REQUESTS', '300'), 'RATE_LIMIT_MAX_REQUESTS'),

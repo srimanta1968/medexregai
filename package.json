@@ -1,0 +1,16 @@
+{
+  "name": "medexregai-workspace",
+  "private": true,
+  "description": "Runs the MedexRegAI API (server/) and website (client/) together for local development.",
+  "scripts": {
+    "setup": "npm install && npm install --prefix server && npm install --prefix client && bash scripts/setup-env.sh",
+    "dev": "concurrently --kill-others-on-fail --names api,web --prefix-colors blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --prefix server",
+    "dev:web": "npm run dev --prefix client",
+    "test": "npm test --prefix server",
+    "build": "npm run build --prefix server && npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "9.1.2"
+  }
+}

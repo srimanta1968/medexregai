@@ -103,6 +103,11 @@ describe('loadConfig', () => {
     expect(() => loadConfig(env({ [name]: undefined }))).toThrow(new RegExp(name));
   });
 
+  it('uses a real request-log format, falling back from unknown values such as "json"', () => {
+    expect(loadConfig(env({ LOG_FORMAT: 'tiny' })).logFormat).toBe('tiny');
+    expect(loadConfig(env({ LOG_FORMAT: 'json' })).logFormat).toBe('combined');
+  });
+
   it('rejects a short JWT secret', () => {
     expect(() => loadConfig(env({ JWT_SECRET: 'short' }))).toThrow(/at least 32 characters/);
   });
