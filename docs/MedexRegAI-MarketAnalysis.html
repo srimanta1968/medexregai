@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedexRegAI Market &amp; Competitive Analysis</title>
+<style>
+/* ============================================================
+   MedexRegAI — Requirements Specification
+   Palette: clinical paper + regulatory teal; semantic risk scale
+   kept separate from the accent so class/severity reads as data.
+   ============================================================ */
+
+:root{
+  /* light — the complete palette lives here */
+  --ground:      #F2F5F4;
+  --surface:     #FFFFFF;
+  --surface-2:   #E9EEEC;
+  --surface-3:   #DFE7E4;
+  --ink:         #0D1A1C;
+  --ink-2:       #3D5052;
+  --ink-3:       #6C7E7E;
+  --rule:        #D0DAD7;
+  --rule-strong: #A9B9B5;
+  --accent:      #15605E;
+  --accent-ink:  #0C4442;
+  --accent-soft: #DCEAE7;
+  --ok:          #2F6B4F;
+  --ok-soft:     #DDEBE2;
+  --warn:        #8A6212;
+  --warn-soft:   #F2E8CF;
+  --crit:        #9C3B2C;
+  --crit-soft:   #F3DFDA;
+  --info:        #25566E;
+  --info-soft:   #DCE7ED;
+  --shadow:      0 1px 2px rgba(13,26,28,.05), 0 8px 24px -12px rgba(13,26,28,.18);
+
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+  --sans:  -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:  "Cascadia Mono",Consolas,"SF Mono","Roboto Mono",ui-monospace,Menlo,monospace;
+
+  --measure: 74ch;
+  --rail: 15rem;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:      #0B1313;
+    --surface:     #111C1C;
+    --surface-2:   #172525;
+    --surface-3:   #1E2F2E;
+    --ink:         #E5EDEB;
+    --ink-2:       #A7B8B5;
+    --ink-3:       #7A8C8A;
+    --rule:        #243635;
+    --rule-strong: #3A5150;
+    --accent:      #55B7AB;
+    --accent-ink:  #7FD0C5;
+    --accent-soft: #12302E;
+    --ok:          #67AC85;
+    --ok-soft:     #162D22;
+    --warn:        #CB9E45;
+    --warn-soft:   #2E2614;
+    --crit:        #D87461;
+    --crit-soft:   #33201B;
+    --info:        #74A9C5;
+    --info-soft:   #15272F;
+    --shadow:      0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:      #0B1313;
+  --surface:     #111C1C;
+  --surface-2:   #172525;
+  --surface-3:   #1E2F2E;
+  --ink:         #E5EDEB;
+  --ink-2:       #A7B8B5;
+  --ink-3:       #7A8C8A;
+  --rule:        #243635;
+  --rule-strong: #3A5150;
+  --accent:      #55B7AB;
+  --accent-ink:  #7FD0C5;
+  --accent-soft: #12302E;
+  --ok:          #67AC85;
+  --ok-soft:     #162D22;
+  --warn:        #CB9E45;
+  --warn-soft:   #2E2614;
+  --crit:        #D87461;
+  --crit-soft:   #33201B;
+  --info:        #74A9C5;
+  --info-soft:   #15272F;
+  --shadow:      0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{ color:var(--accent-ink); text-decoration-thickness:1px; text-underline-offset:.15em; }
+a:hover{ color:var(--accent); }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+
+/* ---------- shell ---------- */
+.shell{
+  max-width:82rem;
+  margin:0 auto;
+  padding:0 1.5rem 6rem;
+  display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr);
+  gap:3.5rem;
+  align-items:start;
+}
+@media (max-width:60rem){
+  .shell{ grid-template-columns:minmax(0,1fr); gap:2rem; padding:0 1.15rem 4rem; }
+}
+
+/* ---------- masthead ---------- */
+.masthead{
+  grid-column:1 / -1;
+  border-bottom:2px solid var(--ink);
+  padding:3.25rem 0 1.5rem;
+  margin-bottom:.5rem;
+}
+.masthead .eyebrow{
+  font-family:var(--mono);
+  font-size:.7rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 .9rem;
+}
+.masthead h1{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(2.1rem,5.4vw,3.4rem);
+  line-height:1.06;
+  letter-spacing:-.015em;
+  margin:0 0 .5rem;
+  text-wrap:balance;
+}
+.masthead .standfirst{
+  font-family:var(--serif);
+  font-size:clamp(1.02rem,1.9vw,1.22rem);
+  line-height:1.5;
+  color:var(--ink-2);
+  max-width:60ch;
+  margin:0 0 2rem;
+}
+
+.docctl{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background:var(--surface);
+  overflow:hidden;
+}
+.docctl div{
+  padding:.6rem .85rem;
+  border-right:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+}
+.docctl dt{
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:0 0 .18rem;
+}
+.docctl dd{
+  margin:0;
+  font-family:var(--mono);
+  font-size:.8rem;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- index rail ---------- */
+.rail{
+  position:sticky;
+  top:1.75rem;
+  align-self:start;
+  max-height:calc(100vh - 3.5rem);
+  overflow-y:auto;
+  font-size:.82rem;
+  padding-right:.35rem;
+}
+.rail h2{
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:.4rem 0 .8rem;
+  font-weight:500;
+}
+.rail ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.12rem; counter-reset:r; }
+.rail li{ counter-increment:r; }
+.rail a{
+  display:grid;
+  grid-template-columns:1.6rem 1fr;
+  gap:.3rem;
+  padding:.24rem .4rem .24rem .1rem;
+  color:var(--ink-2);
+  text-decoration:none;
+  border-left:2px solid transparent;
+  border-radius:0 2px 2px 0;
+  line-height:1.35;
+}
+.rail a::before{
+  content:counter(r,decimal-leading-zero);
+  font-family:var(--mono);
+  font-size:.68rem;
+  color:var(--ink-3);
+  padding-top:.1em;
+}
+.rail a:hover{ color:var(--ink); background:var(--surface-2); border-left-color:var(--accent); }
+@media (max-width:60rem){
+  .rail{ position:static; max-height:none; border:1px solid var(--rule); border-radius:3px; background:var(--surface); padding:1rem 1.1rem; }
+}
+
+/* ---------- sections ---------- */
+main{ min-width:0; counter-reset:sec; }
+.sec{
+  counter-increment:sec;
+  padding-top:2.9rem;
+  scroll-margin-top:1.5rem;
+  max-width:var(--measure);
+}
+.sec > h2{
+  font-family:var(--serif);
+  font-size:clamp(1.4rem,2.9vw,1.86rem);
+  line-height:1.18;
+  font-weight:600;
+  letter-spacing:-.01em;
+  margin:0 0 1rem;
+  padding-bottom:.55rem;
+  border-bottom:1px solid var(--rule-strong);
+  text-wrap:balance;
+  display:grid;
+  grid-template-columns:2.6rem 1fr;
+  gap:.2rem;
+  align-items:baseline;
+}
+.sec > h2::before{
+  content:counter(sec) ".";
+  font-family:var(--mono);
+  font-size:.8rem;
+  font-weight:400;
+  color:var(--accent);
+  letter-spacing:0;
+}
+.sec h3{
+  font-family:var(--sans);
+  font-size:.98rem;
+  font-weight:650;
+  letter-spacing:.005em;
+  margin:2rem 0 .6rem;
+  color:var(--ink);
+}
+.sec h4{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  font-weight:500;
+  margin:1.6rem 0 .55rem;
+}
+.sec p{ margin:0 0 1rem; }
+.sec > p:first-of-type{ color:var(--ink-2); }
+
+.lead{ font-family:var(--serif); font-size:1.06rem; line-height:1.55; color:var(--ink-2); }
+
+ul.plain,ul.bul{ margin:0 0 1.1rem; padding-left:1.15rem; display:flex; flex-direction:column; gap:.4rem; }
+ul.bul li::marker{ color:var(--accent); }
+ul.plain{ list-style:none; padding-left:0; }
+
+code,.mono{ font-family:var(--mono); font-size:.86em; }
+p code,li code,td code{
+  background:var(--surface-2);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  padding:.05em .32em;
+  color:var(--ink);
+  white-space:nowrap;
+}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  padding:.16em .5em;
+  border-radius:2px;
+  border:1px solid currentColor;
+  white-space:nowrap;
+  line-height:1.5;
+}
+.c-must{ color:var(--crit);  background:var(--crit-soft); }
+.c-should{ color:var(--warn); background:var(--warn-soft); }
+.c-could{ color:var(--ink-3); background:var(--surface-2); }
+.c-p1{ color:var(--accent); background:var(--accent-soft); }
+.c-p2{ color:var(--info);   background:var(--info-soft); }
+.c-p3{ color:var(--ink-3);  background:var(--surface-2); }
+.c-ok{ color:var(--ok); background:var(--ok-soft); }
+
+/* ---------- tables ---------- */
+.tw{
+  overflow-x:auto;
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background:var(--surface);
+  margin:0 0 1.4rem;
+  box-shadow:var(--shadow);
+}
+table{ border-collapse:collapse; width:100%; font-size:.84rem; min-width:38rem; }
+thead th{
+  text-align:left;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:500;
+  color:var(--ink-3);
+  background:var(--surface-2);
+  padding:.6rem .8rem;
+  border-bottom:1px solid var(--rule-strong);
+  white-space:nowrap;
+  vertical-align:bottom;
+}
+tbody td{
+  padding:.65rem .8rem;
+  border-bottom:1px solid var(--rule);
+  vertical-align:top;
+  line-height:1.5;
+  color:var(--ink-2);
+}
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover td{ background:var(--surface-2); }
+td strong,td b{ color:var(--ink); font-weight:640; }
+td.num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.k{ font-family:var(--mono); font-size:.78rem; color:var(--ink); white-space:nowrap; }
+
+/* wide tables may break the measure */
+.sec .wide{ max-width:none; }
+
+/* ---------- requirement rows ---------- */
+.reqs{ display:flex; flex-direction:column; border:1px solid var(--rule); border-radius:3px; overflow:hidden; background:var(--surface); margin:0 0 1.5rem; box-shadow:var(--shadow); }
+.req{
+  display:grid;
+  grid-template-columns:5.2rem minmax(0,1fr) auto;
+  gap:.9rem;
+  padding:.7rem .9rem;
+  border-bottom:1px solid var(--rule);
+  align-items:baseline;
+  font-size:.87rem;
+}
+.req:last-child{ border-bottom:none; }
+.req:hover{ background:var(--surface-2); }
+.req .id{
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--accent);
+  letter-spacing:.02em;
+  padding-top:.12em;
+}
+.req .body{ color:var(--ink-2); min-width:0; }
+.req .body b{ color:var(--ink); font-weight:640; }
+.req .tags{ display:flex; gap:.3rem; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:34rem){
+  .req{ grid-template-columns:minmax(0,1fr); gap:.3rem; }
+  .req .tags{ justify-content:flex-start; }
+}
+.modhead{
+  display:flex;
+  align-items:baseline;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin:2rem 0 .6rem;
+}
+.modhead .mid{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.1em;
+  color:var(--surface);
+  background:var(--ink);
+  padding:.15em .45em;
+  border-radius:2px;
+}
+.modhead h3{ margin:0; font-size:1rem; }
+
+/* ---------- callouts ---------- */
+.note{
+  border-left:3px solid var(--accent);
+  background:var(--accent-soft);
+  padding:.85rem 1rem;
+  border-radius:0 3px 3px 0;
+  margin:0 0 1.3rem;
+  font-size:.88rem;
+  color:var(--ink-2);
+}
+.note.warn{ border-left-color:var(--warn); background:var(--warn-soft); }
+.note.crit{ border-left-color:var(--crit); background:var(--crit-soft); }
+.note strong{ color:var(--ink); }
+.note p{ margin:0 0 .5rem; }
+.note p:last-child{ margin:0; }
+
+/* ---------- scope matrix ---------- */
+.matrix{ min-width:44rem; }
+.matrix th.rowh{
+  text-align:left;
+  font-family:var(--sans);
+  font-size:.83rem;
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:0;
+  color:var(--ink);
+  background:var(--surface);
+  border-bottom:1px solid var(--rule);
+  border-right:1px solid var(--rule);
+  padding:.6rem .8rem;
+  white-space:nowrap;
+}
+.matrix td{ text-align:center; padding:.45rem .4rem; }
+.cell{
+  display:inline-block;
+  min-width:4.6rem;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:.24em .3em;
+  border-radius:2px;
+}
+.m1{ background:var(--accent); color:var(--surface); }
+:root[data-theme="dark"] .m1{ color:#08201F; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .m1{ color:#08201F; } }
+.m2{ background:var(--info-soft); color:var(--info); border:1px solid var(--info); }
+.m3{ background:var(--surface-2); color:var(--ink-3); border:1px solid var(--rule); }
+.m0{ color:var(--ink-3); opacity:.5; }
+
+/* ---------- pipeline ---------- */
+.pipe{
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+  padding:.2rem 0 1rem;
+  margin:0 0 1.4rem;
+}
+.stage{
+  flex:0 0 11.5rem;
+  border:1px solid var(--rule);
+  background:var(--surface);
+  border-radius:3px;
+  padding:.75rem .8rem;
+  margin-right:1.35rem;
+  position:relative;
+}
+.stage:last-child{ margin-right:0; }
+.stage:not(:last-child)::after{
+  content:"›";
+  position:absolute;
+  right:-1.02rem;
+  top:50%;
+  transform:translateY(-55%);
+  font-size:1.25rem;
+  color:var(--rule-strong);
+  line-height:1;
+}
+.stage .lbl{
+  font-family:var(--mono);
+  font-size:.6rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:block;
+  margin-bottom:.3rem;
+}
+.stage .nm{ font-weight:640; font-size:.86rem; display:block; margin-bottom:.25rem; }
+.stage .dt{ font-size:.75rem; color:var(--ink-3); line-height:1.45; }
+
+/* ---------- kpi strip ---------- */
+.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:.9rem; margin:0 0 1.4rem; }
+.kpi{ border:1px solid var(--rule); border-top:2px solid var(--accent); background:var(--surface); border-radius:0 0 3px 3px; padding:.75rem .85rem; }
+.kpi .v{ font-family:var(--serif); font-size:1.55rem; line-height:1.1; color:var(--ink); font-variant-numeric:tabular-nums; display:block; }
+.kpi .l{ font-size:.75rem; color:var(--ink-3); line-height:1.4; display:block; margin-top:.25rem; }
+
+/* ---------- footer ---------- */
+.foot{
+  grid-column:1 / -1;
+  margin-top:4rem;
+  padding-top:1.2rem;
+  border-top:1px solid var(--rule-strong);
+  font-size:.78rem;
+  color:var(--ink-3);
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+}
+
+@media print{
+  .rail{ display:none; }
+  .shell{ grid-template-columns:1fr; max-width:none; }
+  .sec{ break-inside:avoid-page; }
+  body{ background:#fff; }
+}
+</style>
+<style>
+/* market-analysis additions: reqs rows carry longer prose than in the spec */
+.req{ grid-template-columns:4.2rem minmax(0,1fr) auto; align-items:start; }
+.req .body{ line-height:1.55; }
+.matrix th.rowh{ font-size:.8rem; max-width:20rem; white-space:normal; }
+.matrix thead th{ text-align:center; white-space:normal; }
+.kpi .v{ font-size:1.4rem; }
+ul.plain li{ line-height:1.5; }
+.sec h4{ margin-top:1.9rem; }
+</style>
+
+</head>
+<body>
+<div class="shell">
+
+<header class="masthead">
+  <p class="eyebrow">Market &amp; Competitive Analysis · Companion to MRA-REQ-001</p>
+  <h1>Where MedexRegAI Wins</h1>
+  <p class="standfirst">A competitor, cost, sizing and go-to-market assessment for the platform specified in MRA-REQ-001 — grounded in live FDA data and current vendor pricing, and written to be argued with rather than agreed with.</p>
+  <dl class="docctl">
+    <div><dt>Document</dt><dd>MRA-MKT-001</dd></div>
+    <div><dt>Revision</dt><dd>1.0</dd></div>
+    <div><dt>Date</dt><dd>2026-08-24</dd></div>
+    <div><dt>Status</dt><dd>For client review</dd></div>
+    <div><dt>Scope</dt><dd>US devices &amp; IVDs</dd></div>
+    <div><dt>Companion to</dt><dd>MRA-REQ-001 r0.1</dd></div>
+  </dl>
+</header>
+
+<nav class="rail" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Executive summary</a></li>
+    <li><a href="#s2">Method &amp; evidence base</a></li>
+    <li><a href="#s3">The demand side</a></li>
+    <li><a href="#s4">Competitive landscape</a></li>
+    <li><a href="#s5">Competitor profiles &amp; cost</a></li>
+    <li><a href="#s6">Feature coverage matrix</a></li>
+    <li><a href="#s7">Differentiation</a></li>
+    <li><a href="#s8">Positioning &amp; messaging</a></li>
+    <li><a href="#s9">Pricing &amp; packaging</a></li>
+    <li><a href="#s10">Gaps to close</a></li>
+    <li><a href="#s11">Market sizing</a></li>
+    <li><a href="#s12">Go-to-market</a></li>
+    <li><a href="#s13">Execution plan &amp; metrics</a></li>
+    <li><a href="#s14">Commercial risks</a></li>
+    <li><a href="#s15">Decisions needed</a></li>
+    <li><a href="#s16">Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="sec" id="s1">
+<h2>Executive summary</h2>
+
+<p class="lead">There is no incumbent that does what MRA-REQ-001 describes. There are four adjacent categories that each do part of it, and a fifth — the consultant — that does all of it by hand at $150–$500 per hour. The opening is real, but it is narrower than it looks and it is closing: five AI-native 510(k) tools have appeared in roughly the last eighteen months, and the eQMS platforms that already own the customer relationship are shipping AI regulatory features through 2026.</p>
+
+<div class="kpis">
+  <div class="kpi"><span class="v">6,246</span><span class="l">Companies that received a 510(k) 2021–2025 — the demonstrated-active buyer universe</span></div>
+  <div class="kpi"><span class="v">58%</span><span class="l">of those filed exactly once in five years — the under-served long tail</span></div>
+  <div class="kpi"><span class="v">$220M</span><span class="l">SAM: US device &amp; IVD regulatory intelligence at Release&nbsp;1 scope</span></div>
+  <div class="kpi"><span class="v">$8k–30k</span><span class="l">The empty price band between toy tools and enterprise suites</span></div>
+  <div class="kpi"><span class="v">127 d</span><span class="l">Median 510(k) review in 2025; p90 is 267 d — the spread is the product</span></div>
+  <div class="kpi"><span class="v">94%</span><span class="l">of recent clearances publish a Summary PDF — the corpus nobody has structured</span></div>
+</div>
+
+<h3>The seven findings that matter</h3>
+
+<div class="reqs">
+  <div class="req"><span class="id">F-1</span><span class="body"><b>The market is barbelled and the middle is empty.</b> AI-native 510(k) tools sell at $790–$3,490 per year. Enterprise regulatory suites sell at $25,000–$200,000. Nothing credible sits between. The 5,527 companies that filed one to four 510(k)s in five years live in that gap.</span><span class="tags"><span class="chip c-p1">Opportunity</span></span></div>
+  <div class="req"><span class="id">F-2</span><span class="body"><b>Everyone sells search; nobody sells a determination.</b> Basil Systems has the deepest FDA device data available commercially and still ends at a result list. The pathway engine, confidence-scored product-code shortlist and reasoning chain in MRA-REQ-001 §9 are genuinely unoccupied ground.</span><span class="tags"><span class="chip c-p1">Wedge</span></span></div>
+  <div class="req"><span class="id">F-3</span><span class="body"><b>Reproducibility is unclaimed.</b> Several vendors offer source traceability on an alert. None offers an immutable, addressable, diffable snapshot under which a March report regenerates identically in September. Section 6 of the requirements is the strongest structural differentiator in the whole specification, and it is not currently being sold as one.</span><span class="tags"><span class="chip c-p1">Moat</span></span></div>
+  <div class="req"><span class="id">F-4</span><span class="body"><b>The 510(k) Summary corpus is the real asset.</b> 94% of recent clearances publish one. Structuring indications-for-use, technological characteristics, testing performed and standards cited — with confidence scores and source spans — is expensive once and cheap forever. It is the part a competitor cannot copy quickly.</span><span class="tags"><span class="chip c-p1">Moat</span></span></div>
+  <div class="req"><span class="id">F-5</span><span class="body"><b>Three feature gaps will lose deals in 2026.</b> An MCP / agent interface (Cortellis and Obsidian already ship one), eSTAR-aware section drafting (Complizen and Cruxi already ship one), and a 510(k) change-assessment module (RegDesk sells one). None is in Release 1 as currently specified.</span><span class="tags"><span class="chip c-must">Act</span></span></div>
+  <div class="req"><span class="id">F-6</span><span class="body"><b>Usage is project-shaped, which is a churn problem.</b> A team files, then leaves. The monitoring and alerting features currently sitting in R3 (FR-6.5, FR-11.5) are the retention mechanism and need to move forward.</span><span class="tags"><span class="chip c-must">Act</span></span></div>
+  <div class="req"><span class="id">F-7</span><span class="body"><b>Consultants are the channel, not the enemy.</b> They are high-frequency, quality-literate, reference-generating, and they carry the client relationship into the long tail. Multi-client isolated workspaces (FR-11.2) are currently R2; they should be R1.</span><span class="tags"><span class="chip c-should">Act</span></span></div>
+</div>
+
+<div class="note">
+<p><strong>The one-line thesis.</strong> Own the price band nobody serves, with the one property nobody claims: <em>every determination reproducible against a dated snapshot of the public record</em>. Sell it first to the people whose job is to defend the answer — consultants and small RA teams — and let their clients follow.</p>
+</div>
+</section>
+
+<section class="sec" id="s2">
+<h2>Method and evidence base</h2>
+
+<p>Two evidence streams, deliberately separated, because they carry very different confidence.</p>
+
+<h4>Primary — computed, high confidence</h4>
+<p>Buyer counts, corpus sizes, review-time distributions and market concentration were computed directly against the openFDA API on <b>24 August 2026</b>, using the same endpoints MRA-REQ-001 §5 specifies for ingestion. These figures are reproducible: the query basis is stated alongside each result. Company counts derive from normalised applicant names (legal-suffix stripped, case-folded), which slightly over-counts where one firm files under several legal entities — treat them as ±10%.</p>
+
+<h4>Secondary — published, medium confidence</h4>
+<p>Vendor pricing, market forecasts and funding figures come from vendor pricing pages, procurement aggregators and analyst press releases. Where a vendor does not publish pricing, that is stated as such rather than estimated silently. Analyst market-size forecasts for this sector disagree by roughly a factor of two; they are used only to cross-check the bottom-up model in §11, never as its basis.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Measure</th><th class="num">Value</th><th class="k">Query / basis</th></tr></thead>
+<tbody>
+<tr><td>510(k) records, all time</td><td class="num">175,814</td><td class="k">/device/510k.json</td></tr>
+<tr><td>PMA records, all time</td><td class="num">56,962</td><td class="k">/device/pma.json</td></tr>
+<tr><td>Product codes defined</td><td class="num">7,087</td><td class="k">/device/classification.json</td></tr>
+<tr><td>Product codes <b>actually used</b> 2021–2025</td><td class="num">1,488</td><td class="k">distinct product_code, 5y clearances</td></tr>
+<tr><td>Class III product codes</td><td class="num">531</td><td class="k">classification, device_class:3</td></tr>
+<tr><td>Device recall records</td><td class="num">58,999</td><td class="k">/device/recall.json</td></tr>
+<tr><td>MAUDE adverse event records</td><td class="num">25,711,469</td><td class="k">/device/event.json</td></tr>
+<tr><td>UDI / GUDID records</td><td class="num">5,083,948</td><td class="k">/device/udi.json</td></tr>
+<tr><td>Registration &amp; listing records, US / world</td><td class="num">155,904 / 333,804</td><td class="k">registrationlisting, iso_country_code</td></tr>
+<tr><td>Clearances 2023 / 2024 / 2025</td><td class="num">3,346 / 3,129 / 3,225</td><td class="k">count=decision_date</td></tr>
+<tr><td>Unique filers 2021–2025</td><td class="num">6,246</td><td class="k">normalised applicant, n=15,932</td></tr>
+<tr><td>Median review time, 2025 decisions</td><td class="num">127 days</td><td class="k">decision_date − date_received, n=3,222</td></tr>
+<tr><td>90th percentile review time, 2025</td><td class="num">267 days</td><td class="k">same cohort</td></tr>
+<tr><td>Clearances publishing a Summary</td><td class="num">94.4%</td><td class="k">15,036 Summary vs 719 Statement</td></tr>
+<tr><td>US share of clearances 2021–2025</td><td class="num">48%</td><td class="k">count=country_code; CN 18%, KR 6%</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>Note on the 1,488 figure.</strong> Only 21% of defined product codes saw any clearance activity in five years. This materially de-risks the classification engine in §8 of the requirements — the fine-grained problem is roughly 1,500-way, not 7,000-way — and it makes the pre-computed product-code dossier (§7) cheap enough to publish publicly, which §12 of this document turns into the primary demand-generation asset.</p>
+</div>
+</section>
+
+<section class="sec" id="s3">
+<h2>The demand side — who actually buys</h2>
+
+<p>MRA-REQ-001 §3 names six personas. This section attaches numbers to them, because the persona choice in Open Question Q1 is really a market-size choice.</p>
+
+<h3>The filer universe, by size</h3>
+<p>Of the 6,246 companies that received a 510(k) clearance between 2021 and 2025:</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Cohort</th><th class="num">Companies</th><th class="num">Share</th><th>What they buy today</th><th>Fit</th></tr></thead>
+<tbody>
+<tr><td><b>One clearance in 5 years</b> — the long tail</td><td class="num">3,627</td><td class="num">58%</td><td>A consultant, once, at $17,500–$50,000 per submission. No standing software budget.</td><td><span class="chip c-p1">Primary</span></td></tr>
+<tr><td><b>2–4 clearances</b> — small repeat filers</td><td class="num">1,900</td><td class="num">30%</td><td>A part-time consultant plus manual FDA database work. A one-to-three person RA function.</td><td><span class="chip c-p1">Primary</span></td></tr>
+<tr><td><b>5–9 clearances</b> — mid-market</td><td class="num">496</td><td class="num">8%</td><td>An in-house RA team, usually an eQMS, sometimes a data subscription.</td><td><span class="chip c-p2">Secondary</span></td></tr>
+<tr><td><b>10+ clearances</b> — enterprise</td><td class="num">223</td><td class="num">4%</td><td>Veeva, ArisGlobal, Cortellis or Basil, plus internal tooling. Long procurement cycles.</td><td><span class="chip c-p3">Later</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Concentration is severe: <b>844 companies account for half of all clearances</b>, and the heaviest filers are Siemens Medical Solutions, Boston Scientific, Arthrex, Medacta, Steris, Smith &amp; Nephew, Intuitive Surgical, Canon Medical, Olympus and Becton Dickinson. Those 223 enterprise accounts are where the existing vendors make their money — and where MedexRegAI should not start.</p>
+
+<p>By applicant geography, US firms account for 7,644 of 15,932 clearances (48%), followed by China (2,791) and South Korea (897). The non-US filer entering the US market is a real, under-served segment with exactly the problem MedexRegAI solves and no domestic tool that solves it. It is out of scope for the pilot but worth noting for Phase 3 sequencing, since it needs no new data — only localisation.</p>
+
+<h3>The segments that never appear in a clearance database</h3>
+
+<div class="tw">
+<table>
+<thead><tr><th>Segment</th><th class="num">Est. size (US)</th><th>Basis and buying behaviour</th></tr></thead>
+<tbody>
+<tr><td><b>Pre-market startups</b>, not yet filed</td><td class="num">~2,500</td><td>Medtech VC ran roughly $8.7B annually and ~132 deals per quarter through 2025. These teams have no RA function, no budget for a $40,000 consultant, and an acute need before the next raise. Highest willingness to try, lowest willingness to pay.</td></tr>
+<tr><td><b>RA / QA consultancies and CROs</b></td><td class="num">~1,500</td><td>Billable-hour pressure makes the arithmetic trivial: one hour saved per week at $250/hr pays for a $12,000 seat. They are also the fastest route into the 3,627-company long tail.</td></tr>
+<tr><td><b>Medtech-active investors</b></td><td class="num">~400</td><td>Diligence use. Low ACV, disproportionate referral value into portfolio companies.</td></tr>
+<tr><td><b>AI/ML device developers</b></td><td class="num">221 in 2025 alone</td><td>295 AI/ML clearances in 2025 from 221 unique manufacturers — the fastest-growing cohort, culturally pre-disposed to buy an AI tool, and facing Predetermined Change Control Plan expectations that no existing product addresses well.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note warn">
+<p><strong>On Open Question Q1.</strong> The requirements document's working assumption — build for the RA professional, let the founder consume the same analysis through a simpler entry path — is the right call, and this data supports it. The founder segment is larger in headcount and louder in demand but cannot sustain the ACV. The RA professional and the consultant can, and they are the ones who can validate the output. Recommend confirming Q1 as written.</p>
+</div>
+
+<h3>The cost the product displaces</h3>
+<p>This is the number that anchors every pricing conversation.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Cost line</th><th class="num">Current</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>RA consultant, hourly</td><td class="num">$150–$500</td><td>Typical band $150–$350; senior US specialists at the top of the range.</td></tr>
+<tr><td>510(k) consulting engagement</td><td class="num">$17,500–$50,000</td><td>Fixed-fee project quotes span $12,000 to $150,000 by complexity.</td></tr>
+<tr><td>Monthly retainer</td><td class="num">$5,000–$25,000</td><td>Guarantees availability; common at manufacturers with no RA head.</td></tr>
+<tr><td>FDA 510(k) user fee, FY2026</td><td class="num">$26,067</td><td>$6,517 at the small-business rate.</td></tr>
+<tr><td>FDA establishment registration, FY2026</td><td class="num">$11,423</td><td>Flat regardless of company size; up roughly 23% year on year.</td></tr>
+<tr><td>PMA base fee, FY2026</td><td class="num">$455,000</td><td>Small-business and first-PMA waivers apply.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The research sweep MedexRegAI automates — predicate hunting, product-code cross-checking, standards lookup, precedent reading — is typically 40 to 120 consultant hours of a 510(k) engagement. At $250 per hour that is <b>$10,000 to $30,000 of displaced spend per submission</b>. Against the Section 15 target of a 60% reduction in RA research hours, a $12,000 annual subscription pays for itself on the first project. That arithmetic, not a feature list, is the sales conversation.</p>
+</section>
+
+<section class="sec" id="s4">
+<h2>The competitive landscape</h2>
+
+<p class="lead">Six groups compete for this budget. Only one of them — the newest — is aiming at the same target as MRA-REQ-001, and it is aiming with a much thinner data layer.</p>
+
+<div class="pipe">
+  <div class="stage"><span class="lbl">Group A</span><span class="nm">FDA data intelligence</span><span class="dt">Basil Systems, RegDataLab, 510kdatabase.net. Deep US device data, sold as search and analytics.</span></div>
+  <div class="stage"><span class="lbl">Group B</span><span class="nm">Global RI / RIM suites</span><span class="dt">RegDesk, Cortellis, IQVIA, ArisGlobal, Freyr, Veeva, Rimsys, Obsidian. Breadth and workflow, pharma heritage.</span></div>
+  <div class="stage"><span class="lbl">Group C</span><span class="nm">AI-native 510(k) copilots</span><span class="dt">Complizen, Cruxi, RookAI, Nemedio, Assyro. Same wedge as us, cheap, fast, shallow.</span></div>
+  <div class="stage"><span class="lbl">Group D</span><span class="nm">eQMS adding AI</span><span class="dt">Greenlight Guru, Ketryx, Qualio, MasterControl, Matrix. Own the budget relationship already.</span></div>
+  <div class="stage"><span class="lbl">Group E</span><span class="nm">Consultancies</span><span class="dt">Emergo by UL, NAMSA, RQM+, Pure Global, thousands of independents. The real incumbent.</span></div>
+  <div class="stage"><span class="lbl">Group F</span><span class="nm">DIY</span><span class="dt">openFDA plus a general-purpose chatbot. Free, ungrounded, and what most startups actually do today.</span></div>
+</div>
+
+<h3>Group A — FDA data intelligence</h3>
+<p><b>Basil Systems</b> is the closest thing to a direct competitor on the data layer, and the one to study. It indexes 510(k), PMA, De Novo, classification, guidance, UDI and clinical-trial data with AI-assisted indexing, updates multiple times daily, and ships an "Ecosystem" view for predicate visualisation. Its own case studies describe transforming weeks of research into minutes — the same claim MedexRegAI makes. Coverage is US-centric and pricing is not published.</p>
+<p><b>What they do not do:</b> issue a determination. Basil helps a competent RA professional find things faster. It does not tell you your pathway, does not model your cost or timeline, does not audit your submission against precedent, and does not produce a citable deliverable. It is a microscope, not a diagnosis. That distinction is the whole opening.</p>
+
+<h3>Group B — global regulatory intelligence and RIM</h3>
+<p>This group sells breadth and enterprise workflow. <b>RegDesk</b> is a Gartner Representative Vendor for both RIM and Regulatory Intelligence, covers 120+ countries, and its AI Application Builder claims submission-ready applications in a week rather than three to six months — with one customer case cutting a Class III timeline from eight months to ten days. <b>Cortellis</b> (Clarivate) brings 300,000+ regulatory reports over 30 years and shipped a Claude integration via MCP in March 2026. <b>IQVIA</b>, <b>ArisGlobal LifeSphere</b> (NavaX agentic AI) and <b>Freyr</b> (200+ markets) are pharma-first with device coverage secondary. <b>Veeva Vault Regulatory</b> is the dominant RIM platform with 450+ customers, but regulatory intelligence is a feature inside a larger submission-management suite with a three-to-twelve-month implementation. <b>Rimsys</b> launched a "Regulatory Execution Engine" in May 2026 and serves 6 of the top 12 global medtech manufacturers. <b>Obsidian</b> is the interesting outlier: a small, focused monitoring product with genuinely published per-user pricing and both API and MCP access.</p>
+<p><b>What they do not do:</b> pre-market strategy for a device that does not exist yet. This group answers "what changed and does it affect my registered portfolio?" MedexRegAI answers "what is my device, legally, and what will it cost me?" Those are different questions with different buyers — but note that Group B is drifting toward us, not away.</p>
+
+<h3>Group C — AI-native 510(k) copilots</h3>
+<p>This is the direct threat and the reason timing matters. <b>Complizen</b> ships predicate analysis, classification, risk intelligence, tests and standards, and a Submission Builder with eSTAR export, at $790 to $3,490 per year with a free tier. <b>Cruxi</b> sells a $300 pathway assessment and a hybrid AI-plus-consultant model at $5,000–$20,000, claiming up to 80% cost reduction. <b>RookAI</b> does AI-driven 510(k)/eSTAR review with expert oversight. <b>Nemedio</b> ($8.5M raised) and <b>Assyro</b> occupy adjacent ground.</p>
+<p><b>Where they are weak:</b> the data layer. These are thin applications over live API calls and general-purpose models. None publishes an accuracy methodology, none offers snapshot reproducibility, none has structured the Summary corpus at scale, and several are consulting practices with software attached rather than the reverse. They will win price-sensitive startups. They will not survive a serious RA professional asking "how do I regenerate this report in six months and prove it is the same analysis?"</p>
+
+<h3>Group D — eQMS platforms adding AI</h3>
+<p>Strategically the most dangerous group, because they already have the budget line. <b>Greenlight Guru</b> has 1,100+ medtech teams, is ISO/IEC 42001 certified for AI governance, has shipped AI Chat over QMS data and AI-assisted regulatory intelligence, and targets Q2 2026 general availability for AI-powered design controls and automated submission-document generation. <b>Ketryx</b> raised a $39M Series B in September 2025 (over $55M total) with former Medtronic CEO Bill Hawkins as an investor, and is building eSTAR automation on top of connected lifecycle evidence.</p>
+<p><b>Where they are weak:</b> centre of gravity. An eQMS documents decisions that have already been made. It is built around the design history file, not around the FDA public record. Greenlight Guru's regulatory intelligence is monitoring, not determination, and its device-corpus depth is nowhere near Basil's or what MRA-REQ-001 §5–7 specifies. The realistic outcome here is partnership, not displacement — see §12.</p>
+<p><b>Pricing context that matters:</b> Greenlight Guru's median contract sits at $43,989 per year (range $20,975–$54,739), and it is raising prices from January 2026 by as much as 100% under a "package separation". That price move opens the mid-market — and MedexRegAI should be in the room when those renewals happen.</p>
+
+<h3>Group E — consultancies</h3>
+<p>The true incumbent. It is also the channel, the validation source, and the pricing anchor all at once. <b>Pure Global</b> is worth watching as a hybrid: flat annual fees from $1,000 covering registration and in-country representation across 13–15 markets, positioned as 80% cheaper than traditional consultants, with free AI regulatory news as a demand-generation loss leader. That is a services business using AI to compress cost — the mirror image of our strategy, and a template for how services firms will respond.</p>
+
+<h3>Group F — the free alternative, and the FDA itself</h3>
+<p>Most pre-market startups today use openFDA plus ChatGPT or Claude. It is free, it is fast, and it hallucinates K-numbers. Every sale in the startup segment is first a sale against "free and probably fine".</p>
+<p>Separately, the regulator is now itself an AI user. FDA launched <b>Elsa</b> in June 2025; over 70% of staff have used it, with CDRH among the highest-adopting centres, and <b>CDRH-GPT</b> is in beta for device review. In February 2026 a directive forced Elsa's migration from Anthropic to Google, and reports of the tool citing non-existent studies have been public. Two consequences: AI in regulatory work is now normalised, which helps adoption; and buyers will ask hard questions about model dependency and validation, which the platform must be able to answer (see §10, G-7).</p>
+</section>
+
+<section class="sec" id="s5">
+<h2>Competitor profiles and cost comparison</h2>
+
+<p>Published pricing, where it exists. "Custom" means the vendor does not publish and requires a sales conversation — which is itself a competitive fact, because it lengthens their cycle and shortens ours.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Vendor</th><th>Group</th><th>Core proposition</th><th class="num">Annual cost</th><th>Primary weakness vs MedexRegAI</th></tr></thead>
+<tbody>
+<tr><td><b>Basil Systems</b></td><td>A</td><td>Deepest commercial FDA device dataset; predicate ecosystem maps; multiple daily updates</td><td class="num">Custom</td><td>Search and analytics, not determination. No pathway call, no cost/timeline model, no citable deliverable, no reproducible snapshot.</td></tr>
+<tr><td><b>RegDesk</b></td><td>B</td><td>AI RIMS across 120+ countries; AI Application Builder; structured change assessment</td><td class="num">Custom, tiered</td><td>Global registration workflow, not US pre-market strategy. Thin predicate and precedent analytics.</td></tr>
+<tr><td><b>Cortellis (Clarivate)</b></td><td>B</td><td>300k+ regulatory reports, 80+ markets, 30 years of curation; Claude/MCP integration</td><td class="num">Custom enterprise</td><td>Pharma heritage; device depth limited; no device-specific classification or predicate tooling.</td></tr>
+<tr><td><b>IQVIA Regulatory Intelligence</b></td><td>B</td><td>NLP assistant (RIA), 110+ countries, ecosystem integration</td><td class="num">Custom enterprise</td><td>Device coverage secondary to pharma; expensive standalone; complex contracting.</td></tr>
+<tr><td><b>ArisGlobal LifeSphere</b></td><td>B</td><td>NavaX agentic AI; automated impact assessment; integrated RIM</td><td class="num">Custom enterprise</td><td>Best value only with the full suite; pharma-first; long implementation.</td></tr>
+<tr><td><b>Freyr RegIntel</b></td><td>B</td><td>200+ markets, multi-category, Ask freya / DocChat / KnowledgeGraphs</td><td class="num">Custom</td><td>Breadth over depth; device intelligence thinner than device-only platforms.</td></tr>
+<tr><td><b>Veeva Vault Regulatory</b></td><td>B</td><td>End-to-end RIM, 450+ customers, Part 11 controls, submission management</td><td class="num">Custom enterprise</td><td>Intelligence is a side feature of a document platform; 3–12 month implementation; overkill below enterprise.</td></tr>
+<tr><td><b>Rimsys</b></td><td>B</td><td>MedTech-native RIM; Regulatory Execution Engine (May 2026); AI monitoring</td><td class="num">Custom enterprise</td><td>Registration lifecycle for products already on market; not a pre-market determination engine.</td></tr>
+<tr><td><b>Obsidian RI</b></td><td>B</td><td>Real-time source-traceable monitoring; API + MCP; <b>published</b> pricing</td><td class="num">$240 / $1,200 / $2,400<br>(annual, −17%)</td><td>Monitoring only. No classification, no predicates, no analysis. Sets a low anchor for alerting as a feature.</td></tr>
+<tr><td><b>Complizen</b></td><td>C</td><td>FDA compliance workspace: predicates, classification, risk, standards, eSTAR export</td><td class="num">$0 / $790 / $3,490</td><td>Thin data layer; no published accuracy; no snapshot reproducibility; no provenance architecture.</td></tr>
+<tr><td><b>Cruxi</b></td><td>C</td><td>AI predicate analysis and eSTAR drafting; hybrid AI + consultant</td><td class="num">$300 per assessment;<br>$5k–$20k hybrid</td><td>Services-led with software attached; per-engagement rather than a compounding data asset.</td></tr>
+<tr><td><b>RookAI</b></td><td>C</td><td>AI 510(k)/eSTAR review with expert oversight</td><td class="num">Custom</td><td>Review of a package you already wrote, not the research that precedes it.</td></tr>
+<tr><td><b>Nemedio</b></td><td>C</td><td>AI QMS and regulatory documentation ($8.5M raised)</td><td class="num">Custom</td><td>Documentation generation; no FDA precedent intelligence layer.</td></tr>
+<tr><td><b>Greenlight Guru</b></td><td>D</td><td>MedTech eQMS + AI Chat, risk solutions, AI regulatory intelligence; 1,100+ customers; ISO 42001</td><td class="num">$20,975–$54,739<br>median $43,989</td><td>Quality system of record, explicitly out of MedexRegAI scope. Its regulatory intelligence is monitoring, not determination.</td></tr>
+<tr><td><b>Ketryx</b></td><td>D</td><td>Regulated AI/software lifecycle compliance; eSTAR automation; $39M Series B</td><td class="num">Custom</td><td>Software/SaMD lifecycle evidence, not device classification or predicate strategy.</td></tr>
+<tr><td><b>Pure Global</b></td><td>E</td><td>Flat-fee global registration + in-country rep + AI dossier prep</td><td class="num">From $1,000/yr</td><td>Market access execution for a device whose pathway is already decided. Complementary, not competing.</td></tr>
+<tr><td><b>RA consultant</b></td><td>E</td><td>Judgement, accountability, relationships</td><td class="num">$17.5k–$50k per 510(k);<br>$5k–$25k/mo retainer</td><td>Not reproducible, not scalable, weeks not minutes — the problem statement in MRA-REQ-001 §1.</td></tr>
+<tr><td><b>openFDA + general chatbot</b></td><td>F</td><td>Free</td><td class="num">$0</td><td>Ungrounded. Fabricates K-numbers and CFR citations. The failure mode MRA-REQ-001 §8 exists to prevent.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>Reading the price column.</strong> Two clusters and a void. Below $3,500 sit tools a founder buys on a credit card. Above $20,000 sit platforms an enterprise buys through procurement. Between them: nothing, and 5,527 companies. The recommended packaging in §9 is built to occupy that void rather than to undercut either cluster.</p>
+</div>
+</section>
+
+<section class="sec" id="s6">
+<h2>Feature coverage matrix</h2>
+
+<p>Assessed against the Release 1–2 scope of MRA-REQ-001. <span class="chip c-ok">Full</span> means the capability is a first-class product surface; <span class="chip c-p2">Partial</span> means present but shallow or bundled; <span class="chip c-p3">Limited</span> means adjacent only.</p>
+
+<div class="tw wide">
+<table class="matrix">
+<thead>
+<tr>
+<th class="rowh">Capability</th>
+<th>MedexRegAI<br>R1–R2</th><th>Basil</th><th>RegDesk</th><th>Complizen<br>/ Cruxi</th><th>Greenlight<br>Guru</th><th>Cortellis<br>/ Veeva</th><th>Consultant</th>
+</tr>
+</thead>
+<tbody>
+<tr><th class="rowh">FDA device corpus depth (510k/PMA/DeNovo/class)</th><td><span class="cell m1">Full</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Manual</span></td></tr>
+<tr><th class="rowh">Ranked product-code prediction with confidence</th><td><span class="cell m1">Full</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">Pathway determination with reasoning chain</th><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">Predicate ranking with IFU diff</th><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">Recall/withdrawal screening of predicates</th><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Manual</span></td></tr>
+<tr><th class="rowh">Structured extraction from 510(k) Summary PDFs</th><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Manual</span></td></tr>
+<tr><th class="rowh">Standards list &amp; precedent-derived test plan</th><td><span class="cell m1">Full</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">Cost &amp; timeline forecast with confidence interval</th><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Estimate</span></td></tr>
+<tr><th class="rowh">Post-market risk mapped to design inputs</th><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Manual</span></td></tr>
+<tr><th class="rowh">Submission gap audit vs precedent</th><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">eSTAR-aware section drafting</th><td><span class="cell m3">Gap</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m2">2026</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">510(k) change assessment / letter-to-file</th><td><span class="cell m3">Gap</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m1">Full</span></td></tr>
+<tr><th class="rowh">Immutable snapshot reproducibility</th><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td></tr>
+<tr><th class="rowh">Citation verification as a hard gate</th><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Human</span></td></tr>
+<tr><th class="rowh">Published accuracy benchmarks</th><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td></tr>
+<tr><th class="rowh">Consultant multi-client isolated workspaces</th><td><span class="cell m1">Full</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">n/a</span></td></tr>
+<tr><th class="rowh">API + MCP / agent interface</th><td><span class="cell m3">Gap</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m0">—</span></td></tr>
+<tr><th class="rowh">Non-US jurisdictions</th><td><span class="cell m0">R3</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m1">120+</span></td><td><span class="cell m0">—</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m1">80–200</span></td><td><span class="cell m2">Varies</span></td></tr>
+<tr><th class="rowh">QMS of record</th><td><span class="cell m0">Out of scope</span></td><td><span class="cell m0">—</span></td><td><span class="cell m3">Limited</span></td><td><span class="cell m0">—</span></td><td><span class="cell m1">Full</span></td><td><span class="cell m2">Partial</span></td><td><span class="cell m0">—</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Three rows in that table are the entire strategy. <b>Snapshot reproducibility</b>, <b>citation verification as a hard gate</b> and <b>published accuracy benchmarks</b> are the only rows where MedexRegAI is alone. Three others — eSTAR drafting, change assessment, MCP — are the only rows where it is behind. §10 addresses those.</p>
+</section>
+
+<section class="sec" id="s7">
+<h2>Differentiation — where we actually win</h2>
+
+<p class="lead">Six defensible positions, ordered by how hard they are for a competitor to copy. The first two are structural and take years to retrofit. The last two are commercial and could be copied in a quarter — so they are worth taking now and not relying on later.</p>
+
+<div class="reqs">
+  <div class="req"><span class="id">D-1</span><span class="body"><b>Reproducibility by architecture.</b> An immutable, addressable, diffable corpus snapshot means a report generated in March regenerates identically in September, and the difference between the two can be shown and explained. No competitor offers this. It is not a feature that can be bolted on — it is a property of the ingestion design (MRA-REQ-001 §6), which is precisely why it is defensible. <b>Who it sells to:</b> anyone who has to defend an answer to an auditor, a notified body, an investor or their own management. That is the entire professional segment.</span><span class="tags"><span class="chip c-p1">Structural</span></span></div>
+
+  <div class="req"><span class="id">D-2</span><span class="body"><b>The structured Summary corpus.</b> 94% of clearances publish a Summary PDF; roughly 15,000 in the last five years and 176,000 all time. Turning indications-for-use, technological characteristics, testing performed, standards cited and the substantial-equivalence argument into queryable structured fields — each with a confidence score and a source span — is a one-time expense that compounds forever. Basil indexes these documents; it does not appear to have modelled them. This asset is what makes precedent-derived test plans (FR-4.3/4.4) and gap audits (FR-5.3) possible at all.</span><span class="tags"><span class="chip c-p1">Structural</span></span></div>
+
+  <div class="req"><span class="id">D-3</span><span class="body"><b>Determination, not search.</b> The competitive set stops at a result list and hands the judgement back to the user. MedexRegAI's unit of value is a ranked determination with a reasoning chain, a confidence band, the precedent behind it, and a document you can hand to someone else. Reframing the category from "find things faster" to "decide, defensibly" is the difference between a $3,000 tool and a $20,000 one.</span><span class="tags"><span class="chip c-p1">Positioning</span></span></div>
+
+  <div class="req"><span class="id">D-4</span><span class="body"><b>Calibrated uncertainty on economics.</b> Median 2025 review was 127 days; the 90th percentile was 267. Any tool quoting an average is lying by omission, and a language model asked to estimate a timeline is guessing. Statistical models over real decision dates and MDUFA cohorts, presented as distributions with intervals (FR-7.2, and the hard rule in §8 that quantitative work is <em>not</em> done by an LLM), is a credibility signal no competitor is sending.</span><span class="tags"><span class="chip c-p1">Technical</span></span></div>
+
+  <div class="req"><span class="id">D-5</span><span class="body"><b>The empty price band.</b> Enter at $8,000–$30,000 — above the credit-card tools, below enterprise procurement — and take the 5,527 companies with one to four clearances in five years. Being the only serious option at that price is a real position, and Greenlight Guru's January 2026 price rise makes the timing unusually good.</span><span class="tags"><span class="chip c-p2">Commercial</span></span></div>
+
+  <div class="req"><span class="id">D-6</span><span class="body"><b>Published accuracy as marketing.</b> Section 16 of the requirements lists "publish the accuracy methodology openly" as a risk mitigation. It is better than that: it is the only credible answer to a sceptical RA professional, and no competitor in any of the six groups publishes accuracy numbers. A quarterly public Accuracy Report — top-3 product-code accuracy against a held-out set of 500 clearances, precision@5 on predicates against an expert panel, citation groundedness — converts an internal quality gate into a category-defining marketing asset.</span><span class="tags"><span class="chip c-p2">Commercial</span></span></div>
+</div>
+
+<div class="note warn">
+<p><strong>What is not a differentiator, and should not be sold as one.</strong> "AI-powered", "built on FDA public data", "weeks to minutes" and "cites its sources" are claims every vendor in Groups A, B and C already makes verbatim. Basil's own case study language is nearly identical to the requirements document's problem statement. Leading with these makes MedexRegAI sound like the fifth entrant in a crowded category. Lead with D-1 and D-2, which nobody else can say.</p>
+</div>
+</section>
+
+<section class="sec" id="s8">
+<h2>Positioning and messaging</h2>
+
+<h3>Positioning statement</h3>
+<div class="note">
+<p>For <b>US medical device and IVD teams making pre-market regulatory decisions</b>, MedexRegAI is the <b>regulatory determination engine</b> that turns FDA's public record into a defensible pathway, predicate set, test plan and cost model — every claim resolving to a source record, every analysis reproducible against a dated snapshot.</p>
+<p>Unlike <b>FDA search tools</b> that end at a result list, or <b>enterprise RIM suites</b> built for pharma portfolio monitoring, MedexRegAI produces the artefact you can put in front of a reviewer, an auditor or an investor — and regenerate unchanged six months later.</p>
+</div>
+
+<h3>Category to claim</h3>
+<p>Do not compete inside "regulatory intelligence" — that category is owned by Group B, is understood to mean monitoring and alerting, and puts MedexRegAI in a comparison it does not want. Claim <b>regulatory determination</b>: the pre-market decision layer that sits before the QMS and beside the consultant. The distinction is simple enough to hold in a sentence and it maps exactly onto the product's actual shape.</p>
+
+<h3>Messaging by audience</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Audience</th><th>What they fear</th><th>The line</th><th>Proof to show</th></tr></thead>
+<tbody>
+<tr><td><b>RA manager, small–mid manufacturer</b></td><td>Being wrong, and being unable to show their working</td><td>"Every predicate, every standard, every timeline — traceable to the FDA record and reproducible six months from now."</td><td>One-click citation walk-back; snapshot diff between two report versions</td></tr>
+<tr><td><b>RA / QA consultant</b></td><td>Billable hours going into database searching instead of judgement</td><td>"Your research sweep runs overnight. Your hours go into the argument."</td><td>Multi-client workspaces; white-labelled report; time study from the pilot</td></tr>
+<tr><td><b>Startup founder / CTO</b></td><td>A Class III surprise that kills the programme</td><td>"Know your pathway, your cost and your timeline before your next board meeting."</td><td>Free product-code explorer; investor-facing regulatory summary</td></tr>
+<tr><td><b>Investor / diligence</b></td><td>Taking a pitch deck's regulatory claims on faith</td><td>"Independently verify the pathway, the predicates and the timeline in an afternoon."</td><td>Diligence report with every claim citable</td></tr>
+<tr><td><b>Enterprise RA (later)</b></td><td>Tool proliferation and validation burden</td><td>"Determination-grade analysis with a validation support package your QA team can qualify."</td><td>SOC 2, ISO 42001, intended-use statement, change-control documentation</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The three sentences that carry the sale</h3>
+<ul class="bul">
+<li><b>Against Basil:</b> "They help you search faster. We tell you what your device is, what it will cost, and give you the document that proves it."</li>
+<li><b>Against Complizen and Cruxi:</b> "Ask them to regenerate last quarter's report and prove it is the same analysis. We can."</li>
+<li><b>Against a consultant:</b> "Keep your consultant. Give them our research sweep and pay them for judgement instead of database searching."</li>
+</ul>
+</section>
+
+<section class="sec" id="s9">
+<h2>Pricing and packaging</h2>
+
+<p>Designed to occupy the void identified in §5, to answer Open Question Q4 (tiered subscription with a fair-use report allowance — confirmed as the right model), and to give the consultant channel a first-class SKU rather than a discount.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Tier</th><th class="num">Price</th><th>Seats</th><th>Included</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><b>Explorer</b></td><td class="num">Free</td><td>1</td><td>Public product-code dossiers, 1 project, 3 analyses/month, watermarked report, no export</td><td>Demand generation and SEO landing surface. Not a product tier — a funnel.</td></tr>
+<tr><td><b>Practitioner</b></td><td class="num">$850/mo<br>$8,500/yr</td><td>1</td><td>5 projects, unlimited classification and predicate analysis, 10 full cited reports/year, PDF/DOCX export, snapshot citations</td><td>The solo RA professional and the funded startup. Lands below procurement thresholds.</td></tr>
+<tr><td><b>Team</b></td><td class="num">$2,200/mo<br>$22,000/yr</td><td>5</td><td>Unlimited projects and reports, gap audit, cost and timeline model, post-market intelligence, watchlist monitoring, API</td><td>The core target: 1–5 person RA functions at small and mid manufacturers.</td></tr>
+<tr><td><b>Consultancy</b></td><td class="num">$2,900/mo<br>$29,000/yr</td><td>5</td><td>Everything in Team, plus unlimited isolated client workspaces, white-label report branding, per-client usage export for rebilling</td><td>The channel SKU. Priced on client capacity, not seats.</td></tr>
+<tr><td><b>Enterprise</b></td><td class="num">from $60,000/yr</td><td>Unlimited</td><td>SSO/SAML, MCP + API, private evaluation runs, validation support package, DPA, SLA, dedicated success</td><td>The 223-company tier. Pursue from Phase 3, not before.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Why these numbers</h3>
+<ul class="bul">
+<li><b>$8,500 is below the pain threshold and above the toy threshold.</b> It is roughly half of one 510(k) consulting engagement's research component, so the ROI case closes in one meeting. It is also 10× Complizen's Starter, which forces a value conversation rather than a price comparison — exactly where D-1 and D-2 win.</li>
+<li><b>$22,000 sits deliberately under Greenlight Guru's $43,989 median.</b> MedexRegAI is a second line item in a budget that already has an eQMS in it. Being visibly cheaper than the eQMS makes that easier, and the January 2026 price rise widens the gap further.</li>
+<li><b>The Consultancy tier is priced on leverage, not seats.</b> A consultant serving twelve clients gets twelve isolated workspaces for $29,000 — under $2,500 per client, against $17,500–$50,000 of engagement value each. This is the highest-margin, highest-referral SKU in the list and it should be built first.</li>
+<li><b>Metering on reports and analyses</b>, per the requirements' Q4 assumption, is correct — but meter generously. Punitive metering on a research tool destroys the exploration behaviour that creates the habit. Cap the report artefact, not the query.</li>
+</ul>
+
+<div class="note">
+<p><strong>Blended ACV assumption for §11 and §13:</strong> a target mix of 45% Practitioner, 30% Team, 20% Consultancy, 5% Enterprise gives a blended ACV of approximately <b>$18,000</b>. That is the figure used in the SOM model. It is sensitive to the Consultancy mix — every point of Consultancy share moves blended ACV up by roughly $200.</p>
+</div>
+</section>
+
+<section class="sec" id="s10">
+<h2>Feature and tooling gaps to close</h2>
+
+<p class="lead">Thirteen additions the competitive picture argues for. Each is stated with what it defends against and where it belongs in the roadmap in MRA-REQ-001 §14. Six are genuinely new modules; the rest are re-sequencing of things already specified.</p>
+
+<h3>Priority 1 — close before general availability</h3>
+
+<div class="reqs">
+  <div class="req"><span class="id">G-1</span><span class="body"><b>MCP server / agent interface.</b> Cortellis shipped a Claude integration via MCP in March 2026; Obsidian ships MCP on every paid tier. This is moving from differentiator to table stakes inside a year, and it is cheap: the retrieval and dossier services in §6 Stage 7 already have the right shape. Exposing classification, predicate search and product-code dossier as MCP tools also makes MedexRegAI the substrate other people's agents call — a distribution position, not just a feature. <b>Move the public API from R2 to R1 and add MCP alongside it.</b></span><span class="tags"><span class="chip c-must">Must</span><span class="chip c-p1">R1</span></span></div>
+
+  <div class="req"><span class="id">G-2</span><span class="body"><b>eSTAR-aware section drafting.</b> Open Question Q6 assumes a research report is sufficient and defers submission-format output to Phase 3. The competitive evidence says otherwise: Complizen ships eSTAR export at $3,490/yr, Cruxi drafts eSTAR content, Greenlight Guru targets automated submission-document generation for Q2 2026, and eSTAR v6.1 (effective 16 February 2026) added QMSR-aligned and Real World Evidence sections. This is the single largest feature gap against Group C. <b>Recommend revising Q6: draft eSTAR-structured sections in R2 — populating the template, not filing it.</b> That stays inside the §2 scope boundary while removing the objection.</span><span class="tags"><span class="chip c-must">Must</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-3</span><span class="body"><b>Consultant multi-client workspaces to R1.</b> FR-11.2 is currently R2. The consultant is the beachhead (§12) and the Consultancy tier is the highest-margin SKU (§9); shipping the segment's defining requirement a release late costs the channel a full phase. <b>Move FR-11.2 to R1.</b></span><span class="tags"><span class="chip c-must">Must</span><span class="chip c-p1">R1</span></span></div>
+
+  <div class="req"><span class="id">G-4</span><span class="body"><b>Watchlist and change alerting to R2.</b> FR-6.5 and FR-11.5 sit in R2/R3. Usage of this product is project-shaped — a team files and leaves — so alerting is not a nice-to-have, it is the renewal mechanism. Obsidian sells monitoring alone at $240–$2,400 per year, which shows both the demand and the price ceiling for it standalone. <b>Ship monitoring in R2 as part of Team, never as a standalone SKU.</b></span><span class="tags"><span class="chip c-must">Must</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-5</span><span class="body"><b>Free public product-code explorer.</b> The product-code dossier (§7) is already a precomputed per-code aggregate. Publishing ~1,500 active codes as public, indexable pages — clearance volume, incumbent concentration, typical review time, common standards, event rates — creates 1,500 SEO landing pages that are literally the product's own data structure. No competitor does this at scale. It is the cheapest acquisition channel available and it exists as a by-product of building the platform.</span><span class="tags"><span class="chip c-must">Must</span><span class="chip c-p1">R1</span></span></div>
+</div>
+
+<h3>Priority 2 — build during Release 2</h3>
+
+<div class="reqs">
+  <div class="req"><span class="id">G-6</span><span class="body"><b>New module M13 — 510(k) change assessment.</b> "Do I need a new 510(k) for this change?" under 21 CFR 807.81(a)(3) is the most frequent recurring regulatory question at any company with a marketed device, and it produces a letter-to-file that must be defensible years later — a perfect fit for snapshot reproducibility. RegDesk sells structured change assessment; nothing in MRA-REQ-001 covers it. This is the feature that converts a project purchase into a subscription.</span><span class="tags"><span class="chip c-should">Should</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-7</span><span class="body"><b>New module M14 — AI/ML device and SaMD pathway support.</b> 295 AI/ML clearances in 2025 from 221 manufacturers, and a Predetermined Change Control Plan expectation that no product in the competitive set handles well. FR-2.7 only <em>detects</em> SaMD. Add PCCP drafting support, AI/ML-specific guidance mapping, and precedent analysis across the AI/ML clearance cohort. This cohort is the fastest-growing, most AI-receptive segment in the market and it is currently buying nothing purpose-built.</span><span class="tags"><span class="chip c-should">Should</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-8</span><span class="body"><b>Pre-Submission (Q-Sub) package builder.</b> FR-2.5 recommends a Pre-Sub meeting where appropriate but offers no help writing one. A Q-Sub is a meeting request, not a filing, so it sits comfortably inside the §12 scope boundary — and it is the natural next action after a high-consequence determination. Low risk, high perceived value, directly downstream of a feature already built.</span><span class="tags"><span class="chip c-should">Should</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-9</span><span class="body"><b>Model-portability requirement (new NFR).</b> FDA's forced migration of Elsa from Anthropic to Google in February 2026 made model dependency a board-level question in this industry. Enterprise buyers and their QA functions will ask. Add an NFR requiring a provider-abstraction layer, a documented model-swap and re-validation procedure, and evaluation-suite re-run as a gate on any model change. §15 already has the evaluation machinery; this makes the guarantee explicit and sellable.</span><span class="tags"><span class="chip c-should">Should</span><span class="chip c-p2">R2</span></span></div>
+
+  <div class="req"><span class="id">G-10</span><span class="body"><b>ISO/IEC 42001 on the compliance roadmap.</b> NFR-7 targets SOC 2 Type II within 12 months. Greenlight Guru is already ISO/IEC 42001 certified for AI governance and says so in market. In a domain selling AI to compliance professionals, an AI-management-system certification is becoming the checkbox that gets you through vendor assessment. Add it alongside SOC 2, targeting month 18.</span><span class="tags"><span class="chip c-should">Should</span><span class="chip c-p2">R2</span></span></div>
+</div>
+
+<h3>Priority 3 — Release 3 and beyond</h3>
+
+<div class="reqs">
+  <div class="req"><span class="id">G-11</span><span class="body"><b>EU data residency option.</b> Complizen already offers it on Enterprise. Open Question Q7's assumption of single-region US deployment for Release 1 is right for Release 1 and will block EU enterprise deals in Release 3. Note it as a known Phase 3 dependency rather than discovering it in a deal.</span><span class="tags"><span class="chip c-could">Could</span><span class="chip c-p3">R3</span></span></div>
+
+  <div class="req"><span class="id">G-12</span><span class="body"><b>Non-US-applicant onboarding.</b> 52% of clearances come from non-US applicants — China alone is 18%. These firms need US pathway determination and have no domestic tool. This requires no new data, only localisation and a distribution partner. Cheap incremental market, worth scoping in Phase 3 alongside EUDAMED.</span><span class="tags"><span class="chip c-could">Could</span><span class="chip c-p3">R3</span></span></div>
+
+  <div class="req"><span class="id">G-13</span><span class="body"><b>eQMS connectors as a partnership wedge.</b> Already in §13 at R3. Given Group D's strategic position, treat these as commercial instruments rather than integrations: an embed deal with a mid-tier eQMS vendor is a distribution channel into an installed base, and it is a defence against being bundled out of the market.</span><span class="tags"><span class="chip c-could">Could</span><span class="chip c-p3">R3</span></span></div>
+</div>
+
+<h3>Internal tooling the plan depends on</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Tool</th><th>Why it is a dependency</th><th>When</th></tr></thead>
+<tbody>
+<tr><td><b>Expert evaluation panel and labelled dataset</b></td><td>The accuracy targets in §15 are a release gate, and D-6 turns them into the primary marketing asset. Open Question Q3 flags this as a hard dependency — it is the single largest unfunded risk in the plan. 500 held-out clearances, 100 blind pathway reviews, 50 expert-scored predicate sets, 300 hand-labelled summaries.</td><td>Phase 0</td></tr>
+<tr><td><b>Public Accuracy Report pipeline</b></td><td>Turns the evaluation suite into a quarterly publishable artefact. Small engineering cost, disproportionate positioning value (D-6).</td><td>Phase 1</td></tr>
+<tr><td><b>Competitive monitoring on Group C</b></td><td>Complizen, Cruxi, RookAI, Nemedio and Assyro ship quickly and price publicly. Track their feature and price pages monthly; the platform's own webhook infrastructure can do it.</td><td>Phase 0</td></tr>
+<tr><td><b>Per-tenant cost telemetry</b></td><td>NFR-12 already requires it. At a $8,500 entry price, marginal cost per report is the difference between a business and a hobby. Instrument before the first paying customer, not after.</td><td>Phase 0</td></tr>
+<tr><td><b>Design-partner agreement with IP terms</b></td><td>NFR-8 promises client device descriptions are never used to train shared models and never cross tenants. That promise must exist contractually before the first pilot, because pre-market device IP is the objection that kills pilots.</td><td>Phase 0</td></tr>
+<tr><td><b>Validation support package template</b></td><td>§12 commits to shipping one. It is also a sales asset that no Group C competitor can produce, and it is what unlocks the mid-market QA review.</td><td>Phase 2</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s11">
+<h2>Market sizing</h2>
+
+<p class="lead">Built bottom-up from the openFDA-derived buyer counts in §3, then cross-checked against published analyst forecasts. The bottom-up number is the one to plan against; the top-down numbers are shown because they will be asked for, and because they are much larger, which is exactly why they should not be used.</p>
+
+<h3>Bottom-up: serviceable addressable market, Release 1 scope</h3>
+<p>US device and IVD regulatory intelligence and determination software, at the packaging in §9.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Segment</th><th class="num">Organisations</th><th class="num">Realistic ACV</th><th class="num">Segment value</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Long tail — 1 clearance / 5 yrs</td><td class="num">3,627</td><td class="num">$10,000</td><td class="num">$36.3M</td><td>openFDA, normalised applicants</td></tr>
+<tr><td>Small repeat filers — 2–4</td><td class="num">1,900</td><td class="num">$22,000</td><td class="num">$41.8M</td><td>openFDA</td></tr>
+<tr><td>Mid-market — 5–9</td><td class="num">496</td><td class="num">$45,000</td><td class="num">$22.3M</td><td>openFDA</td></tr>
+<tr><td>Enterprise — 10+</td><td class="num">223</td><td class="num">$120,000</td><td class="num">$26.8M</td><td>openFDA; enterprise CI budgets $25k–$200k</td></tr>
+<tr><td>Pre-market startups, not yet filed</td><td class="num">2,500</td><td class="num">$8,500</td><td class="num">$21.3M</td><td>Medtech VC deal flow, accumulated cohorts</td></tr>
+<tr><td>RA / QA consultancies and CROs</td><td class="num">1,500</td><td class="num">$29,000</td><td class="num">$43.5M</td><td>Consultancy tier pricing</td></tr>
+<tr><td>Medtech-active investors</td><td class="num">400</td><td class="num">$8,500</td><td class="num">$3.4M</td><td>Diligence seats</td></tr>
+<tr><td><b>Total SAM — US, R1 scope</b></td><td class="num"><b>10,646</b></td><td class="num"><b>~$18k blended</b></td><td class="num"><b>$195M</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Expansion path</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Scope</th><th class="num">Value</th><th>What unlocks it</th></tr></thead>
+<tbody>
+<tr><td>US, Release 1 scope (above)</td><td class="num">$195M</td><td>Shipped as specified</td></tr>
+<tr><td>+ Release 2 modules — gap audit, cost model, post-market, monitoring, change assessment (G-6), AI/ML module (G-7)</td><td class="num">~$390M</td><td>Roughly doubles per-account value by capturing adjacent budget; the same buyer, more of their spend</td></tr>
+<tr><td>+ EU MDR/IVDR via EUDAMED (Phase 3)</td><td class="num">~$680M</td><td>EU device manufacturers plus US firms selling into the EU; the §4 jurisdiction-parameterised model makes this ingestion, not re-platforming</td></tr>
+<tr><td><b>TAM — global device regulatory determination software, 2030</b></td><td class="num"><b>$1.2–1.6B</b></td><td>All jurisdictions in the §4 scope matrix, all modules</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Top-down cross-check</h3>
+<p>Published forecasts, shown with their disagreement intact. These are context, not a basis.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Market defined as</th><th class="num">Now</th><th class="num">Forecast</th><th class="num">CAGR</th><th>Relevance</th></tr></thead>
+<tbody>
+<tr><td>Regulatory Information Management systems</td><td class="num">$2.50B (2025)</td><td class="num">$4.12B by 2030 · $5.11B by 2033</td><td class="num">9–10%</td><td>Device sector is a minority share; our category is a slice, not the whole</td></tr>
+<tr><td>AI in regulatory affairs</td><td class="num">$1.9B (2026)</td><td class="num">$8.86B by 2035</td><td class="num">18.7%</td><td>Closest category match; regulatory intelligence is its largest segment</td></tr>
+<tr><td>Medical device regulatory affairs (services + software)</td><td class="num">$6.5B (2026)</td><td class="num">$12.3B by 2032</td><td class="num">10.9%</td><td>The total spend pool MedexRegAI displaces into</td></tr>
+<tr><td>Healthcare regulatory affairs outsourcing</td><td class="num">$8.4–10.7B (2026)</td><td class="num">—</td><td class="num">~14%</td><td>The consultant budget; forecasts vary by 27% across firms</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note warn">
+<p><strong>Read the top-down numbers sceptically.</strong> The four forecasts above define overlapping markets, disagree with each other by up to a factor of two, and none is specific to US device pre-market determination. They establish that the surrounding pools are large and growing at 10–19%. They do not establish that MedexRegAI's addressable market is a billion dollars today. The $195M bottom-up SAM is the honest number, and it is built from records that can be re-counted at any time.</p>
+</div>
+
+<h3>SOM — obtainable market, three years</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Case</th><th class="num">Y1 customers / ARR</th><th class="num">Y2 customers / ARR</th><th class="num">Y3 customers / ARR</th><th class="num">Y3 SAM share</th></tr></thead>
+<tbody>
+<tr><td><b>Conservative</b></td><td class="num">25 / $340k</td><td class="num">90 / $1.4M</td><td class="num">200 / $3.4M</td><td class="num">1.7%</td></tr>
+<tr><td><b>Base</b></td><td class="num">40 / $560k</td><td class="num">160 / $2.7M</td><td class="num">320 / $5.8M</td><td class="num">3.0%</td></tr>
+<tr><td><b>Upside</b></td><td class="num">60 / $900k</td><td class="num">250 / $4.5M</td><td class="num">500 / $9.5M</td><td class="num">4.9%</td></tr>
+</tbody>
+</table>
+</div>
+<p>Assumptions behind the base case: blended ACV rising from $14,000 in Year 1 to $18,000 by Year 3 as the mix shifts toward Team and Consultancy; net revenue retention of 115% from seat and module expansion; annual logo churn of 12% in Year 1 improving to 8% once the monitoring and change-assessment modules (G-4, G-6) are shipping. Year 3 at 320 customers is 3% of the 10,646-organisation universe — a defensible share for a focused vertical product, and well below the point where an incumbent's response becomes existential.</p>
+</section>
+
+<section class="sec" id="s12">
+<h2>Go-to-market</h2>
+
+<h3>Beachhead</h3>
+<p>Two segments, attacked simultaneously because they feed each other.</p>
+<div class="tw">
+<table>
+<thead><tr><th>Beachhead</th><th>Why first</th><th>Entry SKU</th></tr></thead>
+<tbody>
+<tr><td><b>RA/QA consultants serving US Class II devices</b></td><td>High frequency (many devices per year), quality-literate enough to validate output quickly, reference-generating, and a direct channel into the 3,627-company long tail that cannot be reached economically any other way. They also solve the trust risk in MRA-REQ-001 §16: a consultant who endorses the output is worth more than any marketing claim.</td><td>Consultancy, $29,000</td></tr>
+<tr><td><b>AI/ML and SaMD device companies</b></td><td>295 clearances in 2025 from 221 manufacturers and growing fast. Culturally pre-disposed to buy an AI tool, technically able to evaluate one, and currently served by nothing purpose-built. G-7 makes this segment ours specifically.</td><td>Practitioner → Team</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Three-layer motion</h3>
+<div class="pipe">
+  <div class="stage"><span class="lbl">Layer 1</span><span class="nm">Product-led bottom</span><span class="dt">Free product-code explorer, ~1,500 indexable pages, free tier with 1 project. Self-serve to Practitioner. No sales contact.</span></div>
+  <div class="stage"><span class="lbl">Layer 2</span><span class="nm">Sales-assisted middle</span><span class="dt">$8.5k–$29k ACV. Inside sales, 2–4 week cycle, demo run on the prospect's own device. One rep can carry ~60 accounts.</span></div>
+  <div class="stage"><span class="lbl">Layer 3</span><span class="nm">Channel &amp; partnership</span><span class="dt">Consultancy referral programme, eQMS embed via API/MCP, CRO and test-lab co-marketing, investor portfolio seats.</span></div>
+</div>
+
+<h3>Channels, ranked by expected efficiency</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Channel</th><th>Mechanism</th><th>Why it works here</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td><b>Programmatic SEO on product codes</b></td><td>Publish the product-code dossier (§7) as ~1,500 public pages: clearance volume, incumbents, typical review time, common standards, recall themes</td><td>Every RA professional starts a project by searching a product code or a device name. The pages are a by-product of the platform, not a content project. Nobody in the competitive set does this at scale.</td><td>Near zero marginal</td></tr>
+<tr><td><b>Consultant referral programme</b></td><td>Revenue share or workspace credit for client conversions from a consultant's workspace</td><td>The consultant already has the relationship and the credibility. Their client trusts the recommendation in a way they will not trust an ad.</td><td>15–20% rev share</td></tr>
+<tr><td><b>The public Accuracy Report</b></td><td>Quarterly publication of §15 metrics against held-out sets</td><td>D-6. It is the only credible answer to scepticism, it is inherently newsworthy in a domain where FDA's own AI has been reported hallucinating, and no competitor can respond without publishing numbers they may not want to publish.</td><td>Low</td></tr>
+<tr><td><b>RAPS and industry events</b></td><td>Regulatory Affairs Professionals Society chapters, MD&amp;M, The MedTech Conference, AdvaMed</td><td>The buyer is a defined professional community with its own society. Concentrated, reachable, and it values peer endorsement over vendor claims.</td><td>Medium</td></tr>
+<tr><td><b>Investor portfolio seats</b></td><td>Free diligence seats for medtech-active VCs; they push it to portfolio companies</td><td>Low ACV, high referral leverage. An investor asking a portfolio company "have you verified this pathway?" is a warmer lead than any outbound.</td><td>Low</td></tr>
+<tr><td><b>eQMS embed partnerships</b></td><td>API/MCP integration with mid-tier eQMS vendors (G-13)</td><td>Distribution into an installed base, and a structural defence against Group D bundling MedexRegAI out of the market.</td><td>Medium, slow</td></tr>
+<tr><td><b>Outbound to filers</b></td><td>Target the 1,900 companies with 2–4 clearances; trigger on a new clearance or a competitor recall in their product code</td><td>The trigger data is the product's own data. A relevant, timed, evidenced outreach — not a cold email.</td><td>Medium</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Land and expand</h3>
+<ul class="bul">
+<li><b>Land</b> on predicate discovery. MRA-REQ-001 §14 already sequences this first, and for the right reason: it is the most acutely painful manual task and the clearest proof the data layer works. It is also the fastest demo — describe a device, get ranked predicates with an IFU diff, in under fifteen minutes.</li>
+<li><b>Expand</b> into cost and timeline modelling, which brings a second stakeholder (finance, or the founder) into the account and raises the budget ceiling.</li>
+<li><b>Retain</b> with monitoring and change assessment (G-4, G-6). This is the difference between a tool bought for a project and a subscription renewed for years, and it is currently the weakest part of the commercial design.</li>
+</ul>
+
+<div class="note crit">
+<p><strong>The structural GTM risk, stated plainly.</strong> This product is bought for a project and the project ends. Without the monitoring and change-assessment hooks, Year 2 churn will be severe regardless of how good the analysis is — a team that has filed has no reason to open the tool again for eighteen months. Everything in §10 marked G-4 and G-6 is a revenue-retention requirement wearing a feature's clothing, and should be argued for on those terms.</p>
+</div>
+</section>
+
+<section class="sec" id="s13">
+<h2>Execution plan and metrics</h2>
+
+<p>Aligned to the four delivery phases in MRA-REQ-001 §14, so the commercial and engineering plans share exit criteria.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Phase</th><th>GTM objective</th><th>Activities</th><th>Exit criteria</th></tr></thead>
+<tbody>
+<tr><td><b>0 · Foundation</b><br>wks 1–8</td><td>Recruit design partners and seed the funnel before there is a product</td><td>Sign 8–12 design partners (6 consultants, 6 manufacturers); publish the free product-code explorer as soon as the dossier exists; publish the accuracy methodology; stand up competitive monitoring on Group C; execute design-partner IP agreements</td><td>10+ design partners under agreement; explorer live and indexing; accuracy methodology published</td></tr>
+<tr><td><b>1 · MVP pilot</b><br>wks 9–18</td><td>Convert design partners to paid and produce defensible proof</td><td>5 paid pilots at a discounted $5,000; run the time study that substantiates the 60% research-hour reduction; recruit a 6-person consultant advisory board; produce 3 case studies with named references</td><td>5 paying pilots; time study complete with a real baseline; 3 referenceable customers; §15 accuracy thresholds met</td></tr>
+<tr><td><b>2 · GA</b><br>wks 19–30</td><td>Prove the motion is repeatable without founder involvement</td><td>Open self-serve Practitioner; hire one inside sales rep for Team and Consultancy; launch the referral programme; publish the first quarterly Accuracy Report; begin SOC 2 and ISO 42001 programmes</td><td>40 paying customers; ~$560k ARR; CAC payback under 12 months; onboarding without hand-holding</td></tr>
+<tr><td><b>3 · Expansion</b><br>ongoing</td><td>Add channel leverage and a second jurisdiction</td><td>eQMS embed partnership; enterprise motion into the 223-company tier; EU MDR/IVDR; non-US-applicant onboarding (G-12)</td><td>Second jurisdiction live on the same data model; first embed partner shipping; enterprise logo closed</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Metrics that decide whether this is working</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Metric</th><th class="num">Target</th><th>Why this one</th></tr></thead>
+<tbody>
+<tr><td>Time to first meaningful output</td><td class="num">&lt; 15 min</td><td>Describe a device, receive ranked product codes with reasoning. The whole free-tier conversion depends on this single moment.</td></tr>
+<tr><td>Free → paid conversion</td><td class="num">3–5%</td><td>Standard for vertical B2B PLG. Below 2% means the free tier is giving away the product, not demonstrating it.</td></tr>
+<tr><td>CAC, Practitioner</td><td class="num">&lt; $6,000</td><td>Payback under 9 months at $8,500 ACV.</td></tr>
+<tr><td>CAC, Team / Consultancy</td><td class="num">&lt; $18,000</td><td>Payback under 10 months at $22,000–$29,000 ACV.</td></tr>
+<tr><td>Net revenue retention</td><td class="num">≥ 115%</td><td>Seats plus modules. The number that determines whether the SOM base case is reachable.</td></tr>
+<tr><td>Annual logo churn</td><td class="num">&lt; 10% by Y2</td><td>The direct read on whether G-4 and G-6 solved the project-shaped-usage problem.</td></tr>
+<tr><td>Expert acceptance without material correction</td><td class="num">≥ 75%</td><td>Already a §15 target. It is also the leading indicator of both churn and referral — a professional who corrects the output does not recommend it.</td></tr>
+<tr><td>Consultant-sourced pipeline</td><td class="num">≥ 30% by Y2</td><td>Tests whether the channel thesis in §12 is real or wishful.</td></tr>
+<tr><td>Product-code page organic sessions</td><td class="num">10k/mo by Y2</td><td>Tests whether the cheapest channel is actually the best one.</td></tr>
+<tr><td>Marginal model cost per full report</td><td class="num">&lt; $8</td><td>NFR-12. At an $8,500 entry price with a 10-report allowance, this is the difference between 90% and 70% gross margin.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s14">
+<h2>Commercial risks</h2>
+
+<p>These sit alongside the delivery risks in MRA-REQ-001 §16, not instead of them. The engineering risks there are well identified; these are the ones that can produce a technically excellent product with no customers.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Risk</th><th>Sev.</th><th>Assessment and mitigation</th></tr></thead>
+<tbody>
+<tr><td><b>Greenlight Guru bundles it.</b> 1,100+ customers, an existing budget line, ISO 42001 certification, and AI regulatory features targeting Q2 2026 GA.</td><td><span class="chip c-must">Critical</span></td><td>They will do a shallower version and give it away with the eQMS. Do not fight on breadth. Win on depth (D-1, D-2) with buyers who need to defend the answer, own the consultants Greenlight Guru does not serve well, and pursue integration (G-13) so the choice is "and" rather than "or". Their January 2026 price rise is a near-term opening, not a long-term shield.</td></tr>
+<tr><td><b>Group C races to the bottom.</b> Complizen at $790/yr with a free tier; Cruxi at $300 per assessment.</td><td><span class="chip c-must">Critical</span></td><td>Do not follow. A $790 tool and a $22,000 tool are sold to different people for different reasons. Compete on the questions they cannot answer — reproducibility, published accuracy, provenance — and make those the first two slides, not the last two.</td></tr>
+<tr><td><b>Project-shaped churn.</b> Teams file and leave.</td><td><span class="chip c-must">Critical</span></td><td>The most under-addressed risk in the current plan. G-4 and G-6 are the mitigation and both need to move earlier. Track Year-2 cohort retention from the first pilot, not from GA.</td></tr>
+<tr><td><b>"openFDA is free — why pay?"</b></td><td><span class="chip c-should">High</span></td><td>True and unavoidable. The answer is that the data is free and the <em>structure</em> is not: 94% of clearances have a Summary PDF nobody has parsed, and the extraction plus reproducibility layer is the product. Demonstrate rather than argue — show a raw openFDA response beside a structured IFU comparison.</td></tr>
+<tr><td><b>RA professional scepticism.</b> Already identified in §16 as a delivery risk; it is equally a sales risk.</td><td><span class="chip c-should">High</span></td><td>Published accuracy (D-6), evidence-first interface, consultant advisory board, and never positioning the output as a determination the user can rely on unreviewed. The §12 scope statement is a sales asset, not a legal encumbrance.</td></tr>
+<tr><td><b>Blended ACV lands lower than modelled.</b> If the mix skews to Practitioner, blended ACV falls toward $11,000 and the base case ARR falls by 40%.</td><td><span class="chip c-should">High</span></td><td>Build the Consultancy tier early (G-3) — it is the highest-ACV, highest-referral SKU and the mix lever that matters most. Review blended ACV monthly from the first ten customers.</td></tr>
+<tr><td><b>Group B moves down-market.</b> RegDesk, Rimsys and Obsidian are all adding AI and could add pre-market determination.</td><td><span class="chip c-could">Medium</span></td><td>Their data layer is jurisdictional breadth, not US device depth; rebuilding §5–7 is a multi-year investment against an existing revenue base. Watch for acquisition of a Group A or C player as the fast path — that is the signal to accelerate.</td></tr>
+<tr><td><b>FDA source or access changes.</b> openFDA rate limits, formats and endpoints change without notice.</td><td><span class="chip c-could">Medium</span></td><td>Already covered by NFR-11 and FR-12.2. Worth noting commercially: a competitor without a raw archive and snapshot discipline degrades silently when this happens, and MedexRegAI does not. That is a demo, not just an engineering property.</td></tr>
+<tr><td><b>Analyst market-size scrutiny.</b> An investor cross-checks the top-down forecasts and finds they disagree by 2×.</td><td><span class="chip c-could">Medium</span></td><td>Lead with the bottom-up model in §11 and its reproducible openFDA basis. Present the top-down figures as context with their disagreement visible. Being the party that shows its uncertainty is on-brand for a product whose thesis is calibrated confidence.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s15">
+<h2>Decisions needed</h2>
+
+<p>Six commercial decisions, three of which revise working assumptions in MRA-REQ-001 §17. Each changes scope, sequencing or cost.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th class="k">#</th><th>Decision</th><th>Recommendation</th><th>Consequence if deferred</th></tr></thead>
+<tbody>
+<tr><td class="k">C1</td><td>Confirm the beachhead: consultants and AI/ML device companies, per §12?</td><td><b>Yes.</b> It follows from Q1's working assumption and from the concentration data in §3.</td><td>The Consultancy tier and FR-11.2 sequencing cannot be settled, and Phase 0 partner recruitment starts unfocused.</td></tr>
+<tr><td class="k">C2</td><td><b>Revises Q6.</b> Pull eSTAR-structured section drafting forward from Phase 3 to Release 2?</td><td><b>Yes.</b> It is the largest feature gap against Group C and stays inside the §12 scope boundary as long as MedexRegAI populates the template rather than filing it.</td><td>Every competitive evaluation against Complizen or Cruxi has a visible hole in it.</td></tr>
+<tr><td class="k">C3</td><td>Move FR-11.2 (consultant multi-client workspaces) and the public API + MCP interface to Release 1?</td><td><b>Yes to both.</b> G-1 and G-3. Neither is large; both are gating for the channel and for agent-based distribution.</td><td>The beachhead segment cannot be served in Phase 1, and MCP moves from differentiator to deficit within a year.</td></tr>
+<tr><td class="k">C4</td><td>Approve the §9 pricing architecture, in particular the $8,500 entry and the leverage-priced Consultancy tier?</td><td><b>Approve, and instrument.</b> Metering design (FR: billing, R1) depends on this being settled before build.</td><td>Metering gets built against the wrong model and the first ten deals set the price by accident.</td></tr>
+<tr><td class="k">C5</td><td><b>Sharpens Q3.</b> Is the expert evaluation panel funded, with named people and committed hours?</td><td><b>Fund it explicitly in Phase 0.</b> It gates the §15 accuracy thresholds, which gate Phase 1 sign-off, which gate the D-6 marketing asset.</td><td>The single largest unfunded dependency in the plan. Everything downstream of accuracy stalls.</td></tr>
+<tr><td class="k">C6</td><td>Add ISO/IEC 42001 alongside SOC 2 in the compliance roadmap (G-10)?</td><td><b>Yes, target month 18.</b> Greenlight Guru already holds it and says so in market.</td><td>Mid-market and enterprise vendor assessments start failing on a checkbox rather than on capability.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s16">
+<h2>Sources</h2>
+
+<h4>Primary — computed 24 August 2026</h4>
+<p>openFDA API: <code>/device/510k.json</code>, <code>/device/pma.json</code>, <code>/device/classification.json</code>, <code>/device/recall.json</code>, <code>/device/event.json</code>, <code>/device/udi.json</code>, <code>/device/registrationlisting.json</code>. Clearance cohort: 15,932 records with decision dates between 2021-01-01 and 2025-12-31. Company counts derived from normalised applicant strings.</p>
+
+<h4>Vendor pricing and product</h4>
+<ul class="plain">
+<li><a href="https://www.basilsystems.com/solutions/medtech-intel-regulatory-intelligence">Basil Systems — MedTech Intel, Regulatory Intelligence</a></li>
+<li><a href="https://www.regdesk.co/regulatory-intelligence-software/">RegDesk — Regulatory Intelligence Software</a></li>
+<li><a href="https://www.complizen.ai/pricing">Complizen — Pricing</a></li>
+<li><a href="https://cruxi.ai/pages/subpages/regulatory/510k/microservices/predicate-finding.html">Cruxi — 510(k) predicate finding and pricing models</a></li>
+<li><a href="https://obsidianri.com/pricing">Obsidian Regulatory Intelligence — Pricing</a></li>
+<li><a href="https://www.greenlight.guru/greenlight-guru-ai">Greenlight Guru — AI features and roadmap</a></li>
+<li><a href="https://openregulatory.com/articles/greenlight-guru-price">OpenRegulatory — Greenlight Guru price increase, 2026</a></li>
+<li><a href="https://checkthat.ai/brands/greenlight-guru/pricing">Greenlight Guru pricing and contract data (Vendr-sourced medians)</a></li>
+<li><a href="https://www.pureglobal.com/news/pure-global-introduces-flat-fee-pricing-for-medical-device-market-access">Pure Global — flat-fee pricing announcement</a></li>
+<li><a href="https://rookqs.com/rookai-510k-estar-review">RookAI — 510(k)/eSTAR review</a></li>
+<li><a href="https://meddeviceguide.com/blog/best-regulatory-intelligence-software-medical-devices-2026-guide">MedDeviceGuide — Best Regulatory Intelligence Software for Medical Devices 2026 (8-platform comparison)</a></li>
+</ul>
+
+<h4>Cost benchmarks</h4>
+<ul class="plain">
+<li><a href="https://www.federalregister.gov/documents/2025/07/30/2025-14412/medical-device-user-fee-rates-for-fiscal-year-2026">Federal Register — Medical Device User Fee Rates for FY2026</a></li>
+<li><a href="https://meddeviceguide.com/blog/fda-510k-fees-mdufa-user-fee-schedule-guide">MDUFA V user fee schedule and total cost breakdown</a></li>
+<li><a href="https://meddeviceguide.com/blog/medical-device-regulatory-consulting-hourly-rates-region-guide">Medical device regulatory consulting hourly rates by region, 2026</a></li>
+<li><a href="https://www.complizen.ai/post/how-much-does-510k-cost">510(k) cost breakdown</a></li>
+</ul>
+
+<h4>Market size and funding</h4>
+<ul class="plain">
+<li><a href="https://www.grandviewresearch.com/industry-analysis/regulatory-information-management-rim-system-market-report">Grand View Research — RIM system market</a></li>
+<li><a href="https://www.towardshealthcare.com/insights/ai-in-regulatory-affairs-market-sizing">Towards Healthcare — AI in regulatory affairs market sizing</a></li>
+<li><a href="https://www.snsinsider.com/reports/medical-device-regulatory-affairs-market-5495">SNS Insider — Medical device regulatory affairs market</a></li>
+<li><a href="https://www.grandviewresearch.com/industry-analysis/regulatory-affairs-outsourcing-market">Grand View Research — Regulatory affairs outsourcing market</a></li>
+<li><a href="https://www.lifesciencemarketresearch.com/insights/q1-2025-medical-device-investment-roundup-a-record-breaking-start-to-a-year-of-reckoning">Life Science Intelligence — Q1 2025 medical device investment roundup</a></li>
+<li><a href="https://www.medtechdive.com/news/ai-ketryx-raises-39m-funding/759375/">MedTech Dive — Ketryx $39M Series B</a></li>
+<li><a href="https://secure.businesswire.com/news/home/20260505903088/en/Rimsys-Launches-the-Regulatory-Execution-Engine-for-MedTech">Rimsys — Regulatory Execution Engine launch, May 2026</a></li>
+</ul>
+
+<h4>Regulatory and AI context</h4>
+<ul class="plain">
+<li><a href="https://innolitics.com/articles/year-in-review-ai-ml-medical-device-k-clearances/">Innolitics — 2025 year in review, AI/ML device clearances</a></li>
+<li><a href="https://www.fiercebiotech.com/cro/fda-launces-new-generative-ai-tool-elsa-month-ahead-schedule">Fierce Biotech — FDA launches Elsa</a></li>
+<li><a href="https://dicentra.com/blog/fda/fdas-ai-rollout-what-elsa-and-cdrh-gpt-mean-for-regulatory-submissions-in-the-u-s">dicentra — Elsa and CDRH-GPT for regulatory submissions</a></li>
+<li><a href="https://intuitionlabs.ai/articles/fda-halo-elsa-4-migration-guide">IntuitionLabs — FDA Elsa migration and sponsor implications</a></li>
+<li><a href="https://www.meddeviceonline.com/doc/ai-enters-the-k-submission-world-what-device-developers-need-to-know-0001">Med Device Online — AI enters the 510(k) submission world</a></li>
+</ul>
+
+<div class="note">
+<p><strong>Confidence note.</strong> Primary figures are reproducible against openFDA and should be re-run before any external use, since the corpus updates weekly. Vendor pricing reflects published rates and procurement aggregates as of August 2026 and moves frequently — Greenlight Guru's January 2026 increase is a live example. Analyst forecasts are directional only and disagree materially; §11 states where they were and were not relied upon.</p>
+</div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>MRA-MKT-001 · Rev 1.0 · Companion to MRA-REQ-001 r0.1</span>
+  <span>Primary data: openFDA, retrieved 2026-08-24</span>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MedexRegAI PRD Addendum</title>
+<style>
+:root{--bg:#fbfbfa;--surface:#fff;--ink:#14213d;--ink2:#3d4a63;--muted:#6b7488;--line:#e3e6ec;--soft:#f1f4f6;--brand:#0d6e66;--brand-soft:#e3f2ef;--maj:#b45309;--maj-bg:#fdf1e3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;--brand:#3cc2b2;--brand-soft:#173430;--maj:#f0a145;--maj-bg:#38281a}}
+:root[data-theme="dark"]{--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;--brand:#3cc2b2;--brand-soft:#173430;--maj:#f0a145;--maj-bg:#38281a}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header{padding:48px 0 24px}.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:600}
+h1,h2{font-family:"Source Serif 4",Georgia,serif;letter-spacing:-.01em}h1{font-size:clamp(28px,4vw,40px);line-height:1.15;margin:8px 0 12px;max-width:900px}h2{font-size:25px;margin:0 0 6px}h3{font-size:16px;margin:20px 0 6px}
+.lede{font-size:17px;color:var(--ink2);max-width:860px}section{padding:32px 0;border-top:1px solid var(--line)}.sub{color:var(--ink2);max-width:880px;margin:0 0 14px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}table.wide{min-width:880px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}th{background:var(--soft);font-weight:600;font-size:12.5px;color:var(--ink2)}
+.note{background:var(--soft);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink2);margin:14px 0}.note strong{color:var(--ink)}
+footer{padding:24px 0 48px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+td:first-child{white-space:nowrap}
+</style></head><body><div class="wrap">
+<header>
+<div class="eyebrow">Internal · proposed · amends MRA-PRD-002, 101, 102, 104, 105, 008 · Rev 0.1 · 30 Oct 2026</div>
+<h1>PRD addendum: client evidence to submission</h1>
+<p class="lede">New requirement group FR-14 and a revised build order, responding to consultant feedback and the v4.0 viability review. Status: proposed. Nothing here is approved until the founders decide, and P0 product build starts only if the tests in the viability review pass.</p>
+</header>
+
+<section>
+<h2>1. Revised phases</h2>
+<p class="sub">The "hours first" rule stays. The order changes to follow the hours we actually measured. Week numbers restart when Gate V passes. Effort figures are estimates for engineering review.</p>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>Phase</th><th>Window</th><th>Goal</th><th>Deliverables</th><th>Exit gate</th></tr></thead><tbody>
+<tr><td>V · Validate</td><td>6 weeks, to 18 Dec 2026</td><td>Decide with evidence, no product build</td><td>Workbook v4.0 Part A; messy-folder prototype on 2 closed packages; paid pilot offers; eSTAR XML spike</td><td>Gate V: all three tests pass</td></tr>
+<tr><td>0 · Foundation</td><td>Wk 1–4</td><td>Baseline and architecture</td><td>Time study using the new A3 activities; ADRs; tenant; data-handling and validation pack v0; pilot evaluation set from real packages</td><td>Baseline signed off by the pilot RA lead</td></tr>
+<tr><td>1 · Evidence Core</td><td>Wk 3–12</td><td>Understand a client folder</td><td>FR-14.1 to 14.9; thin FDA checks (K-number, recall, MAUDE, SE table); citation gate; workspaces; audit</td><td>G1′: sorting and gap-check targets met on 2 real packages; RA lead accepts at least 75% of findings</td></tr>
+<tr><td>2 · Drafting</td><td>Wk 11–20</td><td>Turn it into sections</td><td>FR-14.10 to 14.15; section drafts, summary tables, admin documents, Word round trip</td><td>G2′: at least 30% fewer hours on drafted sections, measured on a live 510(k)</td></tr>
+<tr><td>3 · Pilot proof</td><td>Wk 19–26</td><td>Measured result on 2 live 510(k)s</td><td>Time capture; pilot report; security review; SOC 2 readiness starts</td><td>G3′: whole-project hours at least 25% lower (proposed), no rise in FDA deficiencies, 3 paying firms</td></tr>
+<tr><td>4 · Workspace and research</td><td>M7–12</td><td>Widen the value</td><td>Predicate ranking, research library, claim–evidence matrix, FDA question tracker, submission record (existing PRD 1 and 2 scope); eSTAR XML export if the spike works</td><td>Retention and repeat use (revise G4)</td></tr>
+<tr><td>5 · Market and adjacency</td><td>M13+</td><td>Open the funnel</td><td>Self-serve, free tier, product-code pages, PR-1, PR-4, PR-5, API and MCP, Lead Finder, change assessment, second market (manufacturers)</td><td>Series A readiness, with dates reset from G3′</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Note on the 50% target.</strong> PRD-002 §7 measures 50% only on scoped research and checking activities, which on Consultant #1's data is a small share of the project. Replace it with a whole-project measure, and report scoped results alongside it. The 25% threshold is proposed. It sits between the 19% v3.0 committed and the 34% roadmap target on a simple 510(k).</div>
+</section>
+
+<section>
+<h2>2. New requirements: FR-14 Client Evidence to Submission</h2>
+<h3>Intake</h3>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria (proposed)</th><th>Replaces / amends</th></tr></thead><tbody>
+<tr><td>FR-14.1</td><td>Read-only project-folder connectors: Dropbox, Box, SharePoint/OneDrive, Google Drive. Start with the two most reported in Part A.</td><td>Must</td><td>Connected in under 5 minutes; files not copied; change detected within 24 h; access can be revoked by the user</td><td>Architecture §10; PRD-002 §10</td></tr>
+<tr><td>FR-14.2</td><td>Local upload and forwarded email as alternatives where no connector is allowed</td><td>Must</td><td>Attachments land on the right project within 2 minutes</td><td>P2-30, widened</td></tr>
+<tr><td>FR-14.3</td><td>Parse DOCX, XLSX, PPTX, PDF (native and scanned), CSV and images, retaining page, sheet or slide location</td><td>Must</td><td>Every extracted fact has a source location; unreadable files are listed, never silently skipped</td><td>P1-35, widened</td></tr>
+<tr><td>FR-14.4</td><td>Drawings: read title block, revision and visible dimensions from PDF or image exports. Native CAD is listed by file name only.</td><td>Should</td><td>Revision correct on at least 95% of the evaluation set; dimensions need user confirmation</td><td>New</td></tr>
+<tr><td>FR-14.5</td><td>Raw data: identify the file's structure and link it to the report that used it. Analysis is out of scope until ecosystem stage 2.</td><td>Could</td><td>Link suggested, user confirms</td><td>New</td></tr>
+<tr><td>FR-14.6</td><td>Classify each file by document type and eSTAR section, with a reason</td><td>Must</td><td>At least 90% correct on real packages; one-click correction; corrections become evaluation data</td><td>P2-04, moved earlier</td></tr>
+<tr><td>FR-14.7</td><td>Detect duplicates and versions; propose the current version</td><td>Must</td><td>Never picks silently: unclear cases are asked; version chain visible</td><td>P2-40, moved earlier</td></tr>
+</tbody></table></div>
+<h3>Gaps, contradictions and client requests</h3>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria (proposed)</th><th>Replaces / amends</th></tr></thead><tbody>
+<tr><td>FR-14.8</td><td>Contradiction check across client documents: device name, model, dimensions, materials, sterilisation method, shelf life, IFU wording, standard edition, sample size, result vs acceptance criterion</td><td>Must</td><td>Each finding shows both sources and pages; at least 70% of findings judged real by the RA lead; deterministic where possible</td><td>New; extends P2-22</td></tr>
+<tr><td>FR-14.9</td><td>Missing-information list per eSTAR section, and a draft request to the client. Upload by secure link with no account; responses filed to the project.</td><td>Must</td><td>Client needs no login or training; link expires; consultant approves every message; status tracked until received</td><td>New; extends P2-11</td></tr>
+</tbody></table></div>
+<h3>Drafting and output</h3>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria (proposed)</th><th>Replaces / amends</th></tr></thead><tbody>
+<tr><td>FR-14.10</td><td>Draft eSTAR section text for sterilisation and shelf life, biocompatibility, and performance testing, from client reports</td><td>Must</td><td>Each factual statement links to a source page; uncited statements stripped by the gate; at least 70% accepted without material change</td><td>P5-20 to P5-22, moved earlier</td></tr>
+<tr><td>FR-14.11</td><td>Summary tables from test reports</td><td>Must</td><td>Values match source exactly; every mismatch flagged; user confirms</td><td>P5-21, moved earlier</td></tr>
+<tr><td>FR-14.12</td><td>Device description from design documents, with precedent wording shown beside it</td><td>Should</td><td>Warns on claim creep against the IFU and evidence</td><td>P5-22, moved earlier</td></tr>
+<tr><td>FR-14.13</td><td>Administrative documents: 510(k) Summary, cover letter, FDA 3601, Truthful and Accuracy statement</td><td>Should</td><td>Generated from project data; signature fields left blank; never signed by us</td><td>New</td></tr>
+<tr><td>FR-14.14</td><td>Word as the review surface: export with comments linking to sources; re-import edits and record them as human-approved</td><td>Must</td><td>No formatting loss; edits distinguished from generated text (FR-10.5); a Word add-in is optional and follows only if peers ask</td><td>P4-24, moved earlier</td></tr>
+<tr><td>FR-14.15</td><td>eSTAR readiness package: attachment list with file names under 124 characters, size warnings (1 GB per attachment, 4 GB total) and no zip files</td><td>Must</td><td>Checks follow FDA's current eSTAR page and are versioned per template</td><td>New; extends P2-01</td></tr>
+</tbody></table></div>
+<h3>Adoption</h3>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria (proposed)</th><th>Replaces / amends</th></tr></thead><tbody>
+<tr><td>FR-14.16</td><td>Free validation pack: intended use, risk assessment template, test evidence, release and model change log</td><td>Must</td><td>A firm can finish its own risk-based assessment in under 8 hours; updated with each release</td><td>P4-33; remove $10K add-on</td></tr>
+<tr><td>FR-14.17</td><td>Data-handling pack: where data goes, subprocessors, no training on client data, retention, deletion, plus a clause firms can give their clients</td><td>Must</td><td>Reviewed by counsel; per-project deletion completes within the stated period</td><td>NFR-8, NFR-14</td></tr>
+<tr><td>FR-14.18</td><td>Records for the eQMS: dated PDF or DOCX exports of project record, reviews and decisions. No eQMS connector is required.</td><td>Must</td><td>A firm can file the record in any eQMS by hand</td><td>P5-33 deferred, not removed</td></tr>
+<tr><td>FR-14.19</td><td>First-use path needing no training session</td><td>Must</td><td>New user gets the sorted folder and gap list within 1 hour; measured in the pilot</td><td>New</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>3. Technical spike: eSTAR XML (1 week)</h2>
+<p class="sub">FDA says data can be exported from an older eSTAR as XML and imported to a new version in Acrobat Pro, without attachments. We need to know whether generated XML can pre-fill a template reliably.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Question</th><th>Pass</th></tr></thead><tbody>
+<tr><td>Can we generate XML that imports into a blank nIVD v7.1 template?</td><td>Fields fill with no errors, and the form's own logic still runs and reports status correctly</td></tr>
+<tr><td>How stable is the schema between versions?</td><td>Mapping can be versioned, and version changes do not break it silently</td></tr>
+<tr><td>Is this acceptable to consultants and FDA's process?</td><td>A consultant can review and finish the form as usual; check FDA's template instructions for any restriction</td></tr>
+</tbody></table></div>
+<p class="sub">If it fails, keep the Word and readiness outputs and leave form-filling to the consultant. MedexRegAI still never files.</p>
+</section>
+
+<section>
+<h2>4. Existing requirements: what moves</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Item</th><th>Today</th><th>Proposed</th></tr></thead><tbody>
+<tr><td>P1-20 to P1-23 predicate ranking and lineage</td><td>Phase 1</td><td>Phase 4; keep thin search for the SE table</td></tr>
+<tr><td>P1-25 SE table export; P1-22 recall flags; P1-40 citations</td><td>Phase 1</td><td>Keep in Phase 1</td></tr>
+<tr><td>P1-30 to P1-33 research library</td><td>Phase 1</td><td>Phase 4; thin guidance and standards lookup for drafting only</td></tr>
+<tr><td>P2-01 to P2-07 eSTAR plan</td><td>Phase 2</td><td>Section map in Phase 1 (owners and dates in Phase 4)</td></tr>
+<tr><td>P2-20 to P2-24 claim–evidence matrix; P2-30 to P2-36 FDA tracker; P2-40 to P2-45 record</td><td>Phase 2</td><td>Phase 4</td></tr>
+<tr><td>P3-20 to P3-43 pathway, self-serve, free tier, product-code pages</td><td>M6</td><td>Phase 5, gated on G3′</td></tr>
+<tr><td>P5-20 to P5-22 drafting</td><td>M13–22</td><td>Phase 2, as FR-14.10 to 14.12</td></tr>
+<tr><td>P5-30, P5-31 API and MCP; Lead Finder</td><td>M15</td><td>Phase 5, dates reset</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>5. Architecture changes</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Area</th><th>Change</th></tr></thead><tbody>
+<tr><td>Integrations (§10)</td><td>Add Dropbox and Box connectors with read-only scopes, and a no-login client upload service. Fetch on demand; store only extracted text, location and hash.</td></tr>
+<tr><td>Ingestion</td><td>Add a client-document pipeline, kept separate from the FDA corpus pipeline: format conversion, OCR, table extraction, page mapping, prompt-injection handling for untrusted client documents.</td></tr>
+<tr><td>Data model (§6)</td><td>New: SourceLocation, ClientFile, FileVersion, Contradiction, InfoRequest, SectionDraft, DraftStatement. Device gets a stable identity for later UDI linkage.</td></tr>
+<tr><td>Citation gate</td><td>Extend from FDA records to client sources: each statement resolves to file, version and page.</td></tr>
+<tr><td>AI cost</td><td>Replace the $2.40 per-project alert with a measured figure. Starting estimate: $9 simple, $36 complex.</td></tr>
+<tr><td>Consent</td><td>Add a per-tenant data-use opt-in field, off by default, for later ecosystem stages. It has no effect in stage 1.</td></tr>
+</tbody></table></div>
+</section>
+<footer>MedexRegAI · PRD addendum Rev 0.1 · Proposed, not approved. Companion to the v4.0 viability review. Existing PRD files are unchanged.</footer>
+</div></body></html>

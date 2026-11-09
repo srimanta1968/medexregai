@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI UI 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../../assets/prd.css">
+<style>
+/* ---------- phase colours ---------- */
+.ph{display:inline-block;font:600 11px/1 var(--f-body);letter-spacing:.03em;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.ph1{background:var(--accent);color:var(--surface)}
+.ph2{background:var(--good-soft);color:var(--good)}
+.ph3{background:var(--warn-soft);color:var(--warn)}
+.ph4{background:var(--info-soft);color:var(--info)}
+.ph5{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+
+/* ---------- mock window ---------- */
+.mock{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin:14px 0 8px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 10px 28px -16px rgba(0,0,0,.35)}
+.mock-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--sunk);border-bottom:1px solid var(--line);font:12px var(--f-mono);color:var(--muted)}
+.dots{display:flex;gap:5px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.url{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.concept{font:600 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.scroll{overflow-x:auto}
+.app{display:grid;grid-template-columns:205px minmax(0,1fr);min-width:900px;font-size:13px;line-height:1.45}
+.app.solo{grid-template-columns:minmax(0,1fr)}
+.nav{background:var(--sunk);border-right:1px solid var(--line);padding:12px 8px}
+.nav .brand{font:700 14.5px var(--f-display);padding:2px 8px 4px}
+.nav .ctx{font-size:11.5px;color:var(--muted);padding:0 8px 10px;line-height:1.35}
+.nav .sep{font:600 9.5px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:12px 8px 4px}
+.nav span.i{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;color:var(--ink)}
+.nav span.i.on{background:var(--accent-soft);font-weight:600;color:var(--accent-ink)}
+.nav span.i.new::after{content:"new";font:600 9px/1 var(--f-body);text-transform:uppercase;letter-spacing:.06em;color:var(--good);background:var(--good-soft);padding:3px 5px;border-radius:999px}
+.nav .ct{font:11px var(--f-mono);color:var(--muted)}
+.body{padding:14px 18px 18px;min-width:0}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.hdr h5{margin:2px 0 0;font-size:16.5px;line-height:1.25}
+.crumb{font-size:11.5px;color:var(--muted)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.btn{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;background:var(--surface);color:var(--ink);white-space:nowrap}
+.btn.p{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.btn.s{padding:3px 8px;font-size:11.5px}
+.t{display:inline-block;font:600 10.5px/1 var(--f-body);padding:4px 7px;border-radius:999px;background:var(--sunk);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.t.ok{background:var(--good-soft);color:var(--good);border-color:transparent}
+.t.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.t.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.t.info{background:var(--info-soft);color:var(--info);border-color:transparent}
+.t.ac{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+table.mt{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.4}
+table.mt th{font:600 10px/1.3 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);padding:7px 8px;white-space:nowrap}
+table.mt td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.mt tr.sel td{background:var(--accent-soft)}
+table.mt tr.grp td{background:var(--sunk);font-weight:600;font-size:11.5px;color:var(--muted);letter-spacing:.03em}
+.panel{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface);min-width:0}
+.panel h6{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.gside{display:grid;grid-template-columns:minmax(0,1fr) 235px;gap:12px}
+.gside > div:first-child{overflow-x:auto;min-width:0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.stat b{display:block;font:700 19px/1.1 var(--f-display);color:var(--accent-ink)}
+.stat span{font-size:11.5px;color:var(--muted)}
+.src{font:11px var(--f-mono);color:var(--accent-ink)}
+.mut{color:var(--muted)}
+.small{font-size:11.5px}
+.quote{border-left:3px solid var(--line);padding:6px 10px;background:var(--sunk);border-radius:0 6px 6px 0;font-size:12.5px;margin:6px 0}
+.quote mark{background:var(--bad-soft);color:var(--bad);padding:0 2px;border-radius:3px}
+.check{display:grid;grid-template-columns:18px 1fr;gap:6px;align-items:start;padding:3px 0}
+.check i{font-style:normal;color:var(--good);font-weight:700}
+.check i.no{color:var(--muted)}
+.meter{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter.b i{background:var(--muted)}
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+.banner.info{border-color:var(--info);background:var(--info-soft)}
+.mk{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border-radius:999px;background:var(--bad);color:#fff;font:700 10.5px/1 var(--f-body);vertical-align:middle;margin:0 2px}
+.legend{margin:6px 0 4px;padding:0;list-style:none;display:grid;gap:6px;max-width:86ch}
+.legend li{display:grid;grid-template-columns:26px 1fr;gap:6px;font-size:14.5px}
+.ask{background:var(--surface);border:1px dashed var(--accent);border-radius:8px;padding:10px 14px;margin:10px 0 6px;max-width:86ch;font-size:14.5px}
+.ask b{color:var(--accent-ink)}
+.ask ul{margin:4px 0 0;padding-left:20px}
+
+/* ---------- Word mock: stays paper-white in both themes ---------- */
+.wordbar{display:flex;gap:14px;align-items:center;padding:7px 14px;background:#2b579a;color:#fff;font:12px var(--f-body)}
+.wordbar b{font-weight:600}
+.ribbon{display:flex;gap:16px;padding:6px 14px;background:#f3f2f1;color:#323130;font:11.5px var(--f-body);border-bottom:1px solid #d6d6d6}
+.desk{background:#e7e6e5;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;min-width:900px}
+.paper{background:#fff;color:#1d1d1d;padding:30px 38px;box-shadow:0 1px 3px rgba(0,0,0,.2);font:13.5px/1.6 Calibri,"Segoe UI",Arial,sans-serif}
+.paper h4{font:600 16px/1.3 Calibri,"Segoe UI",Arial,sans-serif;color:#1f3864;margin:0 0 8px}
+.paper p{margin:0 0 10px;max-width:none}
+.paper .st{background:#fff4c2;border-bottom:2px solid #e3c34a}
+.paper .st2{background:#e6f0ff;border-bottom:2px solid #8aaee8}
+.paper table{font-size:12px;border-collapse:collapse;width:100%;margin:6px 0 10px}
+.paper th,.paper td{border:1px solid #9a9a9a;padding:4px 6px;color:#1d1d1d;background:#fff;text-transform:none;letter-spacing:0;font-weight:400;white-space:normal}
+.paper th{background:#dde5f0;font-weight:600}
+.cms{display:flex;flex-direction:column;gap:9px}
+.cm{background:#fff;border:1px solid #c8c6c4;border-left:3px solid #c19c00;color:#1d1d1d;border-radius:3px;padding:7px 9px;font:11.5px/1.45 "Segoe UI",Arial,sans-serif}
+.cm b{display:block;font-size:11px;color:#605e5c;margin-bottom:2px}
+.cm.op{border-left-color:#a4262c}
+.cm.hu{border-left-color:#2b579a}
+
+/* ---------- phone mock ---------- */
+.phone{width:330px;border:10px solid var(--ink);border-radius:30px;overflow:hidden;background:var(--surface);font-size:13px;line-height:1.45;margin:0 auto}
+.phone .top{background:var(--accent);color:var(--surface);padding:12px 14px}
+.phone .top b{display:block;font-size:14px}
+.phone .in{padding:12px 14px;display:grid;gap:8px}
+.up{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:4px}
+
+/* ---------- nav-growth matrix ---------- */
+.mx td.c{text-align:center;font-size:15px}
+.mx td.c.n{color:var(--good);font-weight:700}
+.mx td.c.o{color:var(--muted)}
+</style>
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD v2.0</b>
+  <a href="../index.html">Overview</a>
+  <a href="../01-prd-v2.0.html">PRD v2.0</a>
+  <a href="../02-delivery-plan-v2.0.html">Delivery plan</a>
+  <a href="../03-architecture-v2.0.html">Architecture</a>
+  <a href="index.html" class="on">UI 2.0</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#read"><span>1</span>How to read this</a></li>
+    <li><a href="#journey"><span>2</span>The journey</a></li>
+    <li><a href="#growth"><span>3</span>How the app grows</a></li>
+    <li><a href="#p1"><span>4</span>Phase 1 · Evidence</a></li>
+    <li><a href="#p2"><span>5</span>Phase 2 · Drafting</a></li>
+    <li><a href="#p3"><span>6</span>Phase 3 · Pilot proof</a></li>
+    <li><a href="#p4"><span>7</span>Phase 4 · Workspace</a></li>
+    <li><a href="#p5"><span>8</span>Phase 5 · Market</a></li>
+    <li><a href="#always"><span>9</span>What never changes</a></li>
+    <li><a href="#feedback"><span>10</span>Feedback sheet</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-204</span><span>UI 2.0</span><span>Rev 2.0 · 7 Nov 2026</span><span>Concept for evaluation</span></div>
+  <h1>What MedexRegAI would look like, phase by phase</h1>
+  <p class="sub">Concept screens for each build phase of PRD v2.0. They show what a consultant would see and do: from connecting a client folder in the first phase, to reviewing drafted eSTAR sections in Word, to the wider workspace later. Nothing here is built yet. We are showing it so you can tell us what is wrong before we build it.</p>
+  <div class="meta">
+    <div><b>Status</b>Concept mockups. Not a product, not a commitment to any screen.</div>
+    <div><b>Data</b>All names, files, numbers and K-numbers are invented for illustration. "Northbay Devices" is fictional.</div>
+    <div><b>Who it's for</b>The team, and practising consultants evaluating whether this would help them</div>
+    <div><b>Requirements</b>Screen labels such as FR-14.8 point to <a href="../01-prd-v2.0.html">PRD v2.0</a></div>
+  </div>
+</header>
+
+<section id="read">
+  <h2><span class="n">1</span>How to read this document</h2>
+  <ul class="plain">
+    <li>Each phase has its own colour: <span class="ph ph1">Phase 1 · Evidence</span> <span class="ph ph2">Phase 2 · Drafting</span> <span class="ph ph3">Phase 3 · Pilot proof</span> <span class="ph ph4">Phase 4 · Workspace</span> <span class="ph ph5">Phase 5 · Market</span></li>
+    <li>Each screen is drawn as a browser or Word window. Red markers like <span class="mk">1</span> point to the notes under the screen.</li>
+    <li>The dashed box under each screen holds <b>questions for reviewers</b>. Short, blunt answers are the most useful, and "I would not use this" is a valid one. Section 10 collects all the questions in one place.</li>
+    <li>The example throughout: a consultancy preparing a 510(k) for a fictional client's single-use, EO-sterilised infusion set, model IS-200.</li>
+  </ul>
+</section>
+
+<section id="journey">
+  <h2><span class="n">2</span>The consultant's journey in one picture</h2>
+  <p class="lede">The first two phases cover the whole path from client files to a reviewed Word draft. Later phases add tools around it.</p>
+  <div class="diagram" role="img" aria-label="Journey: connect folder, sorted folder, problems, client request, review board, Word draft, records; later phases add pilot report, FDA letters and predicates, and public pages">
+    <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="j" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <text class="hd" x="10" y="20">PHASE 1 · EVIDENCE</text>
+      <rect class="bx-a" x="10" y="32" width="135" height="66" rx="9"/><text class="t" x="22" y="58">Connect</text><text class="s" x="22" y="78">client folder (read-only)</text>
+      <line class="ln" x1="145" y1="65" x2="168" y2="65" marker-end="url(#j)"/>
+      <rect class="bx-a" x="170" y="32" width="135" height="66" rx="9"/><text class="t" x="182" y="58">Sorted folder</text><text class="s" x="182" y="78">by eSTAR section</text>
+      <line class="ln" x1="305" y1="65" x2="328" y2="65" marker-end="url(#j)"/>
+      <rect class="bx-a" x="330" y="32" width="135" height="66" rx="9"/><text class="t" x="342" y="58">Problems</text><text class="s" x="342" y="78">gaps · contradictions</text>
+      <line class="ln" x1="465" y1="65" x2="488" y2="65" marker-end="url(#j)"/>
+      <rect class="bx-a" x="490" y="32" width="135" height="66" rx="9"/><text class="t" x="502" y="58">Client request</text><text class="s" x="502" y="78">upload link, no login</text>
+      <path class="ln" d="M557,98 C557,118 237,108 237,100" marker-end="url(#j)" stroke-dasharray="4 4"/>
+      <text class="lbl" x="300" y="124">new client files are read and sorted again</text>
+
+      <text class="hd" x="10" y="160">PHASE 2 · DRAFTING</text>
+      <rect class="bx" x="170" y="172" width="135" height="66" rx="9" style="stroke:var(--good)"/><text class="t" x="182" y="198">Review board</text><text class="s" x="182" y="218">section status</text>
+      <line class="ln" x1="305" y1="205" x2="328" y2="205" marker-end="url(#j)"/>
+      <rect class="bx" x="330" y="172" width="135" height="66" rx="9" style="stroke:var(--good)"/><text class="t" x="342" y="198">Word draft</text><text class="s" x="342" y="218">sources in comments</text>
+      <line class="ln" x1="465" y1="205" x2="488" y2="205" marker-end="url(#j)"/>
+      <rect class="bx" x="490" y="172" width="135" height="66" rx="9" style="stroke:var(--good)"/><text class="t" x="502" y="198">Readiness</text><text class="s" x="502" y="218">attachments · records</text>
+      <line class="ln" x1="625" y1="205" x2="648" y2="205" marker-end="url(#j)"/>
+      <rect class="bx-w" x="650" y="172" width="150" height="66" rx="9"/><text class="t" x="662" y="198">Consultant files</text><text class="s" x="662" y="218">eSTAR, as today</text>
+      <path class="ln" d="M397,98 L397,130 L237,150 L237,170" marker-end="url(#j)"/>
+
+      <text class="hd" x="830" y="20">LATER PHASES</text>
+      <rect class="bx" x="830" y="32" width="160" height="40" rx="8" style="stroke:var(--warn)"/><text class="s" x="842" y="57" style="fill:var(--ink)">3 · Time log, pilot report</text>
+      <rect class="bx" x="830" y="82" width="160" height="40" rx="8" style="stroke:var(--info)"/><text class="s" x="842" y="107" style="fill:var(--ink)">4 · FDA letters, predicates</text>
+      <rect class="bx-s" x="830" y="132" width="160" height="40" rx="8"/><text class="s" x="842" y="157" style="fill:var(--ink)">5 · Public pages, sign-up</text>
+      <text class="lbl" x="10" y="285">MedexRegAI never files with FDA and never signs. The consultant decides at every step.</text>
+    </svg>
+  </div>
+</section>
+
+<section id="growth">
+  <h2><span class="n">3</span>How the app grows, phase by phase</h2>
+  <p class="lede">The left-hand menu of the app at the end of each phase. <b style="color:var(--good)">●</b> first appears in that phase; <span class="mut">○</span> is still there, possibly improved.</p>
+  <div class="tbl mx"><table class="w-wide">
+    <thead><tr><th>Menu item</th><th>What it does</th><th>P1<br>wk 3–12</th><th>P2<br>wk 11–20</th><th>P3<br>wk 19–26</th><th>P4<br>M7–12</th><th>P5<br>M13+</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clients and projects</strong></td><td>One workspace per client, strictly separated</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Connect</strong></td><td>Link a folder; get the upload link and forwarding address</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Files</strong></td><td>Sorted folder by eSTAR section, versions, unreadable files</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Problems</strong></td><td>Missing items and contradictions</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Client requests</strong></td><td>Drafted requests; status until received</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Trust pack</strong></td><td>Validation and data-handling packs, scopes, deletion</td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Review</strong></td><td>Section board, Word export and re-import, open items</td><td></td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Changes</strong></td><td>What a new client revision affects</td><td></td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Readiness and records</strong></td><td>Attachment checks, admin documents, eQMS record</td><td></td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Time</strong></td><td>One-click time log; pilot report</td><td></td><td></td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>Usage</strong></td><td>Per-client usage export for rebilling</td><td></td><td></td><td class="c n">●</td><td class="c o">○</td><td class="c o">○</td></tr>
+      <tr><td><strong>FDA letters</strong></td><td>Additional Information letters split into tracked deficiencies</td><td></td><td></td><td></td><td class="c n">●</td><td class="c o">○</td></tr>
+      <tr><td><strong>Predicates and research</strong></td><td>Predicate search, SE comparison, research library</td><td></td><td></td><td></td><td class="c n">●</td><td class="c o">○</td></tr>
+      <tr><td><strong>Portfolio</strong></td><td>All clients and projects at a glance</td><td></td><td></td><td></td><td class="c n">●</td><td class="c o">○</td></tr>
+      <tr><td><strong>Introductions</strong></td><td>Opt-in client introductions for consultants</td><td></td><td></td><td></td><td></td><td class="c n">●</td></tr>
+      <tr><td><strong>Billing and API</strong></td><td>Self-serve plans, credits, API access</td><td></td><td></td><td></td><td></td><td class="c n">●</td></tr>
+    </tbody>
+  </table></div>
+  <p><small>Thin FDA checks (K-number verification, recall and adverse-event lookups, SE table) run inside the drafts from Phase 1. They become their own menu item only in Phase 4.</small></p>
+</section>
+
+<!-- ======================================================= PHASE 1 -->
+<section id="p1">
+  <h2><span class="n">4</span>Phase 1 · Evidence core <span class="ph ph1">weeks 3–12</span></h2>
+  <p class="lede">Goal: within an hour of connecting a client folder, the consultant sees every file sorted, what is missing, and where the client's documents disagree. No drafting yet.</p>
+
+  <h3><span class="n">4.1</span>Connect a client folder</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / connect</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i on">Connect</span><span class="i">Files</span><span class="i">Problems</span><span class="i">Client requests</span>
+      <div class="sep">Firm</div><span class="i">Clients and projects</span><span class="i">Trust pack</span>
+    </div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">Northbay Devices › IS-200</div><h5>Where are this client's files?</h5></div></div>
+      <div class="g3">
+        <div class="panel"><h6>Option A <span class="mk">1</span></h6><b>Link a folder</b><p class="small mut" style="margin:4px 0 8px">We read files where they are. Nothing is copied into a new system.</p>
+          <div style="display:grid;gap:6px"><span class="btn">Dropbox</span><span class="btn">Box</span><span class="btn">SharePoint / OneDrive</span><span class="btn">Google Drive</span></div></div>
+        <div class="panel"><h6>Option B</h6><b>Client upload link</b><p class="small mut" style="margin:4px 0 8px">For clients who send files directly. They need no account.</p><span class="btn">Create upload link</span>
+          <h6 style="margin-top:14px">Option C</h6><b>Forward email</b><p class="small mut" style="margin:4px 0 0">Send attachments to<br><span class="src">is-200.northbay@in.medexregai.com</span></p></div>
+        <div class="panel"><h6>What we will access <span class="mk">2</span></h6>
+          <div class="check"><i>✓</i><span><b>Read only</b> the folder you pick: "Northbay / IS-200 510k"</span></div>
+          <div class="check"><i>✓</i><span>We keep extracted text, page locations and file fingerprints</span></div>
+          <div class="check"><i>✓</i><span>Linked files are not stored; our temporary copy is deleted after reading</span></div>
+          <div class="check"><i>✓</i><span>Never used to train AI models; never visible to other clients</span></div>
+          <div class="check"><i>✓</i><span>Disconnect at any time; delete this project's data with one click</span></div>
+          <p class="small" style="margin:8px 0 0"><span class="btn s">Read the data-handling pack</span></p></div>
+      </div>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Works with the file stores firms already use (FR-14.1, 14.2). No new place to keep documents.</span></li><li><span class="mk">2</span><span>Scopes are written in plain words for the firm's quality and IT owner (FR-14.17).</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Which of these would your clients' files actually come through?</li><li>Would your quality or IT owner accept read-only folder access described this way? What else would they ask?</li></ul></div>
+
+  <h3><span class="n">4.2</span>Sorted folder, and the first-hour checklist</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / files</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i">Connect</span><span class="i on">Files <span class="ct">212</span></span><span class="i">Problems <span class="ct">9</span></span><span class="i">Client requests <span class="ct">2</span></span>
+      <div class="sep">Firm</div><span class="i">Clients and projects</span><span class="i">Trust pack</span>
+    </div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">Dropbox › Northbay / IS-200 510k · last checked 10 min ago</div><h5>212 files read · sorted into 11 eSTAR sections</h5></div><div class="acts"><span class="btn">Show unreadable (3)</span><span class="btn p">Review problems (9)</span></div></div>
+      <div style="display:grid;gap:12px">
+        <div>
+          <table class="mt">
+            <thead><tr><th>File</th><th>Type</th><th>eSTAR section <span class="mk">1</span></th><th>Version <span class="mk">2</span></th><th>Status</th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">Sterility · 14 files</td></tr>
+              <tr><td>EO-09 EO validation report.pdf</td><td>Test report</td><td>Sterility</td><td>rev A · current</td><td><span class="t ok">Read · 38 pp</span></td></tr>
+              <tr><td>EO residuals summary.xlsx</td><td>Data summary</td><td>Sterility</td><td>—</td><td><span class="t ok">Read · 2 sheets</span></td></tr>
+              <tr class="grp"><td colspan="5">Shelf life · 6 files</td></tr>
+              <tr><td>SL-22 accelerated ageing report.pdf</td><td>Test report</td><td>Shelf life</td><td>rev B · current<br><span class="small mut">rev A superseded</span></td><td><span class="t ok">Read · 24 pp</span></td></tr>
+              <tr class="grp"><td colspan="5">Biocompatibility · 9 files</td></tr>
+              <tr><td>BC-114 biocompatibility report.pdf</td><td>Test report</td><td>Biocompatibility</td><td><span class="t warn">rev C or rev C1?</span></td><td><span class="t warn">Which is current?</span></td></tr>
+              <tr class="grp"><td colspan="5">Device description · 31 files</td></tr>
+              <tr><td>IS-200-SPEC product specification.xlsx</td><td>Specification</td><td>Device description</td><td>rev F · current</td><td><span class="t ok">Read · 4 sheets</span></td></tr>
+              <tr><td>IS-200-001 assembly drawing.pdf</td><td>Drawing</td><td>Device description</td><td>rev D (title block)</td><td><span class="t ok">Title block read</span></td></tr>
+              <tr><td>Design review 3 deck.pptx</td><td>Presentation</td><td>Device description</td><td>—</td><td><span class="t ok">Read · 22 slides</span></td></tr>
+              <tr><td>Tensile raw data.csv</td><td>Raw data</td><td>Performance testing</td><td>—</td><td><span class="t info">Used by PT-31? confirm</span></td></tr>
+              <tr class="grp"><td colspan="5">Not readable · 3 files <span class="mk">3</span></td></tr>
+              <tr><td>IS-200 housing.SLDPRT</td><td>Native CAD</td><td>—</td><td>—</td><td><span class="t">Listed only</span></td></tr>
+              <tr><td>Supplier certs.pdf</td><td>—</td><td>—</td><td>—</td><td><span class="t bad">Password protected</span></td></tr>
+            </tbody>
+          </table>
+          <p class="small mut" style="margin:8px 0 0">Wrong section? Click it to correct. Corrections teach the sorter for this firm only.</p>
+        </div>
+        <div class="g2">
+          <div class="panel"><h6>Getting started <span class="mk">4</span></h6>
+            <div class="check"><i>✓</i><span>Folder connected</span></div>
+            <div class="check"><i>✓</i><span>212 files read (38 min)</span></div>
+            <div class="check"><i class="no">○</i><span>Confirm 4 unclear versions</span></div>
+            <div class="check"><i class="no">○</i><span>Review 9 problems</span></div>
+            <div class="check"><i class="no">○</i><span>Send the client request</span></div></div>
+          <div class="panel"><h6>eSTAR coverage</h6>
+            <div class="small">Sterility <span class="t ok">evidence found</span></div>
+            <div class="small" style="margin-top:4px">Shelf life <span class="t warn">1 conflict</span></div>
+            <div class="small" style="margin-top:4px">Biocompatibility <span class="t bad">1 report missing</span></div>
+            <div class="small" style="margin-top:4px">EMC / electrical <span class="t">not applicable?</span></div>
+            <div class="small" style="margin-top:4px">Software <span class="t">not applicable?</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div></div></div>
+  <ol class="legend">
+    <li><span class="mk">1</span><span>Every file gets a document type and an eSTAR section, with the reason shown on hover (FR-14.6).</span></li>
+    <li><span class="mk">2</span><span>Versions and duplicates are detected. When it is unclear which is current, the tool asks and never chooses silently (FR-14.7).</span></li>
+    <li><span class="mk">3</span><span>Unreadable files are listed with the reason, never skipped (FR-14.3).</span></li>
+    <li><span class="mk">4</span><span>A first-use path that needs no training session (FR-14.19).</span></li>
+  </ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Is "sorted by eSTAR section" the view you would want first, or would you sort by document type or by test?</li><li>How many client files does a typical 510(k) of yours involve, and how many versions turn up late?</li></ul></div>
+
+  <h3><span class="n">4.3</span>Problems: gaps and contradictions</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / problems / C-3</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i">Connect</span><span class="i">Files <span class="ct">212</span></span><span class="i on">Problems <span class="ct">9</span></span><span class="i">Client requests <span class="ct">2</span></span>
+      <div class="sep">Firm</div><span class="i">Clients and projects</span><span class="i">Trust pack</span>
+    </div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">Problems · 4 contradictions · 5 missing items</div><h5>Shelf life: the IFU says longer than the ageing report supports</h5></div><div class="acts"><span class="t bad">High</span></div></div>
+      <div class="gside">
+        <div>
+          <div class="g2">
+            <div class="panel"><h6>Source 1 · IFU <span class="mk">1</span></h6>
+              <div class="src">IS-200 IFU v4.docx · page 2 · current</div>
+              <div class="quote">Storage: Store at room temperature. Do not use after the expiry date. <mark>Shelf life: 3 years</mark> from the date of manufacture.</div></div>
+            <div class="panel"><h6>Source 2 · Ageing report</h6>
+              <div class="src">SL-22 accelerated ageing report.pdf · rev B · page 11</div>
+              <div class="quote">Packaging integrity and functional performance met acceptance criteria after accelerated ageing <mark>equivalent to 24 months</mark> real time (ASTM F1980).</div></div>
+          </div>
+          <div class="panel" style="margin-top:12px"><h6>Decide <span class="mk">2</span></h6>
+            <div class="acts" style="justify-content:flex-start"><span class="btn">IFU is wrong: note for client</span><span class="btn">Report is incomplete: request data</span><span class="btn">Accept with reason…</span><span class="btn p">Add to client request</span></div>
+            <p class="small mut" style="margin:8px 0 0">Your decision and reason are kept in the project record.</p></div>
+        </div>
+        <div class="panel"><h6>All problems</h6>
+          <table class="mt"><tbody>
+            <tr class="sel"><td><span class="t bad">High</span></td><td>Shelf life: IFU 3 years vs report 24 months</td></tr>
+            <tr><td><span class="t bad">High</span></td><td>Cytotoxicity report referenced but not in folder</td></tr>
+            <tr><td><span class="t warn">Med</span></td><td>Sample size: protocol n=30, report n=29</td></tr>
+            <tr><td><span class="t warn">Med</span></td><td>Tubing OD: spec 4.0 mm, drawing rev D 4.1 mm</td></tr>
+            <tr><td><span class="t warn">Med</span></td><td>EO residuals: ECH result not found</td></tr>
+            <tr><td><span class="t">Low</span></td><td>Model name "IS200" vs "IS-200" in 3 files</td></tr>
+            <tr><td colspan="2" class="small mut">+ 3 more</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Every finding shows both sources, with file, version and page, so it can be checked in seconds (FR-14.8).</span></li><li><span class="mk">2</span><span>The consultant decides. Nothing is changed in the client's documents.</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Which contradictions cost you the most rework today? Are any missing from this list (materials, standard editions, labelling claims…)?</li><li>How many false alarms per project would you tolerate before ignoring this screen?</li></ul></div>
+
+  <h3><span class="n">4.4</span>Client request, and what the client sees</h3>
+  <div class="g2" style="align-items:start">
+    <div class="mock" style="margin:0"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">… / client-requests / new</span><span class="concept">Concept</span></div>
+      <div class="body" style="font-size:13px;line-height:1.45">
+        <div class="crumb">Draft request · needs your approval <span class="mk">1</span></div>
+        <h5 style="margin:2px 0 10px;font-size:15.5px">To: Jane Doe, Northbay Devices (QA)</h5>
+        <div class="panel" style="font-size:12.5px">
+          <p style="margin:0 0 6px">Hi Jane, to complete the IS-200 submission we need:</p>
+          <div class="check"><i>1.</i><span>Cytotoxicity report (ISO 10993-5) referenced in BC-114, section 4</span></div>
+          <div class="check"><i>2.</i><span>Ethylene chlorohydrin (ECH) residual result for EO-09</span></div>
+          <div class="check"><i>3.</i><span>Confirmation of shelf life: the IFU states 3 years; the ageing report supports 24 months</span></div>
+          <p style="margin:6px 0 0">Please upload using the secure link below. No account needed.</p>
+        </div>
+        <div class="acts" style="justify-content:flex-start;margin-top:10px"><span class="btn">Edit</span><span class="btn">Link expires: 30 days</span><span class="btn p">Approve and send</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="phone">
+        <div class="top"><b>Files requested for IS-200</b><span class="small">from your regulatory consultant</span></div>
+        <div class="in">
+          <span class="small mut">No account or app needed <span class="mk">2</span></span>
+          <div class="up"><b class="small">1 · Cytotoxicity report</b><span class="btn s" style="justify-self:start">Upload file</span></div>
+          <div class="up"><b class="small">2 · ECH residual result</b><span class="t ok" style="justify-self:start">Received · 12 Mar</span></div>
+          <div class="up"><b class="small">3 · Shelf life confirmation</b><span class="btn s" style="justify-self:start">Upload or reply</span></div>
+          <span class="small mut">Files go only to this project. Link expires 30 Mar.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ol class="legend"><li><span class="mk">1</span><span>The tool drafts the request. The consultant edits and approves every message, and nothing is sent automatically (FR-14.9).</span></li><li><span class="mk">2</span><span>The client needs no login and no training, and the uploaded files land straight in the project.</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Would you let a tool draft client requests if you approve each one? Would your clients use an upload link, or insist on their own portal?</li></ul></div>
+
+  <h3><span class="n">4.5</span>Trust pack for the firm's quality and IT owner</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / firm / trust-pack</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav"><div class="brand">MedexRegAI</div><div class="ctx">Firm settings</div>
+      <span class="i">Clients and projects</span><span class="i on">Trust pack</span><span class="i">Users and roles</span></div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">Included free · updated with every release <span class="mk">1</span></div><h5>Everything your quality and IT owners need to assess the tool</h5></div></div>
+      <div class="g2">
+        <div class="panel"><h6>Validation pack</h6>
+          <table class="mt"><tbody>
+            <tr><td>Intended use statement</td><td><span class="btn s">DOCX</span></td></tr>
+            <tr><td>Risk assessment template (pre-filled)</td><td><span class="btn s">DOCX</span></td></tr>
+            <tr><td>Test evidence for this release</td><td><span class="btn s">PDF</span></td></tr>
+            <tr><td>Release notes and AI model change log</td><td><span class="btn s">PDF</span></td></tr>
+          </tbody></table></div>
+        <div class="panel"><h6>Data handling <span class="mk">2</span></h6>
+          <table class="mt"><tbody>
+            <tr><td>Where data goes, subprocessors, retention</td><td><span class="btn s">PDF</span></td></tr>
+            <tr><td>Clause you can give your clients</td><td><span class="btn s">DOCX</span></td></tr>
+            <tr><td>AI training on your data</td><td><span class="t ok">Never</span></td></tr>
+            <tr><td>Data use for product improvement</td><td><span class="t">Off (default)</span></td></tr>
+            <tr><td>Delete a project's data</td><td><span class="btn s">Per project</span></td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Validation material is free and part of the product, because validation effort is a reason firms give for not adopting new tools (FR-14.16).</span></li><li><span class="mk">2</span><span>Data handling and the client clause (FR-14.17).</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Would this tool need formal validation under your quality system? What would your quality owner need to see before allowing it on client files?</li></ul></div>
+</section>
+
+<!-- ======================================================= PHASE 2 -->
+<section id="p2">
+  <h2><span class="n">5</span>Phase 2 · Drafting <span class="ph ph2">weeks 11–20</span></h2>
+  <p class="lede">Goal: turn the sorted evidence into draft eSTAR sections, summary tables and admin documents in Word, with each statement traceable to its source page. The consultant reviews in Word, as they write today.</p>
+
+  <h3><span class="n">5.1</span>Review board</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / review</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i">Connect</span><span class="i">Files <span class="ct">219</span></span><span class="i">Problems <span class="ct">3</span></span><span class="i">Client requests <span class="ct">1</span></span>
+      <div class="sep">Submission</div><span class="i on new">Review</span><span class="i new">Changes</span><span class="i new">Readiness and records</span>
+      <div class="sep">Firm</div><span class="i">Clients and projects</span><span class="i">Trust pack</span>
+    </div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">eSTAR template: non-IVD · version recorded on every export</div><h5>Sections</h5></div><div class="acts"><span class="btn">Use firm template <span class="mk">1</span></span><span class="btn p">Export all drafts to Word</span></div></div>
+      <table class="mt">
+        <thead><tr><th>Section</th><th>Status</th><th>Statements</th><th>Open items</th><th>Sources</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><b>Sterility</b></td><td><span class="t ok">Reviewed</span></td><td>41 · 37 unchanged</td><td>0</td><td>EO-09, residuals.xlsx</td><td><span class="btn s">Open in Word</span></td></tr>
+          <tr><td><b>Shelf life</b></td><td><span class="t warn">Draft ready</span></td><td>18</td><td>1 conflict</td><td>SL-22 rev B</td><td><span class="btn s">Open in Word</span></td></tr>
+          <tr><td><b>Biocompatibility</b></td><td><span class="t">Waiting on client</span></td><td>—</td><td>Cytotoxicity report</td><td>BC-114 rev C</td><td><span class="btn s">Draft anyway</span></td></tr>
+          <tr><td><b>Performance testing: bench</b></td><td><span class="t ac">Drafting…</span></td><td>—</td><td>—</td><td>PT-31, PT-32, tensile.csv</td><td></td></tr>
+          <tr><td><b>Device description</b> <span class="mk">2</span></td><td><span class="t warn">Draft ready</span></td><td>26</td><td>1 wording warning</td><td>Spec rev F, drawing rev D</td><td><span class="btn s">Open in Word</span></td></tr>
+          <tr><td><b>Summary tables</b></td><td><span class="t warn">Draft ready</span></td><td>3 tables · 44 rows</td><td>0 mismatches</td><td>Test reports</td><td><span class="btn s">Open in Excel</span></td></tr>
+          <tr><td><b>Labelling, SE discussion</b></td><td><span class="t">Consultant writes</span></td><td>—</td><td>—</td><td>—</td><td></td></tr>
+          <tr class="grp"><td colspan="6">Administrative documents <span class="mk">3</span></td></tr>
+          <tr><td>510(k) Summary · cover letter · FDA 3601 · Truthful and Accuracy</td><td><span class="t ok">Generated</span></td><td colspan="2">Signature fields left blank</td><td>Project data</td><td><span class="btn s">Open</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Drafts can follow the firm's own templates and past wording, used only for that firm (FR-14.24).</span></li><li><span class="mk">2</span><span>Device description shows precedent wording beside the draft and warns when claims go beyond the IFU and the evidence (FR-14.12).</span></li><li><span class="mk">3</span><span>Admin documents come from project data. We never sign them (FR-14.13).</span></li></ol>
+
+  <h3><span class="n">5.2</span>The draft in Word, with sources in the margin</h3>
+  <div class="mock"><div class="wordbar"><b>W</b><span>IS-200 Sterility (draft).docx</span><span style="margin-left:auto;opacity:.85">Concept · illustrative</span></div>
+  <div class="ribbon"><span>File</span><span>Home</span><span>Insert</span><span>Review</span><span>View</span></div>
+  <div class="scroll"><div class="desk">
+    <div class="paper">
+      <h4>Sterilization</h4>
+      <p><span class="st">The IS-200 infusion set is supplied sterile and is sterilized by ethylene oxide (EO).</span> <span class="st">The sterilization process was validated using the overkill half-cycle approach in accordance with ISO 11135:2014.</span> <span class="st">The validation demonstrated a sterility assurance level (SAL) of 10<sup>-6</sup>.</span></p>
+      <p><span class="st">Ethylene oxide residuals were evaluated in accordance with ISO 10993-7:2008, and EO residual levels met the limits for a limited-exposure device.</span> <span class="st2">Ethylene chlorohydrin (ECH) results are provided in Attachment 6.</span></p>
+      <table><thead><tr><th>Test</th><th>Standard</th><th>Acceptance criterion</th><th>Result</th><th>Report</th></tr></thead>
+        <tbody><tr><td>EO residual</td><td>ISO 10993-7</td><td>≤ 4 mg per device</td><td>0.8 mg</td><td>EO-09 p. 21</td></tr>
+        <tr><td>ECH residual</td><td>ISO 10993-7</td><td>≤ 9 mg per device</td><td>2.1 mg</td><td>ECH-02 p. 3</td></tr></tbody></table>
+      <p style="color:#6b6b6b;font-size:12px">[One statement about pyrogenicity was removed because no source was found. See comment.]</p>
+    </div>
+    <div class="cms">
+      <div class="cm"><b>MedexRegAI · Source <span class="mk">1</span></b>EO-09 EO validation report, rev A, p. 4 · "…sterilized using 100% ethylene oxide…"</div>
+      <div class="cm"><b>MedexRegAI · Source</b>EO-09 rev A, p. 7 · method and standard edition matched</div>
+      <div class="cm"><b>MedexRegAI · Source</b>EO-09 rev A, p. 18 · SAL 10<sup>-6</sup></div>
+      <div class="cm hu"><b>Your edit · kept as human-approved <span class="mk">2</span></b>"ECH results are provided in Attachment 6." (added by you)</div>
+      <div class="cm op"><b>MedexRegAI · Open item <span class="mk">3</span></b>Removed: "Pyrogenicity testing met USP &lt;151&gt;". No source found in client files. Request from client?</div>
+    </div>
+  </div></div></div>
+  <ol class="legend">
+    <li><span class="mk">1</span><span>Every factual statement carries a Word comment naming the file, version and page it came from (FR-14.10, 14.14).</span></li>
+    <li><span class="mk">2</span><span>When the document is re-imported, the consultant's edits are recorded as human-approved and kept apart from generated text.</span></li>
+    <li><span class="mk">3</span><span>A statement without a source is removed and listed as an open item. It is never left in the draft.</span></li>
+  </ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Would a draft like this, with sources in the margin, be faster to review than to write yourself? Which sections would you trust it for, and which never?</li><li>Do you write these sections, or does the manufacturer?</li></ul></div>
+
+  <h3><span class="n">5.3</span>When the client sends a new revision</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / changes</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i">Files</span><span class="i">Problems</span><span class="i">Client requests</span>
+      <div class="sep">Submission</div><span class="i">Review</span><span class="i on">Changes <span class="ct">1</span></span><span class="i">Readiness and records</span>
+    </div>
+    <div class="body">
+      <div class="banner"><span><b>New version found:</b> SL-22 accelerated ageing report <b>rev C</b> (replaces rev B) · Dropbox · 14 Mar</span><span class="btn s">Compare versions</span></div>
+      <h5 style="margin:0 0 8px;font-size:15.5px">What this change affects <span class="mk">1</span></h5>
+      <table class="mt">
+        <thead><tr><th>Where</th><th>What cited rev B</th><th>Change in rev C</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Shelf life draft</td><td>4 statements</td><td>Ageing now equivalent to 36 months</td><td><span class="btn s">Re-draft these 4</span></td></tr>
+          <tr><td>Summary table 2</td><td>Row "Seal strength after ageing"</td><td>Result 18.2 → 17.9 N</td><td><span class="btn s">Update row</span></td></tr>
+          <tr><td>Problems</td><td>Shelf life conflict (IFU 3 years)</td><td>Now supported: conflict may be resolved</td><td><span class="btn s">Re-check</span></td></tr>
+          <tr><td>Client request</td><td>Item 3, shelf life confirmation</td><td>—</td><td><span class="btn s">Mark received</span></td></tr>
+        </tbody>
+      </table>
+      <p class="small mut" style="margin:8px 0 0">Nothing is re-drafted until you choose. The old version stays in the record.</p>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Because every statement knows its source, a new revision shows exactly what needs to change (FR-14.21).</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>When a revision arrives after you have used the old one, how do you find what must change today? Would this list replace that work?</li></ul></div>
+
+  <h3><span class="n">5.4</span>Readiness and records for the eQMS</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / readiness</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app solo"><div class="body">
+    <div class="g2">
+      <div class="panel"><h6>eSTAR attachment checks <span class="mk">1</span></h6>
+        <table class="mt"><thead><tr><th>Attachment</th><th>Name</th><th>Size</th><th>Format</th></tr></thead><tbody>
+          <tr><td>EO-09 EO validation report</td><td><span class="t ok">OK</span></td><td><span class="t ok">12 MB</span></td><td><span class="t ok">PDF</span></td></tr>
+          <tr><td>BC-114 biocompatibility…(long name)</td><td><span class="t bad">131 chars</span></td><td><span class="t ok">48 MB</span></td><td><span class="t ok">PDF</span></td></tr>
+          <tr><td>Tensile raw data</td><td><span class="t ok">OK</span></td><td><span class="t ok">2 MB</span></td><td><span class="t warn">ZIP: unpack</span></td></tr>
+          <tr><td colspan="4" class="small mut">Total 1.3 GB of 4 GB · checks follow FDA's current eSTAR page</td></tr>
+        </tbody></table></div>
+      <div class="panel"><h6>Records for your eQMS <span class="mk">2</span></h6>
+        <table class="mt"><tbody>
+          <tr><td>Project record (sources, decisions, reviews)</td><td><span class="btn s">PDF</span> <span class="btn s">DOCX</span></td></tr>
+          <tr><td>Problem log with resolutions</td><td><span class="btn s">PDF</span></td></tr>
+          <tr><td>Client requests and responses</td><td><span class="btn s">PDF</span></td></tr>
+          <tr><td>eSTAR XML pre-fill</td><td><span class="t">Only if feasibility test passes</span></td></tr>
+        </tbody></table>
+        <p class="small mut" style="margin:8px 0 0">Dated exports you file in your eQMS like any document. No integration needed.</p></div>
+    </div>
+  </div></div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Attachment name length, size and format checks (FR-14.15). The consultant still fills and files the eSTAR.</span></li><li><span class="mk">2</span><span>Records go into any eQMS (TrackWise or equivalent) by hand, so no eQMS connector is needed (FR-14.18).</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Is a dated PDF record enough for your eQMS and document control, or would you need something specific?</li></ul></div>
+</section>
+
+<!-- ======================================================= PHASE 3 -->
+<section id="p3">
+  <h2><span class="n">6</span>Phase 3 · Pilot proof <span class="ph ph3">weeks 19–26</span></h2>
+  <p class="lede">Goal: measure honestly, on two live 510(k)s, whether the tool saves time without hurting quality. These screens exist so the result is the firm's own measurement, not our claim.</p>
+  <h3><span class="n">6.1</span>One-click time log, and the pilot report</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / firm / pilot-report</span><span class="concept">Concept · example values only</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Firm view</div>
+      <span class="i">Clients and projects</span><span class="i on new">Time</span><span class="i new">Usage</span><span class="i">Trust pack</span>
+    </div>
+    <div class="body">
+      <div class="gside">
+        <div>
+          <div class="hdr"><div><div class="crumb">IS-200 compared with your own baseline project · <b>example values</b></div><h5>Hours by activity <span class="mk">1</span></h5></div><div class="acts"><span class="btn">Export CSV</span></div></div>
+          <table class="mt"><thead><tr><th>Activity</th><th style="width:38%">Baseline vs with tool</th><th>Baseline</th><th>With tool</th></tr></thead><tbody>
+            <tr><td>Chasing the client for information</td><td><div class="meter b"><i style="width:60%"></i></div><div class="meter" style="margin-top:3px"><i style="width:35%"></i></div></td><td>6.0 h</td><td>3.5 h</td></tr>
+            <tr><td>Finding files and current versions</td><td><div class="meter b"><i style="width:50%"></i></div><div class="meter" style="margin-top:3px"><i style="width:15%"></i></div></td><td>5.0 h</td><td>1.5 h</td></tr>
+            <tr><td>Resolving conflicts between documents</td><td><div class="meter b"><i style="width:40%"></i></div><div class="meter" style="margin-top:3px"><i style="width:25%"></i></div></td><td>4.0 h</td><td>2.5 h</td></tr>
+            <tr><td>Writing sections once facts are clear</td><td><div class="meter b"><i style="width:100%"></i></div><div class="meter" style="margin-top:3px"><i style="width:70%"></i></div></td><td>10.0 h</td><td>7.0 h</td></tr>
+            <tr><td colspan="4" class="small mut">Grey bar: baseline · teal bar: with tool · invented numbers to show the layout</td></tr>
+          </tbody></table>
+        </div>
+        <div style="display:grid;gap:12px;align-content:start">
+          <div class="panel"><h6>Log time <span class="mk">2</span></h6>
+            <div class="small" style="margin-bottom:6px">IS-200 · today</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="btn s">Chasing</span><span class="btn s">Finding</span><span class="btn s p">Conflicts ▸ 0:45</span><span class="btn s">Writing</span><span class="btn s">Client review</span></div></div>
+          <div class="panel"><h6>Quality checks</h6>
+            <div class="small">Statements accepted unchanged <span class="t ac">example</span></div>
+            <div class="small" style="margin-top:4px">Statements without a source <span class="t ok">0</span></div>
+            <div class="small" style="margin-top:4px">FDA questions on this filing <span class="t">pending</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Hours are compared with the firm's own baseline, activity by activity (FR-14.20). The pilot report is signed by the firm's RA lead.</span></li><li><span class="mk">2</span><span>Time logging is optional and takes one click, using the activity list from our practice worksheet.</span></li></ol>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>What would you need to see measured before calling this a must-have rather than a nice-to-have?</li><li>If the tool saved hours, would that mean more projects, lower fees, or margin for your firm?</li></ul></div>
+</section>
+
+<!-- ======================================================= PHASE 4 -->
+<section id="p4">
+  <h2><span class="n">7</span>Phase 4 · Workspace and research <span class="ph ph4">months 7–12</span></h2>
+  <p class="lede">Goal: once the core is proven, add the tools around the submission: FDA Additional Information letters, predicate research and an overview of every client.</p>
+
+  <h3><span class="n">7.1</span>FDA letter tracker</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / fda-letters</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app">
+    <div class="nav">
+      <div class="brand">MedexRegAI</div><div class="ctx">Northbay Devices<br>IS-200 infusion set · 510(k)</div>
+      <span class="i">Files</span><span class="i">Problems</span><span class="i">Review</span><span class="i">Readiness and records</span>
+      <div class="sep">After filing</div><span class="i on new">FDA letters</span><span class="i new">Predicates and research</span>
+    </div>
+    <div class="body">
+      <div class="hdr"><div><div class="crumb">Additional Information request · received 2 Jun · forwarded by email</div><h5>5 deficiencies · response due in 162 days <span class="mk">1</span></h5></div><div class="acts"><span class="btn p">Export response skeleton (Word)</span></div></div>
+      <table class="mt"><thead><tr><th>#</th><th>Deficiency (summary)</th><th>Section</th><th>Affected files and statements <span class="mk">2</span></th><th>Owner</th><th>Status</th></tr></thead><tbody>
+        <tr><td>1</td><td>Provide ECH residual test method and validation</td><td>Sterility</td><td>ECH-02 · 2 statements</td><td>Client</td><td><span class="t warn">Requested</span></td></tr>
+        <tr><td>2</td><td>Clarify shelf-life claim against ageing data</td><td>Shelf life</td><td>SL-22 rev C · IFU v4 · 5 statements</td><td>Consultant</td><td><span class="t ac">Drafting</span></td></tr>
+        <tr><td>3</td><td>Provide full cytotoxicity report</td><td>Biocompatibility</td><td>BC-114 · CT-07</td><td>Consultant</td><td><span class="t ok">Ready</span></td></tr>
+        <tr><td>4</td><td>Justify sample size for tensile testing</td><td>Performance</td><td>PT-31 · tensile.csv</td><td>Client</td><td><span class="t">Open</span></td></tr>
+        <tr><td>5</td><td>Update labelling for MR safety</td><td>Labelling</td><td>IFU v4</td><td>Consultant</td><td><span class="t">Open</span></td></tr>
+      </tbody></table>
+    </div>
+  </div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>The letter is split into numbered, tracked deficiencies with a deadline clock (FR-14.23). The consultant confirms the split before it is saved.</span></li><li><span class="mk">2</span><span>Each deficiency links to the client files and drafted statements it affects.</span></li></ol>
+
+  <h3><span class="n">7.2</span>Predicates and SE comparison</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / northbay-devices / is-200 / predicates</span><span class="concept">Concept · placeholder K-numbers</span></div>
+  <div class="scroll"><div class="app solo"><div class="body">
+    <div class="g2">
+      <div class="panel"><h6>Candidate predicates <span class="mk">1</span></h6>
+        <table class="mt"><thead><tr><th>Device</th><th>Similarity</th><th>Flags</th></tr></thead><tbody>
+          <tr class="sel"><td>K2XXXX1 · Infusion set A</td><td>IFU high · tech high</td><td><span class="t ok">Clean</span></td></tr>
+          <tr><td>K2XXXX2 · Infusion set B</td><td>IFU high · tech medium</td><td><span class="t ok">Clean</span></td></tr>
+          <tr><td>K1XXXX3 · Infusion set C</td><td>IFU medium · tech high</td><td><span class="t bad">Recall linked</span></td></tr>
+        </tbody></table></div>
+      <div class="panel"><h6>SE comparison (exports to Word and Excel) <span class="mk">2</span></h6>
+        <table class="mt"><thead><tr><th>Attribute</th><th>IS-200</th><th>Predicate</th></tr></thead><tbody>
+          <tr><td>Sterilisation</td><td>EO <span class="src">EO-09 p.4</span></td><td>EO <span class="src">K2XXXX1 summary p.3</span></td></tr>
+          <tr><td>Shelf life</td><td>3 years <span class="src">SL-22C p.11</span></td><td>2 years <span class="src">p.4</span> <span class="t warn">Difference</span></td></tr>
+          <tr><td>Tubing material</td><td>PVC, DEHP-free <span class="src">Spec F</span></td><td>PVC <span class="src">p.3</span></td></tr>
+        </tbody></table></div>
+    </div>
+  </div></div></div></div>
+  <ol class="legend"><li><span class="mk">1</span><span>Predicate ranking with recall flags. A recall-linked device is never shown as clean.</span></li><li><span class="mk">2</span><span>The subject device column is filled from the client's own documents, and the predicate column from FDA's summary. Both are cited.</span></li></ol>
+
+  <h3><span class="n">7.3</span>Portfolio overview</h3>
+  <div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / firm / portfolio</span><span class="concept">Concept · illustrative</span></div>
+  <div class="scroll"><div class="app solo"><div class="body">
+    <div class="g4">
+      <div class="stat"><b>7</b><span>active 510(k) projects</span></div>
+      <div class="stat"><b>12</b><span>open client requests</span></div>
+      <div class="stat"><b>5</b><span>high problems open</span></div>
+      <div class="stat"><b>1</b><span>FDA clock running</span></div>
+    </div>
+    <table class="mt" style="margin-top:12px"><thead><tr><th>Client</th><th>Project</th><th>Stage</th><th>Next action</th><th>Due</th></tr></thead><tbody>
+      <tr><td>Northbay Devices</td><td>IS-200</td><td><span class="t warn">FDA letter</span></td><td>Deficiency 2 response</td><td>11 Nov</td></tr>
+      <tr><td>Client B</td><td>Catheter X</td><td><span class="t ac">Drafting</span></td><td>Review biocompatibility</td><td>14 Nov</td></tr>
+      <tr><td>Client C</td><td>Wound dressing</td><td><span class="t">Waiting on client</span></td><td>3 files requested</td><td>—</td></tr>
+    </tbody></table>
+  </div></div></div></div>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Of the Phase 4 tools (FDA letters, predicates, portfolio), which would you actually use, and which would you drop?</li><li>Who in your practice answers FDA's Additional Information letters, and is that work billed separately?</li></ul></div>
+</section>
+
+<!-- ======================================================= PHASE 5 -->
+<section id="p5">
+  <h2><span class="n">8</span>Phase 5 · Market and adjacency <span class="ph ph5">month 13 onward</span></h2>
+  <p class="lede">Goal: open the product to more buyers only after it is proven with consultancies. These screens are early sketches and will change after the pilot.</p>
+  <div class="g2" style="align-items:start">
+    <div>
+      <h3><span class="n">8.1</span>Public product-code page and free check</h3>
+      <div class="mock" style="margin-top:0"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">medexregai.com / codes / ABC</span><span class="concept">Concept</span></div>
+        <div class="body" style="font-size:13px">
+          <div class="crumb">Product code ABC (placeholder) · Class II</div>
+          <h5 style="margin:2px 0 10px;font-size:15.5px">Infusion sets: what FDA has cleared</h5>
+          <div class="g2"><div class="stat"><b>—</b><span>clearances, last 5 years</span></div><div class="stat"><b>—</b><span>typical review time</span></div></div>
+          <p class="small" style="margin:10px 0 6px">Common standards · recall themes · cited sources</p>
+          <span class="btn p">Check your device for free</span>
+        </div></div>
+    </div>
+    <div>
+      <h3><span class="n">8.2</span>Introductions for consultants (opt-in only)</h3>
+      <div class="mock" style="margin-top:0"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">app.medexregai.com / firm / introductions</span><span class="concept">Concept</span></div>
+        <div class="body" style="font-size:13px">
+          <div class="banner info"><span>Shared only because the company chose to be introduced.</span></div>
+          <div class="panel"><b>Startup · novel wearable pump</b><p class="small mut" style="margin:4px 0 8px">Likely De Novo · no clear predicate · brief attached</p><div class="acts" style="justify-content:flex-start"><span class="btn s">Read brief</span><span class="btn s p">Accept introduction</span></div></div>
+        </div></div>
+    </div>
+  </div>
+  <div class="ask"><b>Questions for reviewers</b><ul><li>Would introductions to companies that asked for help be useful to your practice, or a conflict for it?</li></ul></div>
+</section>
+
+<section id="always">
+  <h2><span class="n">9</span>What never changes, in every phase</h2>
+  <div class="cards">
+    <div class="card"><span class="k">Sources</span><h4>Every fact shows where it came from</h4><p>File, version and page for client documents; record and date for FDA data. A statement without a source is removed.</p></div>
+    <div class="card"><span class="k">Control</span><h4>The consultant decides</h4><p>Nothing goes to a client without approval. Versions are never chosen silently. Edits are recorded as yours.</p></div>
+    <div class="card"><span class="k">Boundaries</span><h4>We never file or sign</h4><p>The consultant fills and files the eSTAR. Signature fields stay blank.</p></div>
+    <div class="card"><span class="k">Fit</span><h4>No new system of record</h4><p>Files stay in your Dropbox, Box, SharePoint or Drive. Word out. PDF records into your eQMS.</p></div>
+    <div class="card"><span class="k">Privacy</span><h4>Client data stays with the client</h4><p>Strict separation between clients, no AI training on your data, and deletion per project.</p></div>
+  </div>
+</section>
+
+<section id="feedback">
+  <h2><span class="n">10</span>Feedback sheet</h2>
+  <p class="lede">For a review meeting or to send back afterwards. Print this page, or copy the questions into an email. A blank is better than a guess.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>#</th><th>Screen</th><th>Question</th><th style="min-width:240px">Your answer</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1</td><td>4.1 Connect</td><td>Which file stores do your clients' files come through? Would read-only access pass your quality and IT review?</td><td></td></tr>
+      <tr><td class="id">2</td><td>4.2 Sorted folder</td><td>Is "by eSTAR section" the right first view? How many files and late versions does a typical 510(k) involve?</td><td></td></tr>
+      <tr><td class="id">3</td><td>4.3 Problems</td><td>Which contradictions cost you the most rework? How many false alarms would you tolerate?</td><td></td></tr>
+      <tr><td class="id">4</td><td>4.4 Client request</td><td>Would you let the tool draft requests you approve? Would clients use an upload link?</td><td></td></tr>
+      <tr><td class="id">5</td><td>4.5 Trust pack</td><td>What would your quality owner need before allowing the tool on client files?</td><td></td></tr>
+      <tr><td class="id">6</td><td>5.2 Word draft</td><td>Faster to review than to write? Which sections would you trust it for, and which never?</td><td></td></tr>
+      <tr><td class="id">7</td><td>5.3 Changes</td><td>Would the revision-impact list replace work you do today?</td><td></td></tr>
+      <tr><td class="id">8</td><td>5.4 Records</td><td>Is a dated PDF record enough for your eQMS?</td><td></td></tr>
+      <tr><td class="id">9</td><td>6.1 Pilot report</td><td>What would have to be measured before you call this a must-have?</td><td></td></tr>
+      <tr><td class="id">10</td><td>7 Workspace</td><td>Which Phase 4 tools would you use, and which would you drop?</td><td></td></tr>
+      <tr><td class="id">11</td><td>Overall</td><td>If you could have only one of these screens, which would it be?</td><td></td></tr>
+      <tr><td class="id">12</td><td>Overall</td><td>What is missing, or what would stop you adopting this?</td><td></td></tr>
+    </tbody>
+  </table></div>
+</section>
+<footer>MRA-PRD-204 · UI 2.0 concept · Rev 2.0 · 7 Nov 2026 · Companion to PRD v2.0 (MRA-PRD-201) and the delivery plan (MRA-PRD-202). All data is fictional. Screens are concepts for evaluation, not a product or a commitment.</footer>
+</main>
+</div>
+<script src="../../assets/prd.js"></script>
+</body>
+</html>

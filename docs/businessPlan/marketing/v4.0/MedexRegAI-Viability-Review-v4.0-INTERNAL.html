@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MedexRegAI Viability Review</title>
+<style>
+:root{--bg:#fbfbfa;--surface:#fff;--ink:#14213d;--ink2:#3d4a63;--muted:#6b7488;--line:#e3e6ec;--soft:#f1f4f6;--brand:#0d6e66;--brand-soft:#e3f2ef;--s0:#6B7CC4;--s1:#D97706;--crit:#b42318;--crit-bg:#fdecea;--maj:#b45309;--maj-bg:#fdf1e3;--min:#475467;--min-bg:#eef1f5;--ok:#067647;--ok-bg:#e6f4ec}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;--brand:#3cc2b2;--brand-soft:#173430;--s0:#7F8FD6;--s1:#C47608;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}}
+:root[data-theme="dark"]{--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;--brand:#3cc2b2;--brand-soft:#173430;--s0:#7F8FD6;--s1:#C47608;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header.hero{padding:48px 0 28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:600}
+h1,h2{font-family:"Source Serif 4",Georgia,serif;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin:8px 0 12px;max-width:900px}
+h2{font-size:26px;margin:0 0 6px}h3{font-size:17px;margin:22px 0 8px}
+.lede{font-size:17px;color:var(--ink2);max-width:860px}.meta{color:var(--muted);font-size:13px;margin-top:14px}
+section{padding:36px 0;border-top:1px solid var(--line)}
+.sub{color:var(--ink2);max-width:880px;margin:0 0 18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi .v{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}.kpi.brand{background:var(--brand-soft);border-color:transparent}.kpi.brand .v{color:var(--brand)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}.card h3{margin-top:0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:600;font-size:12.5px;color:var(--ink2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.phase td{background:var(--soft);font-weight:600;color:var(--brand);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+tfoot td{font-weight:600;background:var(--soft)}
+table.wide{min-width:880px}
+.sev{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}
+.sev-crit{background:var(--crit-bg);color:var(--crit)}.sev-maj{background:var(--maj-bg);color:var(--maj)}.sev-min{background:var(--min-bg);color:var(--min)}.sev-ok{background:var(--ok-bg);color:var(--ok)}
+.note{background:var(--soft);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink2);margin:14px 0}.note strong{color:var(--ink)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:6px 0 12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bargroup{margin-bottom:14px}.barlabel{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.barrow{display:grid;grid-template-columns:96px 1fr 56px;align-items:center;gap:8px;margin:2px 0}
+.barname{font-size:12px;color:var(--muted)}.barval{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink2);text-align:right}
+.bar{height:14px;border-radius:0 4px 4px 0;min-width:2px}.bar.s0{background:var(--s0)}.bar.s1{background:var(--s1)}
+.bar:hover{filter:brightness(1.08);outline:2px solid var(--surface)}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:6px;font-size:12.5px;opacity:0;transition:opacity .1s;z-index:9;max-width:320px}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}@media(max-width:820px){.flow{grid-template-columns:1fr}}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:relative;font-size:13.5px}
+.step b{display:block;margin-bottom:4px}.step.human{background:var(--brand-soft);border-color:transparent}
+.stage{display:grid;grid-template-columns:44px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin:8px 0}
+.stage .n{width:36px;height:36px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--brand)}
+.stage.now{background:var(--brand-soft);border-color:transparent}.stage.now .n{background:var(--brand);color:var(--bg)}
+.stage h3{margin:0 0 2px}.stage p{margin:4px 0;font-size:13.5px;color:var(--ink2)}
+.calc{display:grid;grid-template-columns:280px 1fr;gap:16px}@media(max-width:820px){.calc{grid-template-columns:1fr}}
+.calc label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px;color:var(--ink2)}
+.calc input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+a{color:var(--brand)}ol.sources li{margin:5px 0;font-size:13.5px;overflow-wrap:anywhere}
+footer{padding:24px 0 48px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+@media print{#tip{display:none}section{break-inside:auto}.tablewrap{overflow:visible}}
+</style></head><body><div id="tip"></div><div class="wrap">
+
+<header class="hero">
+<div class="eyebrow">Internal · not for customers · v4.0 · 30 October 2026</div>
+<h1>Is MedexRegAI a viable business? Not as planned. Possibly, if we build what consultants actually spend their time on.</h1>
+<p class="lede">A consultant told us the platform is a nice-to-have that does not solve the bigger problem: turning client-submitted information into a submission. Our own time data agrees. The current plan builds FDA research first, which took 10 of 98 hours in that study, and leaves client material, which took 60, until after Series A. Nothing in this repository is built yet (it holds documents and research only), so changing the order mainly costs a planning decision. Viability is still unproven and needs three tests, which can finish by 18 December.</p>
+<div class="kpis">
+<div class="kpi"><div class="v">10 of 98 h</div><div class="l">FDA research: predicate search, verification, library. Built first in the current plan.</div></div>
+<div class="kpi brand"><div class="v">60 of 98 h</div><div class="l">Client material into submission sections. Mostly deferred to after Series A.</div></div>
+<div class="kpi"><div class="v">0.06x</div><div class="l">First-year return for a firm on today's committed savings, if half the freed hours become revenue (modelled)</div></div>
+<div class="kpi brand"><div class="v">2.1x</div><div class="l">Same case with roadmap savings and lighter adoption. A target, unproven.</div></div>
+</div>
+<p class="meta">Evidence base: one consultant's task hours (n = 1), one consultant's email reporting informal peer conversations, the PRD set, business plan r6 and public sources. Every modelled figure is labelled.</p>
+</header>
+
+<section>
+<h2>1. What the consultant said, tested against our evidence</h2>
+<p class="sub">The email is mostly right. One caveat: the peers spoke "without details", so they were reacting to the idea of another tool, not to a product. That is still a real barrier, because it is the reaction our sales outreach would get.</p>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th style="width:27%">What they said</th><th style="width:43%">What our evidence shows</th><th>Verdict</th></tr></thead><tbody>
+<tr><td>The bigger challenge is managing client information and turning it into submissions.</td><td>60 of 98 hours are tasks 12 to 14 and 16 to 22 (sections, admin documents, assembly, QC, client review). v3.0 gives no credit on 38 of those hours, and saves only 5 h across the 60. Our 26-task list has <strong>no line at all</strong> for collecting, sorting and reconciling client information, so we have never measured the thing they named.</td><td><span class="sev sev-ok">Supported</span> Size still unknown</td></tr>
+<tr><td>An AI platform is a nice-to-have.</td><td>Today's committed saving is 18 h of 98 (19%). After adoption costs, a firm's first-year return is thin if freed hours do not all turn into revenue (section 5).</td><td><span class="sev sev-ok">Supported</span> For the current scope</td></tr>
+<tr><td>Another tool means training, validation and maintenance.</td><td>No ROI file counts these costs. The PRD sells the validation pack as a $10K-a-year add-on at M7 to M12 (P4-33), so we would be charging for the objection. FDA's guidance says supporting software "often carries lower risk", so validation effort may be reduced, but the firm decides, and that guidance is written for manufacturers.</td><td><span class="sev sev-ok">Supported</span> And reducible</td></tr>
+<tr><td>It must fit existing IT: eQMS, Dropbox or equivalent, accounting, onboarding and sales tools.</td><td>"Registers, not repositories" already suits this: files stay where they are. But the architecture connects only SharePoint and Google Drive, at Phase 2, with no Dropbox or Box. The eQMS connector names Greenlight Guru, not TrackWise, and arrives at M13 to M22.</td><td><span class="sev sev-maj">Partly fixed</span> Right principle, wrong connectors</td></tr>
+<tr><td>Client data arrives in Word, Excel, PowerPoint, PDF and others.</td><td>The PRD extracts only four fields (standard, sample size, result, date) from uploaded test reports, and only as a "Should" (P1-35). PowerPoint, raw data and drawings are not mentioned.</td><td><span class="sev sev-crit">Gap</span> Not in the PRD</td></tr>
+<tr><td>So the project may not be viable.</td><td>This is true of the current plan. It does not follow for the problem they named. They described a costly unsolved problem, and general AI has not moved it for Consultant #1 (section hours were identical with and without AI). We do not yet know why, and the answer could also defeat our product.</td><td><span class="sev sev-min">Open</span> Test it</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>2. Where the hours go, and where we save</h2>
+<p class="sub">Consultant #1's hours with general AI on the Huber needle 510(k), against v3.0 committed savings. We save most where the time is smallest.</p>
+<div class="legend"><span><i style="background:var(--s0)"></i>Hours today, with general AI</span><span><i style="background:var(--s1)"></i>Hours MedexRegAI saves (v3.0 committed target)</span></div>
+<div id="chart"></div>
+<div class="tablewrap"><table>
+<thead><tr><th>Group</th><th>Tasks</th><th class="num">Hours today</th><th class="num">Saved (v3.0)</th><th class="num">Saved %</th></tr></thead><tbody>
+<tr><td>Client material into submission</td><td>12–14, 16–22</td><td class="num">60</td><td class="num">5.0</td><td class="num">8%</td></tr>
+<tr><td>Classification, pathway, predicates, SE, research</td><td>2–7</td><td class="num">24</td><td class="num">10.3</td><td class="num">43%</td></tr>
+<tr><td>Upload, review-period management, close-out</td><td>23, 25, 26</td><td class="num">10</td><td class="num">3.0</td><td class="num">30%</td></tr>
+<tr><td>Intake meetings, proposal, SOW</td><td>1</td><td class="num">4</td><td class="num">0</td><td class="num">0%</td></tr>
+</tbody><tfoot><tr><td>Total</td><td>20 tasks</td><td class="num">98</td><td class="num">18.3</td><td class="num">19%</td></tr></tfoot></table></div>
+<div class="note"><strong>The question we must answer next:</strong> how much of those 60 hours is finding, chasing and reconciling information, and how much is expert judgement? If it is mostly judgement, drafting will not help and the consultant's "nice-to-have" stands. The current workbook cannot tell us. The v4.0 workbook can (section A3).</div>
+</section>
+
+<section>
+<h2>3. Where the current plan conflicts with this evidence</h2>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th style="width:36%">What our documents say</th><th style="width:36%">What we now know</th><th>Change</th></tr></thead><tbody>
+<tr><td><strong>PRD-002 §2–3:</strong> "Hours first… research before workflow"; Predicate Finder is the "largest block of hours"; research is second.</td><td>Predicate search and verification are 4 h, and the SE matrix is 10 h. Section and admin work is 38 h. The rule is right, but the order it produced is wrong.</td><td>Keep the rule and redo the order.</td></tr>
+<tr><td><strong>BP r6:</strong> eSTAR section drafting moved from M15 to post-Series A to fund the Lead Finder: "A competitive checkbox… The trade is not close." The plan also calls it the largest gap against direct competitors.</td><td>It is the largest block of consultant hours and the problem the consultant named.</td><td>Reverse the trade.</td></tr>
+<tr><td><strong>PRD 2 §12:</strong> eSTAR form filling is out of scope.</td><td>FDA's page says eSTAR data can be exported and imported as XML in Acrobat Pro; attachments are not included. Generating that XML may be possible, but we have not tested it.</td><td>Run a 1-week spike before ruling it in or out.</td></tr>
+<tr><td><strong>Investor deck v7:</strong> "40–120 billable hours" and $10K–$30K for the research sweep.</td><td>Consultant #1: 24 h with AI, including classification and SE. n = 1, but an investor who checks with one consultant may hear the same.</td><td>Hold this claim until more data arrives.</td></tr>
+<tr><td><strong>BP r6:</strong> "no sales motion" at $500; the funnel is the business.</td><td>Consultancies are 42% of conservative revenue and raise IT, validation and contract objections. That is a founder-led B2B sale with a trust review.</td><td>Plan for it. Self-serve can follow.</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>4. How we solve it: client evidence to submission</h2>
+<p class="sub">The product becomes a layer between the firm's existing folders and FDA's eSTAR, with the consultant in charge at the review step. FDA data remains essential as the check on the draft, but it is no longer the headline.</p>
+<div class="flow">
+<div class="step"><b>1. Connect</b>Read-only link to a project folder in Dropbox, Box, SharePoint or Drive, plus forwarded email. No files stored.</div>
+<div class="step"><b>2. Read and sort</b>Word, Excel, PowerPoint, PDF (including scans), CSV and drawings, sorted by type, version and eSTAR section.</div>
+<div class="step"><b>3. Find problems</b>Missing items, old versions and contradictions, such as specification vs drawing vs report vs IFU. Sends the client a request with an upload link.</div>
+<div class="step"><b>4. Draft</b>eSTAR sections, summary tables and admin documents in Word. Each statement links to its source page and FDA checks run on the draft.</div>
+<div class="step human"><b>5. Consultant decides</b>Reviews in Word, then fills and files eSTAR as today. We never file or sign. The record exports to the firm's eQMS.</div>
+</div>
+<h3>How this answers each objection</h3>
+<div class="tablewrap"><table>
+<thead><tr><th style="width:24%">Objection</th><th>Design answer</th><th style="width:30%">Target to test (proposed)</th></tr></thead><tbody>
+<tr><td>Value</td><td>Works on the 60-hour block, and catches contradictions before FDA does.</td><td>At least 30% fewer hours on sections; at least 70% of drafted statements accepted without material change.</td></tr>
+<tr><td>Fit with IT</td><td>No replacement and no system of record. Read-only folder access in, Word out, and PDF or DOCX records for the eQMS. No TrackWise connector.</td><td>Peers say no required integration beyond their file store.</td></tr>
+<tr><td>Training</td><td>A consultant works in Word and a single review screen. Clients need no login.</td><td>Under 1 hour to the first useful output.</td></tr>
+<tr><td>Validation</td><td>Free validation pack from day one: intended use, risk assessment, test evidence, change log. Every statement is reviewed and traceable to a source, which supports a lower-risk classification.</td><td>Under 8 hours for a firm to complete its own risk-based assessment.</td></tr>
+<tr><td>Maintenance</td><td>Hosted, with nothing to install. Model and prompt changes are versioned and regression-tested (already in the PRD).</td><td>No routine work for the firm's IT staff.</td></tr>
+<tr><td>Client confidentiality</td><td>Tenant isolation and no model training on client data (already NFR-7 and NFR-8). Add: per-project deletion, a contract clause firms can give their clients, and SOC 2 work earlier.</td><td>Peers confirm their client agreements would allow it.</td></tr>
+</tbody></table></div>
+
+<h3>Priorities</h3>
+<p class="sub">Effort figures are our estimates and need engineering review. Full requirements are in the PRD addendum (v4.0).</p>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>Priority</th><th style="width:34%">Change</th><th>In the PRD today</th><th class="num">Effort (est.)</th><th style="width:22%">Why</th></tr></thead><tbody>
+<tr class="phase"><td colspan="5">P0: prove first (pilot, weeks 1 to 16)</td></tr>
+<tr><td>1</td><td>Client file intake: folder connectors, multi-format parsing, sorting, versions</td><td>P1-34 and P1-35 are partial; SharePoint and Drive only; Phase 2</td><td class="num">10–14 eng-wk</td><td>The problem named in the email; everything else depends on it</td></tr>
+<tr><td>2</td><td>Gap and contradiction check across client documents, with a client request link</td><td>P2-10 to P2-22 cover evidence gaps, but not conflicts between documents or requests to clients</td><td class="num">4–6 eng-wk</td><td>Visible value from day one, and useful even if drafting underperforms</td></tr>
+<tr><td>3</td><td>eSTAR section drafting from client reports, with page-level citations, in Word</td><td>P5-20 to P5-22, M13–22; business plan moved it to post-Series A</td><td class="num">8 eng-wk (BP)</td><td>22 h of Huber section text, 130 h of pump documents</td></tr>
+<tr><td>4</td><td>Admin documents from the project record</td><td>Not in the PRD (v3.0 lists it as upside)</td><td class="num">1–2 eng-wk</td><td>Low risk: 8 h today, target saving 3 h</td></tr>
+<tr><td>5</td><td>Free validation pack and client-contract clause</td><td>P4-33, M7–12, sold at $10K a year</td><td class="num">2–3 eng-wk equiv.</td><td>Removes a stated objection at low cost</td></tr>
+<tr><td>6</td><td>Keep from Phase 1, thinly: K-number, recall and MAUDE checks; SE table from the predicate summary; citation gate; workspaces; audit</td><td>PRD 1, Must</td><td class="num">Already planned</td><td>Our highest committed saving (SE 4 h, verify 1.5 h) and the trust layer</td></tr>
+<tr class="phase"><td colspan="5">P1: after the pilot proves value (to M12)</td></tr>
+<tr><td>7</td><td>Predicate ranking, research library, claim–evidence matrix, FDA question tracker, submission record</td><td>PRD 1–2, Phases 1–2</td><td class="num">As planned</td><td>Sound features, but they should not lead</td></tr>
+<tr><td>8</td><td>eSTAR XML export, if the spike works; AI-letter response drafts</td><td>Out of scope; P5-10, M13–22</td><td class="num">Spike 1 wk</td><td>Task 20 (8 h) and task 24 (unmeasured; up to 9 h on a complex filing)</td></tr>
+<tr class="phase"><td colspan="5">P2: defer until gates are met</td></tr>
+<tr><td>9</td><td>Lead Finder, self-serve checkout, free tier and product-code pages, pathway PR-1, PR-4, PR-5, API and MCP</td><td>M6 to M15</td><td class="num">Frees 8+ eng-wk</td><td>Cost: Lead Finder is $199K of the plan's $1.15M M18 run-rate. Consultancies still get it later as a reason to stay.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Budget check:</strong> P0 new work is about 25 to 33 engineer-weeks, against 8 reclaimed from the Lead Finder and about 14 to 16 moved out of the pilot window (the 10 to 12 week Submission Workspace, plus 4 weeks of retainer billing and free-tier work). That leaves a likely shortfall of 1 to 11 engineer-weeks, which still needs a CTO estimate. If the shortfall holds, reduce the first connector set to two services and limit parsing to the file types peers report most often.</div>
+</section>
+
+<section>
+<h2>5. Business viability</h2>
+<h3>The firm's decision: is it worth adopting?</h3>
+<p class="sub">v3.0's per-project ROI left out two things the consultant raised: adoption effort, and whether saved hours really turn into money. This model adds both. It assumes the Team plan ($10,800), 12 projects a year, 25% complex, and $150 an hour. <strong>Adoption hours and the share of freed hours that become revenue are our assumptions.</strong></p>
+<div class="tablewrap"><table>
+<thead><tr><th>Scenario</th><th class="num">Hours freed a year</th><th class="num">Year-1 cost</th><th class="num">Net, all hours monetised</th><th class="num">Net, half monetised</th></tr></thead><tbody>
+<tr><td>Today's scope (18 / 38 h per project), 60 h adoption</td><td class="num">279</td><td class="num">$19,800</td><td class="num">$22,005 · 1.1x</td><td class="num"><strong>$1,103 · 0.06x</strong></td></tr>
+<tr><td>Today's scope, 20 h adoption</td><td class="num">279</td><td class="num">$13,800</td><td class="num">$28,005 · 2.0x</td><td class="num">$7,103 · 0.5x</td></tr>
+<tr><td>Roadmap targets (34 / 92 h), 60 h adoption</td><td class="num">578</td><td class="num">$19,800</td><td class="num">$66,825 · 3.4x</td><td class="num">$23,513 · 1.2x</td></tr>
+<tr><td>Roadmap targets, 20 h adoption</td><td class="num">578</td><td class="num">$13,800</td><td class="num">$72,825 · 5.3x</td><td class="num"><strong>$29,513 · 2.1x</strong></td></tr>
+</tbody></table></div>
+<p class="sub"><strong>Reading this:</strong> at today's scope, the "nice-to-have" verdict is about right. A firm billing by the hour may also lose revenue on saved hours unless it can take on more work. The consultant's "extremely busy" hints at a capacity constraint, but we need the v4.0 workbook's answer on what saved hours actually become.</p>
+<div class="calc card">
+<div>
+<label for="c_h">Hours saved, simple project</label><input id="c_h" type="number" value="33.5" step="0.5" min="0">
+<label for="c_hc">Hours saved, complex project</label><input id="c_hc" type="number" value="92" step="1" min="0">
+<label for="c_n">Projects a year</label><input id="c_n" type="number" value="12" min="1">
+<label for="c_cx">Share complex (%)</label><input id="c_cx" type="number" value="25" min="0" max="100">
+<label for="c_r">Rate ($/h)</label><input id="c_r" type="number" value="150" min="0">
+<label for="c_m">Share of freed hours that become revenue (%)</label><input id="c_m" type="number" value="50" min="0" max="100">
+<label for="c_a">Adoption hours, first year</label><input id="c_a" type="number" value="20" min="0">
+<label for="c_p">Annual plan price ($)</label><input id="c_p" type="number" value="10800" min="0">
+</div>
+<div><div class="out">
+<div class="kpi"><div class="v" id="o_h"></div><div class="l">Hours freed a year</div></div>
+<div class="kpi"><div class="v" id="o_v"></div><div class="l">Value realised</div></div>
+<div class="kpi"><div class="v" id="o_c"></div><div class="l">Year-1 cost, including adoption</div></div>
+<div class="kpi brand"><div class="v" id="o_n"></div><div class="l">Net gain and return</div></div>
+</div><p class="sub" style="margin-top:14px">Try this with your own numbers. All inputs are assumptions until the v4.0 workbook and tests replace them.</p></div>
+</div>
+
+<h3>Our decision: can this support a company?</h3>
+<div class="tablewrap"><table>
+<thead><tr><th style="width:36%">Question</th><th>Finding</th></tr></thead><tbody>
+<tr><td>Accounts needed to cover costs</td><td>Current spending is about $667K a year ($1M over 18 months). At 85% gross margin and $13,500 average revenue per account (between Team and Practice), break-even is <strong>about 58 consultancy accounts</strong> (modelled). That is 17% of the 344 firms acting as US agent for five or more establishments, or 5% of the 1,201 acting for two or more. Those counts are proxies, not a census of 510(k) consultancies.</td></tr>
+<tr><td>How realistic is that?</td><td>Hard on consultancies alone. The plan's conservative case reaches 30 by M18. We should expect to need a second buyer: manufacturers who file repeatedly and have the same client-file problem internally (about 1,869 companies with 2–4 clearances and 717 with 5 or more, 2021–2025, from the plan's verified counts).</td></tr>
+<tr><td>Delivery cost</td><td>The plan's $2.40 of AI cost per project will not hold. Reading a whole client package and drafting sections costs an estimated $9 for a simple project and $36 for a complex one at current list prices (1,500 pages assumed for simple, four times that for complex; to be measured). With the plan's other delivery costs, gross margin would be about 86–92% at $500 and 92–95% at $900. OCR, drawings and heavier support could lower it, so the break-even above uses 85%.</td></tr>
+<tr><td>Pricing pressure</td><td>Complizen listed $3,490 a year for its Pro plan when the plan checked in August 2026. Team at $10,800 must beat it on real outcomes, not features. Rebilling helps: $900 is under 6% of a $17,500 engagement, and the workbook now asks whether firms would do this.</td></tr>
+<tr><td>Competition</td><td>This space is not empty. Complizen says it ingests specs and test reports "any format", drafts sections with citations and exports to eSTAR, and sells a done-for-you 510(k) from $11,000, which puts it in competition with consultants. Assyro advertises eSTAR authoring. Both are vendor claims, not verified. We should test whether consultants have tried them and what they found. Our possible edge: built for multi-client consultancies, works with their existing folders, no competing service line, measured acceptance data. None of that is proven yet.</td></tr>
+<tr><td>Verdict today</td><td><strong>Not yet viable on evidence, and not disproven.</strong> The problem looks real and costly, and the money works if the targets hold. Whether we can win is unknown until the tests below report.</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>6. The tests that decide it</h2>
+<p class="sub">Spend only on these until they report. The thresholds are proposed and should be fixed before results arrive, so we cannot talk ourselves into a pass.</p>
+<div class="tablewrap"><table class="wide">
+<thead><tr><th>Test</th><th>Method</th><th>When</th><th>Pass</th><th>If it fails</th></tr></thead><tbody>
+<tr><td><strong>1. Is the problem big enough?</strong></td><td>v4.0 workbook Part A from at least 5 consultants at different firms, plus a 20-minute call with this consultant.</td><td>Out by 6 Nov; results by 27 Nov</td><td>Median: at least 25% of section hours are finding, chasing and reconciling. At least 3 of 5 mark the organiser or drafter "would pay" or higher. No required integration beyond file storage.</td><td>Problem is judgement, or fit is a blocker. Go to fallback.</td></tr>
+<tr><td><strong>2. Can we solve it?</strong></td><td>"Messy folder" test: run 2 closed packages through a prototype (scripts plus human checking, no product build). Consultants score draft sections and flagged contradictions, and log their time.</td><td>Mid-Nov to 11 Dec</td><td>At least 30% fewer hours on those sections; at least 70% of statements accepted without material change; zero uncited facts; at least one real contradiction found that the consultant had to fix.</td><td>Check why. If drafts cost more to review than to write, drop drafting and test organiser-only value.</td></tr>
+<tr><td><strong>3. Will they pay?</strong></td><td>Offer a paid pilot on a live project, with a written validation and data-handling pack.</td><td>By 18 Dec</td><td>At least 3 firms sign (for example the $500 First Project or a Practice pack deposit), and their IT or quality owner has no blocking objection.</td><td>Interest without payment means nice-to-have. Go to fallback.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Fallback, in order:</strong> (a) sell the same workflow directly to manufacturers' RA teams and validate with one RA/QA lead; (b) sell only the smaller organiser and contradiction check at a lower price; (c) if neither passes, stop the build and keep the cash. Test 2 needs a client-approved or properly redacted package: without one, use a package built from public 510(k) summaries, and treat the result as weaker evidence.</div>
+</section>
+
+<section>
+<h2>7. Long-term outlook: the medical device ecosystem</h2>
+<p class="sub">An outlook, not a commitment. Each stage earns the next by creating data and trust the next stage needs. Timing is indicative. Stages 3 and 4 align with the OEM Exchange and Device Marketplace in business plan r6; all market sizes remain unvalidated.</p>
+<div class="stage now"><div class="n">1</div><div><h3>Compliance preparation, filing and approval (now to about M18)</h3><p>Client evidence to submission for 510(k). <strong>AI:</strong> reads, checks and drafts. <strong>Creates:</strong> a structured record linking each device claim to its evidence and FDA outcome.</p></div></div>
+<div class="stage"><div class="n">2</div><div><h3>Lab test data capture and refinement (about M12 to M30)</h3><p>Direct intake from test labs and raw data. <strong>AI:</strong> spots outliers, protocol deviations and weak sample sizes, compares results with what comparable clearances tested, and flags likely FDA questions before filing. <strong>Requires:</strong> manufacturer permission, and lab partnerships. <strong>Gate:</strong> stage 1 retention.</p></div></div>
+<div class="stage"><div class="n">3</div><div><h3>Manufacturers, OEMs and suppliers (about M20 to M36)</h3><p>Verified directory using FDA registration and inspection data; test-plan RFQs; reuse of supplier certificates and sterilisation validations. <strong>AI:</strong> supplier matching and risk. <strong>Gate:</strong> enough active devices to give suppliers real demand.</p></div></div>
+<div class="stage"><div class="n">4</div><div><h3>Customers: clinics, hospitals and practitioners (about M26 to M48)</h3><p>Finding buyers and evaluation sites for cleared devices, using regulatory status as the trust signal. <strong>AI:</strong> matching a device to clinical need and buying group. <strong>Gate:</strong> a base of newly cleared devices from stages 1 to 3.</p></div></div>
+<div class="stage"><div class="n">5</div><div><h3>Deployment and operations (later)</h3><p>Installed base tracked by UDI: service, complaints, medical device reports, recalls, and the change assessment already in PRD 5. <strong>AI:</strong> finds field problems early and feeds them back into risk files and the next 510(k). <strong>This closes the loop:</strong> field data improves the next submission. <strong>New duties:</strong> customer-owned operational data and stronger security.</p></div></div>
+<div class="stage"><div class="n">6</div><div><h3>Patient care data and engagement (later still, and a different company in risk terms)</h3><p><strong>AI:</strong> predicts problems, suggests improvements and engages patients. <strong>New duties:</strong> HIPAA and patient consent. The prediction software may itself be a regulated medical device: FDA's January 2026 decision-support guidance covers software for health care professionals and sets no new policy for patient-facing tools. It would need a quality system, IEC 62304 lifecycle work, and possibly a predetermined change control plan. Plan it as a separate regulated product line with its own funding.</p></div></div>
+<h3>Three choices today that keep this path open, at little cost</h3>
+<div class="tablewrap"><table>
+<thead><tr><th style="width:28%">Choice</th><th>What to do now</th></tr></thead><tbody>
+<tr><td>One device record</td><td>Model evidence around a stable device identity, ready to take a UDI later, so tests, suppliers, clearances and field data can link to it.</td></tr>
+<tr><td>Data rights</td><td>NFR-8 (no training on client data) stays the default and is a selling point. The ecosystem depends on data sharing, so add a separate, explicit opt-in per customer from day one. Never make it a condition of purchase.</td></tr>
+<tr><td>Where data lives</td><td>"Registers, not repositories" and NFR-9 (no PHI) stay for stages 1 to 4. Stages 5 and 6 need customer-controlled stores and a separate PHI environment, so keep those boundaries clean in the architecture.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>How to use this outlook:</strong> use it with investors, after the stage 1 tests. Do not lead with it to consultants. It adds to their worry about scale and could make us look like a future competitor to them. Stage 1 must stand on its own.</div>
+</section>
+
+<section>
+<h2>8. Decisions for the founders</h2>
+<div class="tablewrap"><table>
+<thead><tr><th style="width:5%">#</th><th>Decision</th><th>Recommendation</th></tr></thead><tbody>
+<tr><td>1</td><td>Pause the current Phase 1 build order and move to the client-evidence wedge, subject to the tests?</td><td>Yes.</td></tr>
+<tr><td>2</td><td>Reverse the eSTAR drafting and Lead Finder trade?</td><td>Yes, accepting the $199K lower M18 run-rate in the plan.</td></tr>
+<tr><td>3</td><td>Make the validation pack free and bring it forward?</td><td>Yes; give up the $10K add-on.</td></tr>
+<tr><td>4</td><td>Approve the test thresholds in section 6 before any results arrive?</td><td>Yes. Adjust them now if you disagree, not later.</td></tr>
+<tr><td>5</td><td>Revise the investor deck?</td><td>Hold the "40–120 hours" claim and the "no sales motion" story until tests report, then re-issue r7 with the new wedge.</td></tr>
+<tr><td>6</td><td>Who owns Consultant #1's written permission?</td><td>The CEO, this week. v3.0 and v4.0 materials rely on their hours.</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>Sources and method</h2>
+<ol class="sources">
+<li>Consultant email (private, not quoted externally); Consultant #1 task hours and v3.0 ROI Claim Review (docs/businessPlan/marketing/v3.0). The task grouping in section 2 is ours.</li>
+<li>PRD set MRA-PRD-001 to 008 (docs/Prd); business plan MRA-BIZ-001 r6; investor deck v7. Market counts are from the plan's §22 verification.</li>
+<li>FDA, <a href="https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program">eSTAR Program</a> (content current 21 Sep 2026): v7.1, XML export and import, attachment limits, technical-screening hold.</li>
+<li>FDA, <a href="https://www.fda.gov/media/188844/download">Computer Software Assurance for Production and Quality Management System Software</a> (issued 3 Feb 2026, nonbinding, written for manufacturers). Whether a consultancy's use falls under ISO 13485 4.1.6 is not settled by it. Peers should tell us how they treat it.</li>
+<li>Complizen <a href="https://www.complizen.ai/submission-builder">Submission Builder</a>; Assyro <a href="https://www.assyro.com/platform/estar-authoring">eSTAR Authoring</a> (read 30 Oct 2026; vendor claims). Complizen price from the plan's August 2026 read.</li>
+<li>FDA <a href="https://www.fda.gov/media/191560/download">Clinical Decision Support Software guidance</a> (January 2026) and <a href="https://www.cov.com/en/news-and-insights/insights/2026/01/5-key-takeaways-from-fdas-revised-clinical-decision-support-cds-software-guidance">Covington summary</a>; FDA <a href="https://www.hhs.gov/guidance/sites/default/files/hhs-guidance-documents/FDA/Guidance-Predetermined-Change-Control-AIML.pdf">PCCP guidance for AI-enabled device software</a>. Regulatory points in section 7 are orientation, not legal advice.</li>
+<li>Delivery cost estimate: Claude list prices cached 6 Oct 2026 (Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10, Opus 5.5 $4/$20 per million tokens); assumes 500 tokens a page, triage of all pages, extraction of 40%, ten sections drafted three times. Not measured.</li>
+</ol>
+</section>
+<footer>MedexRegAI · Projexlight · Internal viability review v4.0 · 30 October 2026. Contains a private consultant communication. Do not forward outside the founding team.</footer>
+</div>
+<script>
+const data=[["Client material into submission",60,5],["Classification, pathway, predicates, SE, research",24,10.3],["Upload, review-period management, close-out",10,3],["Intake meetings, proposal, SOW",4,0]];
+const max=60,tip=document.getElementById('tip'),host=document.getElementById('chart');
+host.innerHTML=data.map(([n,a,b])=>`<div class="bargroup"><div class="barlabel">${n}</div>
+<div class="barrow"><div class="barname">Today</div><div><div class="bar s0" style="width:${a/max*100}%" data-t="${n}: ${a} h today"></div></div><div class="barval">${a} h</div></div>
+<div class="barrow"><div class="barname">Saved</div><div><div class="bar s1" style="width:${b/max*100}%" data-t="${n}: ${b} h saved (target)"></div></div><div class="barval">${b} h</div></div></div>`).join('');
+host.addEventListener('mousemove',e=>{const t=e.target.dataset&&e.target.dataset.t;if(t){tip.textContent=t;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+12,innerWidth-330)+'px';tip.style.top=e.clientY+12+'px'}else tip.style.opacity=0});
+host.addEventListener('mouseleave',()=>tip.style.opacity=0);
+const $=i=>document.getElementById(i),f=x=>'$'+Math.round(x).toLocaleString('en-US');
+function calc(){const n=+$('c_n').value,cx=+$('c_cx').value/100,r=+$('c_r').value,m=+$('c_m').value/100,a=+$('c_a').value,p=+$('c_p').value;
+const h=n*(1-cx)*+$('c_h').value+n*cx*+$('c_hc').value,v=h*r*m,c=p+a*r,net=v-c;
+$('o_h').textContent=Math.round(h).toLocaleString('en-US');$('o_v').textContent=f(v);$('o_c').textContent=f(c);$('o_n').textContent=(net<0?'-':'')+f(Math.abs(net))+' · '+(c?(net/c).toFixed(1):'0')+'x'}
+document.querySelectorAll('.calc input').forEach(i=>i.addEventListener('input',calc));calc();
+</script>
+</body></html>

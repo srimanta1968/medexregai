@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI Architecture v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD v2.0</b>
+  <a href="index.html">Overview</a>
+  <a href="01-prd-v2.0.html">PRD v2.0</a>
+  <a href="02-delivery-plan-v2.0.html">Delivery plan</a>
+  <a href="03-architecture-v2.0.html" class="on">Architecture</a>
+  <a href="ui2.0/index.html">UI 2.0</a>
+  <a href="../index.html">PRD v1.0 set</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#principles"><span>1</span>Principles</a></li>
+    <li><a href="#delta"><span>2</span>What changes</a></li>
+    <li><a href="#context"><span>3</span>System context</a></li>
+    <li><a href="#containers"><span>4</span>Containers</a></li>
+    <li><a href="#pipeline"><span>5</span>Client-document pipeline</a></li>
+    <li><a href="#storage"><span>6</span>Storage</a></li>
+    <li><a href="#model"><span>7</span>Data model</a></li>
+    <li><a href="#ai"><span>8</span>AI architecture</a></li>
+    <li><a href="#gate"><span>9</span>Citation gate v2</a></li>
+    <li><a href="#contra"><span>10</span>Contradiction engine</a></li>
+    <li><a href="#word"><span>11</span>Word round trip</a></li>
+    <li><a href="#flows"><span>12</span>Key flows</a></li>
+    <li><a href="#security"><span>13</span>Security</a></li>
+    <li><a href="#integrations"><span>14</span>Integrations</a></li>
+    <li><a href="#deploy"><span>15</span>Deployment and ops</a></li>
+    <li><a href="#phase"><span>16</span>By phase</a></li>
+    <li><a href="#adrs"><span>17</span>Decisions (ADRs)</a></li>
+    <li><a href="#future"><span>18</span>Keeping the path open</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-203</span><span>Architecture</span><span>Rev 2.0 · 7 Nov 2026</span><span>Proposed</span></div>
+  <h1>MedexRegAI system architecture v2.0</h1>
+  <p class="sub">The v1.0 architecture (a governed FDA knowledge base, retrieval-grounded AI with a citation gate, and multi-tenant workspaces) stays. v2.0 adds a second, separate pipeline for untrusted client documents, read-only connectors to the stores firms already use, a contradiction engine, drafting with citations to client pages, and Word as the review surface.</p>
+  <div class="meta">
+    <div><b>Extends</b><a href="../08-architecture.html">MRA-PRD-008 Rev 1.0</a>. Sections not mentioned here are unchanged.</div>
+    <div><b>Shape</b>Modular monolith plus workers; one PostgreSQL with pgvector; S3; Claude API. A sandboxed document-conversion pool is the one new runtime.</div>
+    <div><b>New modules</b><code>intake</code>, <code>docproc</code>, <code>evidence</code>, <code>drafting</code>, <code>office</code></div>
+    <div><b>Status</b>ADR-011 to ADR-018 proposed, for approval in Phase 0</div>
+  </div>
+</header>
+
+<section id="principles">
+  <h2><span class="n">1</span>Architecture principles</h2>
+  <ol class="plain">
+    <li><strong>Provenance is structural</strong> (kept). Every fact carries its source. For client files that means file, version, hash and location (page, sheet and cell range, or slide), as well as the FDA record and snapshot.</li>
+    <li><strong>The model never recalls facts</strong> (kept). It reasons over retrieved passages and cites them. The citation gate now resolves client sources too.</li>
+    <li><strong>Client documents are untrusted input</strong> (new). They are parsed in a sandbox, passed to models only as data, and can never change system behaviour.</li>
+    <li><strong>Fit around existing systems</strong> (new). Read-only access to the firm's file store, Word out, PDF/DOCX records into any eQMS. No integration with the eQMS, accounting or CRM is required.</li>
+    <li><strong>Registers, not repositories</strong> (kept, made stricter). Linked files are fetched on demand, processed, and the fetched copy is discarded. We keep extracted text, locations, structure and hashes.</li>
+    <li><strong>Two pipelines, one model.</strong> The FDA corpus pipeline (public, shared, snapshotted) and the client-document pipeline (private, per tenant, deletable) never share storage or jobs. They meet only in retrieval, behind row-level security.</li>
+    <li><strong>Deterministic where possible.</strong> Value comparison, table matching, file-name and size checks are code, not prompts. Models handle reading, classification and prose.</li>
+    <li><strong>Boring, few moving parts</strong> (kept). One database, one object store, one queue. Split only on measured need.</li>
+  </ol>
+</section>
+
+<section id="delta">
+  <h2><span class="n">2</span>What changes from v1.0</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Area</th><th>v1.0</th><th>v2.0</th></tr></thead>
+    <tbody>
+      <tr><td>Main data flow</td><td>FDA corpus → research → workspace</td><td>Client folder → sorted evidence → contradictions → drafts → Word; the FDA corpus checks the draft</td></tr>
+      <tr><td>Ingestion</td><td>One pipeline, for FDA data</td><td>Second pipeline for client documents: conversion, OCR, tables, locations, classification, versions, facts</td></tr>
+      <tr><td>Connectors</td><td>SharePoint and Drive, Phase 2</td><td>Dropbox, Box, SharePoint/OneDrive, Drive, read-only, Phase 1; upload links; forwarding address</td></tr>
+      <tr><td>Citation gate</td><td>FDA records <code>[R:id#p]</code></td><td>Adds client sources <code>[C:version#loc]</code>, with span and value checks</td></tr>
+      <tr><td>Outputs</td><td>Our screens plus exports</td><td>Word round trip with source comments and edit capture; eQMS records; readiness package</td></tr>
+      <tr><td>Security</td><td>Tenant isolation, no training</td><td>Adds sandboxed conversion, prompt-injection defence, expiring client links, per-project deletion, data-use consent field</td></tr>
+      <tr><td>AI cost</td><td>$2.40 per project alert</td><td>Measured per project; starting estimate $9 simple, $36 complex</td></tr>
+      <tr><td>Deferred</td><td>—</td><td>eQMS connectors, API and MCP, Lead Finder module, public product-code pages and the Stripe ledger move to Phase 5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="context">
+  <h2><span class="n">3</span>System context</h2>
+  <div class="diagram" role="img" aria-label="System context: consultants and clients, firm file stores, MedexRegAI, Claude API, FDA public data, Word, eQMS, and FDA eSTAR filed by the consultant">
+    <svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <rect class="bx" x="20" y="30" width="200" height="70" rx="10"/><text class="t" x="36" y="58">Consultant</text><text class="s" x="36" y="80">editor, reviewer, firm admin</text>
+      <rect class="bx" x="20" y="130" width="200" height="70" rx="10"/><text class="t" x="36" y="158">Client contributor</text><text class="s" x="36" y="180">no account; upload link</text>
+      <rect class="bx-s" x="20" y="230" width="200" height="90" rx="10"/><text class="t" x="36" y="258">Firm file stores</text><text class="s" x="36" y="280">Dropbox · Box · SharePoint/</text><text class="s" x="36" y="296">OneDrive · Google Drive · email</text>
+
+      <rect class="bx-a" x="340" y="90" width="300" height="220" rx="12"/>
+      <text class="hd" x="360" y="118">MEDEXREGAI</text>
+      <text class="t" x="360" y="146">Intake · Document processing</text>
+      <text class="t" x="360" y="170">Evidence and contradictions</text>
+      <text class="t" x="360" y="194">Drafting · Citation gate</text>
+      <text class="t" x="360" y="218">Thin FDA checks</text>
+      <text class="t" x="360" y="242">Workspaces · Audit</text>
+      <text class="s" x="360" y="276">Stores extracted text, locations,</text>
+      <text class="s" x="360" y="292">hashes; not copies of linked files</text>
+
+      <rect class="bx-s" x="760" y="30" width="220" height="70" rx="10"/><text class="t" x="776" y="58">Claude API</text><text class="s" x="776" y="80">no training on inputs (NFR-8)</text>
+      <rect class="bx-s" x="760" y="120" width="220" height="70" rx="10"/><text class="t" x="776" y="148">FDA public data</text><text class="s" x="776" y="170">510(k), recalls, MAUDE, standards</text>
+      <rect class="bx" x="760" y="210" width="220" height="70" rx="10"/><text class="t" x="776" y="238">Microsoft Word</text><text class="s" x="776" y="260">review surface (DOCX)</text>
+      <rect class="bx" x="760" y="300" width="220" height="70" rx="10"/><text class="t" x="776" y="328">Firm eQMS</text><text class="s" x="776" y="350">TrackWise or equivalent; by hand</text>
+
+      <line class="ln" x1="220" y1="65" x2="338" y2="130" marker-end="url(#a1)"/>
+      <line class="ln" x1="220" y1="165" x2="338" y2="185" marker-end="url(#a1)"/>
+      <line class="ln" x1="220" y1="275" x2="338" y2="245" marker-end="url(#a1)"/>
+      <text class="lbl" x="232" y="320">read-only</text>
+      <line class="ln" x1="640" y1="130" x2="758" y2="70" marker-end="url(#a1)"/>
+      <line class="ln" x1="758" y1="155" x2="642" y2="170" marker-end="url(#a1)"/>
+      <line class="ln" x1="640" y1="230" x2="758" y2="245" marker-end="url(#a1)"/>
+      <line class="ln" x1="758" y1="255" x2="642" y2="250" marker-end="url(#a1)"/>
+      <line class="ln" x1="640" y1="290" x2="758" y2="330" marker-end="url(#a1)"/>
+      <text class="lbl" x="662" y="350">PDF/DOCX records</text>
+
+      <rect class="bx-w" x="340" y="345" width="300" height="55" rx="10"/><text class="t" x="356" y="370">FDA eSTAR / CDRH Portal</text><text class="s" x="356" y="388">filled and filed by the consultant only</text>
+      <line class="ln" x1="120" y1="100" x2="338" y2="372" marker-end="url(#a1)" stroke-dasharray="4 4"/>
+    </svg>
+  </div>
+  <p>We never file with FDA and never sign. The eQMS receives our records the way it receives any document: a person files them.</p>
+</section>
+
+<section id="containers">
+  <h2><span class="n">4</span>Containers</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Container / module</th><th>Technology (proposed)</th><th>Responsibility</th><th>Status</th><th>Phase</th></tr></thead>
+    <tbody>
+      <tr><td>Web app</td><td>Next.js (React, TypeScript)</td><td>Connect, sorted folder, problems, request, review and records screens (PRD S1–S6)</td><td>Changed</td><td>1</td></tr>
+      <tr><td>Client upload portal</td><td>Same web app, separate route and session type</td><td>Expiring, single-project upload links for clients; no account</td><td><span class="chip c-ours">New</span></td><td>1</td></tr>
+      <tr><td>API service</td><td>Python 3.12, FastAPI, SQLAlchemy, Pydantic</td><td>Auth, tenancy context, projects, evidence, drafts, exports</td><td>Kept</td><td>1</td></tr>
+      <tr><td><code>intake</code> module</td><td>Dropbox, Box, Microsoft Graph and Google Drive SDKs; inbound email</td><td>Folder links, change detection (webhooks or delta feeds, plus a nightly hash sweep), on-demand fetch</td><td><span class="chip c-ours">New</span></td><td>1</td></tr>
+      <tr><td><code>docproc</code> workers</td><td>Sandboxed containers with no outbound network: LibreOffice headless for page-true conversion; pdfplumber/pypdf; openpyxl; python-pptx; OCR engine (ADR-013)</td><td>Convert, locate, extract text and tables, OCR, render page images for drawings</td><td><span class="chip c-ours">New</span></td><td>1</td></tr>
+      <tr><td><code>evidence</code> module</td><td>Python, in the API codebase</td><td>Classification, versions, extracted facts, completeness rules, contradiction engine, revision impact</td><td><span class="chip c-ours">New</span></td><td>1–2</td></tr>
+      <tr><td><code>drafting</code> module</td><td>Python; Claude API</td><td>Section drafts, summary tables, device description, admin documents, readiness package</td><td><span class="chip c-ours">New</span></td><td>2</td></tr>
+      <tr><td><code>office</code> module</td><td>python-docx (with comment support), openpyxl</td><td>Word export with source comments and statement bookmarks; re-import and diff; XLSX tables; PDF records</td><td><span class="chip c-ours">New</span></td><td>2</td></tr>
+      <tr><td>AI service</td><td>Python module; Anthropic Python SDK</td><td>Model router, prompt registry, citation gate v2, cost metering</td><td>Changed</td><td>1</td></tr>
+      <tr><td>FDA corpus pipeline</td><td>Python; Claude Batch API</td><td>Thin scope first: K-numbers, predicate summaries, recalls, MAUDE, standards, guidance for pilot codes</td><td>Narrowed</td><td>1</td></tr>
+      <tr><td>Workers and queue</td><td>Postgres-backed durable job queue (ADR-005)</td><td>Fetch, parse, classify, compare, draft, export, delete</td><td>Kept</td><td>1</td></tr>
+      <tr><td>Evaluation harness</td><td>Python; versioned datasets in S3; CI</td><td>Adds client-document sets: classification, versions, contradictions, drafting acceptance, prompt injection</td><td>Widened</td><td>0–1</td></tr>
+      <tr><td>MCP server, Stripe ledger, Lead Finder</td><td>—</td><td>—</td><td>Deferred</td><td>5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">5</span>Client-document pipeline</h2>
+  <div class="diagram" role="img" aria-label="Client document pipeline: fetch, convert, locate and extract, classify, version, facts, compare, index, discard">
+    <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <rect class="bx-s" x="10" y="20" width="140" height="80" rx="9"/><text class="hd" x="22" y="42">1 FETCH</text><text class="s" x="22" y="64">on demand, read-only;</text><text class="s" x="22" y="80">hash; malware scan</text>
+      <line class="ln" x1="150" y1="60" x2="173" y2="60" marker-end="url(#a2)"/>
+      <rect class="bx-w" x="175" y="20" width="150" height="80" rx="9"/><text class="hd" x="187" y="42">2 CONVERT</text><text class="s" x="187" y="64">sandbox, no network;</text><text class="s" x="187" y="80">page-true PDF render</text>
+      <line class="ln" x1="325" y1="60" x2="348" y2="60" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="350" y="20" width="150" height="80" rx="9"/><text class="hd" x="362" y="42">3 LOCATE + EXTRACT</text><text class="s" x="362" y="64">text, tables, OCR; page,</text><text class="s" x="362" y="80">sheet!cells, slide map</text>
+      <line class="ln" x1="500" y1="60" x2="523" y2="60" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="525" y="20" width="150" height="80" rx="9"/><text class="hd" x="537" y="42">4 CLASSIFY</text><text class="s" x="537" y="64">doc type, eSTAR</text><text class="s" x="537" y="80">section, with reason</text>
+      <line class="ln" x1="675" y1="60" x2="698" y2="60" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="700" y="20" width="140" height="80" rx="9"/><text class="hd" x="712" y="42">5 VERSION</text><text class="s" x="712" y="64">duplicates, chains;</text><text class="s" x="712" y="80">ask if unclear</text>
+      <line class="ln" x1="840" y1="60" x2="863" y2="60" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="865" y="20" width="125" height="80" rx="9"/><text class="hd" x="877" y="42">6 FACTS</text><text class="s" x="877" y="64">typed values +</text><text class="s" x="877" y="80">SourceLocation</text>
+      <path class="ln" d="M928,100 L928,140 L760,140" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="560" y="120" width="198" height="80" rx="9"/><text class="hd" x="572" y="142">7 COMPARE</text><text class="s" x="572" y="164">contradictions, gaps vs</text><text class="s" x="572" y="180">eSTAR section rules</text>
+      <line class="ln" x1="560" y1="160" x2="497" y2="160" marker-end="url(#a2)"/>
+      <rect class="bx-a" x="320" y="120" width="175" height="80" rx="9"/><text class="hd" x="332" y="142">8 INDEX</text><text class="s" x="332" y="164">passages + embeddings,</text><text class="s" x="332" y="180">RLS by tenant/workspace</text>
+      <line class="ln" x1="320" y1="160" x2="257" y2="160" marker-end="url(#a2)"/>
+      <rect class="bx-s" x="80" y="120" width="175" height="80" rx="9"/><text class="hd" x="92" y="142">9 DISCARD</text><text class="s" x="92" y="164">fetched copy deleted;</text><text class="s" x="92" y="180">text, hash, locations kept</text>
+      <text class="lbl" x="80" y="232">A file change (webhook, delta feed or nightly hash) re-runs steps 1–8 for that file only, then revision impact (FR-14.21)</text>
+    </svg>
+  </div>
+  <h3><span class="n">5.1</span>Format handling</h3>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Format</th><th>Approach</th><th>Location kept</th><th>Requirement</th></tr></thead>
+    <tbody>
+      <tr><td>PDF (native)</td><td>Text and table extraction per page</td><td>Page and bounding box</td><td>FR-14.3</td></tr>
+      <tr><td>PDF (scanned), images</td><td>OCR engine chosen by benchmark (ADR-013); low-confidence pages flagged</td><td>Page and bounding box</td><td>FR-14.3</td></tr>
+      <tr><td>DOCX</td><td>Structure read directly; page numbers from a sandboxed PDF render so citations match what the reviewer sees</td><td>Page, heading path, paragraph</td><td>FR-14.3</td></tr>
+      <tr><td>XLSX, CSV</td><td>Sheets, named ranges and header detection; values kept typed</td><td>Sheet and cell range</td><td>FR-14.3, 14.11</td></tr>
+      <tr><td>PPTX</td><td>Slide text, tables and speaker notes</td><td>Slide number</td><td>FR-14.3</td></tr>
+      <tr><td>Drawings (PDF or image exports)</td><td>Title-block region read with OCR plus a vision-capable model; revision and part number confirmed against file name and title block</td><td>Page and region</td><td>FR-14.4</td></tr>
+      <tr><td>Raw instrument data</td><td>Structure profile only (columns, units, row count); link suggested to the report that cites it</td><td>File and columns</td><td>FR-14.5</td></tr>
+      <tr><td>Native CAD, encrypted, corrupt, archives</td><td>Listed with the reason; archives expanded once in the sandbox, with size and depth limits</td><td>File only</td><td>FR-14.3</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="storage">
+  <h2><span class="n">6</span>Storage</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Layer</th><th>Holds</th><th>Change in v2.0</th></tr></thead>
+    <tbody>
+      <tr><td>PostgreSQL 16 + pgvector</td><td>FDA canonical model; workspace and evidence domain; extracted facts; drafts; audit; jobs</td><td>New evidence and drafting tables (§7); RLS on every tenant table, including vectors</td></tr>
+      <tr><td>S3, client bucket (per-tenant prefix, KMS key per tenant)</td><td>Extracted text and page images by version; uploaded files when the user uploads instead of linking; exports</td><td><span class="chip c-ours">New</span> Lifecycle rules for per-project deletion; fetched copies held only for the job and deleted on completion</td></tr>
+      <tr><td>S3 raw archive (Object Lock)</td><td>FDA source files</td><td>Unchanged; never holds client data</td></tr>
+      <tr><td>Redis</td><td>Hot lookups, rate limits</td><td>Never caches client content</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="model">
+  <h2><span class="n">7</span>Data model: new entities</h2>
+  <p class="lede">All carry <code>org_id</code> and <code>workspace_id</code> for row-level security. v1.0 entities are unchanged unless noted.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Entity</th><th>Key attributes</th><th>Relationships</th><th>FR</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="4">Intake and evidence</td></tr>
+      <tr><td>StorageConnection</td><td>provider, scopes granted, folder ID, status, token reference (vault), revoked at</td><td>→ Workspace · → ClientFile</td><td>14.1</td></tr>
+      <tr><td>ClientFile</td><td>provider ID or upload ID, path, name, format, status (read, unreadable + reason)</td><td>→ FileVersion (many)</td><td>14.1–14.3</td></tr>
+      <tr><td>FileVersion</td><td>SHA-256, size, modified time, version label, is_current, superseded_by, decided_by (system/user)</td><td>→ ClientFile · → SourceLocation</td><td>14.7</td></tr>
+      <tr><td>DocumentClass</td><td>document type, eSTAR section, reason, confidence, corrected_by</td><td>→ FileVersion</td><td>14.6</td></tr>
+      <tr><td>SourceLocation</td><td>version, kind (page, sheet range, slide, region), coordinates, text span hash</td><td>shared by facts, statements and findings</td><td>14.3</td></tr>
+      <tr><td>ExtractedFact</td><td>fact key (e.g. shelf_life, sterilisation_method, standard_edition, sample_size), typed value, unit, confidence, confirmed</td><td>→ SourceLocation · → Device</td><td>14.3, 14.8</td></tr>
+      <tr><td>Device</td><td>stable device identity, model names, UDI-DI (nullable, for later)</td><td>→ DeviceProject · ← ExtractedFact</td><td>§18</td></tr>
+      <tr class="grp"><td colspan="4">Problems and requests</td></tr>
+      <tr><td>Contradiction</td><td>fact key, values, severity, status (open, resolved, accepted with reason), resolution note</td><td>→ ExtractedFact (2+)</td><td>14.8</td></tr>
+      <tr><td>GapItem</td><td>eSTAR section, rule, status</td><td>→ PlanSection (v1.0 entity, thin)</td><td>14.9</td></tr>
+      <tr><td>InfoRequest / ClientUploadLink</td><td>items, approved_by, sent at, status; link token hash, expiry, size limit, uses</td><td>→ GapItem · → ClientFile (responses)</td><td>14.9</td></tr>
+      <tr class="grp"><td colspan="4">Drafting and review</td></tr>
+      <tr><td>SectionDraft</td><td>eSTAR section, template version, status, model and prompt versions, generated at</td><td>→ DraftStatement (many)</td><td>14.10–14.13</td></tr>
+      <tr><td>DraftStatement</td><td>text, statement ID (Word bookmark), origin (generated, human), gate result</td><td>→ StatementCitation (many) · → ReviewEdit</td><td>14.10</td></tr>
+      <tr><td>StatementCitation</td><td>target: SourceLocation or FDA record passage; quoted span; value check result</td><td>→ SourceLocation / corpus passage</td><td>14.10</td></tr>
+      <tr><td>ReviewEdit</td><td>before, after, editor, imported at, material change flag</td><td>→ DraftStatement</td><td>14.14</td></tr>
+      <tr><td>ReadinessCheck</td><td>attachment, name length, size, format, template version, result</td><td>→ SectionDraft · → FileVersion</td><td>14.15</td></tr>
+      <tr><td>StyleSource</td><td>firm template or past wording, opt-in, enabled</td><td>→ Organisation</td><td>14.24</td></tr>
+      <tr class="grp"><td colspan="4">Measurement and consent</td></tr>
+      <tr><td>TimeEntry</td><td>user, project, activity code (A3), minutes, date</td><td>→ DeviceProject</td><td>14.20</td></tr>
+      <tr><td>DataUseConsent</td><td>scope, granted by, granted at; default off; no effect in stage 1</td><td>→ Organisation</td><td>§18</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ai">
+  <h2><span class="n">8</span>AI architecture</h2>
+  <h3><span class="n">8.1</span>Routes</h3>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Route</th><th>Approach</th><th>Model tier (ADR-007)</th><th>Guard</th></tr></thead>
+    <tbody>
+      <tr><td>Page triage</td><td>Is this page relevant, and to which section? Batch where latency allows.</td><td>Bulk: Haiku 5.5</td><td>Low-confidence pages escalate</td></tr>
+      <tr><td>Document classification</td><td>Structured output: type, section, reason</td><td>Bulk, escalating to Sonnet 5.5</td><td>Reason stored; correction loop</td></tr>
+      <tr><td>Fact extraction</td><td>Schema per document type (test report, IFU, specification, drawing title block, protocol)</td><td>Standard: Sonnet 5.5</td><td>Each value must point at a location whose text contains it (checked in code)</td></tr>
+      <tr><td>Free-text contradiction (IFU wording vs claims)</td><td>Pairwise comparison of candidate passages found by fact key and retrieval</td><td>Standard</td><td>Both spans required, or the finding is dropped</td></tr>
+      <tr><td>Section drafting</td><td>Grounded generation over the section's located passages, with document citations</td><td>Deep: Opus 5.5 for synthesis; Standard for revisions</td><td>Citation gate v2; uncited sentences removed</td></tr>
+      <tr><td>Summary tables</td><td>Values copied from ExtractedFact in code; the model only proposes rows and column mapping</td><td>Standard</td><td>Exact value match against the source</td></tr>
+      <tr><td>Client request wording</td><td>Short drafted message per gap</td><td>Standard</td><td>Consultant approval before sending</td></tr>
+    </tbody>
+  </table></div>
+  <p>Model IDs and list prices are as recorded in MRA-PRD-008 (Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per million tokens, cached 6 Oct 2026). They are reconfirmed at ADR-007. Two Claude API constraints recorded in v1.0 shape the design: document citations can't be combined with structured outputs, so drafting (prose, with citations) and extraction (structured) are separate routes; and current Opus and Sonnet don't allow forcing a specific tool call, so routes rely on schemas.</p>
+  <h3><span class="n">8.2</span>Cost per project (estimate, to be measured)</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Assumption</th><th>Simple</th><th>Complex</th></tr></thead>
+    <tbody>
+      <tr><td>Pages in the client package</td><td>1,500</td><td>6,000</td></tr>
+      <tr><td>Tokens per page</td><td>500</td><td>500</td></tr>
+      <tr><td>Pages extracted after triage</td><td>40%</td><td>40%</td></tr>
+      <tr><td>Sections drafted, times each</td><td>10 × 3</td><td>10 × 3</td></tr>
+      <tr class="hl"><td><strong>Estimated AI cost</strong></td><td><strong>$9</strong></td><td><strong>$36</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p><small>From the v4.0 viability review. OCR, vision on drawings and re-drafts after revisions could raise it. Metered per project from Phase 1 (AiCall), with an alert at 2× the estimate. Prompt caching covers stable section instructions and the project's fact table.</small></p>
+</section>
+
+<section id="gate">
+  <h2><span class="n">9</span>Citation gate v2</h2>
+  <ol class="plain">
+    <li><strong>Cite.</strong> Drafts cite FDA passages as <code>[R:record#passage]</code> and client sources as <code>[C:file_version#location]</code>.</li>
+    <li><strong>Resolve.</strong> Every cited ID must exist, belong to this workspace (or the public corpus), and point at a current FileVersion, or at a superseded one with a warning.</li>
+    <li><strong>Match.</strong> The quoted span must match the extracted text at that location. Numbers, units, standard editions and dates in the sentence must equal an ExtractedFact at a cited location.</li>
+    <li><strong>Cover.</strong> Every sentence with a factual entity (number, standard, material, method, date, K-number) must carry a citation.</li>
+    <li><strong>Remove and log.</strong> Failing sentences are removed and listed as open items for the consultant. The gate cannot be turned off.</li>
+  </ol>
+</section>
+
+<section id="contra">
+  <h2><span class="n">10</span>Contradiction engine</h2>
+  <ul class="plain">
+    <li><strong>Normalise</strong> facts by key: units (mm, in), durations (months, years), standard identifiers and editions (ISO 11135:2014 vs ISO 11135), sterilisation methods, material names (with a synonym list), model names.</li>
+    <li><strong>Compare deterministically</strong> across all current versions for the same device: different values for one key make a candidate. Results are compared against acceptance criteria where both are present.</li>
+    <li><strong>Use the model only for free text</strong> such as IFU wording against labelling or claims, and only with both passages shown.</li>
+    <li><strong>Rank</strong> by section and severity (for example, shelf life in the IFU above what the ageing report supports ranks high). Repeat findings are suppressed. Resolutions are kept, so a resolved conflict does not return unless a new version changes it.</li>
+    <li><strong>Evaluate</strong> on labelled packages: precision (≥ 70% judged real) is the gate metric, because false alarms cost consultant time.</li>
+  </ul>
+</section>
+
+<section id="word">
+  <h2><span class="n">11</span>Word round trip</h2>
+  <ul class="plain">
+    <li><strong>Export.</strong> Draft built on the firm's own template if one is set (FR-14.24), else ours. Each statement is wrapped in a bookmark carrying its statement ID. A Word comment on it lists the source file, version and page, with a link into the review screen. Open items appear as comments, not body text.</li>
+    <li><strong>Re-import.</strong> The edited DOCX is matched by bookmark. Changed text becomes a ReviewEdit marked human-approved. New text without a bookmark is kept as human text. Deleted statements are recorded.</li>
+    <li><strong>Fallback.</strong> If bookmarks are lost (copy-paste into another file), match by text similarity and ask the user to confirm.</li>
+    <li><strong>No add-in in Release 1.</strong> A Word add-in follows only if peers ask for it (ADR-015).</li>
+  </ul>
+</section>
+
+<section id="flows">
+  <h2><span class="n">12</span>Key flows</h2>
+  <h3><span class="n">12.1</span>Connect and sort</h3>
+  <p>User picks a folder → <code>StorageConnection</code> created with read-only scope → <code>intake.list</code> enumerates files → one <code>docproc.process(version)</code> job per file → classification and version jobs → <code>evidence.compare(project)</code> → sorted folder and problems ready. Target: 500 files in 60 minutes.</p>
+  <h3><span class="n">12.2</span>A client sends a new revision</h3>
+  <p>Webhook, delta feed or nightly hash finds a change → new <code>FileVersion</code> → pipeline steps 1–8 for that file → version chain updated (asks if unclear) → <code>evidence.compare</code> re-runs → revision impact lists every fact, finding, statement and table cell that cited the old version → the consultant chooses what to re-draft.</p>
+  <h3><span class="n">12.3</span>Draft and review</h3>
+  <p>Consultant requests a section → retrieve located passages and facts for the section → drafting route → citation gate v2 → thin FDA checks on cited predicates and standards → DOCX export → consultant edits in Word → re-import → ReviewEdits recorded → section marked reviewed → eQMS record export.</p>
+</section>
+
+<section id="security">
+  <h2><span class="n">13</span>Security, tenancy and data handling</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Control</th><th>Design</th><th>Requirement</th></tr></thead>
+    <tbody>
+      <tr><td>Isolation</td><td>RLS on every tenant table, including vectors and extracted facts; per-tenant KMS keys on the client bucket; cross-tenant read tests on every endpoint</td><td>NFR-7, NFR-8</td></tr>
+      <tr><td>Untrusted documents</td><td>Conversion in containers with no network and resource limits; document text passed to models inside clearly delimited data blocks; document routes have no tools; outputs schema-checked; injection test set in CI</td><td>NFR-16</td></tr>
+      <tr><td>Connector scopes</td><td>Read-only, least privilege, limited to the chosen folder where the provider allows it; tokens in the vault; revocable by the user and the firm admin; scopes listed in the data-handling pack</td><td>NFR-17, FR-14.1</td></tr>
+      <tr><td>Client upload links</td><td>Random token stored hashed; one project; expiry; size and type limits; malware scan; the consultant approves the request first</td><td>FR-14.9</td></tr>
+      <tr><td>Model data handling</td><td>Client content sent to the Claude API only for the request at hand; never used to train shared models; listed as a subprocessor</td><td>NFR-8, FR-14.17</td></tr>
+      <tr><td>PHI</td><td>Upload and fetch scan for likely PHI (clinical data raises this risk), with a warning and redaction prompt; no PHI by design</td><td>NFR-9</td></tr>
+      <tr><td>Deletion</td><td>Per-project deletion of extracted text, images, facts, drafts and embeddings within the stated period; deletion certificate; audit events keep hashes only</td><td>NFR-14</td></tr>
+      <tr><td>Assurance</td><td>SOC 2 readiness from Phase 3; external penetration test before the first paid live project; validation pack updated each release</td><td>NFR-18, FR-14.16</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="integrations">
+  <h2><span class="n">14</span>Integrations</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Integration</th><th>Mechanism</th><th>Phase</th></tr></thead>
+    <tbody>
+      <tr><td>Dropbox</td><td>Dropbox API, read-only content scope, folder chosen by the user; change detection by cursor or webhook</td><td>1</td></tr>
+      <tr><td>Box</td><td>Box API, read-only; folder chosen by the user; webhooks</td><td>1</td></tr>
+      <tr><td>SharePoint / OneDrive</td><td>Microsoft Graph, delegated read access; file picker; delta queries</td><td>1 (was 2)</td></tr>
+      <tr><td>Google Drive</td><td>Drive API, read-only scope; picker; changes feed</td><td>1 (was 2)</td></tr>
+      <tr><td>Inbound email</td><td>Per-project forwarding address; attachments into the pipeline</td><td>1</td></tr>
+      <tr><td>Client uploads</td><td>Upload portal (§4)</td><td>1</td></tr>
+      <tr><td>Identity</td><td>Managed identity provider, Google and Microsoft SSO (ADR-004)</td><td>1</td></tr>
+      <tr><td>Exports</td><td>DOCX with comments and bookmarks, XLSX, PDF records; eSTAR XML only if the spike passes (ADR-017)</td><td>2 (XML: 4)</td></tr>
+      <tr><td>eQMS (TrackWise, Greenlight Guru, others)</td><td>None. Firms file our PDF/DOCX records. A connector is built only when two paying firms ask for the same system.</td><td>Deferred</td></tr>
+      <tr><td>Payments, public API, MCP</td><td>As in v1.0</td><td>5</td></tr>
+    </tbody>
+  </table></div>
+  <p><small>Exact OAuth scopes are confirmed against each provider's current documentation in Phase 0 and listed in the data-handling pack.</small></p>
+</section>
+
+<section id="deploy">
+  <h2><span class="n">15</span>Deployment and operations</h2>
+  <ul class="plain">
+    <li><strong>Unchanged:</strong> AWS, one US region (ADR-001); containers on a managed service; Terraform; dev, staging and production, with the pilot as a production tenant.</li>
+    <li><strong>New:</strong> a <code>docproc</code> worker pool in an isolated subnet with no internet egress, scaled on queue depth; an OCR pool if the chosen engine is self-hosted.</li>
+    <li><strong>Observability:</strong> tracing across fetch → parse → classify → draft → gate, so a wrong statement can be traced to the stage that caused it. Per-project metrics: pages, unreadable files, AI cost, time to sorted folder.</li>
+    <li><strong>SLOs:</strong> 99.5% monthly availability; 500 files sorted in 60 minutes; one section drafted in 10 minutes.</li>
+    <li><strong>Runbooks:</strong> connector token revoked, provider outage, OCR backlog, injection alert, deletion request.</li>
+  </ul>
+</section>
+
+<section id="phase">
+  <h2><span class="n">16</span>Architecture by phase</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Phase</th><th>Architecture added</th></tr></thead>
+    <tbody>
+      <tr><td class="id">V</td><td>Throwaway scripts for the messy-folder test (not production code); eSTAR XML spike</td></tr>
+      <tr><td class="id">0</td><td>Repo, CI, Terraform, tenancy schema with RLS; ADR-001 to 018; evaluation harness with client-document sets; sandbox design</td></tr>
+      <tr><td class="id">1</td><td>Intake (connectors, upload portal, email); docproc pipeline; classification, versions, facts; contradiction engine; citation gate v2; thin FDA pipeline; time capture</td></tr>
+      <tr><td class="id">2</td><td>Drafting module; office module (Word round trip); revision impact; readiness checks; records export; style sources</td></tr>
+      <tr><td class="id">3</td><td>Hardening, penetration test, SOC 2 readiness, cost review, usage export</td></tr>
+      <tr><td class="id">4</td><td>v1.0 research and workspace modules (predicates, library, matrix, FDA tracker, manifests); eSTAR XML export if approved</td></tr>
+      <tr><td class="id">5</td><td>Full FDA corpus, public pages at the edge, Stripe and credit ledger, API and MCP, Lead Finder with model-isolation guard</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="adrs">
+  <h2><span class="n">17</span>Architecture decisions (ADRs)</h2>
+  <p class="lede">ADR-001 to ADR-009 are unchanged (see MRA-PRD-008 §14). ADR-010 is amended. ADR-011 to ADR-018 are new.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ADR</th><th>Decision</th><th>Alternatives considered</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="id">ADR-010 (amended)</td><td>"Registers, not repositories": linked files are fetched on demand and the copy is discarded after processing; only uploads are stored</td><td>Keep fetched copies for speed</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-011</td><td>A separate client-document pipeline, never sharing storage or jobs with the FDA corpus pipeline</td><td>One shared ingestion pipeline</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-012</td><td>Read-only connectors for four stores, built in the order Part A reports; change detection by provider feed plus a nightly hash sweep</td><td>Sync agent installed at the firm; copy-in import</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-013</td><td>OCR engine chosen by benchmark on real scanned test reports and drawings in Phase 0</td><td>Fix a managed OCR service now; self-hosted open-source only</td><td>Open</td></tr>
+      <tr><td class="id">ADR-014</td><td>One SourceLocation model for pages, cell ranges, slides and regions, used by facts, statements and findings</td><td>Per-format location tables</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-015</td><td>Word round trip through DOCX bookmarks and comments; no add-in in Release 1</td><td>Word add-in first; in-browser editor</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-016</td><td>Untrusted-document isolation: sandboxed conversion with no network; no tools on document routes; delimited data blocks; CI injection tests</td><td>Rely on prompt instructions alone</td><td>Proposed</td></tr>
+      <tr><td class="id">ADR-017</td><td>eSTAR XML mapping, versioned per template, only if the Phase V spike passes</td><td>Never generate XML; fill PDFs directly</td><td>Conditional</td></tr>
+      <tr><td class="id">ADR-018</td><td>Per-tenant data-use consent field, off by default, with no effect in stage 1</td><td>Add later when needed</td><td>Proposed</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="future">
+  <h2><span class="n">18</span>Keeping the long-term path open, at little cost</h2>
+  <p>The viability review sets out a long-term outlook: lab test data, suppliers and OEMs, customers, field operations, and patient data, each stage gated on the last. None of it is in scope. Three choices now keep it possible:</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Choice</th><th>What we do now</th></tr></thead>
+    <tbody>
+      <tr><td>One device record</td><td><code>Device</code> has a stable identity with a nullable UDI-DI, so tests, suppliers, clearances and field data can link to it later.</td></tr>
+      <tr><td>Data rights</td><td>No training on client data stays the default and a selling point. <code>DataUseConsent</code> exists from day one, off by default, never a condition of purchase.</td></tr>
+      <tr><td>Where data lives</td><td>"Registers, not repositories" and no PHI hold for stages 1–4. Stages 5–6 would need customer-controlled stores and a separate PHI environment, so the boundaries stay clean.</td></tr>
+    </tbody>
+  </table></div>
+  <p><small>Don't lead with this outlook in front of consultants. It adds to their worry about scale and could make us look like a future competitor.</small></p>
+</section>
+<footer>MRA-PRD-203 · Architecture v2.0 · Rev 2.0 · 7 Nov 2026 · Extends MRA-PRD-008 Rev 1.0. Libraries and services named are proposals for ADR review. Internal.</footer>
+</main>
+</div>
+<script src="../assets/prd.js"></script>
+</body>
+</html>

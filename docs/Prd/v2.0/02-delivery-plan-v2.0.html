@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI Delivery Plan v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD v2.0</b>
+  <a href="index.html">Overview</a>
+  <a href="01-prd-v2.0.html">PRD v2.0</a>
+  <a href="02-delivery-plan-v2.0.html" class="on">Delivery plan</a>
+  <a href="03-architecture-v2.0.html">Architecture</a>
+  <a href="ui2.0/index.html">UI 2.0</a>
+  <a href="../index.html">PRD v1.0 set</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#summary"><span>1</span>Summary</a></li>
+    <li><a href="#priorities"><span>2</span>Priorities</a></li>
+    <li><a href="#gatev"><span>3</span>Phase V: tests</a></li>
+    <li><a href="#phases"><span>4</span>Phases</a></li>
+    <li><a href="#timeline"><span>5</span>Timeline</a></li>
+    <li><a href="#pilot"><span>6</span>Pilot week by week</a></li>
+    <li><a href="#gates"><span>7</span>Gates</a></li>
+    <li><a href="#budget"><span>8</span>Engineering budget</a></li>
+    <li><a href="#team"><span>9</span>Team</a></li>
+    <li><a href="#fallback"><span>10</span>Fallbacks</a></li>
+    <li><a href="#risks"><span>11</span>Risks</a></li>
+    <li><a href="#decisions"><span>12</span>Decisions needed</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-202</span><span>Delivery plan</span><span>Rev 2.0 · 7 Nov 2026</span><span>Supersedes MRA-PRD-002</span></div>
+  <h1>Prioritised delivery plan: test first, then build where the hours are</h1>
+  <p class="sub">Six weeks of tests decide whether to build. If they pass, a 26-week pilot builds client intake and the contradiction check first, then drafting, then measures the result on two live 510(k)s. Research tools, self-serve and the Lead Finder wait until the pilot proves value.</p>
+  <div class="meta">
+    <div><b>Phase V</b>9 Nov – 18 Dec 2026. No product build; scripts and human checking only.</div>
+    <div><b>Pilot</b>26 weeks from Gate V. Week 1 is assumed to be 4 Jan 2027, subject to funding.</div>
+    <div><b>Budget</b>Within the $650K build line. Shortfall of 4–16 engineer-weeks before CTO sizing (§8).</div>
+    <div><b>Requirements</b><a href="01-prd-v2.0.html">MRA-PRD-201</a> (FR-14) and the kept v1.0 items</div>
+  </div>
+</header>
+
+<section id="summary">
+  <h2><span class="n">1</span>Summary</h2>
+  <div class="kpis">
+    <div class="kpi"><b>18 Dec</b><span>Gate V: problem size, solvability, willingness to pay</span></div>
+    <div class="kpi"><b>Wk 12</b><span>G1′: a client folder understood (sorting, gaps, contradictions)</span></div>
+    <div class="kpi"><b>Wk 20</b><span>G2′: ≥ 30% fewer hours on drafted sections</span></div>
+    <div class="kpi"><b>Wk 26 · M6</b><span>G3′: ≥ 25% fewer whole-project hours; 3 paying firms</span></div>
+    <div class="kpi"><b>M7–12</b><span>Workspace and research tools widen the value</span></div>
+    <div class="kpi"><b>M13+</b><span>Self-serve, free tier, Lead Finder, API, second market</span></div>
+  </div>
+  <p>v1.0's rule was "hours first". It was the right rule applied to an unmeasured task list. v2.0 applies it to the hours we measured: 60 of 98 on client material, 10 of 98 on FDA research. Nothing is built yet, so changing the order costs a planning decision rather than rework.</p>
+</section>
+
+<section id="priorities">
+  <h2><span class="n">2</span>Priorities</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>#</th><th>Capability</th><th>Requirements</th><th>Effort (est.)</th><th>Why this position</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">P0 · prove first (pilot, weeks 1–26)</td></tr>
+      <tr class="hl"><td class="id">1</td><td>Client file intake: connectors, multi-format parsing, sorting, versions</td><td>FR-14.1–14.7</td><td>10–14 eng-wk</td><td>The problem the consultant named. Everything else depends on it.</td></tr>
+      <tr class="hl"><td class="id">2</td><td>Gap and contradiction check, with a client request link</td><td>FR-14.8, 14.9</td><td>4–6 eng-wk</td><td>Visible value from day one, and useful even if drafting underperforms</td></tr>
+      <tr><td class="id">3</td><td>Adoption packs: free validation pack, data-handling pack, first-use path</td><td>FR-14.16, 14.17, 14.19</td><td>2–3 eng-wk equiv. + counsel</td><td>Removes stated objections cheaply; Test 3 needs them</td></tr>
+      <tr><td class="id">4</td><td>Time capture by activity</td><td>FR-14.20</td><td>1 eng-wk</td><td>Without it the pilot can't prove the ROI</td></tr>
+      <tr><td class="id">5</td><td>Thin FDA checks, SE table, citation gate (extended to client sources), workspaces, audit</td><td>Kept v1.0 items</td><td>Already planned</td><td>Our highest committed saving (SE 4 h, verification 1.5 h) and the trust layer</td></tr>
+      <tr class="hl"><td class="id">6</td><td>eSTAR section drafting and summary tables, with page-level citations, in Word</td><td>FR-14.10, 14.11, 14.14</td><td>8 eng-wk</td><td>22 h of section text on the Huber project; 130 h of documents on the pump project</td></tr>
+      <tr><td class="id">7</td><td>Revision impact when a client sends a new version</td><td>FR-14.21</td><td>2 eng-wk (est.)</td><td>Late revisions cause rework; this is cheap once statements carry sources</td></tr>
+      <tr><td class="id">8</td><td>Device description, admin documents, readiness package, eQMS records, firm style sources</td><td>FR-14.12, 14.13, 14.15, 14.18, 14.24</td><td>3–5 eng-wk</td><td>Low risk: 8 h of admin work today, target saving 3 h</td></tr>
+      <tr class="grp"><td colspan="5">P1 · after the pilot proves value (M7–12)</td></tr>
+      <tr><td class="id">9</td><td>Predicate ranking and lineage, research library, claim–evidence matrix, FDA question tracker, submission record</td><td>v1.0 PRD 1–2; FR-14.23</td><td>As planned</td><td>Sound features, but they should not lead</td></tr>
+      <tr><td class="id">10</td><td>eSTAR XML export (if the spike works); AI-letter response drafts</td><td>Spike; P5-10</td><td>Spike 1 wk</td><td>Task 20 (8 h) and task 24 (unmeasured; up to 9 h on a complex filing)</td></tr>
+      <tr><td class="id">11</td><td>Raw-data linking; usage export for rebilling</td><td>FR-14.5, 14.22</td><td>1–2 eng-wk</td><td>Helps rebilling and traceability; not needed to prove value</td></tr>
+      <tr class="grp"><td colspan="5">P2 · defer until G3′ and G4′ are met (M13+)</td></tr>
+      <tr><td class="id">12</td><td>Lead Finder, self-serve checkout and credits, free tier, product-code pages, PR-1, PR-4, PR-5, API and MCP</td><td>v1.0 PRD 3, 5</td><td>Frees 8+ eng-wk now</td><td>The Lead Finder was $199K of the $1.15M plan-case M18 run-rate. Consultancies still get it later as a reason to stay.</td></tr>
+      <tr><td class="id">13</td><td>eQMS connectors, change assessment, manufacturer edition</td><td>P5-01–05, P5-33</td><td>—</td><td>Only when two paying firms ask for the same eQMS, or fallback (a) validates manufacturers</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="gatev">
+  <h2><span class="n">3</span>Phase V: the tests that decide whether to build</h2>
+  <p class="lede">Thresholds are fixed now, before any results arrive, so that we cannot talk ourselves into a pass.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Test</th><th>Method</th><th>When</th><th>Pass</th><th>If it fails</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 · Is the problem big enough?</strong></td><td>Workbook v4.0 Part A from at least 5 consultants at different firms, plus a 20-minute call with the consultant who wrote to us when they are back from travel</td><td>Part A due 20 Nov; results 27 Nov</td><td>Median ≥ 25% of section hours are finding, chasing and reconciling. ≥ 3 of 5 mark the organiser or drafter "would pay" or higher. No required integration beyond file storage.</td><td>The problem is judgement, or fit is a blocker: go to fallback</td></tr>
+      <tr><td><strong>2 · Can we solve it?</strong></td><td>"Messy folder" test: two closed packages through a prototype (scripts plus human checking). Consultants score draft sections and flagged contradictions and log their time.</td><td>16 Nov – 11 Dec</td><td>≥ 30% fewer hours on those sections; ≥ 70% of statements accepted without material change; zero uncited facts; ≥ 1 real contradiction that the consultant had to fix</td><td>Find out why. If drafts cost more to review than to write, drop drafting and test organiser-only value.</td></tr>
+      <tr><td><strong>3 · Will they pay?</strong></td><td>Paid pilot offer on a live project, with written validation and data-handling packs (v0)</td><td>Offers from 30 Nov; decision by 18 Dec</td><td>≥ 3 firms sign (for example the $500 First Project or a Practice pack deposit), and their IT or quality owner raises no blocking objection</td><td>Interest without payment means nice-to-have: go to fallback</td></tr>
+      <tr><td><strong>Spike · eSTAR XML</strong></td><td>Generate XML and import it into a blank nIVD v7.1 template in Acrobat Pro</td><td>1 week, 16–20 Nov</td><td>Fields fill with no errors and the form's own logic still runs; the mapping can be versioned</td><td>Keep Word and readiness outputs; the consultant fills the form</td></tr>
+    </tbody>
+  </table></div>
+  <h3><span class="n">3.1</span>Phase V week by week</h3>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Week of</th><th>Founders</th><th>Product / engineering</th><th>Consultants</th></tr></thead>
+    <tbody>
+      <tr><td class="id">9 Nov</td><td>Approve decisions 1–6 (§12). Get Consultant #1's written permission. Confirm Part A reached peers (planned for 6 Nov).</td><td>Find two packages: client-approved or redacted, or else built from public 510(k) summaries (weaker evidence). Prototype scripts.</td><td>Peers fill in Part A</td></tr>
+      <tr><td class="id">16 Nov</td><td>Validation and data-handling packs v0 drafted; counsel review booked</td><td>eSTAR XML spike. Prototype run on package 1.</td><td>Part A due 20 Nov</td></tr>
+      <tr><td class="id">23 Nov</td><td>One follow-up. If fewer than 3 replies, ask for names or offer a paid 30-minute call (disclose any payment).</td><td>Package 1 scored; contradictions reviewed</td><td>Scoring session 1</td></tr>
+      <tr><td class="id">30 Nov</td><td>Test 1 read-out. Paid pilot offers out.</td><td>Package 2 run</td><td>Scoring session 2</td></tr>
+      <tr><td class="id">7 Dec</td><td>Pilot terms negotiated with the firms' quality and IT owners</td><td>Test 2 read-out by 11 Dec. CTO sizes the budget gap (§8).</td><td>—</td></tr>
+      <tr><td class="id">14 Dec</td><td><strong>Gate V, 18 Dec:</strong> build, fall back, or stop</td><td>If build: ADRs 011–018 ready for Phase 0</td><td>Combined, anonymised results shared with everyone who replied</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="phases">
+  <h2><span class="n">4</span>Phases</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Phase</th><th>Window</th><th>Goal</th><th>Main deliverables</th><th>Exit gate</th></tr></thead>
+    <tbody>
+      <tr><td class="id">V · Validate</td><td>9 Nov – 18 Dec 2026</td><td>Decide with evidence; no product build</td><td>Part A results; messy-folder prototype on 2 packages; paid pilot offers; eSTAR XML spike; packs v0</td><td>Gate V: all three tests pass</td></tr>
+      <tr><td class="id">0 · Foundation</td><td>Wk 1–4</td><td>Baseline and architecture</td><td>Time study with the A3 activity codes on 2–3 past 510(k)s; ADR-001 to 018; tenant; validation and data-handling packs v1; evaluation set from real packages</td><td>G0′: baseline signed off by the pilot RA lead</td></tr>
+      <tr><td class="id">1 · Evidence Core</td><td>Wk 3–12</td><td>Understand a client folder</td><td>FR-14.1–14.9, 14.16, 14.17, 14.19, 14.20; thin FDA checks; extended citation gate; workspaces; audit</td><td>G1′</td></tr>
+      <tr><td class="id">2 · Drafting</td><td>Wk 11–20</td><td>Turn it into sections</td><td>FR-14.10–14.15, 14.18, 14.21, 14.24; Word round trip</td><td>G2′</td></tr>
+      <tr><td class="id">3 · Pilot proof</td><td>Wk 19–26</td><td>A measured result on 2 live 510(k)s</td><td>Time capture read-out; pilot report; security review; SOC 2 readiness starts; FR-14.22</td><td>G3′</td></tr>
+      <tr><td class="id">4 · Workspace and research</td><td>M7–12</td><td>Widen the value</td><td>Predicate ranking, research library, claim–evidence matrix, FR-14.23 FDA question tracker, submission record; eSTAR XML export if the spike worked; AI-letter response drafts</td><td>G4′</td></tr>
+      <tr><td class="id">5 · Market and adjacency</td><td>M13+</td><td>Open the funnel</td><td>Self-serve, free tier, product-code pages, PR-1, PR-4, PR-5, API and MCP, Lead Finder, change assessment; manufacturer edition if fallback (a) validated it</td><td>Series A readiness, dates reset from G3′</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="timeline">
+  <h2><span class="n">5</span>Timeline (months from Gate V)</h2>
+  <div class="gantt"><div class="g" role="img" aria-label="Phase timeline by month, starting January 2027">
+    <div></div>
+    <div class="ax" style="grid-column:2">M1</div><div class="ax" style="grid-column:4">M3</div><div class="ax" style="grid-column:7">M6</div><div class="ax" style="grid-column:10">M9</div><div class="ax" style="grid-column:13">M12</div><div class="ax" style="grid-column:16">M15</div><div class="ax" style="grid-column:19">M18</div><div class="ax" style="grid-column:22">M21</div><div class="ax" style="grid-column:25">M24</div>
+    <div class="lbl">0 · Foundation<small>wk 1–4</small></div><div class="bar d" style="grid-column:2 / 3">wk 1–4</div>
+    <div class="lbl">1 · Evidence Core<small>wk 3–12</small></div><div class="bar p" style="grid-column:2 / 5">wk 3–12</div>
+    <div class="lbl">G1′ folder understood</div><div class="gate" style="grid-column:5"><span>Wk 12</span></div>
+    <div class="lbl">2 · Drafting<small>wk 11–20</small></div><div class="bar p" style="grid-column:4 / 7">wk 11–20</div>
+    <div class="lbl">3 · Pilot proof<small>wk 19–26</small></div><div class="bar m" style="grid-column:6 / 8">M5–6</div>
+    <div class="lbl">G3′ pilot result</div><div class="gate" style="grid-column:8"><span>M6</span></div>
+    <div class="lbl">4 · Workspace and research</div><div class="bar" style="grid-column:8 / 14">M7–12</div>
+    <div class="lbl">5 · Market and adjacency</div><div class="bar l" style="grid-column:14 / 25">M13+</div>
+    <div class="lbl">Self-serve, free tier, Lead Finder</div><div class="bar l" style="grid-column:14 / 19">M13–17</div>
+    <div class="lbl">Series A readiness</div><div class="gate" style="grid-column:19"><span>M18 (to re-date at G3′)</span></div>
+  </div></div>
+  <p><small>Phase V (9 Nov – 18 Dec 2026) runs before M1 and is not drawn. M1 is assumed to be January 2027.</small></p>
+</section>
+
+<section id="pilot">
+  <h2><span class="n">6</span>Pilot plan, week by week</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Weeks</th><th>Engineering</th><th>Pilot firm</th><th>RA expert / product</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1–2</td><td>ADRs; repo, CI, environments; pilot tenant; tenancy schema with RLS</td><td>Timesheets or estimates on 2–3 past 510(k)s using the A3 activities; name the RA lead and the quality/IT owner</td><td>Time-study interviews; choose 2 live 510(k)s</td><td>Baseline by activity</td></tr>
+      <tr><td class="id">3–4</td><td>First two connectors (from Part A); upload and forwarding address; parsing for PDF, DOCX and XLSX with locations</td><td>Connect a closed project; review validation pack v1</td><td>Label evaluation set: file types, sections, versions, contradictions on 2 real packages</td><td>Files in, located</td></tr>
+      <tr><td class="id">5–8</td><td>Classification and section map; versions and duplicates; PPTX, scans (OCR), CSV, images, drawing title blocks; thin FDA checks</td><td>Correct misclassifications; time capture on live 510(k) #1</td><td>Score classification and version accuracy</td><td>Sorted folder v1</td></tr>
+      <tr><td class="id">9–12</td><td>Contradiction check; missing-information list; client request and upload link; first-use path; extended citation gate</td><td>Send the first client request through the tool</td><td>Judge contradiction findings; review the request wording</td><td><strong>G1′</strong></td></tr>
+      <tr><td class="id">11–16</td><td>Section drafting (sterilisation and shelf life, biocompatibility, performance testing); summary tables; Word export with source comments</td><td>Review drafts in Word on 510(k) #1</td><td>Write section rubrics; score acceptance</td><td>Drafts v1</td></tr>
+      <tr><td class="id">15–20</td><td>Word re-import; revision impact; device description; admin documents; readiness package; eQMS records; firm style sources</td><td>Use on 510(k) #2; file records in the eQMS</td><td>Measure hours on drafted sections</td><td><strong>G2′</strong></td></tr>
+      <tr><td class="id">19–26</td><td>Fixes from pilot feedback; cost metering review; security review; SOC 2 readiness start; usage export</td><td>Final time logs on both projects; validation log</td><td>Compare to baseline; write the pilot report</td><td><strong>G3′ pilot result</strong></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="gates">
+  <h2><span class="n">7</span>Gates</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Gate</th><th>When</th><th>Pass criteria (proposed)</th><th>If it fails</th></tr></thead>
+    <tbody>
+      <tr><td class="id">Gate V</td><td>18 Dec 2026</td><td>Tests 1, 2 and 3 in §3 all pass</td><td>Fallback in §10</td></tr>
+      <tr><td class="id">G0′ Baseline</td><td>Wk 4</td><td>Baseline hours by activity signed off; 2 live 510(k)s selected; ADRs approved; quality/IT owner has read the packs</td><td>Use structured estimates; extend Phase 0 by up to 2 weeks</td></tr>
+      <tr><td class="id">G1′ Folder understood</td><td>Wk 12</td><td>Classification ≥ 90% and versions correct on 2 real packages; ≥ 70% of contradiction findings real; RA lead accepts ≥ 75% of findings; first useful output in &lt; 1 h; tenant isolation tests pass</td><td>Do not start drafting. Fix intake, or sell the organiser alone (fallback b).</td></tr>
+      <tr><td class="id">G2′ Drafting works</td><td>Wk 20</td><td>≥ 30% fewer hours on drafted sections on a live 510(k); ≥ 70% of statements accepted; 0 uncited facts; Word round trip without formatting loss</td><td>Keep the organiser and tables; narrow drafting to the sections that passed</td></tr>
+      <tr><td class="id">G3′ Pilot result</td><td>Wk 26 · M6</td><td>Whole-project hours ≥ 25% lower on 2 live 510(k)s; no rise in FDA deficiencies; firm's validation effort &lt; 8 h; ≥ 3 paying firms</td><td>Report the measured result honestly; re-plan Phases 4–5 around what worked</td></tr>
+      <tr><td class="id">G4′ Retention</td><td>M12</td><td>≥ 80% of pilot firms renew; ≥ 12 paying consultancies; ≥ 2 projects per firm per quarter; AI cost within 2× the estimate</td><td>No Phase 5 spend; reprice or narrow</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="budget">
+  <h2><span class="n">8</span>Engineering budget check</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Item</th><th>Engineer-weeks (est.)</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>P0 new work from addendum Rev 0.1 (priorities 1, 2, 3, 6, 8)</td><td>+25 to +33</td><td>Our estimate; needs CTO review</td></tr>
+      <tr><td>P0 new in v2.0 (FR-14.20, 14.21, 14.24)</td><td>+3 to +5</td><td>Our estimate</td></tr>
+      <tr><td>Lead Finder moved to Phase 5</td><td>−8</td><td>From business plan r6</td></tr>
+      <tr><td>Submission Workspace moved out of the pilot</td><td>−10 to −12</td><td>From MRA-PRD-002 §10</td></tr>
+      <tr><td>Retainer billing and free-tier work moved out of the pilot</td><td>−4</td><td>From business plan r6</td></tr>
+      <tr class="hl"><td><strong>Shortfall before further offsets</strong></td><td><strong>4 to 16</strong></td><td></td></tr>
+      <tr><td>Phase 1 research items moved to Phase 4 (predicate ranking, lineage, research library, snapshot diff)</td><td>Not sized</td><td>Likely covers much of the gap; the CTO sizes it by 11 Dec</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><p><strong>If the shortfall holds after CTO sizing:</strong> launch with two connectors rather than four, limit parsing to the file types peers report most often, and move FR-14.12 and FR-14.24 to Phase 4. Do not cut the citation gate, the validation pack or time capture.</p></div>
+</section>
+
+<section id="team">
+  <h2><span class="n">9</span>Team</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Role</th><th>v1.0 pilot plan</th><th>v2.0 focus</th></tr></thead>
+    <tbody>
+      <tr><td>CEO, product and regulatory</td><td>Customer lead, time study, gates</td><td>Phase V tests, pilot sales to firms' quality and IT owners, Consultant #1 permission</td></tr>
+      <tr><td>CTO, AI/ML lead</td><td>Retrieval, evaluation, citation gate</td><td>Client-document pipeline design, extended citation gate, drafting evaluation, budget sizing</td></tr>
+      <tr><td>RA domain expert (0.25 FTE, M1–6)</td><td>Evaluation set, gap rules</td><td>Contradiction and section rubrics, scoring drafts, validation pack content</td></tr>
+      <tr><td>Senior data engineer (from M1)</td><td>FDA ingestion</td><td>Parsing, OCR, table extraction and locations; FDA thin checks</td></tr>
+      <tr><td>Senior backend engineer (from M2)</td><td>Tenancy, workspace services</td><td>Connectors, upload service, Word round trip, records export</td></tr>
+      <tr><td>Frontend engineer (from M3)</td><td>Predicate UI, eSTAR plan</td><td>Sorted folder, problems, request and review screens</td></tr>
+      <tr><td>AI/ML engineer, QA/evaluation engineer</td><td>As planned</td><td>Classification, contradiction and drafting routes; prompt-injection and regression suites</td></tr>
+      <tr><td>Counsel (external)</td><td>DPA only</td><td>Data-handling pack and client clause before Test 3. Cost not yet quoted.</td></tr>
+    </tbody>
+  </table></div>
+  <p><small>The +$28K for earlier backend and frontend starts (MRA-PRD-002 §9) still applies.</small></p>
+</section>
+
+<section id="fallback">
+  <h2><span class="n">10</span>Fallbacks, in order</h2>
+  <ol class="plain">
+    <li><strong>(a) Manufacturers' RA teams.</strong> Sell the same workflow to manufacturers that file repeatedly (about 1,869 companies with 2–4 clearances and 717 with 5 or more, 2021–2025). Validate with one RA/QA lead first.</li>
+    <li><strong>(b) Organiser only.</strong> Sell intake, sorting and the contradiction check at a lower price, without drafting.</li>
+    <li><strong>(c) Stop.</strong> If neither passes, stop the build and keep the cash.</li>
+  </ol>
+</section>
+
+<section id="risks">
+  <h2><span class="n">11</span>Risks</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>The 60 hours are mostly expert judgement, not information handling</td><td><span class="chip c-must">High</span></td><td>Test 1 measures it before any build; fallback (b)</td></tr>
+      <tr><td>Reviewing drafts costs more than writing them</td><td><span class="chip c-must">High</span></td><td>Test 2 measures review time; drafting narrows to sections that pass G2′</td></tr>
+      <tr><td>Client agreements forbid outside AI processing</td><td><span class="chip c-must">High</span></td><td>Data-handling pack, client clause, per-project deletion, US hosting; A4 asks what would have to be true</td></tr>
+      <tr><td>No real package available for Test 2</td><td><span class="chip c-should">Medium</span></td><td>Use a package built from public 510(k) summaries; treat the result as weaker evidence</td></tr>
+      <tr><td>Competitors already sell drafting (Complizen, Assyro claims)</td><td><span class="chip c-should">Medium</span></td><td>Compete on multi-client consultancy fit, existing folders, no competing consulting service line, and measured acceptance data. Ask peers what they found.</td></tr>
+      <tr><td>AI cost per project is higher than estimated (large scanned packages)</td><td><span class="chip c-should">Medium</span></td><td>Measure from Phase 1; Haiku triage before Sonnet extraction; alert at 2× the estimate</td></tr>
+      <tr><td>Prompt injection through client files</td><td><span class="chip c-should">Medium</span></td><td>NFR-16; documents never become instructions; CI tests</td></tr>
+      <tr><td>The pilot slides into a system of record</td><td><span class="chip c-should">Medium</span></td><td>Principle 2 and out-of-scope list enforced at review</td></tr>
+      <tr><td>Consultant #1 withholds permission</td><td><span class="chip c-could">Low</span></td><td>Replace their hours with Part A medians; v3.0/v4.0 materials then need revising</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="decisions">
+  <h2><span class="n">12</span>Decisions needed from the founders</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>#</th><th>Decision</th><th>Recommendation</th><th>By</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1</td><td>Adopt the v2.0 build order (client evidence first), subject to Gate V?</td><td>Yes</td><td>13 Nov</td></tr>
+      <tr><td class="id">2</td><td>Reverse the business plan's trade: eSTAR drafting in, Lead Finder to Phase 5?</td><td>Yes, accepting a lower M18 run-rate (business plan r7 §17)</td><td>13 Nov</td></tr>
+      <tr><td class="id">3</td><td>Make the validation pack free and bring it forward?</td><td>Yes; give up the $10K add-on</td><td>13 Nov</td></tr>
+      <tr><td class="id">4</td><td>Approve the Gate V thresholds in §3 before results arrive?</td><td>Yes. Change them now if you disagree, not later.</td><td>13 Nov</td></tr>
+      <tr><td class="id">5</td><td>Hold the "40–120 hours" claim and the "no sales motion" story in the investor deck until tests report?</td><td>Yes; re-issue the deck after Gate V</td><td>13 Nov</td></tr>
+      <tr><td class="id">6</td><td>Who gets Consultant #1's written permission?</td><td>CEO, this week</td><td>13 Nov</td></tr>
+      <tr><td class="id">7</td><td>Approve the new requirements FR-14.20 to 14.24?</td><td>Yes; 14.20 and 14.21 are needed to prove and keep the ROI</td><td>18 Dec</td></tr>
+      <tr><td class="id">8</td><td>Pilot start date and funding (week 1 assumed 4 Jan 2027)</td><td>Confirm at Gate V</td><td>18 Dec</td></tr>
+      <tr><td class="id">9</td><td>Counsel budget for the data-handling pack</td><td>Get a quote this month; it is needed for Test 3</td><td>20 Nov</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<footer>MRA-PRD-202 · Delivery plan v2.0 · Rev 2.0 · 7 Nov 2026 · Supersedes MRA-PRD-002 Rev 1.0. Effort figures are estimates for engineering review. Internal.</footer>
+</main>
+</div>
+<script src="../assets/prd.js"></script>
+</body>
+</html>

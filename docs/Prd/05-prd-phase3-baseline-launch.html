@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRD 3 Baseline Launch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html" class="on">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#pilot"><span>2</span>Pilot proof</a></li>
+    <li><a href="#corpus"><span>3</span>Full corpus</a></li>
+    <li><a href="#pathway"><span>4</span>Pathway and report</a></li>
+    <li><a href="#commerce"><span>5</span>Self-serve and billing</a></li>
+    <li><a href="#free"><span>6</span>Free tier and pages</a></li>
+    <li><a href="#harden"><span>7</span>Hardening</a></li>
+    <li><a href="#accept"><span>8</span>Exit gate</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-103</span><span>Phase 3</span><span>Weeks 21–26 · M5–6</span><span>Rev 1.0</span></div>
+  <h1>PRD 3: Pilot proof and baseline launch</h1>
+  <p class="sub">Measure the pilot result, widen the data from the pilot's product codes to the full US corpus, and open the product to the market on the business-plan terms: PR-1 and PR-2, card checkout, retainer and credits, free tier.</p>
+  <div class="meta">
+    <div><b>Business plan</b>"Baseline live and self-serve open", M6</div>
+    <div><b>Projects</b>PR-1 Pathway Determination · PR-2 Predicate and Comparative Study</div>
+    <div><b>Gate</b>G3: pilot ≥ 50% and REQ §15 baseline thresholds</div>
+    <div><b>Note</b>Commerce items may slip to M7 by founder decision if the pilot needs the capacity</div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose</h2>
+  <p>Phase 3 does two jobs. It produces the pilot's measured result and the customer's go/no-go. It also turns the pilot build into the month-6 public baseline: the same features on the full corpus, plus the self-serve purchase path the business model depends on.</p>
+</section>
+
+<section id="pilot">
+  <h2><span class="n">2</span>Pilot proof</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P3-01</td><td>In-app time capture per activity code (RA-PRED, RA-RES, RA-PLAN, RA-XCHK, RA-AIR, RA-REC), optional and editable</td><td><span class="chip c-should">Should</span></td><td>Totals by project and activity export to CSV</td></tr>
+      <tr><td class="id">P3-02</td><td>Pilot report: baseline vs pilot hours, quality metrics, expert acceptance rate, defects</td><td><span class="chip c-must">Must</span></td><td>Signed by the customer's RA lead</td></tr>
+      <tr><td class="id">P3-03</td><td>Usage analytics: features used, time to first predicate set, exports</td><td><span class="chip c-must">Must</span></td><td>No client content in analytics events</td></tr>
+      <tr><td class="id">P3-04</td><td>Pilot feedback backlog triaged into GA (PRD 4) or adjacency (PRD 5)</td><td><span class="chip c-must">Must</span></td><td>Every item has an owner and phase</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="corpus">
+  <h2><span class="n">3</span>Full-corpus data</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P3-10</td><td>Extract all 510(k) summaries in scope (post-2010 at least; earlier where OCR quality allows) through the batch pipeline</td><td>REQ Phase 1b</td><td><span class="chip c-must">Must</span></td><td>Field-level F1 ≥ 0.90 on a 300-summary held-out set spanning panels</td></tr>
+      <tr><td class="id">P3-11</td><td>All Tier 1 sources ingested and snapshotted: 510(k), classification, PMA, De Novo, registration and listing, recognised standards, MDUFA performance, guidance, recalls</td><td>REQ §5, §6</td><td><span class="chip c-must">Must</span></td><td>Snapshot reproducibility shown end to end</td></tr>
+      <tr><td class="id">P3-12</td><td>Predicate graph and product-code dossiers rebuilt per snapshot</td><td>REQ §7</td><td><span class="chip c-must">Must</span></td><td>Lineage queries &lt; 1 s</td></tr>
+      <tr><td class="id">P3-13</td><td>Entity resolution of company names across sources</td><td>REQ §6 Stage 3</td><td><span class="chip c-must">Must</span></td><td>≥ 98% precision on a labelled sample</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="pathway">
+  <h2><span class="n">4</span>Pathway determination and report (PR-1)</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P3-20</td><td>Pathway determination (exempt, 510(k), De Novo, PMA, HDE) with the basis stated</td><td>FR-2.3</td><td><span class="chip c-must">Must</span></td><td>≥ 95% agreement with blind expert review of 100 profiles</td></tr>
+      <tr><td class="id">P3-21</td><td>Exemption limitations and general controls for exempt devices</td><td>FR-2.4</td><td><span class="chip c-must">Must</span></td><td>Cites the CFR limitation text</td></tr>
+      <tr><td class="id">P3-22</td><td>High-consequence flags (Class III, implant, life-sustaining, no viable predicate) with Pre-Sub recommendation; flag logic published and free of revenue signals</td><td>FR-2.5, BP §7 guardrail</td><td><span class="chip c-must">Must</span></td><td>Flag rate reported; no pricing or lead data reachable from the model context</td></tr>
+      <tr><td class="id">P3-23</td><td>Regulatory Strategy Report: classification, pathway, predicates, standards and testing, risks; PDF, DOCX, HTML with branding</td><td>FR-10.1, 10.3</td><td><span class="chip c-must">Must</span></td><td>Full report &lt; 10 min at p95; 100% citation groundedness</td></tr>
+      <tr><td class="id">P3-24</td><td>Every report versioned, immutable once issued, stamped with snapshot and model versions</td><td>FR-10.4</td><td><span class="chip c-must">Must</span></td><td>Regenerates identically against the same snapshot</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="commerce">
+  <h2><span class="n">5</span>Self-serve purchase, retainer and credits</h2>
+  <p>Implements the pricing rules in MRA-BIZ-001 r6 §5. The rules are encoded in a credit ledger, not in UI logic.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P3-30</td><td>Self-serve signup and card checkout</td><td>BP §13</td><td><span class="chip c-must">Must</span></td><td>Stranger to paid project in &lt; 5 minutes, no human involved</td></tr>
+      <tr><td class="id">P3-31</td><td>First Project at $500, once per account</td><td>BP R-1</td><td><span class="chip c-must">Must</span></td><td>Enforced in the ledger per organisation and payment identity</td></tr>
+      <tr><td class="id">P3-32</td><td>Ad-hoc second project at $1,500, capped at 2 a year; from the third, a pack plus retainer</td><td>BP R-2</td><td><span class="chip c-must">Must</span></td><td>Cap enforced per rolling 12 months</td></tr>
+      <tr><td class="id">P3-33</td><td>Packs (5, 12, 30, 100) at pack project rates; $500/month retainer that continues between packs</td><td>BP R-3, ladder</td><td><span class="chip c-must">Must</span></td><td>Retainer keeps billing after a pack is used up; new pack rate applies on purchase</td></tr>
+      <tr><td class="id">P3-34</td><td>Credits transferable across a consultancy's client workspaces, with per-client usage export</td><td>BP M-3</td><td><span class="chip c-must">Must</span></td><td>Allocation and usage visible per workspace</td></tr>
+      <tr><td class="id">P3-35</td><td>Free re-runs against a newer snapshot</td><td>BP M-2</td><td><span class="chip c-must">Must</span></td><td>No credit consumed on re-run</td></tr>
+      <tr><td class="id">P3-36</td><td>Deferred revenue on unconsumed credits; invoices and receipts</td><td>BP §13</td><td><span class="chip c-must">Must</span></td><td>Ledger reconciles with the payment provider daily</td></tr>
+      <tr><td class="id">P3-37</td><td>Academic and non-profit pricing ($250, retainer waived) after verification</td><td>BP ladder</td><td><span class="chip c-could">Could</span></td><td>Manual verification acceptable at launch</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="free">
+  <h2><span class="n">6</span>Free tier and product-code pages</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P3-40</td><td>Free determination: first section of the report and a watermarked preview</td><td>BP §13</td><td><span class="chip c-must">Must</span></td><td>Paid sections not reachable without credits</td></tr>
+      <tr><td class="id">P3-41</td><td>Public product-code pages (about 1,500): clearance volume, incumbents, typical review time, common standards, recall themes, with a free-determination call to action</td><td>BP §12</td><td><span class="chip c-must">Must</span></td><td>Pages built from snapshots; indexable; load &lt; 1.5 s</td></tr>
+      <tr><td class="id">P3-42</td><td>Funnel instrumentation for the five conversion rates</td><td>BP §12, R-3</td><td><span class="chip c-must">Must</span></td><td>Weekly report from launch day</td></tr>
+      <tr><td class="id">P3-43</td><td>Lead consent prompt stored for later use by Lead Finder (M15), double opt-in</td><td>BP §7, L-2</td><td><span class="chip c-should">Should</span></td><td>Nothing leaves the tenant without an explicit tick</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="harden">
+  <h2><span class="n">7</span>Hardening</h2>
+  <ul class="plain">
+    <li>Load test at 10× pilot usage; NFR-1 latency targets met.</li>
+    <li>External penetration test scheduled; critical findings fixed before public launch.</li>
+    <li>Backups and restore drill; disaster-recovery runbook.</li>
+    <li>Status page and incident process.</li>
+    <li>SOC 2 readiness programme started (policies, access reviews, change management).</li>
+  </ul>
+</section>
+
+<section id="accept">
+  <h2><span class="n">8</span>Exit gate G3 (week 26, M6)</h2>
+  <ul class="plain">
+    <li>Pilot: scoped hours ≥ 50% lower on ≥ 2 live 510(k)s; no rise in AI deficiencies; RA lead signs the report.</li>
+    <li>REQ §15 baseline thresholds met: top-3 code ≥ 90%, pathway ≥ 95%, precision@5 ≥ 0.80, 100% citations, extraction F1 ≥ 0.90.</li>
+    <li>At least four design partners on real devices (BP baseline milestone); the pilot consultancy counts as one.</li>
+    <li>First projects sold without a human involved.</li>
+  </ul>
+</section>
+
+<footer>MRA-PRD-103 · PRD 3 Pilot proof and baseline launch · Traces to MRA-BIZ-001 r6 §5, §12–13 and MRA-REQ-001 Phase 1b.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

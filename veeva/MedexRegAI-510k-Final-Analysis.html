@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI 510(k) Pilot Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: report with a sticky contents rail on wide screens, one column on phones. Tables scroll inside their own frames. */
+:root{
+  --bg:#f5f7f6; --surface:#ffffff; --sunk:#eef2f1; --ink:#16232a; --muted:#566469; --line:#d6dedc;
+  --accent:#0d6468; --accent-soft:#e0eeed; --accent-ink:#0a4f52;
+  --good:#2b7340; --good-soft:#e3f1e6; --warn:#94600a; --warn-soft:#f8eed9; --bad:#a83a2c; --bad-soft:#f8e4e0;
+  --shadow:0 1px 2px rgba(16,35,42,.06),0 4px 16px rgba(16,35,42,.05);
+  --f-display:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111719; --surface:#182124; --sunk:#141c1e; --ink:#e3eae8; --muted:#97a6a9; --line:#2a3639;
+  --accent:#5bb8b3; --accent-soft:#1a3332; --accent-ink:#8fd3cf;
+  --good:#71c08a; --good-soft:#18301f; --warn:#e2aa45; --warn-soft:#33280f; --bad:#ec8576; --bad-soft:#3a1c18;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111719; --surface:#182124; --sunk:#141c1e; --ink:#e3eae8; --muted:#97a6a9; --line:#2a3639;
+  --accent:#5bb8b3; --accent-soft:#1a3332; --accent-ink:#8fd3cf;
+  --good:#71c08a; --good-soft:#18301f; --warn:#e2aa45; --warn-soft:#33280f; --bad:#ec8576; --bad-soft:#3a1c18;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px}
+@media (max-width:960px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+/* contents rail */
+.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px;max-height:100vh;overflow:auto}
+.toc h2{font:600 11px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.toc a{display:grid;grid-template-columns:28px 1fr;padding:5px 8px;border-radius:6px;color:var(--muted);text-decoration:none;font-size:13.5px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.toc a:hover,.toc a.on{background:var(--accent-soft);color:var(--ink)}
+.toc a.key{color:var(--ink);font-weight:600}
+
+main{min-width:0}
+header.hero{padding-block:40px 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.04em;color:var(--accent);display:flex;flex-wrap:wrap;gap:6px 14px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,4.4vw,44px);line-height:1.12;letter-spacing:-.01em;margin:14px 0 10px;text-wrap:balance}
+.sub{font-size:18px;color:var(--muted);max-width:62ch;margin:0}
+.inputs{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.inputs div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.45}
+.inputs b{display:block;font:600 11px/1.3 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+
+section{padding-top:48px;scroll-margin-top:16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.2;margin:0 0 6px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 15px/1 var(--f-mono);color:var(--accent);min-width:2ch}
+h3{font-size:18px;font-weight:600;margin:32px 0 10px;text-wrap:balance}
+h3 .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);margin-right:8px;font-size:15px}
+p{margin:0 0 14px;max-width:72ch}
+.lede{color:var(--muted);margin-bottom:20px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+strong{font-weight:600}
+
+/* bottom line */
+.findings{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:14px;counter-reset:f}
+.findings li{counter-increment:f;display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.findings li::before{content:counter(f);font:700 22px/1 var(--f-display);color:var(--accent);grid-row:span 2;padding-top:3px}
+.findings h4{margin:0;font-size:17px;font-weight:600;line-height:1.35}
+.findings p{margin:0;color:var(--muted);font-size:15px}
+.findings li.rec{background:var(--accent-soft);border-color:transparent}
+.findings li.rec p{color:var(--ink)}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:12px 0 8px}
+table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
+th{font:600 11.5px/1.3 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.id{font-family:var(--f-mono);font-size:13px;color:var(--accent-ink);white-space:nowrap;font-weight:500}
+.w-wide{min-width:880px}.w-mid{min-width:680px}
+tr.hl td{background:var(--accent-soft)}
+
+/* chips */
+.chip{display:inline-block;font:600 11.5px/1 var(--f-body);letter-spacing:.03em;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.c-core{background:var(--accent);color:var(--surface)}
+.c-yes{background:var(--good-soft);color:var(--good)}
+.c-later{background:var(--warn-soft);color:var(--warn)}
+.c-no{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.c-must{background:var(--bad-soft);color:var(--bad)}
+.c-should{background:var(--warn-soft);color:var(--warn)}
+.c-could{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.r{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+.r s{color:var(--muted)}
+.r b{color:var(--accent-ink)}
+
+/* screen links */
+a.scr{font:500 12px/1 var(--f-mono);color:var(--accent-ink);background:var(--accent-soft);border-radius:4px;padding:3px 5px;text-decoration:none;white-space:nowrap;cursor:zoom-in}
+a.scr:hover{background:var(--accent);color:var(--surface)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* coverage split */
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 6px}
+@media (max-width:640px){.split{grid-template-columns:minmax(0,1fr)}}
+.split > div{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:var(--surface)}
+.split h4{margin:0 0 6px;font-size:15px}
+.split p{margin:0;font-size:14.5px;color:var(--muted)}
+.split .tag{font:600 11px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+
+/* lists of items */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;padding:0;list-style:none}
+.pills li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:14px}
+.pills.ours li{border-color:var(--accent);color:var(--accent-ink)}
+.pills.out li{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+
+/* options */
+.options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+@media (max-width:820px){.options{grid-template-columns:minmax(0,1fr)}}
+.opt{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:18px;display:flex;flex-direction:column;gap:10px}
+.opt h4{margin:0;font-size:16px}
+.opt .k{font:600 11px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.opt p{margin:0;font-size:14px}
+.opt dl{margin:0;display:grid;gap:8px;font-size:14px}
+.opt dt{font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.opt dd{margin:0}
+.opt.pick{border:2px solid var(--accent);box-shadow:var(--shadow)}
+.opt.pick .k{color:var(--accent)}
+.callout{border-left:3px solid var(--accent);background:var(--surface);padding:14px 18px;border-radius:0 8px 8px 0;margin:18px 0}
+.callout p{margin:0}
+
+/* timeline */
+.gantt{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:16px 18px;margin-top:12px}
+.g{min-width:640px;display:grid;grid-template-columns:200px repeat(27,minmax(0,1fr));row-gap:10px;align-items:center;font-size:13.5px}
+.g .lbl{padding-right:12px;line-height:1.3}
+.g .lbl small{display:block;color:var(--muted);font-size:12px}
+.g .bar{height:22px;border-radius:5px;background:var(--accent);color:var(--surface);font:500 11px/22px var(--f-mono);padding:0 6px;white-space:nowrap;overflow:hidden}
+.g .bar.m{background:var(--warn-soft);color:var(--warn);border:1px dashed var(--warn)}
+.g .bar.d{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.g .ax{font:500 11px/1 var(--f-mono);color:var(--muted)}
+.g .gate{height:22px;border-left:3px solid var(--bad);position:relative}
+.g .gate span{position:absolute;left:6px;top:3px;font:600 11px/1.4 var(--f-body);color:var(--bad);white-space:nowrap}
+
+.qs{margin:12px 0 0;padding-left:22px;display:grid;gap:8px;max-width:72ch}
+.changes{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:10px;max-width:78ch}
+.changes li{padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.changes b{color:var(--accent-ink)}
+
+/* gallery */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:16px}
+.gallery figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;scroll-margin-top:16px}
+.gallery a{display:block;cursor:zoom-in}
+.gallery img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;max-width:100%;background:var(--sunk)}
+.gallery figcaption{padding:8px 10px 10px;font-size:13px;line-height:1.35}
+.gallery figcaption .mono{color:var(--accent-ink);display:block;font-size:11.5px;margin-bottom:2px}
+.gallery figure:target{outline:2px solid var(--accent)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(8,14,16,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));z-index:20}
+.lb img{max-width:min(1280px,100%);max-height:78vh;border-radius:6px;background:#000}
+.lb .cap{color:#e8eeec;font-size:14px;text-align:center;max-width:80ch}
+.lb .cap .mono{color:#8fd3cf;margin-right:8px}
+.lb .ctl{display:flex;gap:10px}
+.lb button{font:600 13px/1 var(--f-body);color:#e8eeec;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:10px 14px;cursor:pointer}
+.lb button:hover{background:rgba(255,255,255,.22)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1"><span>1</span>Bottom line</a></li>
+    <li><a href="#s2"><span>2</span>Veeva demo in 510(k) terms</a></li>
+    <li><a href="#s3"><span>3</span>Pilot areas × demo × plan</a></li>
+    <li><a href="#s4"><span>4</span>Plan items in the demo</a></li>
+    <li><a href="#s5"><span>5</span>Scope decision</a></li>
+    <li><a href="#s6" class="key"><span>6</span>Gap register</a></li>
+    <li><a href="#s7"><span>7</span>Pilot scope</a></li>
+    <li><a href="#s8"><span>8</span>Proving the 50%</a></li>
+    <li><a href="#s9"><span>9</span>Timeline</a></li>
+    <li><a href="#s10"><span>10</span>Changes to our plan</a></li>
+    <li><a href="#s11"><span>11</span>Questions for customer</a></li>
+    <li><a href="#screens"><span>A</span>Demo screens</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MedexRegAI</span><span>Final analysis</span><span>8 Oct 2026</span></div>
+  <h1>510(k) Consulting Pilot Analysis</h1>
+  <p class="sub">The Veeva Vault RIM demo compared with what our 510(k) consulting customer needs and with our business plan and requirements, plus a list of what is missing.</p>
+  <div class="inputs">
+    <div><b>Demo</b>Veeva Vault RIM Suite end-to-end demo · 9 min 24 s · 40 screens (see <a href="#screens">appendix</a>)</div>
+    <div><b>Customer</b>FDA 510(k) consulting practice · six pilot areas · 50% effort reduction in 3–6 months</div>
+    <div><b>Business plan</b>MRA-BIZ-001 r6 · Pre-Seed v6 · 30 Aug 2026</div>
+    <div><b>Requirements</b>MRA-REQ-001 r0.2 · .docx (17 Aug) and .html (30 Aug), 80 matching FR/NFR IDs</div>
+  </div>
+</header>
+
+<section id="s1">
+  <h2><span class="n">1</span>Bottom line</h2>
+  <ol class="findings">
+    <li><h4>The Veeva demo solves a different problem from the customer's.</h4>
+      <p>It is a <strong>pharma</strong> RIM system (Enalapril tablets, eCTD, MAA, decentralised procedure, xEVMPD/IDMP) running one post-approval change across 48 registrations in many countries. A 510(k) consultancy works in <strong>one FDA market, mostly pre-market</strong>, and its biggest cost is research done before anything is written. Copying Veeva would mean building the expensive part and skipping the part that saves the hours.</p></li>
+    <li><h4>The customer's two most time-consuming activities are not in the demo at all.</h4>
+      <p>Finding and evaluating predicates, and organising FDA research and evidence. Veeva has no predicate intelligence. Both are the <strong>core of our business plan</strong> (PR-2, FR-3.x, FR-10.2 citations, snapshots). The 50% saving can realistically come from here, and building it for this customer is the same work as building the platform.</p></li>
+    <li><h4>The other four areas match Veeva's patterns, but our plan scopes them out or defers them.</h4>
+      <p>Content plan, traceability, FDA questions and versions, and the submission record. Our requirements say we are not a document control system or system of record, defer eSTAR drafting past the Series A, and put the content checklist in Release 2. This is the main decision (§5). The full gap list is in §6.</p></li>
+    <li class="rec"><h4>Recommendation: a 6-month, low-cost pilot with a stop/go gate at week 12.</h4>
+      <p>Build two releases of intelligence (Predicate, Research), then one release of lightweight workflow registers (Content plan, Traceability, FDA interactions, Submission record). Keep documents in the customer's own storage.</p></li>
+  </ol>
+</section>
+
+<section id="s2">
+  <h2><span class="n">2</span>The Veeva demo in 510(k) terms</h2>
+  <p class="lede">Each demo capability, its 510(k) equivalent, and whether the pilot needs it. Click a screen number to see that screen.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Veeva demo capability</th><th>Screens</th><th>510(k) consulting equivalent</th><th>Pilot?</th></tr></thead>
+    <tbody>
+      <tr><td>Product Overview dashboard: registrations by country, sites, shelf life, storage</td><td><a class="scr" href="#s002">002</a>–<a class="scr" href="#s009">009</a></td><td><strong>Portfolio dashboard</strong>: each 510(k) by stage, FDA review clock, AI-hold days left, open deficiencies. A country breakdown is irrelevant for one regulator</td><td><span class="chip c-yes">Yes, simple</span></td></tr>
+      <tr><td>Change event + <strong>impact assessment</strong> across 48 registrations</td><td><a class="scr" href="#s011">011</a>–<a class="scr" href="#s014">014</a></td><td><strong>510(k) change assessment</strong> for a cleared device (letter-to-file vs new 510(k)), and "which claims, tests and documents does this change touch?"</td><td><span class="chip c-later">Later · M16–22</span></td></tr>
+      <tr><td>Local disposition by country affiliates</td><td><a class="scr" href="#s015">015</a></td><td>Not applicable (single regulator)</td><td><span class="chip c-no">No</span></td></tr>
+      <tr class="hl"><td><strong>Submission content plan</strong>: eCTD tree, owners, due dates, status</td><td><a class="scr" href="#s016">016</a> <a class="scr" href="#s023">023</a></td><td><strong>eSTAR section plan and checklist</strong>: device description, IFU, SE comparison, labeling, biocompatibility, sterilization, shelf life, software, EMC/electrical, performance testing, with owner, status and evidence links</td><td><span class="chip c-core">Yes, core</span></td></tr>
+      <tr><td>Project dashboards: status by module and owner</td><td><a class="scr" href="#s017">017</a>–<a class="scr" href="#s019">019</a></td><td>Readiness by eSTAR section and by owner (consultant, client engineer, test lab)</td><td><span class="chip c-yes">Yes</span></td></tr>
+      <tr class="hl"><td><strong>Continuous publishing and validation</strong>: errors by severity, missing documents</td><td><a class="scr" href="#s020">020</a>–<a class="scr" href="#s022">022</a></td><td><strong>Pre-submission gap check</strong>: a missing section, test report or justification is caught before FDA technical screening or an AI request</td><td><span class="chip c-core">Yes, high value</span></td></tr>
+      <tr><td>Collaborative authoring in MS Word</td><td><a class="scr" href="#s023">023</a>–<a class="scr" href="#s024">024</a></td><td>Use the customer's existing SharePoint, Google Drive and Word</td><td><span class="chip c-no">Don't build</span></td></tr>
+      <tr><td>Viewer and eCTD XML backbone</td><td><a class="scr" href="#s025">025</a>–<a class="scr" href="#s026">026</a></td><td>Not needed. eSTAR is a PDF form</td><td><span class="chip c-no">No</span></td></tr>
+      <tr><td><strong>Submit to Gateway</strong></td><td><a class="scr" href="#s027">027</a></td><td>The customer uploads through the CDRH Portal. We <strong>record</strong> what went in, when, and its file hash</td><td><span class="chip c-later">Record only</span></td></tr>
+      <tr><td>Dispatch and on-time dashboard</td><td><a class="scr" href="#s028">028</a>–<a class="scr" href="#s030">030</a></td><td>Submission timeline: target vs actual date, FDA review days vs hold days</td><td><span class="chip c-yes">Yes, simple</span></td></tr>
+      <tr class="hl"><td><strong>HA question ingestion ("RIMbot")</strong> and related past questions</td><td><a class="scr" href="#s031">031</a>–<a class="scr" href="#s032">032</a></td><td><strong>FDA AI-request tracker</strong>: ingest the AI letter, split it into deficiencies, tag each by eSTAR section, and find similar deficiencies <strong>from the firm's own past projects</strong>. FDA does not publish AI letters, so the consultancy's history is the asset</td><td><span class="chip c-core">Yes, core</span></td></tr>
+      <tr><td>Regulatory objective, approval, <strong>bulk registration update wizard</strong></td><td><a class="scr" href="#s033">033</a>–<a class="scr" href="#s036">036</a></td><td>Record the clearance: K-number, decision date, cleared IFU. No bulk wizard needed</td><td><span class="chip c-no">Minimal</span></td></tr>
+      <tr><td>Updated dashboard after approval</td><td><a class="scr" href="#s037">037</a>–<a class="scr" href="#s038">038</a></td><td>Project closed and portfolio updated</td><td><span class="chip c-yes">With dashboard</span></td></tr>
+      <tr class="hl"><td><strong>Active Dossier Viewer</strong>: current version of each document per market</td><td><a class="scr" href="#s039">039</a></td><td><strong>Submission record</strong>: which version of each document went into the original submission, each AI response and each resubmission</td><td><span class="chip c-core">Yes, core</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s3">
+  <h2><span class="n">3</span>Pilot areas × Veeva demo × our plan</h2>
+  <div class="split">
+    <div><span class="tag">Areas 1–2</span><h4>Our plan is strongest, Veeva has nothing</h4><p>Predicate search and FDA research. Most of the consultant hours are here.</p></div>
+    <div><span class="tag">Areas 3–6</span><h4>Veeva is strongest, our plan is thin or excludes them</h4><p>Content plan, traceability, FDA questions and versions, submission record. The customer is asking for both halves.</p></div>
+  </div>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>#</th><th>Customer pilot area</th><th>In Veeva demo?</th><th>Covered by our plan / requirements?</th><th>Gap to close</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1</td><td><strong>Finding and evaluating predicate devices</strong></td><td><span class="chip c-no">No</span></td><td><span class="chip c-yes">Fully</span><br>PR-2 (ships M6); FR-3.1 ranked predicates; FR-3.2 IFU and tech side-by-side; FR-3.3 recall screening; FR-3.4 lineage; FR-3.7 saved set with rationale</td><td>None in scope. Narrow the corpus to the customer's product codes to cut cost</td></tr>
+      <tr><td class="id">2</td><td><strong>Organising FDA research, public summaries, evidence</strong></td><td><span class="chip c-no">No</span><br><small>only own documents</small></td><td><span class="chip c-yes">Mostly</span><br>FR-1.3 client documents (Should); FR-4.1/4.5 standards and guidance; FR-10.2 citations; FR-10.4/NFR-6 snapshots; FR-6.x MAUDE/recalls</td><td>A <strong>project research library</strong> that also holds the customer's private evidence</td></tr>
+      <tr><td class="id">3</td><td><strong>510(k)/eSTAR content plan and document checklist</strong></td><td><span class="chip c-yes">Yes</span><br><a class="scr" href="#s016">016</a>–<a class="scr" href="#s022">022</a></td><td><span class="chip c-later">Partial, later</span><br>FR-5.1/5.2 are Release 2. FR-5.3 gap analysis Should, R2. eSTAR drafting deferred post-Series A</td><td>Pull FR-5.1–5.3 into the pilot. Build an eSTAR <strong>section plan</strong>, not form filling</td></tr>
+      <tr><td class="id">4</td><td><strong>Linking claims, evidence, test reports, documents</strong></td><td><span class="chip c-later">Partial</span></td><td><span class="chip c-must">Weak</span><br>FR-3.2 flags differences. PR-6 traceability matrix is M22–28</td><td><strong>New</strong>: claim → SE difference → evidence → test report → eSTAR section matrix</td></tr>
+      <tr><td class="id">5</td><td><strong>Document versions, FDA questions, changes, resubmissions</strong></td><td><span class="chip c-yes">Yes</span><br><a class="scr" href="#s031">031</a>–<a class="scr" href="#s032">032</a></td><td><span class="chip c-must">Not covered</span><br>BP and REQ exclude "document control" and "system of record". Change assessment M16–22</td><td><strong>New</strong>: AI-request register and a version <strong>register</strong> (links and hashes to files held elsewhere)</td></tr>
+      <tr><td class="id">6</td><td><strong>Auditable record: submitted, asked, changed</strong></td><td><span class="chip c-yes">Yes</span><br><a class="scr" href="#s025">025</a> <a class="scr" href="#s039">039</a></td><td><span class="chip c-later">Partial</span><br>FR-11.3 audit and FR-10.4 immutable versions cover our analyses, not the submission package</td><td>Extend the audit model: submitted → FDA asked → responded → cleared</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s4">
+  <h2><span class="n">4</span>Which plan items the demo covers</h2>
+  <h3><span class="n">4a</span>Plan items Veeva already does a version of</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Business plan / requirements item</th><th>Where in the demo</th><th>How close</th></tr></thead>
+    <tbody>
+      <tr><td>FR-5.1 / 5.2 content checklist with status and evidence</td><td>Content plan <a class="scr" href="#s016">016</a> <a class="scr" href="#s023">023</a></td><td>Close. Veeva's adds owners and due dates</td></tr>
+      <tr><td>FR-5.3 gap analysis / FR-5.5 readiness as evidence coverage</td><td>Validation tiles <a class="scr" href="#s020">020</a>–<a class="scr" href="#s022">022</a></td><td>Different basis. Veeva checks technical validity; ours checks against <strong>precedent</strong></td></tr>
+      <tr><td>510(k) change assessment (BP M3, M16–22)</td><td>Event + impact assessment <a class="scr" href="#s011">011</a>–<a class="scr" href="#s014">014</a></td><td>The pattern carries over</td></tr>
+      <tr><td>Registration change intelligence (BP, reshaped, M16–22)</td><td>Product Overview <a class="scr" href="#s002">002</a>–<a class="scr" href="#s009">009</a></td><td>The BP deliberately avoids registration management. This is what we said we would not build</td></tr>
+      <tr><td>FR-11.1 roles / FR-11.4 reviewer approval</td><td>Deliverable owners <a class="scr" href="#s017">017</a>–<a class="scr" href="#s019">019</a></td><td>Close</td></tr>
+      <tr><td>FR-11.3 audit trail / FR-10.4 immutable versions</td><td>Viewer <a class="scr" href="#s025">025</a>, Active Dossier <a class="scr" href="#s039">039</a></td><td>Ours covers analyses; theirs covers submissions</td></tr>
+      <tr><td>FR-11.5 / FR-6.5 change notifications</td><td>Dashboards as the morning check</td><td>Weak. Veeva shows, we push alerts</td></tr>
+      <tr><td>FR-1.5 device variants</td><td>Pack sizes <a class="scr" href="#s006">006</a>–<a class="scr" href="#s008">008</a></td><td>Comparable</td></tr>
+      <tr><td>FR-8.2 supplier footprint (and the OEM Exchange)</td><td>Manufacturers and site roles <a class="scr" href="#s005">005</a></td><td>Same data shape: site, role, market</td></tr>
+      <tr><td>FR-4.3 shelf-life testing in the test plan</td><td>The whole storyline</td><td>Topic overlap only</td></tr>
+    </tbody>
+  </table></div>
+  <h3><span class="n">4b</span>Plan items the demo does not have (our differentiation)</h3>
+  <ul class="pills ours">
+    <li>PR-1 pathway determination (FR-2.x)</li><li><strong>PR-2 predicate ranking, IFU diff, recall screening, lineage</strong></li><li>PR-3 standards and precedent test plan</li><li>PR-4 MDUFA cost and timeline</li><li>PR-5 competitive landscape</li><li>FR-6 MAUDE and recall design inputs</li><li><strong>Citation gate, immutable snapshots, published accuracy</strong></li><li>Per-deliverable pricing, free seats</li><li>Determination Guarantee</li><li>Lead Finder</li><li>OEM Exchange and Device Marketplace</li>
+  </ul>
+  <h3><span class="n">4c</span>Demo capabilities our plan explicitly excludes</h3>
+  <ul class="pills out">
+    <li>Gateway submission</li><li>Collaborative authoring and document control</li><li>eQMS / system of record</li><li>Registration management and bulk wizard</li><li>eCTD publishing</li><li>Multi-country local disposition</li>
+  </ul>
+</section>
+
+<section id="s5">
+  <h2><span class="n">5</span>The scope decision</h2>
+  <p>Pilot areas 5 and 6, and part of 3, push us toward the system of record that MRA-REQ-001 §2 and the business plan rule out. There are three ways to handle that.</p>
+  <div class="options">
+    <div class="opt"><span class="k">Option A</span><h4>Hold the line</h4><p>Pilot covers areas 1–2, and area 3 as a checklist only.</p>
+      <dl><dt>For</dt><dd>Stays inside the plan; least build</dd><dt>Against</dt><dd>The 50% target is unlikely. AI-response and rework hours stay manual</dd></dl></div>
+    <div class="opt pick"><span class="k">Option B · Recommended</span><h4>Registers, not repositories</h4><p>Areas 3–6 as lightweight registers: links, hashes, statuses, deficiencies, relationships. Files stay in SharePoint or Drive. No check-in/out, e-signatures, Part 11 validation or eSTAR filling.</p>
+      <dl><dt>For</dt><dd>Covers all six areas; becomes the plan's consultant workspace (FR-11.2, M-3); closes the eSTAR/checklist gap cheaply</dd><dt>Against</dt><dd>Some scope growth; needs a short plan and requirements amendment</dd></dl></div>
+    <div class="opt"><span class="k">Option C</span><h4>Build a Veeva-lite RIM</h4><p>Full document management and workflow.</p>
+      <dl><dt>For</dt><dd>Closest to the demo</dd><dt>Against</dt><dd>Months of build, validation burden, and a direct fight with Rimsys, Veeva and Greenlight Guru</dd></dl></div>
+  </div>
+  <div class="callout"><p><strong>Choose B.</strong> It is cheaper than C and meets the customer's needs, which A does not. An AI-deficiency history and a claim-to-evidence matrix are also what a consultancy will pay a retainer for, and they feed FR-5.3 (predicting AI requests from precedent).</p></div>
+</section>
+
+<section id="s6">
+  <h2><span class="n">6</span>Gap register: what is missing</h2>
+  <p class="lede">Each gap is checked against both requirements files and business plan r6. New requirement IDs use a proposed <strong>FR-13 "Submission Workspace"</strong> group so existing numbering stays the same.</p>
+
+  <h3><span class="n">6.1</span>Missing entirely: new requirements</h3>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Gap</th><th>What is missing</th><th>Why it's a gap</th><th>Demo</th><th>Proposed requirement</th><th>Area</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td class="id">G-1</td><td><strong>eSTAR section plan</strong> with owner, due date, status</td><td>FR-5.1/5.2 are a generic checklist. No owners, dates or eSTAR structure. REQ Q6 defers eSTAR output</td><td><a class="scr" href="#s016">016</a>–<a class="scr" href="#s019">019</a></td><td><span class="mono">FR-13.1</span> eSTAR-aligned content plan with owner, dates and status per section, tied to the eSTAR template version</td><td>3</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-2</td><td><strong>Claim–evidence traceability matrix</strong></td><td>Nothing in REQ. The BP has one only inside PR-6 (M22–28)</td><td><a class="scr" href="#s016">016</a></td><td><span class="mono">FR-13.2</span> Link each claim and SE difference to evidence, test reports and eSTAR sections; flag unsupported claims and orphan evidence</td><td>4</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-3</td><td><strong>Client evidence as first-class items</strong></td><td>FR-1.3 only feeds documents into the device profile (Should)</td><td><a class="scr" href="#s039">039</a></td><td><span class="mono">FR-13.3</span> Register evidence (type, standard, version, date, lab, result); extract key fields from test reports</td><td>2, 4</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-4</td><td><strong>FDA interaction register</strong>: AI letters, deficiencies, Pre-Sub feedback, 180-day hold clock</td><td>No requirement covers regulator correspondence</td><td><a class="scr" href="#s031">031</a></td><td><span class="mono">FR-13.4</span> Ingest correspondence (upload or forwarded email), split into deficiencies, tag by section, link to response and evidence, track the deadline</td><td>5</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-5</td><td><strong>Reuse of past deficiencies and responses</strong></td><td>AI letters are not public, so the FDA corpus cannot supply this</td><td><a class="scr" href="#s032">032</a></td><td><span class="mono">FR-13.5</span> Search similar past deficiencies <strong>within the tenant only</strong> (NFR-8)</td><td>5</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">G-6</td><td><strong>Document version register</strong> for files held elsewhere</td><td>REQ excludes document control; nothing tracks client file versions</td><td><a class="scr" href="#s025">025</a> <a class="scr" href="#s039">039</a></td><td><span class="mono">FR-13.6</span> Each version as link, hash, author, date. No storage or e-signature</td><td>5, 6</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-7</td><td><strong>Submission record and timeline</strong></td><td>FR-11.3 audits analyses; FR-10.4 freezes reports. Nothing records submissions</td><td><a class="scr" href="#s027">027</a> <a class="scr" href="#s039">039</a></td><td><span class="mono">FR-13.7</span> Immutable event log per 510(k): package (files and hashes), screening outcome, AI request, response, decision and K-number</td><td>6</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">G-8</td><td><strong>Portfolio dashboard</strong> across projects and clients</td><td>FR-11 covers access, not oversight</td><td><a class="scr" href="#s002">002</a> <a class="scr" href="#s028">028</a></td><td><span class="mono">FR-13.8</span> Stage, review and hold clock, open deficiencies, readiness % per project and client</td><td>All</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">G-9</td><td><strong>Task owners and due-date reminders</strong></td><td>FR-11.5 notifies on data changes only</td><td><a class="scr" href="#s017">017</a>–<a class="scr" href="#s019">019</a></td><td><span class="mono">FR-13.9</span> Owners on sections, deficiencies and evidence; due-date reminders</td><td>3, 5</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">G-10</td><td><strong>510(k) change assessment</strong> for cleared devices</td><td>Only a roadmap line in the .html REQ and BP M16–22. No FR, and absent from the .docx</td><td><a class="scr" href="#s011">011</a>–<a class="scr" href="#s014">014</a></td><td><span class="mono">FR-13.10</span> Assess a design or labeling change against cleared claims and evidence (21 CFR 807.81(a)(3))</td><td>Later</td><td><span class="chip c-could">Could</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.2</span>Exists but scheduled too late for the pilot</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Requirement</th><th>Today → pilot</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><span class="mono">FR-5.1</span> content checklist</td><td class="r"><s>Must · R2</s> → <b>R1</b></td><td>Core of pilot area 3</td></tr>
+      <tr><td><span class="mono">FR-5.2</span> checklist status and evidence</td><td class="r"><s>Must · R2</s> → <b>R1</b></td><td>Same</td></tr>
+      <tr><td><span class="mono">FR-5.3</span> gap analysis vs precedent</td><td class="r"><s>Should · R2</s> → <b>Must · R1</b></td><td>Our answer to Veeva's continuous validation; largest rework saving</td></tr>
+      <tr><td><span class="mono">FR-11.2</span> isolated client workspaces</td><td class="r"><s>Must · R2</s> → <b>R1</b></td><td>The customer is a consultancy; plan mechanic M-3 depends on it</td></tr>
+      <tr><td><span class="mono">FR-11.4</span> comment, approve, reviewed-by</td><td class="r"><s>Should · R2</s> → <b>R1</b></td><td>Senior RA sign-off is part of the consultancy's process</td></tr>
+      <tr><td><span class="mono">FR-1.3</span> accept client documents</td><td class="r"><s>Should</s> → <b>Must · R1</b></td><td>The evidence library and traceability need it</td></tr>
+      <tr><td><span class="mono">FR-3.7</span> predicate set with rationale</td><td class="r"><s>Should</s> → <b>Must · R1</b></td><td>Predicate decisions must be auditable</td></tr>
+      <tr><td>Storage integration: Google Drive, SharePoint</td><td class="r"><s>R3</s> → <b>R1</b></td><td>Option B depends on linking to where files already live</td></tr>
+      <tr><td><span class="mono">FR-11.5</span> change notifications</td><td class="r">Should · R2 (keep)</td><td>Useful, not needed to prove the 50%</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.3</span>Exists, but the scope must widen</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Requirement</th><th>Covers today</th><th>Widen to</th></tr></thead>
+    <tbody>
+      <tr><td><span class="mono">FR-11.3</span> audit trail</td><td>Who ran which analysis, on which snapshot</td><td>Also submission events, deficiency handling and evidence versions (feeds G-7)</td></tr>
+      <tr><td><span class="mono">FR-10.4</span> immutable reports</td><td>Our generated reports</td><td>Also a frozen "as-submitted" package manifest</td></tr>
+      <tr><td><span class="mono">FR-3.2</span> IFU and tech comparison</td><td>On-screen comparison</td><td>Exportable SE comparison table in eSTAR layout; each difference becomes a traceability row (G-2)</td></tr>
+      <tr><td><span class="mono">FR-10.3</span> export</td><td>Reports</td><td>Also checklist, traceability matrix, deficiency log, submission record</td></tr>
+      <tr><td>eQMS / PLM connectors (R3)</td><td>Push gap items to Greenlight Guru, Jira</td><td>Also read document references from the eQMS, where many clients keep the design history file</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.4</span>Business plan gaps (MRA-BIZ-001 r6)</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Gap</th><th>Where</th><th>What to add</th></tr></thead>
+    <tbody>
+      <tr><td>No product line for submission management</td><td>§3 catalogue</td><td>A "Submission Workspace" inside the $500/month retainer (recommended, as it justifies the retainer between projects), or a PR-7 "Submission Readiness and AI Response" project</td></tr>
+      <tr><td>No feature-matrix rows for AI-request management, submission record, traceability</td><td>§10 Block A</td><td>Add the three rows. RegDesk, Rimsys, Veeva and Greenlight Guru (partly) have them. Our angle: precedent-based gap prediction and deficiency reuse</td></tr>
+      <tr><td>"Never submit" and "not a document control system"</td><td>§3; REQ §2</td><td>Keep both. Add "a register of submission artefacts, not a document control system"</td></tr>
+      <tr><td>eSTAR drafting deferred post-Series A</td><td>§10, §13</td><td>The pilot's section plan and gap check close most of the visible gap without 8 weeks of form drafting</td></tr>
+      <tr><td>No design-partner or paid-pilot line</td><td>§13, §15</td><td>Record the pilot as Phase 1 "signed design partner" evidence, with any pilot fee</td></tr>
+      <tr><td>Lead Finder triggers are pre-market only until M22–26</td><td>§7</td><td>AI-request deficiencies are a natural opt-in trigger, with the same guardrail (no revenue signal into analysis)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.5</span>Our own documents disagree (fix before sharing)</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Issue</th><th>Detail</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Requirements .docx is stale</td><td>The .docx (17 Aug) lacks the US-adjacency roadmap row in the .html (30 Aug): change assessment, AI/ML PCCP, eSTAR drafting, non-US applicants</td><td>Regenerate the .docx from the HTML</td></tr>
+      <tr><td>eSTAR timing differs</td><td>.docx: out of scope in Release 1. .html: Phase 3, month 15. BP r6: post-Series A</td><td>Align all three</td></tr>
+      <tr><td>Billing model mismatch</td><td>REQ: subscription tiers with metering. BP r6: $500/month retainer, per-project credits, free seats</td><td>Move REQ to the retainer and credit ledger (BP §13 costs it at +3 weeks)</td></tr>
+      <tr><td>API timing</td><td>REQ: REST API in R2. BP r6: API and MCP at M15 as a $2,000/month add-on</td><td>Align release and price</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">6.6</span>Veeva capabilities we deliberately leave out</h3>
+  <ul class="pills out">
+    <li>CDRH Portal / gateway submission</li><li>Co-authoring, check-in/out</li><li>eCTD/XML publishing and viewer</li><li>Registration management, bulk wizard</li><li>Multi-country disposition</li><li>xEVMPD / IDMP</li><li>Full document control, Part 11 e-signatures</li>
+  </ul>
+  <p>Each is pharma-specific, outside our scope boundary, or already handled by the customer's existing tools.</p>
+</section>
+
+<section id="s7">
+  <h2><span class="n">7</span>Pilot scope</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Module</th><th>Area</th><th>What it does</th><th>Links</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td><strong>P1 Predicate Finder</strong></td><td>1</td><td>Device description → ranked predicates from 510(k) summaries; IFU and tech side-by-side; recall flags; saved set with rationale; comparison export</td><td>PR-2, FR-3.1–3.3, FR-3.7</td><td>M</td></tr>
+      <tr><td><strong>P2 Research and Evidence Library</strong></td><td>2</td><td>Per-project library of FDA records and client evidence; every item cited and snapshot-dated; tagged by topic and eSTAR section</td><td>FR-1.3, 4.1, 4.5, 10.2; G-3; Drive/SharePoint</td><td>M</td></tr>
+      <tr><td><strong>P3 eSTAR Plan and Gap Check</strong></td><td>3</td><td>eSTAR section template; owner, due date, status; evidence links; gap check against comparable clearances</td><td>FR-5.1–5.3; G-1, G-9</td><td>M</td></tr>
+      <tr><td><strong>P4 Claim–Evidence Matrix</strong></td><td>4</td><td>Claim or SE difference → evidence → test report → eSTAR section; unsupported claims and orphan reports</td><td>G-2</td><td>S–M</td></tr>
+      <tr><td><strong>P5 FDA Interaction Tracker</strong></td><td>5</td><td>AI letter → deficiencies → tagged → linked to response; similar past deficiencies; 180-day clock; version register</td><td>G-4, G-5, G-6</td><td>M</td></tr>
+      <tr><td><strong>P6 Submission Record</strong></td><td>6</td><td>Immutable timeline per 510(k): package, requests, responses, changes, decision. Exportable</td><td>G-7; FR-11.3, 10.4</td><td>S</td></tr>
+      <tr><td><strong>Portfolio dashboard</strong></td><td>All</td><td>Stage, review clock, open deficiencies, readiness %</td><td>G-8; FR-11.2, 11.4</td><td>S</td></tr>
+    </tbody>
+  </table></div>
+  <h3>What keeps the cost low</h3>
+  <ul class="changes">
+    <li><b>Narrow corpus.</b> Load 510(k) summaries only for the product codes the customer works in. This also tests extraction quality, the plan's top technical risk, on a small set.</li>
+    <li><b>No document storage.</b> Link to SharePoint or Drive; store metadata and hashes.</li>
+    <li><b>No eSTAR filling and no submission.</b> The customer uploads to the CDRH Portal; we record what they uploaded.</li>
+    <li><b>One deployment</b> with client-workspace isolation from day one.</li>
+    <li><b>The customer's RA staff as evaluators</b>, which is also our design-partner evidence.</li>
+  </ul>
+  <p style="margin-top:14px"><strong>Indicative team:</strong> about 2 engineers (full-stack, data/AI), a fractional RA expert and a part-time product lead for about 6 months. Refine after the baseline in §8.</p>
+</section>
+
+<section id="s8">
+  <h2><span class="n">8</span>Proving the 50% reduction</h2>
+  <p>The 50% target holds only if it is measured against a baseline and limited to the scoped activities. Expert judgement, test-lab coordination and FDA review time are not reducible by software. The plan cites 40–120 consultant research hours per filing; Complizen publishes a 30–60% workload reduction, so 50% is at the top of that range.</p>
+  <p><strong>Weeks 0–2:</strong> reconstruct hours by activity from timesheets on 2–3 recent 510(k)s.</p>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Activity</th><th>Baseline hrs</th><th>Pilot hrs</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr><td>Product-code and predicate search, shortlist, SE comparison table</td><td>measure</td><td>measure</td><td class="r"><b>≥ 60% less</b></td></tr>
+      <tr><td>Collecting FDA research (summaries, guidance, standards, recalls)</td><td>measure</td><td>measure</td><td class="r"><b>≥ 60% less</b></td></tr>
+      <tr><td>Building and maintaining the eSTAR checklist</td><td>measure</td><td>measure</td><td class="r"><b>≥ 50% less</b></td></tr>
+      <tr><td>Cross-checking claims against evidence</td><td>measure</td><td>measure</td><td class="r"><b>≥ 40% less</b></td></tr>
+      <tr><td>AI-letter triage and response package</td><td>measure</td><td>measure</td><td class="r"><b>≥ 40% less</b></td></tr>
+      <tr><td>Reconstructing what was submitted and what changed</td><td>measure</td><td>measure</td><td class="r"><b>≥ 70% less</b></td></tr>
+      <tr class="hl"><td><strong>Total of scoped activities</strong></td><td>measure</td><td>measure</td><td class="r"><b>≥ 50% less</b></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Quality checks, so speed isn't bought with errors:</strong> AI-request deficiencies per submission, technical-screening holds, predicates rejected late, items found missing after submission.</p>
+</section>
+
+<section id="s9">
+  <h2><span class="n">9</span>Timeline</h2>
+  <div class="gantt"><div class="g" role="img" aria-label="26-week pilot timeline">
+    <div></div><div class="ax" style="grid-column:2">0</div><div class="ax" style="grid-column:7">5</div><div class="ax" style="grid-column:12">10</div><div class="ax" style="grid-column:17">15</div><div class="ax" style="grid-column:22">20</div><div class="ax" style="grid-column:27">25</div>
+    <div class="lbl">Discovery<small>Baseline study, pick 2 live 510(k)s</small></div><div class="bar d" style="grid-column:2 / 5">wk 0–2</div>
+    <div class="lbl">A · Research<small>P1, P2</small></div><div class="bar" style="grid-column:5 / 11">wk 3–8</div>
+    <div class="lbl">Measure A<small>Live project; design B and C</small></div><div class="bar m" style="grid-column:11 / 15">wk 9–12</div>
+    <div class="lbl">Stop / go</div><div class="gate" style="grid-column:15"><span>Week 12 gate</span></div>
+    <div class="lbl">B · Plan<small>P3, P4, dashboard</small></div><div class="bar" style="grid-column:15 / 21">wk 13–18</div>
+    <div class="lbl">C · Record<small>P5, P6</small></div><div class="bar" style="grid-column:19 / 25">wk 17–22</div>
+    <div class="lbl">Measure and decide</div><div class="bar m" style="grid-column:25 / 29">wk 23–26</div>
+  </div></div>
+  <ul class="changes" style="margin-top:16px">
+    <li><b>Week 12 gate.</b> Predicate and research hours at least 50% lower on a live project, and the customer's RA lead accepts the outputs. Otherwise stop or re-scope before building P3–P6.</li>
+    <li><b>Week 24–26.</b> Total scoped hours at least 50% lower on 2 or more live 510(k)s, with no rise in AI deficiencies. Then a go/no-go on commercial terms.</li>
+  </ul>
+</section>
+
+<section id="s10">
+  <h2><span class="n">10</span>Changes to our plan if the pilot succeeds</h2>
+  <ul class="changes">
+    <li><b>Pull forward</b> FR-5.1–5.3 into the month-6 baseline. This closes most of the eSTAR gap against Complizen and Cruxi without building form filling.</li>
+    <li><b>Add</b> the AI-deficiency register and claim–evidence matrix to the consultant workspace (FR-11.2) as retainer features. They put us in the consultancy's cost of delivery (M-3).</li>
+    <li><b>Amend</b> REQ §2 to read "a register of submission artefacts, not a document control system".</li>
+    <li><b>Use</b> the pilot as the "signed design partner" and "extraction proven" milestones in Phase 1.</li>
+    <li><b>Add</b> FR-13 "Submission Workspace" (G-1 to G-10) to MRA-REQ-001, with the changes in §6.2 and §6.3.</li>
+    <li><b>Fix now, whatever happens:</b> the document conflicts in §6.5.</li>
+  </ul>
+</section>
+
+<section id="s11">
+  <h2><span class="n">11</span>Questions for the customer</h2>
+  <ol class="qs">
+    <li>Which product codes or device types make up most of your 510(k) work?</li>
+    <li>Where do your documents live today: SharePoint, Drive, or an eQMS such as Greenlight Guru?</li>
+    <li>Can you share timesheets or activity estimates from 2–3 past 510(k)s for the baseline?</li>
+    <li>Can you share past AI letters and responses, anonymised, to seed the deficiency history?</li>
+    <li>Do you need separate client workspaces from day one?</li>
+    <li>Who is the RA lead who will accept or reject outputs at the week-12 gate?</li>
+  </ol>
+</section>
+
+<section id="screens">
+  <h2><span class="n">A</span>Veeva demo screens</h2>
+  <p class="lede">All 40 screens captured from the demo, in order, with timestamps. Click any screen to enlarge it, then use the arrow keys to step through.</p>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<footer>MedexRegAI · 510(k) pilot analysis · Sources: Veeva Vault RIM Suite end-to-end demo (veeva.com), MRA-BIZ-001 r6, MRA-REQ-001 r0.2.</footer>
+</main>
+</div>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Demo screen">
+  <img id="lbImg" alt="">
+  <div class="cap" id="lbCap"></div>
+  <div class="ctl"><button id="lbPrev" type="button">← Previous</button><button id="lbClose" type="button">Close</button><button id="lbNext" type="button">Next →</button></div>
+</div>
+
+<script>
+const SCREENS=[
+["001_00m00s","Title card"],["002_00m05s","Product Overview: registrations and marketing status"],["003_00m32s","Legend filter: hide Not Marketed"],["004_00m34s","Dashboard updates live"],["005_00m43s","Drug substance and product manufacturers, site roles"],["006_01m28s","Pack sizes, shelf life, storage conditions"],["007_01m31s","Approved shelf life by market"],["008_01m41s","Approved storage conditions"],["009_01m48s","HA questions, commitments, ongoing activities"],["010_02m12s","Global events and submission status report"],
+["011_02m18s","Change event: shelf-life extension to 24 months"],["012_02m33s","Impact assessment report options"],["013_02m36s","Impact assessment: packaging across registrations"],["014_02m38s","Impact assessment result: 48 registrations"],["015_02m58s","Country activities and local disposition"],["016_03m28s","Submission content plan (eCTD tree)"],["017_03m57s","Submission project management dashboard"],["018_04m02s","Document status by module and owner"],["019_04m15s","Overall completeness"],["020_04m20s","Validation: high-severity errors"],
+["021_04m27s","Validation errors by severity"],["022_04m30s","Low errors, newer versions available"],["023_04m58s","Content plan with Word co-authoring"],["024_05m10s","Co-authoring the stability summary"],["025_05m28s","Viewer: published PDF and submission metadata"],["026_05m35s","Viewer: navigating the XML backbone"],["027_05m47s","Submit to Gateway"],["028_05m55s","Global submission completeness"],["029_06m03s","Dispatched plans and initial submissions"],["030_06m08s","On-time submissions, days to spare"],
+["031_06m42s","Health authority question HAQ-000022"],["032_07m21s","Related past HA questions"],["033_07m44s","Regulatory objective in progress"],["034_07m56s","Registration change wizard: scope"],["035_08m02s","Wizard: select registrations"],["036_08m05s","Wizard: add 24-month shelf life"],["037_08m10s","Product Overview after approval"],["038_08m26s","Shelf life now shows 24 months"],["039_08m53s","Active Dossier Viewer"],["040_09m15s","Closing card"]];
+const src=f=>"screens/"+f+".jpg", ts=f=>f.slice(4).replace("m","m ");
+const gal=document.getElementById("gallery");
+SCREENS.forEach(([f,c],i)=>{const fig=document.createElement("figure");fig.id="s"+f.slice(0,3);
+  fig.innerHTML=`<a href="#s${f.slice(0,3)}" data-i="${i}"><img loading="lazy" src="${src(f)}" alt="${c}"></a><figcaption><span class="mono">${f.slice(0,3)} · ${ts(f)}</span>${c}</figcaption>`;gal.appendChild(fig);});
+const lb=document.getElementById("lb"),img=document.getElementById("lbImg"),cap=document.getElementById("lbCap");let cur=0,last=null;
+function show(i){cur=(i+SCREENS.length)%SCREENS.length;const[f,c]=SCREENS[cur];img.src=src(f);img.alt=c;cap.innerHTML=`<span class="mono">${f.slice(0,3)} · ${ts(f)}</span>${c}`;}
+function open(i){last=document.activeElement;show(i);lb.hidden=false;document.getElementById("lbClose").focus();}
+function close(){lb.hidden=true;if(last)last.focus();}
+document.addEventListener("click",e=>{const a=e.target.closest("a.scr, .gallery a");if(!a)return;e.preventDefault();
+  const n=a.dataset.i!=null?+a.dataset.i:parseInt(a.getAttribute("href").slice(2),10)-1;open(n);});
+document.getElementById("lbPrev").onclick=()=>show(cur-1);document.getElementById("lbNext").onclick=()=>show(cur+1);document.getElementById("lbClose").onclick=close;
+lb.addEventListener("click",e=>{if(e.target===lb)close();});
+document.addEventListener("keydown",e=>{if(lb.hidden)return;if(e.key==="Escape")close();if(e.key==="ArrowLeft")show(cur-1);if(e.key==="ArrowRight")show(cur+1);});
+/* highlight current section in contents */
+const links=[...document.querySelectorAll(".toc a")];
+if("IntersectionObserver" in window){const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(l=>l.classList.toggle("on",l.getAttribute("href")==="#"+en.target.id));}});},{rootMargin:"-20% 0px -70% 0px"});
+document.querySelectorAll("main section").forEach(s=>io.observe(s));}
+</script>
+</body>
+</html>

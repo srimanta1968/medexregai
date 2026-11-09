@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veeva vs MedexRegAI Capabilities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html" class="on">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#summary"><span>1</span>Summary</a></li>
+    <li><a href="#evidence"><span>2</span>What we reviewed</a></li>
+    <li><a href="#map"><span>3</span>Veeva's system map</a></li>
+    <li><a href="#rim"><span>4</span>Regulatory (RIM)</a></li>
+    <li><a href="#ai"><span>5</span>AI capabilities</a></li>
+    <li><a href="#quality"><span>6</span>Quality patterns</a></li>
+    <li><a href="#ours"><span>7</span>Where we lead</a></li>
+    <li><a href="#other"><span>8</span>Out-of-scope suites</a></li>
+    <li><a href="#pilot"><span>9</span>Pilot 50% mapping</a></li>
+    <li><a href="#borrow"><span>10</span>Patterns to adopt</a></li>
+    <li><a href="#position"><span>11</span>Positioning</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-001</span><span>Capability comparison</span><span>Rev 1.0 · 8 Oct 2026</span></div>
+  <h1>Veeva vs MedexRegAI: capabilities and requirements</h1>
+  <p class="sub">What Veeva's product videos show the Vault platform can do, mapped against MedexRegAI's requirements (MRA-REQ-001), business plan (MRA-BIZ-001 r6) and the 510(k) consulting pilot.</p>
+  <div class="meta">
+    <div><b>Evidence</b>88 Veeva product videos, 6 h 43 min, 77 transcripts, screens per video</div>
+    <div><b>Compared against</b>MRA-REQ-001 r0.2 (80 FR/NFR), MRA-BIZ-001 r6, MRA-PLN-001 r2.0</div>
+    <div><b>Customer</b>FDA 510(k) consultancy pilot, 50% effort reduction in 3–6 months</div>
+    <div><b>Video library</b><a href="../../veeva/videos/_index.csv">veeva/videos/_index.csv</a></div>
+  </div>
+</header>
+
+<section id="summary">
+  <h2><span class="n">1</span>Summary</h2>
+  <div class="cards">
+    <div class="card"><span class="k">What Veeva is</span><h4>A system of record for executing regulated work</h4><p>Veeva unifies documents, data and workflow for pharma regulatory, quality, safety, clinical and commercial teams. It is strongest after a strategy is decided: planning, authoring, publishing, filing, archiving and updating registrations.</p></div>
+    <div class="card"><span class="k">What we are</span><h4>Intelligence on the public FDA record</h4><p>MedexRegAI answers the questions that come first: what the device is, which pathway, which predicates, what testing, what it will cost. Veeva's videos show none of that research layer.</p></div>
+    <div class="card pick"><span class="k">What the pilot needs</span><h4>Our intelligence plus a light workspace</h4><p>The consultancy's 50% saving needs our research engine plus a light version of five Veeva patterns: content plan, continuous checks, FDA question handling, version history and a chronology record.</p></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b>37</b><span>Veeva capabilities catalogued (§4–6), plus 5 out-of-scope suites</span></div>
+    <div class="kpi"><b>20</b><span>adopted for the pilot, in light form</span></div>
+    <div class="kpi"><b>8</b><span>scheduled for Release 1 or US adjacency</span></div>
+    <div class="kpi"><b>9</b><span>deliberately not built</span></div>
+    <div class="kpi"><b>14</b><span>of our capabilities with no Veeva equivalent</span></div>
+  </div>
+  <div class="callout"><p><strong>Bottom line.</strong> Don't compete with Veeva as a RIM system of record; the business plan rules that out, and it isn't where the consultant's hours go. Compete on research and decision support, which Veeva doesn't show. Adopt Veeva's best workflow ideas only as light registers that sit next to the customer's existing document storage.</p></div>
+</section>
+
+<section id="evidence">
+  <h2><span class="n">2</span>What we reviewed</h2>
+  <p>We downloaded every video on Veeva's 58 product pages (48 pages carry a video) plus the 39 demos linked from the Demo Center: 88 unique videos. Each video folder holds the video, its captions, a timestamped transcript and screenshots taken at every screen change. This comparison relies most on the 22 videos covering regulatory, quality, platform and AI. The commercial, clinical and safety videos were read for platform patterns only.</p>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Area</th><th>Videos</th><th>Most relevant</th><th>Folder</th></tr></thead>
+    <tbody>
+      <tr><td>Regulatory (RIM)</td><td>8</td><td>RIM end-to-end demo, Registrations, Submissions, Submissions Publishing, Submissions Archive, RIM explainer, Animal Health variation management, Submission document collection</td><td><a href="../../veeva/videos/veeva-rim/">veeva-rim</a>, <a href="../../veeva/videos/veeva-submissions/">veeva-submissions</a></td></tr>
+      <tr><td>AI and platform</td><td>7</td><td>Vault AI strategy and roadmap, Application Assistant, custom agents, complaint-intake agent, Quick Check agent, Falcon MLR</td><td><a href="../../veeva/videos/vault-ai/">vault-ai</a>, <a href="../../veeva/videos/development-cloud/">development-cloud</a></td></tr>
+      <tr><td>Quality</td><td>9</td><td>Unified Quality Management, QMS change control, QualityDocs, Validation Management, LIMS, Batch Release, Training</td><td><a href="../../veeva/videos/quality-cloud/">quality-cloud</a></td></tr>
+      <tr><td>Cross-suite connections</td><td>8</td><td>RIM to Clinical, RIM to Safety (PSMF Annex H), Quality to Safety, Safety to EDC</td><td><a href="../../veeva/videos/demo-center/">demo-center</a></td></tr>
+      <tr><td>Safety, clinical, commercial, data</td><td>56</td><td>Read for platform patterns only. Pharma-specific and out of scope</td><td><a href="../../veeva/videos/">all videos</a></td></tr>
+    </tbody>
+  </table></div>
+  <p><small>Note: the videos show Veeva's pharma (drug) workflows: eCTD, CTD, MAA, IND/NDA. None of the 88 videos show a device 510(k) or eSTAR workflow. Veeva sells RIM to medtech too, but these videos don't evidence device-specific features, so we don't assume any.</small></p>
+</section>
+
+<section id="map">
+  <h2><span class="n">3</span>Veeva's system map, as the videos show it</h2>
+  <div class="diagram"><svg viewBox="0 0 980 360" role="img" aria-label="Veeva Vault platform map">
+    <rect class="bx-s" x="10" y="300" width="960" height="48" rx="8"/>
+    <text class="t" x="490" y="322" text-anchor="middle">Vault Platform: one database for documents + data · workflow · Part 11 e-signature · dashboards</text>
+    <text class="s" x="490" y="339" text-anchor="middle">Vault AI: chat on records, summaries, comparison, query agent, AI tab, custom agents · Falcon "agentic labor" outside Vault</text>
+    <rect class="bx-a" x="10" y="20" width="300" height="260" rx="8"/>
+    <text class="hd" x="26" y="44">DEVELOPMENT CLOUD · REGULATORY</text>
+    <text class="t" x="26" y="72">Registrations</text><text class="s" x="26" y="88">registered details per country, events, impact assessment</text>
+    <text class="t" x="26" y="116">Submissions</text><text class="s" x="26" y="132">content plans, authoring, HA questions</text>
+    <text class="t" x="26" y="160">Submissions Publishing</text><text class="s" x="26" y="176">continuous publishing and validation, gateway</text>
+    <text class="t" x="26" y="204">Submissions Archive</text><text class="s" x="26" y="220">viewer, document lifecycle, chronology</text>
+    <text class="s" x="26" y="256">Connections: RIM to Clinical, RIM to Safety, RIM to QMS</text>
+    <rect class="bx" x="330" y="20" width="200" height="260" rx="8"/>
+    <text class="hd" x="346" y="44">QUALITY CLOUD</text>
+    <text class="t" x="346" y="72">QMS</text><text class="s" x="346" y="88">events, deviations, CAPA</text>
+    <text class="t" x="346" y="116">Change control</text><text class="s" x="346" y="132">linked to variations</text>
+    <text class="t" x="346" y="160">QualityDocs, Training</text>
+    <text class="t" x="346" y="188">Validation Mgmt</text><text class="s" x="346" y="204">req → test traceability</text>
+    <text class="t" x="346" y="232">LIMS, Batch Release</text>
+    <rect class="bx" x="550" y="20" width="200" height="260" rx="8"/>
+    <text class="hd" x="566" y="44">DEVELOPMENT CLOUD</text>
+    <text class="t" x="566" y="72">Clinical operations</text><text class="s" x="566" y="88">eTMF, CTMS, Study Startup</text>
+    <text class="t" x="566" y="116">Clinical data</text><text class="s" x="566" y="132">EDC, coder, RTSM</text>
+    <text class="t" x="566" y="160">Safety</text><text class="s" x="566" y="176">cases, E2B, signal, docs</text>
+    <rect class="bx" x="770" y="20" width="200" height="260" rx="8"/>
+    <text class="hd" x="786" y="44">COMMERCIAL + DATA</text>
+    <text class="t" x="786" y="72">Vault CRM</text><text class="s" x="786" y="88">agentic call report</text>
+    <text class="t" x="786" y="116">PromoMats</text><text class="s" x="786" y="132">MLR, Quick Check</text>
+    <text class="t" x="786" y="160">Ostro, Crossix</text>
+    <text class="t" x="786" y="188">OpenData, Link</text>
+    <text class="t" x="786" y="216">Compass</text>
+  </svg></div>
+  <p>Veeva's main idea is one platform holding documents and data together, so a change made once (a new manufacturer, a shelf-life extension, an approval) flows into registrations, submissions, safety and quality without re-keying. Most of its AI announcements in 2026 are agents working on data already inside the customer's Vault.</p>
+</section>
+
+<section id="rim">
+  <h2><span class="n">4</span>Regulatory (RIM) capabilities compared</h2>
+  <p class="lede">Status key: <span class="chip c-pilot">Pilot</span> build a light form in the pilot · <span class="chip c-r1">Release 1</span> in our R1/GA plan · <span class="chip c-later">Adjacency</span> M13–22 · <span class="chip c-out">Out of scope</span> excluded by the business plan or pharma-only.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Veeva capability</th><th>Shown in</th><th>Our requirement today</th><th>Decision for MedexRegAI</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="6">Registrations and change management</td></tr>
+      <tr><td class="id">V-R1</td><td>Registration record per country: registered product, substance, manufacturers, packs, shelf life, marketing status, renewal flag</td><td>Registrations, Animal Health</td><td>None. BP: "deliberately not registration management"</td><td>Keep out. For a cleared device, store a <strong>Clearance record</strong> (K-number, date, cleared IFU, product code) only</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-R2</td><td>Event (global change) linked to a QMS change control</td><td>Registrations, QMS explainer</td><td>None</td><td>Model a <strong>Change</strong> on a cleared device as input to 510(k) change assessment</td><td><span class="chip c-later">Adjacency</span></td></tr>
+      <tr><td class="id">V-R3</td><td>Impact assessment report templates (by substance, packaging, shelf life, manufacturer, labeling)</td><td>Registrations, RIM e2e</td><td>Roadmap line only (change assessment M13–22)</td><td>Rebuild for devices: change → affected claims, evidence and cleared IFU → letter-to-file vs new 510(k), citing FDA guidance</td><td><span class="chip c-later">Adjacency</span></td></tr>
+      <tr><td class="id">V-R4</td><td>Bulk create related records (activities, submissions, objectives) from an impact assessment</td><td>Registrations</td><td>None</td><td>Not needed for one regulator. Create one project from a change assessment</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-R5</td><td>Local disposition requested from affiliates</td><td>Registrations, RIM e2e</td><td>None</td><td>Single-market FDA work has no affiliates</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-R6</td><td>Global content plan dispatched to local markets</td><td>Registrations</td><td>None</td><td>Use the idea as <strong>reusable eSTAR plan templates</strong> per device type</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-R7</td><td>Manage-registered-details wizard: bulk update after approval</td><td>Registrations, RIM e2e</td><td>None</td><td>On clearance, close the project and write the Clearance record. No bulk wizard</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-R8</td><td>Product overview dashboards (markets, sites, packs, shelf life, open questions)</td><td>RIM e2e, Registrations</td><td>None. FR-11 covers access only</td><td><strong>Portfolio dashboard</strong> by client and project: stage, FDA clock, open deficiencies, readiness (G-8)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="grp"><td colspan="6">Submissions planning and authoring</td></tr>
+      <tr><td class="id">V-S1</td><td>Application record as single source; submission wizard; submissions forecast ("RegOps command center")</td><td>Submissions, Publishing</td><td>FR-1.1 device project and profile</td><td>The <strong>Device Project</strong> is our application record. Forecast view comes with the portfolio dashboard</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-S2</td><td>Submission content plan: structure on the left, project management (owner, due dates, status) on the right</td><td>Submissions, Publishing, RIM e2e</td><td>FR-5.1/5.2 checklist (R2)</td><td><strong>eSTAR section plan</strong> with owner, dates and status per section (FR-13.1, pulled into the pilot)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-S3</td><td>Match-document mode: finds library documents matching a section's criteria</td><td>Submissions</td><td>None</td><td><strong>Evidence auto-match</strong>: suggest which registered evidence items satisfy each eSTAR section (FR-13.3)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-S4</td><td>Authoring templates; Microsoft 365 co-authoring; Part 11 e-signature approvals</td><td>Submissions, RIM e2e</td><td>Out of scope ("not a document control system")</td><td>Customer keeps Word/SharePoint. We link to files and record versions and reviewer approvals (FR-11.4)</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-S5</td><td>Agentic authoring of submissible documents (announced)</td><td>Vault AI strategy keynote</td><td>eSTAR drafting deferred post-Series A</td><td>Draft only what our evidence supports: SE comparison table, predicate rationale, test summary tables. Never file</td><td><span class="chip c-later">Adjacency</span></td></tr>
+      <tr class="grp"><td colspan="6">Publishing, validation and filing</td></tr>
+      <tr class="hl"><td class="id">V-P1</td><td>Continuous validation against health-authority criteria while documents are still being written</td><td>Publishing, RIM e2e</td><td>FR-5.3 gap analysis (Should, R2)</td><td><strong>Continuous gap check</strong>: re-run eSTAR completeness and precedent-based gap rules whenever evidence or plan changes (FR-5.3 → Must, pilot)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-P2</td><td>Continuous eCTD publishing, leaf titles, XML operations</td><td>Publishing</td><td>None</td><td>eSTAR is a PDF form, so no eCTD publishing</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-P3</td><td>Cross-document permalinks and a link evaluator</td><td>Publishing</td><td>None</td><td>Not needed for eSTAR attachments</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-P4</td><td>Lock versions, "Ready for Submission", send through the FDA/HC/EMA gateway, store acknowledgements</td><td>Publishing, RIM e2e</td><td>"We never submit to a regulator"</td><td><strong>Freeze an as-submitted manifest</strong> (file list + hashes) when the user records a CDRH Portal upload. Never transmit (FR-13.7)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="grp"><td colspan="6">Health-authority interactions</td></tr>
+      <tr class="hl"><td class="id">V-H1</td><td>Forward HA email to a Vault inbox; automatic classification</td><td>Submissions, RIM e2e</td><td>None</td><td><strong>FDA correspondence intake</strong> by upload or forwarding address; classify as AI request, Pre-Sub feedback, technical-screening hold, decision letter (FR-13.4)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-H2</td><td>Highlight text to extract HA questions into records</td><td>Submissions</td><td>None</td><td><strong>AI deficiency extraction</strong>: split the letter into numbered deficiencies automatically, user confirms (FR-13.4)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-H3</td><td>Find related past questions and reuse earlier responses</td><td>RIM e2e</td><td>None</td><td><strong>Similar-deficiency search</strong> within the firm's own history (tenant only, NFR-8) (FR-13.5)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-H4</td><td>"Initiate response": creates the follow-up submission, content plan and a response document with the questions filled in</td><td>Submissions</td><td>None</td><td><strong>Response package</strong>: one deficiency per row, linked evidence, response status, export to a response-letter skeleton</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-H5</td><td>Commitments and open questions dashboards; AI-suggested responses (Falcon regulatory agent, announced)</td><td>Submissions, Vault AI keynote</td><td>None</td><td>Dashboard in the pilot. Response drafting from precedent and own history in adjacency</td><td><span class="chip c-later">Adjacency</span></td></tr>
+      <tr class="grp"><td colspan="6">Archive and record</td></tr>
+      <tr class="hl"><td class="id">V-A1</td><td>Archive viewer: full submission history, correspondence, document lifecycle across sequences</td><td>Archive, RIM e2e</td><td>FR-10.4 covers our reports only</td><td><strong>Submission record</strong>: immutable timeline per 510(k) with versions per event (FR-13.6, FR-13.7)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">V-A2</td><td>Application chronology report: submissions, correspondence, questions, commitments in date order</td><td>Archive</td><td>None</td><td><strong>Chronology export</strong> for audits and client hand-over (PDF/DOCX)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="grp"><td colspan="6">Connections</td></tr>
+      <tr><td class="id">V-C1</td><td>RIM to Clinical: product, study, site records and cross-linked documents</td><td>eTMF to Submissions demo</td><td>FR-1.3 accept documents</td><td>Link to customer storage (SharePoint/Drive) instead of a clinical system</td><td><span class="chip c-r1">Release 1</span></td></tr>
+      <tr><td class="id">V-C2</td><td>RIM to Safety and RIM to QMS master-data sync</td><td>PSMF Annex H, QMS explainer</td><td>eQMS connectors (R3)</td><td>Read document references from an eQMS (Greenlight Guru) later</td><td><span class="chip c-later">Adjacency</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ai">
+  <h2><span class="n">5</span>AI capabilities compared</h2>
+  <p>Veeva's AI works on content already inside the customer's Vault. Ours works on the public FDA record first, then on the customer's evidence. That difference decides what each can answer.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Veeva AI capability</th><th>Shown in</th><th>Our equivalent</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="id">V-AI1</td><td>Chat on a record ("Application Assistant"): open objectives, commitments due, with links</td><td>AI Regulatory demo</td><td>Project assistant: Q&A over the project, its evidence, deficiencies and the FDA corpus, every answer cited (Regulatory Q&A use case)</td><td><span class="chip c-r1">Release 1</span></td></tr>
+      <tr><td class="id">V-AI2</td><td>Standard agents: document chat, summary, translation, version comparison, query agent; AI tab</td><td>Vault AI keynotes</td><td>Version comparison of evidence documents and summary of FDA letters in the pilot. General chat in Release 1</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-AI3</td><td>Customer-configurable agents, point-and-click</td><td>Custom agents demo</td><td>Not planned. Our value is curated, evaluated agents with published accuracy</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-AI4</td><td>Falcon: standard agents doing routine work, including an HA-interaction agent that extracts and suggests responses</td><td>Vault AI strategy keynote</td><td>Deficiency extraction (pilot) and response drafting (adjacency)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-AI5</td><td>Quick Check and Falcon MLR: pre-review of content against rules; claims checked against a claims library and anchored to references</td><td>PromoMats Quick Check, Falcon MLR</td><td><strong>Claim–evidence check</strong>: every claim and SE difference anchored to evidence or flagged unsupported (FR-13.2). Same idea, applied to 510(k) claims</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-AI6</td><td>Email intake agent: creates the record, triages, closes with written rationale</td><td>Complaint intake webinar</td><td>FDA correspondence intake classifies and routes, with written rationale and human confirmation</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr class="hl"><td class="id">—</td><td>Not shown by Veeva: pathway determination, predicate ranking, precedent-derived test plans, MDUFA timelines, recall screening</td><td>—</td><td>Our core (PR-1 to PR-5, FR-2 to FR-7), grounded on the public FDA record with citation gate and snapshots</td><td><span class="chip c-ours">Ours</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><p><strong>Watch item.</strong> Veeva announced agentic authoring and an HA-interaction agent for 2026. Once shipped, Veeva customers get response suggestions from their own history. Our answer: precedent from the public record plus the consultancy's cross-client history (within its tenant). A single manufacturer's Vault can't see that span.</p></div>
+</section>
+
+<section id="quality">
+  <h2><span class="n">6</span>Quality-suite patterns worth reusing</h2>
+  <p>We will not build a QMS (out of scope in REQ §2). Three quality patterns still apply to our design.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>ID</th><th>Veeva pattern</th><th>Shown in</th><th>How we use it</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="id">V-Q1</td><td>Quality event → deviation → CAPA → change control → document change → training, as one linked chain</td><td>Unified Quality Management</td><td>Link chain for our record: FDA deficiency → evidence change → response → resubmission, one connected timeline</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-Q2</td><td>Change control connected to regulatory variation management</td><td>QMS explainer</td><td>Input to 510(k) change assessment: a design change from the client's eQMS becomes an assessment request</td><td><span class="chip c-later">Adjacency</span></td></tr>
+      <tr><td class="id">V-Q3</td><td>Validation Management: requirements linked to test steps, trace matrix generated automatically, review by exception</td><td>Validation Management demo</td><td>(a) Model for our claim–evidence matrix. (b) How we build our own validation support package (REQ compliance posture)</td><td><span class="chip c-pilot">Pilot</span></td></tr>
+      <tr><td class="id">V-Q4</td><td>Document control, periodic review, training assignment</td><td>QualityDocs, Training</td><td>Out of scope. The customer's eQMS owns this</td><td><span class="chip c-out">Out of scope</span></td></tr>
+      <tr><td class="id">V-Q5</td><td>LIMS, batch release, station manager, EHS</td><td>LIMS, Batch Release demos</td><td>Pharma manufacturing. Not relevant</td><td><span class="chip c-out">Out of scope</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ours">
+  <h2><span class="n">7</span>Where MedexRegAI leads (no Veeva equivalent in the videos)</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Our capability</th><th>Requirement</th><th>Release</th><th>Why it matters to the pilot</th></tr></thead>
+    <tbody>
+      <tr><td>Product-code prediction with confidence and reasoning</td><td>FR-2.1, 2.2</td><td>R1 baseline</td><td>Removes the first guess in every engagement</td></tr>
+      <tr><td>Pathway determination with reasoning chain and high-consequence flags</td><td>FR-2.3–2.5</td><td>R1 baseline</td><td>Avoids wrong-pathway rework ($10K–$50K per event, BP)</td></tr>
+      <tr class="hl"><td><strong>Predicate ranking, IFU and technology side-by-side, recall screening, lineage</strong></td><td>FR-3.1–3.4, 3.7</td><td>Pilot</td><td><strong>The largest block of consultant research hours</strong></td></tr>
+      <tr><td>Competitive landscape per product code</td><td>FR-3.5, 8.1</td><td>R1</td><td>Context for the SE argument</td></tr>
+      <tr class="hl"><td><strong>Standards list and precedent-derived test plan</strong></td><td>FR-4.1–4.5</td><td>Pilot (subset)</td><td>Defines expected eSTAR evidence, which feeds the gap check</td></tr>
+      <tr><td>MAUDE and recall themes as design-risk inputs</td><td>FR-6.1–6.4</td><td>R1 GA</td><td>Supports risk sections</td></tr>
+      <tr><td>User fees and MDUFA-based review-time distribution</td><td>FR-7.1–7.2</td><td>R1 GA</td><td>Client planning and quoting</td></tr>
+      <tr class="hl"><td><strong>Precedent-based gap prediction (which missing items trigger AI requests)</strong></td><td>FR-5.3</td><td>Pilot</td><td>Avoids AI-request rework ($8K–$25K per event, BP)</td></tr>
+      <tr><td>Inline citation to the FDA record, enforced as a hard gate</td><td>FR-10.2, NFR-5</td><td>Pilot</td><td>Defensible output; reviewer trust</td></tr>
+      <tr><td>Immutable data snapshots; reproducible reports; free re-runs</td><td>FR-10.4, NFR-6, BP M-2</td><td>Pilot</td><td>Audit record of what the research said when</td></tr>
+      <tr><td>Published accuracy benchmarks and Determination Guarantee</td><td>BP M-1, §15 metrics</td><td>R1 GA</td><td>Commercial trust</td></tr>
+      <tr><td>Consultant multi-client workspaces with rebillable credits</td><td>FR-11.2, BP M-3</td><td>Pilot</td><td>Fits how a consultancy bills</td></tr>
+      <tr><td>Flat, published per-deliverable pricing; free seats</td><td>BP §5</td><td>M6</td><td>Purchasable without procurement</td></tr>
+      <tr><td>Lead Finder and marketplaces</td><td>BP §7–8</td><td>M15+</td><td>Consultancy gets qualified leads</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="other">
+  <h2><span class="n">8</span>Veeva suites out of scope for MedexRegAI</h2>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Suite</th><th>What the videos show</th><th>Relevance</th></tr></thead>
+    <tbody>
+      <tr><td>Clinical operations (eTMF, CTMS, Study Startup, Site Connect, Training)</td><td>Study setup, expected-document lists, site document exchange, monitoring reports filed automatically</td><td>Pattern only: "expected document list per milestone" is similar to our eSTAR expected-evidence list</td></tr>
+      <tr><td>Clinical data (EDC, coder, RTSM, Payments)</td><td>Data capture, randomisation, site payments</td><td>None</td></tr>
+      <tr><td>Safety (Safety, SafetyDocs, Signal, Workbench, E2B)</td><td>Case intake and processing, signal detection, ICSR submission</td><td>None directly. Our MAUDE analysis is public-data intelligence, not case processing</td></tr>
+      <tr><td>Commercial (CRM, PromoMats, Ostro, Crossix, Medical)</td><td>Agentic call reports, MLR review, conversational brand assistants</td><td>Pattern only: claims substantiation (Falcon MLR) informs our claim–evidence check</td></tr>
+      <tr><td>Data Cloud (OpenData, Link, Compass)</td><td>HCP and account reference data, patient data</td><td>None</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="pilot">
+  <h2><span class="n">9</span>How the comparison serves the 50% pilot target</h2>
+  <p>Each scoped consultant activity is mapped to where the saving comes from. The baseline hours come from the customer's timesheets (Project Plan, Phase 0).</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Consultant activity</th><th>Source of the saving</th><th>Veeva pattern used</th><th>Our requirement</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr><td>Product-code and predicate search, shortlist, SE comparison table</td><td>Ranked predicates with IFU/tech diff and recall flags; exportable SE table</td><td>None (ours alone)</td><td>FR-3.1–3.3, 3.7; FR-3.2 export</td><td><b>≥ 60% less</b></td></tr>
+      <tr><td>Collecting FDA research (summaries, guidance, standards, recalls)</td><td>Project research library, auto-populated and cited</td><td>None (ours alone)</td><td>FR-4.1, 4.5, 10.2; G-3</td><td><b>≥ 60% less</b></td></tr>
+      <tr><td>Building and maintaining the eSTAR checklist</td><td>Template plans, owners and dates, evidence auto-match</td><td>V-S2, V-S3, V-R6</td><td>FR-13.1, 13.3, 13.9</td><td><b>≥ 50% less</b></td></tr>
+      <tr><td>Cross-checking claims against evidence</td><td>Claim–evidence matrix with continuous gap check</td><td>V-P1, V-AI5, V-Q3</td><td>FR-13.2, FR-5.3</td><td><b>≥ 40% less</b></td></tr>
+      <tr><td>AI-letter triage and response package</td><td>Deficiency extraction, similar past deficiencies, response tracker</td><td>V-H1–V-H4</td><td>FR-13.4, 13.5</td><td><b>≥ 40% less</b></td></tr>
+      <tr><td>Reconstructing "what we submitted, what FDA asked, what changed"</td><td>Immutable submission record and chronology export</td><td>V-A1, V-A2, V-P4</td><td>FR-13.6, 13.7</td><td><b>≥ 70% less</b></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="borrow">
+  <h2><span class="n">10</span>Veeva patterns to adopt, and how far</h2>
+  <div class="cards">
+    <div class="card"><span class="k">Adopt</span><h4>The plan is the hub</h4><p>One screen holds the eSTAR structure on the left and owners, dates, evidence and status on the right (V-S2).</p></div>
+    <div class="card"><span class="k">Adopt</span><h4>Check continuously, not at the end</h4><p>Re-run completeness and precedent gap rules every time evidence changes (V-P1).</p></div>
+    <div class="card"><span class="k">Adopt</span><h4>Letters become records</h4><p>An FDA letter becomes structured deficiencies linked to responses and evidence (V-H1–H4).</p></div>
+    <div class="card"><span class="k">Adopt</span><h4>Chronology as an export</h4><p>One date-ordered record of submissions, questions and decisions (V-A2).</p></div>
+    <div class="card"><span class="k">Adopt, later</span><h4>Change → impact assessment</h4><p>The pattern behind 510(k) change assessment (V-R2, V-R3), in US adjacency.</p></div>
+    <div class="card"><span class="k">Avoid</span><h4>Document storage and publishing</h4><p>Co-authoring, e-signature, eCTD publishing and gateway filing (V-S4, V-P2–P4) make us a system of record.</p></div>
+  </div>
+</section>
+
+<section id="position">
+  <h2><span class="n">11</span>Positioning against Veeva</h2>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Dimension</th><th>Veeva Vault RIM</th><th>MedexRegAI</th></tr></thead>
+    <tbody>
+      <tr><td>Job</td><td>Run and record regulated work</td><td>Decide and prepare: research, evidence and readiness</td></tr>
+      <tr><td>Primary data</td><td>The customer's own documents and data</td><td>The public FDA record, then the customer's evidence</td></tr>
+      <tr><td>Market shown in videos</td><td>Pharma, multi-country, eCTD</td><td>US medical devices, 510(k), De Novo, eSTAR</td></tr>
+      <tr><td>Buyer</td><td>Enterprise RA, IT and quality; long procurement</td><td>Consultancies, startups, small and mid manufacturers; card purchase</td></tr>
+      <tr><td>Price</td><td>Not published</td><td>$500/month + $300–$500 per project, published</td></tr>
+      <tr><td>AI</td><td>Agents over Vault content; Falcon agents announced</td><td>Retrieval-grounded agents over the FDA corpus, citation gate, published accuracy</td></tr>
+      <tr><td>Relationship</td><td>—</td><td>Complementary. Our outputs can feed a Veeva or eQMS record set</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>MRA-PRD-001 · Veeva vs MedexRegAI capabilities · Sources: Veeva product videos (veeva.com, downloaded October 2026, internal research only), MRA-REQ-001 r0.2, MRA-BIZ-001 r6, MRA-PLN-001 r2.0.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

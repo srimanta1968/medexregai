@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI PRD Set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+<style>.solo{max-width:1040px;margin:0 auto}</style>
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html" class="on">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<main class="solo">
+<header class="hero">
+  <div class="eyebrow"><span>MedexRegAI</span><span>Product requirements set</span><span>Rev 1.0 · 8 Oct 2026</span></div>
+  <h1>Building MedexRegAI for the 510(k) pilot and beyond</h1>
+  <p class="sub">Eight documents: what Veeva's platform does compared with our requirements, the phased project plan, one requirements document per phase, and the system architecture. All of them work toward one target: a 510(k) consultancy cutting its research and submission effort by 50% within six months.</p>
+</header>
+<div class="callout warn"><p><strong>Superseded build order (7 Nov 2026).</strong> After consultant feedback, <a href="v2.0/index.html">PRD v2.0</a> replaces the plan and build order in this set. The requirements here remain the reference for features that v2.0 keeps or moves to later phases.</p></div>
+
+<section>
+  <h2>Read in this order</h2>
+  <div class="cards">
+    <a class="card" href="01-capability-comparison.html"><span class="k">MRA-PRD-001</span><h4>Veeva vs MedexRegAI</h4><p>37 Veeva capabilities from 88 product videos, mapped to our requirements: what we adopt, schedule, avoid, and where we lead.</p></a>
+    <a class="card pick" href="02-project-plan.html"><span class="k">MRA-PRD-002</span><h4>Phased project plan</h4><p>Five phases, what to build first, the 26-week pilot week by week, gates, team, cost delta and decisions needed.</p></a>
+    <a class="card" href="08-architecture.html"><span class="k">MRA-PRD-008</span><h4>System architecture</h4><p>Containers, data pipeline, data model, AI and citation gate, tenancy, integrations, deployment, ADRs.</p></a>
+  </div>
+  <h2 style="margin-top:28px">Requirements by phase</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Document</th><th>Phase</th><th>Window</th><th>Pilot areas</th><th>Gate</th></tr></thead>
+    <tbody>
+      <tr><td><a href="03-prd-phase1-research-core.html">PRD 1 · Foundation and Research Core</a></td><td>0–1</td><td>Wk 1–12</td><td>1 Predicates · 2 Research</td><td>G1 week 12</td></tr>
+      <tr><td><a href="04-prd-phase2-submission-workspace.html">PRD 2 · Submission Workspace</a></td><td>2</td><td>Wk 13–22</td><td>3 Plan · 4 Claims · 5 FDA questions · 6 Record</td><td>G2 week 22</td></tr>
+      <tr><td><a href="05-prd-phase3-baseline-launch.html">PRD 3 · Pilot proof and baseline launch</a></td><td>3</td><td>Wk 21–26 · M6</td><td>Pilot measurement</td><td>G3 M6</td></tr>
+      <tr><td><a href="06-prd-phase4-release1-ga.html">PRD 4 · Release 1 GA</a></td><td>4</td><td>M7–12</td><td>Wider evidence, trust features</td><td>G4 M12</td></tr>
+      <tr><td><a href="07-prd-phase5-us-adjacency.html">PRD 5 · US adjacency</a></td><td>5</td><td>M13–22</td><td>Change assessment, response drafting</td><td>Series A M18</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Key decisions in this set</h2>
+  <ol class="plain">
+    <li><strong>Compete on intelligence, not on record-keeping.</strong> Veeva's videos show no predicate, pathway or precedent intelligence, and that's where the consultant's hours go.</li>
+    <li><strong>Registers, not repositories.</strong> Adopt Veeva's content-plan, continuous-check, HA-question and chronology patterns in light form. Never store or file the submission itself.</li>
+    <li><strong>Prove research savings first.</strong> The Submission Workspace is built only if the week-12 gate shows a ≥ 50% saving on predicate and research work.</li>
+    <li><strong>One build serves the pilot and the market.</strong> Pilot features become the month-6 baseline; the content checklist and gap audit move forward from Release 2.</li>
+    <li><strong>New requirement group FR-13 "Submission Workspace"</strong> (FR-13.1–13.10) to be added to MRA-REQ-001.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Sources</h2>
+  <ul class="plain">
+    <li>Veeva product videos, screenshots and transcripts: <a href="../../veeva/videos/_index.csv">veeva/videos/_index.csv</a> (internal research only)</li>
+    <li>Earlier analysis: <a href="../../veeva/MedexRegAI-510k-Final-Analysis.html">510(k) pilot analysis</a></li>
+    <li><a href="../MedexRegAI-Requirements.html">MRA-REQ-001 Requirements</a> · <a href="../businessPlan/MedexRegAI-BusinessPlan-PreSeed-v6.html">MRA-BIZ-001 Business Plan r6</a> · <a href="../MedexRegAI-ProjectPlan-Budget.html">MRA-PLN-001 Project Plan and Budget</a></li>
+  </ul>
+</section>
+<footer>MedexRegAI PRD set · docs/Prd</footer>
+</main>
+</body>
+</html>

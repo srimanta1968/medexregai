@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRD 5 US Adjacency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html" class="on">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#change"><span>2</span>Change assessment</a></li>
+    <li><a href="#response"><span>3</span>Response drafting</a></li>
+    <li><a href="#drafting"><span>4</span>eSTAR drafting assists</a></li>
+    <li><a href="#connect"><span>5</span>Connectors and API</a></li>
+    <li><a href="#leads"><span>6</span>Lead Finder</a></li>
+    <li><a href="#other"><span>7</span>Other adjacency</a></li>
+    <li><a href="#accept"><span>8</span>Exit</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-105</span><span>Phase 5</span><span>M13–22</span><span>Rev 1.0</span></div>
+  <h1>PRD 5: US adjacency</h1>
+  <p class="sub">Recurring work on cleared devices, AI help with FDA responses and drafting, connections into customers' systems, and the Lead Finder. These turn a project purchase into a lasting retainer.</p>
+  <div class="meta">
+    <div><b>Business plan</b>M3 US adjacency (M16–22), Lead Finder and API + MCP at M15</div>
+    <div><b>Veeva patterns</b>V-R2, V-R3 change and impact · V-H5, V-AI4 response suggestion · V-S5 agentic authoring · V-C2 connections</div>
+    <div><b>Funding</b>Round tail into Series A</div>
+    <div><b>Detail level</b>Scope-level PRD; refined before M12</div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose</h2>
+  <p>After clearance, a consultancy's client keeps changing the device: labeling, materials, suppliers, software. Each change raises the most frequent recurring question in device regulation: does this need a new 510(k) or a letter to file? Phase 5 answers it with the same evidence base, and adds drafting and response help where the pilot showed the hours still sit.</p>
+</section>
+
+<section id="change">
+  <h2><span class="n">2</span>510(k) change assessment</h2>
+  <p>Veeva's event and impact-assessment pattern (V-R2, V-R3), rebuilt for a cleared device: a change is compared with what was cleared and what evidence supported it.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P5-01</td><td>Record a change to a cleared device (labeling, technology, materials, design, software, manufacturing) against its Clearance record</td><td>FR-13.10</td><td><span class="chip c-must">Must</span></td><td>Change linked to the cleared IFU, claims and manifest</td></tr>
+      <tr><td class="id">P5-02</td><td>Impact view: which cleared claims, SE differences, evidence items and test reports the change touches (from the claim–evidence matrix)</td><td>FR-13.10</td><td><span class="chip c-must">Must</span></td><td>Every affected item linked</td></tr>
+      <tr><td class="id">P5-03</td><td>Assessment following FDA's guidance on deciding when to submit a 510(k) for a change to an existing device, with the decision path documented</td><td>REQ M2 adjacency</td><td><span class="chip c-must">Must</span></td><td>Each decision step cites the guidance passage; expert agreement ≥ 90% on 50 historical changes</td></tr>
+      <tr><td class="id">P5-04</td><td>Letter-to-file document skeleton (DOCX) with the assessment, evidence references and rationale</td><td>REQ M2</td><td><span class="chip c-must">Must</span></td><td>Opens in Word; citations intact</td></tr>
+      <tr><td class="id">P5-05</td><td>Optional intake of change requests from the client's eQMS (read connector)</td><td>V-Q2 pattern</td><td><span class="chip c-should">Should</span></td><td>Greenlight Guru first, if a partnership forms</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="response">
+  <h2><span class="n">3</span>AI-request response drafting</h2>
+  <p>Veeva announced an agent that extracts health-authority communications and suggests responses (V-AI4). Ours drafts from three sources: the project's evidence, the public precedent, and the consultancy's own past responses (tenant-scoped).</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P5-10</td><td>Draft a response per deficiency: restatement, proposed response, evidence references, open items for the client</td><td>New</td><td><span class="chip c-must">Must</span></td><td>Every factual statement cited to evidence or the FDA record; uncited text stripped by the gate</td></tr>
+      <tr><td class="id">P5-11</td><td>Show the past deficiencies and guidance passages used, with similarity scores</td><td>FR-13.5</td><td><span class="chip c-must">Must</span></td><td>Tenant isolation verified</td></tr>
+      <tr><td class="id">P5-12</td><td>Draft marked as AI-generated until a reviewer approves; edits tracked</td><td>FR-10.5, FR-11.4</td><td><span class="chip c-must">Must</span></td><td>Approval recorded in the audit trail</td></tr>
+      <tr><td class="id">P5-13</td><td>Accept rate and edit distance tracked per deficiency category</td><td>Evaluation</td><td><span class="chip c-must">Must</span></td><td>Reported in the Accuracy Report</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="drafting">
+  <h2><span class="n">4</span>eSTAR drafting assists</h2>
+  <p>A narrow version of the "agentic authoring" Veeva announced (V-S5): we only draft text our structured data already supports, and never fill or file the eSTAR itself.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P5-20</td><td>Draft the SE discussion from the saved predicate set and its difference notes</td><td><span class="chip c-must">Must</span></td><td>Fully cited; reviewer approval required</td></tr>
+      <tr><td class="id">P5-21</td><td>Draft performance-testing summary tables from registered test-report fields</td><td><span class="chip c-must">Must</span></td><td>Values match the extracted, confirmed fields exactly</td></tr>
+      <tr><td class="id">P5-22</td><td>Draft device description and IFU wording aligned to precedent phrasing (REQ IFU drafting use case)</td><td><span class="chip c-should">Should</span></td><td>Precedent shown alongside; warns on claim creep</td></tr>
+      <tr><td class="id">P5-23</td><td>AI/ML and SaMD: Predetermined Change Control Plan outline</td><td><span class="chip c-could">Could</span></td><td>Only if the Ketryx position allows (BP §3)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="connect">
+  <h2><span class="n">5</span>Connectors and API</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P5-30</td><td>Public REST API: classification, predicate search, product-code dossier, report generation, project read</td><td>REQ Integrations; BP add-on $2,000/month</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P5-31</td><td>MCP tool server exposing the same capabilities to customers' agents</td><td>BP M15</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P5-32</td><td>Webhooks for data-change events on watched codes and companies</td><td>REQ (R3)</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P5-33</td><td>eQMS and PLM connectors: push gap items, read document references (Greenlight Guru, Jira, Confluence)</td><td>REQ (R3)</td><td><span class="chip c-should">Should</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="leads">
+  <h2><span class="n">6</span>Lead Finder (M15)</h2>
+  <ul class="plain">
+    <li>Consultant channel subscription with filters (product code, panel, class, geography, engagement size) and lead credits (BP §7).</li>
+    <li>Consequence-tiered lead pricing; 72-hour exclusivity; automatic refund for unreachable leads.</li>
+    <li>Double opt-in from the free-tier user; nothing leaves the tenant without it (L-2).</li>
+    <li>Hard separation: no revenue signal reaches the determination model or its prompts (BP standing gate).</li>
+    <li>For the pilot consultancy: they become a supply-side partner, and their free client workspaces count toward consultant-sourced accounts.</li>
+  </ul>
+</section>
+
+<section id="other">
+  <h2><span class="n">7</span>Other adjacency scope</h2>
+  <ul class="plain">
+    <li>Onboarding for non-US applicants filing into the US: localised interface and partner distribution (BP E-2).</li>
+    <li>Clinical trial and IDE data linkage from ClinicalTrials.gov (BP gap closing, M13–16).</li>
+    <li>Registration change intelligence from establishment data, deliberately not registration management (BP).</li>
+  </ul>
+</section>
+
+<section id="accept">
+  <h2><span class="n">8</span>Exit</h2>
+  <ul class="plain">
+    <li>Change assessment in use at ≥ 10 accounts with cleared devices.</li>
+    <li>Response drafts accepted with light edits ≥ 60% of the time.</li>
+    <li>Lead Finder live with ≥ 14 consultant channels (conservative case, BP §16).</li>
+    <li>Series A readiness at M18 (BP).</li>
+  </ul>
+</section>
+
+<footer>MRA-PRD-105 · PRD 5 US adjacency · Traces to MRA-REQ-001 Phase 3 and MRA-BIZ-001 r6 §7, §16.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

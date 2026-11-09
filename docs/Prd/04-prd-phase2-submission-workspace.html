@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRD 2 Submission Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html" class="on">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#rule"><span>2</span>Scope rule</a></li>
+    <li><a href="#flows"><span>3</span>Workflows</a></li>
+    <li><a href="#plan"><span>4</span>eSTAR plan</a></li>
+    <li><a href="#gap"><span>5</span>Gap check</a></li>
+    <li><a href="#matrix"><span>6</span>Claim–evidence</a></li>
+    <li><a href="#fda"><span>7</span>FDA interactions</a></li>
+    <li><a href="#record"><span>8</span>Submission record</a></li>
+    <li><a href="#dash"><span>9</span>Dashboard</a></li>
+    <li><a href="#data"><span>10</span>Data and AI</a></li>
+    <li><a href="#accept"><span>11</span>Exit gate</a></li>
+    <li><a href="#out"><span>12</span>Not in scope</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-102</span><span>Phase 2</span><span>Weeks 13–22</span><span>Rev 1.0</span></div>
+  <h1>PRD 2: Submission Workspace</h1>
+  <p class="sub">A light workspace that turns research into a ready 510(k): the eSTAR plan, a continuous gap check, a claim–evidence matrix, FDA question handling and an auditable record of what was submitted. It adapts Veeva's best RIM patterns without becoming a document system.</p>
+  <div class="meta">
+    <div><b>Pilot areas</b>3 Plan · 4 Claims and evidence · 5 FDA questions and versions · 6 Audit record</div>
+    <div><b>New requirements</b>FR-13.1 – FR-13.9 · FR-5.1–5.3 pulled forward</div>
+    <div><b>Starts only if</b>Gate G1 passed at week 12</div>
+    <div><b>Veeva patterns</b>V-S2, V-S3, V-P1, V-P4, V-H1–H4, V-A1, V-A2, V-AI5, V-Q3</div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose and outcome</h2>
+  <div class="kpis">
+    <div class="kpi"><b>≥ 50%</b><span>less time on the eSTAR checklist</span></div>
+    <div class="kpi"><b>≥ 40%</b><span>less time cross-checking claims</span></div>
+    <div class="kpi"><b>≥ 40%</b><span>less time on AI-letter response packages</span></div>
+    <div class="kpi"><b>≥ 70%</b><span>less time reconstructing the record</span></div>
+  </div>
+  <p>The consultant plans each eSTAR section, sees which evidence covers it, and gets warned early about gaps that comparable submissions show FDA asks about. When FDA sends an AI request, the letter becomes a list of tracked deficiencies with suggested evidence and similar past deficiencies. At any time the consultant can export a dated record of what was submitted, what FDA asked and what changed.</p>
+</section>
+
+<section id="rule">
+  <h2><span class="n">2</span>Scope rule: registers, not repositories</h2>
+  <div class="callout"><p>We store <strong>references</strong> (link, file hash, version label, author, date), <strong>statuses</strong>, <strong>relationships</strong> and <strong>extracted structure</strong>. The files stay in the customer's SharePoint, Google Drive or eQMS. We don't provide check-in/out, e-signatures, Part 11 document control, eSTAR form filling or FDA transmission. This amends REQ §2 to read "a register of submission artefacts, not a document control system".</p></div>
+</section>
+
+<section id="flows">
+  <h2><span class="n">3</span>End-to-end workflow</h2>
+  <div class="diagram"><svg viewBox="0 0 980 220" role="img" aria-label="Submission workspace flow">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="bx" x="10" y="30" width="140" height="70" rx="8"/><text class="t" x="80" y="58" text-anchor="middle">Research Core</text><text class="s" x="80" y="76" text-anchor="middle">predicates, library,</text><text class="s" x="80" y="90" text-anchor="middle">evidence (PRD 1)</text>
+    <rect class="bx-a" x="180" y="30" width="140" height="70" rx="8"/><text class="t" x="250" y="58" text-anchor="middle">eSTAR plan</text><text class="s" x="250" y="76" text-anchor="middle">sections, owners,</text><text class="s" x="250" y="90" text-anchor="middle">dates, auto-match</text>
+    <rect class="bx-a" x="350" y="30" width="140" height="70" rx="8"/><text class="t" x="420" y="58" text-anchor="middle">Gap check</text><text class="s" x="420" y="76" text-anchor="middle">completeness +</text><text class="s" x="420" y="90" text-anchor="middle">precedent rules</text>
+    <rect class="bx-a" x="520" y="30" width="140" height="70" rx="8"/><text class="t" x="590" y="58" text-anchor="middle">Claim–evidence</text><text class="s" x="590" y="76" text-anchor="middle">every claim and</text><text class="s" x="590" y="90" text-anchor="middle">SE difference anchored</text>
+    <rect class="bx-w" x="690" y="30" width="130" height="70" rx="8"/><text class="t" x="755" y="58" text-anchor="middle">Submitted</text><text class="s" x="755" y="76" text-anchor="middle">user uploads to</text><text class="s" x="755" y="90" text-anchor="middle">CDRH Portal</text>
+    <rect class="bx-a" x="850" y="30" width="120" height="70" rx="8"/><text class="t" x="910" y="58" text-anchor="middle">Manifest</text><text class="s" x="910" y="76" text-anchor="middle">frozen file list</text><text class="s" x="910" y="90" text-anchor="middle">+ hashes</text>
+    <path class="ln" d="M150 65 H178" marker-end="url(#ar)"/><path class="ln" d="M320 65 H348" marker-end="url(#ar)"/><path class="ln" d="M490 65 H518" marker-end="url(#ar)"/><path class="ln" d="M660 65 H688" marker-end="url(#ar)"/><path class="ln" d="M820 65 H848" marker-end="url(#ar)"/>
+    <rect class="bx-a" x="520" y="140" width="190" height="66" rx="8"/><text class="t" x="615" y="166" text-anchor="middle">FDA interaction</text><text class="s" x="615" y="184" text-anchor="middle">AI letter → deficiencies →</text><text class="s" x="615" y="198" text-anchor="middle">responses, 180-day clock</text>
+    <rect class="bx-s" x="760" y="140" width="210" height="66" rx="8"/><text class="t" x="865" y="166" text-anchor="middle">Submission record</text><text class="s" x="865" y="184" text-anchor="middle">timeline + chronology export</text><text class="s" x="865" y="198" text-anchor="middle">K-number on clearance</text>
+    <path class="ln" d="M755 100 V120 H615 V138" marker-end="url(#ar)"/>
+    <path class="ln" d="M520 173 H420 V102" marker-end="url(#ar)"/><text class="lbl" x="430" y="166">evidence changes re-run checks</text>
+    <path class="ln" d="M710 173 H758" marker-end="url(#ar)"/>
+  </svg></div>
+</section>
+
+<section id="plan">
+  <h2><span class="n">4</span>eSTAR section plan</h2>
+  <p>Modelled on Veeva's submission content plan (V-S2): the structure sits on the left and project management on the right. Sections follow the current FDA eSTAR template for the device type. The template is versioned, so a template change is a migration rather than an edit.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-01</td><td>Create a plan from a versioned eSTAR template for the device type (for example non-IVD, IVD, software-containing)</td><td>FR-13.1, FR-5.1</td><td><span class="chip c-must">Must</span></td><td>Plan lists every template section; template version stamped</td></tr>
+      <tr><td class="id">P2-02</td><td>Each section: owner (consultant, client engineer, test lab), due date, actual date, status (not started, in progress, complete, not applicable with reason)</td><td>FR-13.1, FR-5.2, FR-13.9</td><td><span class="chip c-must">Must</span></td><td>"Not applicable" requires a written justification</td></tr>
+      <tr><td class="id">P2-03</td><td>Pre-fill applicability from the device profile (for example sterile, software, patient contact, energy source)</td><td>New</td><td><span class="chip c-must">Must</span></td><td>Sections marked suggested-applicable with the profile reason shown</td></tr>
+      <tr><td class="id">P2-04</td><td>Evidence auto-match: suggest evidence items for each section from tags, type, standard and extracted fields (Veeva "match document" idea, V-S3)</td><td>FR-13.3</td><td><span class="chip c-must">Must</span></td><td>User accepts or rejects each suggestion; ≥ 80% of accepted links come from suggestions in the pilot</td></tr>
+      <tr><td class="id">P2-05</td><td>Reusable plan templates saved by the consultancy, per device family</td><td>New (V-R6 idea)</td><td><span class="chip c-should">Should</span></td><td>New project can start from a firm template</td></tr>
+      <tr><td class="id">P2-06</td><td>Reminders on due dates and reassignments</td><td>FR-13.9</td><td><span class="chip c-should">Should</span></td><td>Email and in-app; daily digest option</td></tr>
+      <tr><td class="id">P2-07</td><td>Export the plan with status and evidence references (XLSX, PDF)</td><td>FR-10.3 widened</td><td><span class="chip c-must">Must</span></td><td>Export includes the template version and generation time</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="gap">
+  <h2><span class="n">5</span>Continuous gap check</h2>
+  <p>Veeva validates continuously against health-authority technical criteria (V-P1). We check <strong>completeness</strong> against the eSTAR plan and <strong>expectation</strong> against precedent: what comparable cleared submissions included, and what the device-specific guidance asks for.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-10</td><td>Re-run checks automatically when the plan, evidence, profile or snapshot changes</td><td>FR-5.3 (→ Must)</td><td><span class="chip c-must">Must</span></td><td>Results refresh within 60 s of a change</td></tr>
+      <tr><td class="id">P2-11</td><td>Completeness rules: required sections without evidence, evidence without a section, missing "not applicable" reasons</td><td>FR-5.1</td><td><span class="chip c-must">Must</span></td><td>Deterministic rules; no AI involved</td></tr>
+      <tr><td class="id">P2-12</td><td>Precedent rules: tests and standards present in ≥ N% of comparable clearances but absent here, with the count shown</td><td>FR-4.4, FR-5.3</td><td><span class="chip c-must">Must</span></td><td>Each finding cites the comparable submissions and guidance passage</td></tr>
+      <tr><td class="id">P2-13</td><td>Severity: high (likely technical-screening hold or AI request), medium, low; ranked by likelihood</td><td>FR-5.3</td><td><span class="chip c-must">Must</span></td><td>Severity rationale visible; RA expert reviewed rule weights</td></tr>
+      <tr><td class="id">P2-14</td><td>Findings can be resolved, accepted with justification, or deferred, with an audit entry</td><td>FR-11.3</td><td><span class="chip c-must">Must</span></td><td>Accepted findings need a written reason</td></tr>
+      <tr><td class="id">P2-15</td><td>Readiness shown as evidence coverage only, never as clearance likelihood</td><td>FR-5.5</td><td><span class="chip c-must">Must</span></td><td>UI copy reviewed against FR-5.5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="matrix">
+  <h2><span class="n">6</span>Claim–evidence matrix</h2>
+  <p>Like Falcon MLR's claim substantiation (V-AI5) and Veeva's requirement-to-test traceability (V-Q3), applied to 510(k) claims.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-20</td><td>Claims register: IFU statements, labeling claims, performance claims, and each SE difference from the predicate comparison (PRD 1 P1-21)</td><td>FR-13.2</td><td><span class="chip c-must">Must</span></td><td>SE differences imported automatically from the saved predicate set</td></tr>
+      <tr><td class="id">P2-21</td><td>Link each claim to evidence items, test reports and eSTAR sections (many-to-many)</td><td>FR-13.2</td><td><span class="chip c-must">Must</span></td><td>Links versioned; link author and time recorded</td></tr>
+      <tr><td class="id">P2-22</td><td>Flag unsupported claims, orphan evidence, and evidence whose source file changed since linking (hash mismatch)</td><td>FR-13.2, FR-13.6</td><td><span class="chip c-must">Must</span></td><td>Flags feed the gap check</td></tr>
+      <tr><td class="id">P2-23</td><td>AI suggestion of supporting passages inside linked evidence for each claim</td><td>New</td><td><span class="chip c-should">Should</span></td><td>Suggested passage shown with page reference; user confirms</td></tr>
+      <tr><td class="id">P2-24</td><td>Export the matrix (XLSX) for the design history file</td><td>FR-10.3 widened</td><td><span class="chip c-must">Must</span></td><td>Opens cleanly in Excel</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="fda">
+  <h2><span class="n">7</span>FDA interaction tracker</h2>
+  <p>Modelled on Veeva's HA correspondence flow (V-H1–H4): email in, automatic classification, question extraction, response initiation. Ours adds similar-deficiency search across the consultancy's projects, kept within its own tenant.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-30</td><td>Add FDA correspondence by upload or a per-workspace forwarding address</td><td>FR-13.4</td><td><span class="chip c-must">Must</span></td><td>Forwarded email and attachments land on the right project within 2 minutes</td></tr>
+      <tr><td class="id">P2-31</td><td>Classify: AI request, technical-screening hold, Pre-Sub feedback, decision letter, other; with written rationale</td><td>FR-13.4 (V-AI6 idea)</td><td><span class="chip c-must">Must</span></td><td>≥ 95% correct type on pilot letters; user can change it</td></tr>
+      <tr><td class="id">P2-32</td><td>Split an AI letter into numbered deficiencies; tag each by eSTAR section and topic</td><td>FR-13.4</td><td><span class="chip c-must">Must</span></td><td>≥ 95% of deficiencies split correctly on pilot letters; user confirms before saving</td></tr>
+      <tr><td class="id">P2-33</td><td>Response deadline clock (180 days from the AI request date by default; editable) with reminders</td><td>FR-13.4</td><td><span class="chip c-must">Must</span></td><td>Clock visible on the project and dashboard</td></tr>
+      <tr><td class="id">P2-34</td><td>Per deficiency: owner, status, response text reference, linked new or changed evidence</td><td>FR-13.4</td><td><span class="chip c-must">Must</span></td><td>Changing evidence re-runs the gap check</td></tr>
+      <tr><td class="id">P2-35</td><td>Similar past deficiencies and their responses from this consultancy's projects (tenant-scoped), plus related guidance passages</td><td>FR-13.5</td><td><span class="chip c-should">Should</span></td><td>Never returns results from another tenant; cross-client reuse inside a consultancy only if the owner turns it on</td></tr>
+      <tr><td class="id">P2-36</td><td>Export a response-letter skeleton (DOCX): each deficiency restated, response placeholder, evidence references</td><td>New (V-H4 idea)</td><td><span class="chip c-must">Must</span></td><td>Skeleton opens in Word with numbering matching the letter</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><p><strong>Confidentiality.</strong> AI letters are confidential client records. Cross-client similarity within a consultancy is off by default. When the owner turns it on, results show deficiency text only, never the other client's name or device, unless the user has access to that workspace.</p></div>
+</section>
+
+<section id="record">
+  <h2><span class="n">8</span>Submission record and versions</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-40</td><td>Document version register: each version of each evidence file as link, hash, version label, author, date</td><td>FR-13.6</td><td><span class="chip c-must">Must</span></td><td>Changes at the source detected within 24 h (storage change feed or nightly hash)</td></tr>
+      <tr><td class="id">P2-41</td><td>Record a submission event: type (original, AI response, resubmission), date, eSTAR version, attached file list; freeze a manifest of versions and hashes</td><td>FR-13.7, FR-10.4 widened</td><td><span class="chip c-must">Must</span></td><td>Manifest immutable once recorded; later file changes show as differences</td></tr>
+      <tr><td class="id">P2-42</td><td>Timeline per 510(k): submitted, screening outcome, AI request, response, decision (K-number, date, cleared IFU)</td><td>FR-13.7</td><td><span class="chip c-must">Must</span></td><td>Every event links to its documents and deficiencies</td></tr>
+      <tr><td class="id">P2-43</td><td>Compare two manifests: what changed between submission and response</td><td>New</td><td><span class="chip c-must">Must</span></td><td>Lists added, removed and changed files</td></tr>
+      <tr><td class="id">P2-44</td><td>Chronology export (PDF, DOCX) for audits and client hand-over (V-A2 idea)</td><td>New</td><td><span class="chip c-must">Must</span></td><td>Generated in &lt; 30 s; includes the audit-trail extract</td></tr>
+      <tr><td class="id">P2-45</td><td>On clearance, write a Clearance record and close the project</td><td>New (V-R7 idea)</td><td><span class="chip c-must">Must</span></td><td>Cleared IFU stored; project read-only except for notes</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="dash">
+  <h2><span class="n">9</span>Portfolio dashboard</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P2-50</td><td>Projects by client and stage, with readiness % (evidence coverage), open findings by severity, open deficiencies, next due dates and the FDA clock</td><td>FR-13.8</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P2-51</td><td>Click-through from any tile to the underlying list</td><td>FR-13.8 (V-R8 idea)</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P2-52</td><td>Per-client usage export for rebilling</td><td>BP M-3</td><td><span class="chip c-should">Should</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2><span class="n">10</span>Data and AI requirements</h2>
+  <p>New entities: <strong>EstarTemplate, EstarPlan, PlanSection, Claim, TraceLink, GapRule, GapFinding, FdaCorrespondence, Deficiency, Response, SubmissionEvent, Manifest, ManifestEntry, Clearance</strong>. Schema in <a href="08-architecture.html#model">Architecture §6</a>.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>AI task</th><th>Model tier</th><th>Guard</th></tr></thead>
+    <tbody>
+      <tr><td>Evidence auto-match</td><td>Embeddings + rules; Haiku 5.5 for borderline cases</td><td>Suggestions only; user confirms</td></tr>
+      <tr><td>Precedent gap rules (offline build per product code)</td><td>Statistics over extracted tests and standards; Sonnet 5.5 to summarise</td><td>Counts and cited submissions shown; RA expert reviews weights</td></tr>
+      <tr><td>Correspondence classification and deficiency splitting</td><td>Sonnet 5.5, structured outputs</td><td>User confirmation; rationale stored</td></tr>
+      <tr><td>Similar-deficiency search</td><td>Embeddings, tenant-filtered in the query</td><td>Isolation enforced in the database, not only in the app</td></tr>
+      <tr><td>Supporting-passage suggestion</td><td>Sonnet 5.5 with page-located citations</td><td>Shown as suggestion with location</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="accept">
+  <h2><span class="n">11</span>Exit gate G2 (week 22)</h2>
+  <ul class="plain">
+    <li>All six pilot areas in daily use on 2 live 510(k)s.</li>
+    <li>Gap check validated against the customer's past AI letters: ≥ 60% of past deficiencies would have been flagged as a finding.</li>
+    <li>Deficiency splitting ≥ 95% correct on pilot letters; correspondence type ≥ 95%.</li>
+    <li>Tenant isolation tests pass for similar-deficiency search.</li>
+    <li>No blocking defects open; exports open cleanly in Word and Excel.</li>
+  </ul>
+</section>
+
+<section id="out">
+  <h2><span class="n">12</span>Not in scope</h2>
+  <ul class="pills" style="list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px">
+    <li class="chip c-out">eSTAR form filling</li><li class="chip c-out">CDRH Portal transmission</li><li class="chip c-out">Co-authoring and check-in/out</li><li class="chip c-out">E-signatures and Part 11 document control</li><li class="chip c-out">AI-drafted response text (PRD 5)</li><li class="chip c-out">Change assessment for cleared devices (PRD 5)</li><li class="chip c-out">eQMS connectors (PRD 5)</li>
+  </ul>
+</section>
+
+<footer>MRA-PRD-102 · PRD 2 Submission Workspace · Introduces FR-13.1–13.9; pulls FR-5.1–5.3, FR-11.2, FR-11.4 forward.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

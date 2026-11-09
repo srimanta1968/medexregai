@@ -1,0 +1,26 @@
+
+[1] 510(k) clearances (decision code SE*), decided 2021-01-01..2025-12-31
+    clearances 15,759  US applicants 7,533  non-US 8,226 (52.2%)
+    distinct applicants raw 6,501  clean 6,134
+    by clearances (clean)  {'1': 3548, '2-4': 1869, '5-9': 492, '10+': 225}
+    by clearances (raw)    {'1': 3886, '2-4': 1923, '5-9': 479, '10+': 213}
+    US-domiciled applicants (clean) 2,585
+
+[2] Foreign device establishments (active registrations) and their third-party US agents
+    active foreign establishments 15,437
+    distinct third-party US agent firms raw 4,580  clean 4,019
+    serving >=  2 establishments (clean) 1,201
+    serving >=  5 establishments (clean) 344
+    serving >= 10 establishments (clean) 154
+    serving >= 25 establishments (clean) 64
+    largest: Registrar 1173, Regrek 779, Emergo Global Representation 255, Irc 173, Medagent 170, Liberty Management Group 126, Dawa Medical 121, Roc Chinese European Industrial Research Society 114
+
+[3] Drugs@FDA sponsors with >= 1 approved submission (status AP) dated 2021-2025
+    NDA 704  ANDA 584  BLA 175  any 1,260
+
+[4] FDA BMIS file (BMIS_2026_0831.txt): organisations recorded as TYPE = CRO
+    distinct CRO names, all years since Oct 2008 (clean) 6,993
+    on forms received 2021 or later: raw 4,392  clean 3,748  US-addressed (clean) 2,214
+    named on >=  2 forms since 2021 (clean) 2,057
+    named on >=  5 forms since 2021 (clean) 905
+    named on >= 10 forms since 2021 (clean) 441

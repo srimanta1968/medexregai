@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI Phased Project Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html" class="on">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#summary"><span>1</span>Summary</a></li>
+    <li><a href="#principles"><span>2</span>Planning rules</a></li>
+    <li><a href="#first"><span>3</span>What to build first</a></li>
+    <li><a href="#phases"><span>4</span>Phases</a></li>
+    <li><a href="#timeline"><span>5</span>Timeline</a></li>
+    <li><a href="#pilot"><span>6</span>Pilot plan (wk 1–26)</a></li>
+    <li><a href="#measure"><span>7</span>Measuring 50%</a></li>
+    <li><a href="#gates"><span>8</span>Gates</a></li>
+    <li><a href="#team"><span>9</span>Team and cost</a></li>
+    <li><a href="#trade"><span>10</span>Scope trades</a></li>
+    <li><a href="#risks"><span>11</span>Risks</a></li>
+    <li><a href="#decisions"><span>12</span>Decisions needed</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-002</span><span>Project plan</span><span>Rev 1.0 · 8 Oct 2026</span></div>
+  <h1>Phased project plan: pilot first, platform second</h1>
+  <p class="sub">How MedexRegAI is built in five phases so that one 510(k) consultancy gets a measured 50% effort reduction within six months, and the same work becomes the month-6 baseline the business plan commits to.</p>
+  <div class="meta">
+    <div><b>Anchors</b>MRA-BIZ-001 r6 milestones: baseline M6, GA M12, Lead Finder M15, Series A M18</div>
+    <div><b>Budget</b>Within the $650K build line of MRA-PLN-001 r2.0, plus about $28K proposed (§9)</div>
+    <div><b>Pilot</b>26 weeks, 2 live 510(k)s, stop/go gate at week 12</div>
+    <div><b>Requirements</b>PRD 1–5 in this set; new group FR-13 "Submission Workspace"</div>
+  </div>
+</header>
+
+<section id="summary">
+  <h2><span class="n">1</span>Summary</h2>
+  <div class="kpis">
+    <div class="kpi"><b>Wk 12</b><span>First proof: predicate and research hours ≥ 50% lower on a live project</span></div>
+    <div class="kpi"><b>Wk 22</b><span>Submission Workspace complete for the pilot</span></div>
+    <div class="kpi"><b>M6</b><span>Pilot result and public baseline launch, together</span></div>
+    <div class="kpi"><b>M12</b><span>Release 1 general availability</span></div>
+    <div class="kpi"><b>M13–22</b><span>US adjacency: change assessment, response drafting, Lead Finder</span></div>
+  </div>
+  <p>The pilot is not a separate project. Every pilot feature is either baseline scope the business plan already funds (predicates, research, citations, workspaces) or Release 1 scope pulled forward (content checklist, gap audit). The only new scope is the light Submission Workspace (FR-13). It is what lets a consultancy reach 50%, and it gives the $500/month retainer something to do between projects.</p>
+</section>
+
+<section id="principles">
+  <h2><span class="n">2</span>Planning rules</h2>
+  <ol class="plain">
+    <li><strong>Hours first.</strong> Build in the order the consultant's hours are spent: research before workflow.</li>
+    <li><strong>Prove before widening.</strong> No Submission Workspace build until week-12 evidence shows the research core saves time.</li>
+    <li><strong>Registers, not repositories.</strong> We store links, hashes, statuses and relationships. Files stay in the customer's SharePoint or Drive. We never file with FDA.</li>
+    <li><strong>One codebase.</strong> The pilot runs on the production architecture, in its own tenant. No throwaway prototype.</li>
+    <li><strong>Narrow data, full pipeline.</strong> Start with the customer's product codes through the full ingestion pipeline, then widen to the whole corpus for M6.</li>
+    <li><strong>Citations and snapshots from day one.</strong> They are architectural (FM-2 in the business plan) and can't be added later.</li>
+  </ol>
+</section>
+
+<section id="first">
+  <h2><span class="n">3</span>What to build first, and why</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Order</th><th>Capability</th><th>Why this position</th><th>Phase</th><th>PRD</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1</td><td>Data foundation: ingestion, snapshots, provenance, canonical model, hybrid search, citation gate</td><td>Everything depends on it. The extraction-accuracy risk must be retired early (BP: week 12, $8K)</td><td>0–1</td><td><a href="03-prd-phase1-research-core.html">PRD 1</a></td></tr>
+      <tr><td class="id">2</td><td>Tenancy, workspaces (client isolation), roles, audit trail</td><td>A consultancy can't use it without client separation (FR-11.2)</td><td>1</td><td>PRD 1</td></tr>
+      <tr class="hl"><td class="id">3</td><td>Predicate Finder and SE comparison export</td><td>Largest block of hours; the clearest proof the data layer works</td><td>1</td><td>PRD 1</td></tr>
+      <tr class="hl"><td class="id">4</td><td>Research and Evidence Library (FDA records + client evidence)</td><td>Second-largest block of hours; feeds everything in Phase 2</td><td>1</td><td>PRD 1</td></tr>
+      <tr><td class="id">5</td><td>eSTAR section plan, evidence auto-match, continuous gap check</td><td>Turns research into readiness; prevents AI requests</td><td>2</td><td><a href="04-prd-phase2-submission-workspace.html">PRD 2</a></td></tr>
+      <tr><td class="id">6</td><td>Claim–evidence matrix</td><td>Catches unsupported claims before FDA does</td><td>2</td><td>PRD 2</td></tr>
+      <tr><td class="id">7</td><td>FDA interaction tracker (deficiency extraction, similar past deficiencies)</td><td>AI responses are the costliest rework, and the value grows with history</td><td>2</td><td>PRD 2</td></tr>
+      <tr><td class="id">8</td><td>Submission record and chronology export</td><td>Cheap once 5–7 exist; gives the audit trail the customer asked for</td><td>2</td><td>PRD 2</td></tr>
+      <tr><td class="id">9</td><td>Pathway determination, self-serve checkout, credit ledger, free tier</td><td>Business-plan baseline for M6; not needed by the pilot customer</td><td>3</td><td><a href="05-prd-phase3-baseline-launch.html">PRD 3</a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="phases">
+  <h2><span class="n">4</span>Phases</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Phase</th><th>Window</th><th>Goal</th><th>Main deliverables</th><th>Exit criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">0 · Foundation</td><td>Wk 1–4 · M1</td><td>Know the baseline, fix the architecture</td><td>Time study on 2–3 past 510(k)s; pilot product codes; architecture ADRs; seed evaluation set; eSTAR section template; pilot tenant; design system start</td><td>Baseline hours signed off by the customer's RA lead; ADRs approved</td></tr>
+      <tr><td class="id">1 · Research Core</td><td>Wk 3–12 · M1–3</td><td>Cut predicate and research time by half on a live project</td><td>Ingestion and snapshots for pilot codes; summary extraction; Predicate Finder; Research Library; citation gate; workspaces, roles, audit; SE table export</td><td><strong>Week-12 gate</strong> (§8)</td></tr>
+      <tr><td class="id">2 · Submission Workspace</td><td>Wk 13–22 · M4–5</td><td>Cut checklist, cross-check, AI-response and record-keeping time</td><td>eSTAR plan; evidence register and auto-match; continuous gap check; claim–evidence matrix; FDA interaction tracker; submission record; chronology export; portfolio dashboard; storage links</td><td>All six pilot areas usable on 2 live 510(k)s</td></tr>
+      <tr><td class="id">3 · Pilot proof + baseline launch</td><td>Wk 21–26 · M5–6</td><td>Prove 50% and open the product to the market</td><td>Pilot measurement; full-corpus extraction; pathway determination (PR-1); self-serve checkout, retainer and credit ledger; free tier and product-code pages; hardening</td><td>Pilot ≥ 50% on scoped hours; BP baseline gate (accuracy thresholds, 4+ design partners live)</td></tr>
+      <tr><td class="id">4 · Release 1 GA</td><td>M7–12</td><td>Full five-project catalogue, sold without hand-holding</td><td>PR-3 compliance assessment with full gap audit; PR-4 cost and timeline; PR-5 landscape; MAUDE and recalls; watchlist and alerts; human review queue; Accuracy Report; Determination Guarantee; validation support package</td><td>BP M12 gate: NRR ≥ 110%, repeat rate ≥ 2.2, consultant accounts ≥ 30%</td></tr>
+      <tr><td class="id">5 · US adjacency</td><td>M13–22</td><td>Recurring needs for cleared devices; network revenue</td><td>API + MCP (M15); Lead Finder (M15); 510(k) change assessment; AI-response drafting from precedent and firm history; eSTAR drafting assists; eQMS read connector; non-US applicant onboarding</td><td>Retention cohort; Series A readiness (M18)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="timeline">
+  <h2><span class="n">5</span>Timeline (months 1–24)</h2>
+  <div class="gantt"><div class="g" role="img" aria-label="Phase timeline by month">
+    <div></div>
+    <div class="ax" style="grid-column:2">M1</div><div class="ax" style="grid-column:4">M3</div><div class="ax" style="grid-column:7">M6</div><div class="ax" style="grid-column:10">M9</div><div class="ax" style="grid-column:13">M12</div><div class="ax" style="grid-column:16">M15</div><div class="ax" style="grid-column:19">M18</div><div class="ax" style="grid-column:22">M21</div><div class="ax" style="grid-column:25">M24</div>
+    <div class="lbl">0 · Foundation<small>wk 1–4</small></div><div class="bar d" style="grid-column:2 / 3">wk 1–4</div>
+    <div class="lbl">1 · Research Core<small>wk 3–12</small></div><div class="bar p" style="grid-column:2 / 5">wk 3–12</div>
+    <div class="lbl">Week-12 gate</div><div class="gate" style="grid-column:5"><span>Stop / go</span></div>
+    <div class="lbl">2 · Submission Workspace<small>wk 13–22</small></div><div class="bar p" style="grid-column:5 / 7">wk 13–22</div>
+    <div class="lbl">3 · Pilot proof + baseline<small>wk 21–26</small></div><div class="bar m" style="grid-column:6 / 8">M5–6</div>
+    <div class="lbl">4 · Release 1 GA</div><div class="bar" style="grid-column:8 / 14">M7–12</div>
+    <div class="lbl">5 · US adjacency</div><div class="bar l" style="grid-column:14 / 24">M13–22</div>
+    <div class="lbl">Lead Finder, API + MCP</div><div class="bar l" style="grid-column:14 / 17">M13–15</div>
+    <div class="lbl">Series A readiness</div><div class="gate" style="grid-column:19"><span>M18</span></div>
+  </div></div>
+  <p><small>Business-plan phases map as follows: MRA-PLN-001 Phase 1 (design and validate, wk 1–20) covers our Phase 0 and the design half of Phases 1–2. MRA-PLN-001 Phase 2 (build, wk 9–48) covers our Phases 1–4.</small></p>
+</section>
+
+<section id="pilot">
+  <h2><span class="n">6</span>Pilot plan, week by week</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Weeks</th><th>Engineering</th><th>Customer (consultancy)</th><th>RA expert / product</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td class="id">1–2</td><td>Architecture ADRs; repo, CI, environments; pilot tenant</td><td>Timesheets or estimates for 2–3 past 510(k)s; list product codes; name RA lead</td><td>Time-study interviews; pick 2 live 510(k)s</td><td>Baseline hours by activity</td></tr>
+      <tr><td class="id">3–4</td><td>Ingestion for pilot codes (510(k), classification, recalls, standards, guidance); snapshot framework</td><td>Share anonymised past AI letters and responses</td><td>Seed evaluation set: 50 devices with expert predicates</td><td>Corpus for pilot codes, snapshot S1</td></tr>
+      <tr><td class="id">5–8</td><td>Summary extraction; hybrid search; Predicate Finder; citation gate; workspaces and roles</td><td>Try the Predicate Finder on a past device</td><td>Score extraction F1 and predicate precision@5</td><td>Predicate Finder v1</td></tr>
+      <tr><td class="id">9–12</td><td>Research Library; evidence upload; SE table export; audit trail</td><td>Use on live 510(k) #1; log hours</td><td>Review outputs; accept or correct</td><td><strong>Week-12 gate</strong></td></tr>
+      <tr><td class="id">13–16</td><td>eSTAR plan and templates; evidence register and auto-match; storage links</td><td>Plan live 510(k) #1 and #2 in the tool</td><td>Write gap rules for pilot device types</td><td>eSTAR plan v1</td></tr>
+      <tr><td class="id">15–19</td><td>Continuous gap check; claim–evidence matrix</td><td>Cross-check claims in the tool</td><td>Validate gap rules against past AI letters</td><td>Gap check v1</td></tr>
+      <tr><td class="id">17–22</td><td>FDA interaction tracker; deficiency extraction; similar-deficiency search; submission record; chronology export; dashboard</td><td>Load past AI letters; record submissions</td><td>Label deficiency categories</td><td>Workspace complete</td></tr>
+      <tr><td class="id">23–26</td><td>Fixes from pilot feedback; performance; security review</td><td>Final time logs on both projects</td><td>Compare to baseline; write pilot report</td><td><strong>Pilot result</strong></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="measure">
+  <h2><span class="n">7</span>Measuring the 50% reduction</h2>
+  <p>The 50% target applies to the scoped activities below, measured against the customer's own baseline. Expert judgement, test-lab work and FDA review time are excluded because software doesn't shorten them.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Activity</th><th>Target</th><th>How measured</th><th>Feature (PRD)</th></tr></thead>
+    <tbody>
+      <tr><td>Product-code and predicate search, shortlist, SE comparison</td><td><b>≥ 60%</b></td><td>Timesheet code RA-PRED</td><td>Predicate Finder (PRD 1)</td></tr>
+      <tr><td>Collecting FDA research</td><td><b>≥ 60%</b></td><td>Timesheet code RA-RES</td><td>Research Library (PRD 1)</td></tr>
+      <tr><td>Building and maintaining the eSTAR checklist</td><td><b>≥ 50%</b></td><td>Timesheet code RA-PLAN</td><td>eSTAR plan (PRD 2)</td></tr>
+      <tr><td>Cross-checking claims against evidence</td><td><b>≥ 40%</b></td><td>Timesheet code RA-XCHK</td><td>Claim–evidence matrix (PRD 2)</td></tr>
+      <tr><td>AI-letter triage and response package</td><td><b>≥ 40%</b></td><td>Timesheet code RA-AIR</td><td>FDA interaction tracker (PRD 2)</td></tr>
+      <tr><td>Reconstructing what was submitted and changed</td><td><b>≥ 70%</b></td><td>Timesheet code RA-REC</td><td>Submission record (PRD 2)</td></tr>
+      <tr class="hl"><td><strong>Total of scoped activities</strong></td><td><b>≥ 50%</b></td><td>Sum, weighted by baseline hours</td><td>All</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Quality checks:</strong> expert acceptance without material correction ≥ 75% (REQ §15 trust metric); no increase in AI-request deficiencies; predicate precision@5 ≥ 0.80 on pilot codes; 100% citation groundedness.</p>
+</section>
+
+<section id="gates">
+  <h2><span class="n">8</span>Gates</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Gate</th><th>When</th><th>Pass criteria</th><th>If it fails</th></tr></thead>
+    <tbody>
+      <tr><td class="id">G0 Baseline</td><td>Wk 4</td><td>Baseline hours signed off; 2 live 510(k)s selected; ADRs approved</td><td>Use structured estimates; extend Phase 0 by 2 weeks at most</td></tr>
+      <tr class="hl"><td class="id">G1 Research proof</td><td>Wk 12</td><td>RA-PRED + RA-RES hours ≥ 50% lower on live project #1; extraction F1 ≥ 0.90 on pilot codes; precision@5 ≥ 0.80; RA lead accepts ≥ 75% of outputs</td><td>Do not start Phase 2. Fix the research core or re-scope the pilot</td></tr>
+      <tr><td class="id">G2 Workspace ready</td><td>Wk 22</td><td>All six pilot areas in daily use on both projects; no blocking defects</td><td>Cut P2 scope to the plan, gap check and record. Move the rest to Phase 4</td></tr>
+      <tr class="hl"><td class="id">G3 Pilot result + baseline</td><td>Wk 26 · M6</td><td>Scoped hours ≥ 50% lower on ≥ 2 projects; no rise in AI deficiencies; BP baseline thresholds met (REQ §15)</td><td>Report the measured result honestly; re-plan GA scope around what worked</td></tr>
+      <tr><td class="id">G4 GA</td><td>M12</td><td>BP gate: NRR ≥ 110%, repeat rate ≥ 2.2, consultant-sourced ≥ 30%; funnel ≥ 60% of plan</td><td>Reprice toward mid-market (BP R-3); no expansion work</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="team">
+  <h2><span class="n">9</span>Team and cost</h2>
+  <p>The team is the one in MRA-BIZ-001 §18 and MRA-PLN-001. The pilot needs backend and frontend engineers about two months earlier than planned, because the Submission Workspace is UI and API heavy.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Role</th><th>Plan today</th><th>Pilot plan</th><th>Main pilot work</th></tr></thead>
+    <tbody>
+      <tr><td>CEO, product and regulatory</td><td>M1–18</td><td>No change</td><td>Customer lead, time study, gates</td></tr>
+      <tr><td>CTO, AI/ML lead</td><td>M1–18</td><td>No change</td><td>Architecture, retrieval, evaluation, citation gate</td></tr>
+      <tr><td>RA domain expert (fractional)</td><td>0.15 → 0.10</td><td>0.25 in M1–6</td><td>Evaluation set, gap rules, output review</td></tr>
+      <tr><td>Senior data engineer</td><td>M3–11</td><td><strong>M1–11</strong></td><td>Ingestion, snapshots, extraction pipeline</td></tr>
+      <tr><td>Senior backend engineer</td><td>M4–11</td><td><strong>M2–11</strong></td><td>API, tenancy, audit, workspace services</td></tr>
+      <tr><td>Frontend engineer</td><td>M5–10</td><td><strong>M3–10</strong></td><td>Predicate UI, eSTAR plan, matrix, tracker</td></tr>
+      <tr><td>AI/ML engineer</td><td>M5–10</td><td>No change</td><td>Extraction, deficiency parsing, gap rules</td></tr>
+      <tr><td>QA / evaluation engineer</td><td>M5–13</td><td>No change</td><td>Eval harness, regression</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><p><strong>Cost delta (estimate):</strong> about <strong>+$28K</strong> for the earlier backend and frontend starts, plus about $10K for the extra RA-expert hours. Data engineering moves earlier inside its existing allocation. Funding options: a pilot fee from the customer (for example a Practice pack paid in advance), or the Phase 1 contingency. Founders to decide (§12).</p></div>
+</section>
+
+<section id="trade">
+  <h2><span class="n">10</span>Scope trades against the business plan</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Change</th><th>From</th><th>To</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Content checklist and gap audit (FR-5.1–5.3)</td><td>R2, M7–12</td><td>Pilot, M4–5</td><td>Pulled forward; GA work shrinks by the same amount</td></tr>
+      <tr><td>Client workspaces and reviewer approval (FR-11.2, 11.4)</td><td>R2</td><td>Pilot, M2–3</td><td>Pulled forward</td></tr>
+      <tr><td>Storage links: SharePoint, Google Drive</td><td>R3</td><td>Pilot, M4</td><td>Read-only links and change detection only</td></tr>
+      <tr><td>Submission Workspace (FR-13)</td><td>Not planned</td><td>Pilot, M4–5</td><td>New scope, about 10–12 engineer-weeks</td></tr>
+      <tr><td>PR-5 market and competitive landscape</td><td>M12</td><td>M13</td><td>Proposed offset; landscape data is already used inside PR-2</td></tr>
+      <tr><td>UDI attribute comparison (FR-3.6)</td><td>R2</td><td>After GA</td><td>Proposed offset</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="risks">
+  <h2><span class="n">11</span>Risks</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Extraction accuracy on older 510(k) summaries is too low</td><td><span class="chip c-must">High</span></td><td>Measured at week 8 on pilot codes; restrict to post-2010 summaries if needed (BP fallback)</td></tr>
+      <tr><td>No usable baseline (no timesheets)</td><td><span class="chip c-must">High</span></td><td>Structured estimate interviews plus a stopwatch study of one task per activity</td></tr>
+      <tr><td>The pilot slides into building a system of record</td><td><span class="chip c-must">High</span></td><td>"Registers, not repositories" rule in every PRD; out-of-scope lists enforced at review</td></tr>
+      <tr><td>The pilot squeezes the M6 public baseline</td><td><span class="chip c-should">Medium</span></td><td>Phase 3 commercial items may slip to M7 by founder decision; pilot takes priority</td></tr>
+      <tr><td>Customer can't share past AI letters</td><td><span class="chip c-should">Medium</span></td><td>Similar-deficiency search starts empty and fills with pilot data; gap rules from public guidance</td></tr>
+      <tr><td>Confidentiality of client device data</td><td><span class="chip c-should">Medium</span></td><td>Tenant isolation, no training on client data (NFR-8), DPA with the consultancy</td></tr>
+      <tr><td>FDA changes the eSTAR template mid-pilot</td><td><span class="chip c-could">Low</span></td><td>Templates versioned (FR-13.1); migration script per version</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="decisions">
+  <h2><span class="n">12</span>Decisions needed</h2>
+  <ol class="plain">
+    <li>Approve option B, "registers, not repositories", as a standing scope rule (amends REQ §2).</li>
+    <li>Approve the +$28K earlier staffing and choose how to fund it (pilot fee or contingency).</li>
+    <li>Approve the scope trades in §10 (PR-5 to M13, UDI comparison after GA).</li>
+    <li>Agree pilot commercial terms and data-sharing terms with the consultancy.</li>
+    <li>Confirm the cloud and identity choices in the architecture document (ADR-001 to ADR-004).</li>
+  </ol>
+</section>
+
+<footer>MRA-PRD-002 · Phased project plan · Builds on MRA-PLN-001 r2.0 and MRA-BIZ-001 r6.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

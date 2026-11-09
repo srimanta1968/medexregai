@@ -1,0 +1,2550 @@
+{
+  "version": "0acce1189ce5c85b",
+  "fetchedAt": "2026-11-09T17:33:27.390Z",
+  "tools": [
+    {
+      "name": "projexlight_init_session",
+      "description": "Initialize code generation session and get assigned tasks. For multi-project setups, projectPath routes credentials correctly.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root (e.g., /c/Users/name/project). Auto-detected if not provided."
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/instruction/init",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/init -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_instruction",
+      "description": "THE tool to call when you are about to write code for a task you know the id of. Returns that task's full implementation instruction: description, acceptance criteria, code templates, validation rules, quality gates, and any outstanding api-definition/violation gaps you must fix as part of it. taskId accepts EITHER the UUID or the short ID in any form a person types — TK-4135, tk-4135, or just 4135 — so pass the id the user quoted straight through instead of looking the UUID up first. Use projexlight_get_task instead only when you want the task metadata WITHOUT the instruction.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Task UUID, or short ID in any form: TK-4135, tk-4135, or just 4135"
+          },
+          "taskType": {
+            "type": "string",
+            "description": "Type of task (api_endpoint, frontend, database, etc.)",
+            "enum": [
+              "api_endpoint",
+              "frontend",
+              "backend",
+              "database",
+              "service_layer",
+              "ui_component",
+              "testing"
+            ]
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "endpoint": "/api/instruction/get",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/get -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_sdk_api",
+      "description": "SDK reuse: fetch the full spec (method, path, requiresAuth, payload_shape, fieldEnums, dependsOn) for ONE endpoint from THIS project's bundled SDK catalog, when it ships one. Call it only when about to integrate a specific endpoint you already found in mcp-server/data/sdk-catalog-index.json — it avoids loading the whole catalog. A project without that file has no catalog and does not use this tool.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "HTTP method of the endpoint, e.g. \"POST\""
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Endpoint path, e.g. \"/api/scheduling/appointments\""
+          }
+        },
+        "required": [
+          "method",
+          "endpoint"
+        ]
+      },
+      "endpoint": "/api/sdk/api",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/sdk/api -H 'Content-Type: application/json' -d '{\"method\": \"<METHOD>\", \"endpoint\": \"<ENDPOINT>\"}'"
+    },
+    {
+      "name": "projexlight_search_apis",
+      "description": "API DISCOVERY: search the project api_library for endpoints that already exist, so you reuse an API instead of inventing one. Call this BEFORE writing frontend code that talks to a backend. Filter by pattern (substring of the endpoint path, e.g. \"auth\", \"user\", \"/api/orders\"), by HTTP method, or by feature/epic/scenario. api_library is the single source of truth for APIs created across all features and developers. Set includeSchemas=true only for an endpoint you are about to integrate — it returns request/response schemas, samples and test data, and costs a lot of context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Substring matched against the endpoint path, e.g. \"auth\" or \"/api/orders\". Omit to list every API in the project."
+          },
+          "method": {
+            "type": "string",
+            "description": "Filter by HTTP method: GET, POST, PUT, DELETE or PATCH"
+          },
+          "featureId": {
+            "type": "string",
+            "description": "Restrict results to one feature (UUID)"
+          },
+          "epicId": {
+            "type": "string",
+            "description": "Restrict results to one epic (UUID)"
+          },
+          "scenarioId": {
+            "type": "string",
+            "description": "Restrict results to one scenario (UUID)"
+          },
+          "includeSchemas": {
+            "type": "boolean",
+            "description": "Include request/response schemas, sample input/output and test data sets. Expensive — only when integrating a specific endpoint."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max results (default 50, max 500)"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pagination cursor returned by a previous call"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/search-apis",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/search-apis -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_set_variable_scope",
+      "description": "Apply an LLM-decided scope for ONE test-config {{var:NAME}}: global (constant across ALL envs), env (env-specific seed data; needs envName), or cache (produced by an API — removes the var so the definition uses {{cache:}} instead). Moves the variable between test-config tiers atomically. Call once per variable AFTER a pre-commit scan emits .mcp-cache/variable_classification_latest.json, having read the variable actual code (route handler / DTO / seed) — the name and value hints in that file are ADVISORY, the code is authoritative.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variable name as it appears in {{var:NAME}}"
+          },
+          "scope": {
+            "type": "string",
+            "description": "One of: global, env, cache"
+          },
+          "envName": {
+            "type": "string",
+            "description": "Environment name — REQUIRED when scope is env"
+          },
+          "value": {
+            "type": "string",
+            "description": "Optional value to seed for the variable"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          }
+        },
+        "required": [
+          "name",
+          "scope"
+        ]
+      },
+      "endpoint": "/api/variables/set-scope",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/variables/set-scope -H 'Content-Type: application/json' -d '{\"name\": \"<NAME>\", \"scope\": \"<SCOPE>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_next_task",
+      "description": "Get AND claim your next task automatically — no taskId needed. Enforces depth-first feature sequencing: finishes your currently assigned/owned feature end-to-end (in the correct task-type order) BEFORE moving to the next feature; when your feature is done it picks the oldest unassigned feature and locks it to you. Returns the full implementation instruction. Call this after projexlight_complete_task to get the correct next task instead of picking tasks yourself.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sprintId": {
+            "type": "string",
+            "description": "Optional: scope next-task selection to a single sprint UUID."
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        }
+      },
+      "endpoint": "/api/instruction/next",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/next -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_validate",
+      "description": "Validate generated code against quality rules",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "The UUID of the task being validated"
+          },
+          "taskType": {
+            "type": "string",
+            "description": "Type of task"
+          },
+          "codeSnippets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filePath": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "filePath",
+                "content"
+              ]
+            },
+            "description": "Array of code files to validate"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "taskId",
+          "codeSnippets"
+        ]
+      },
+      "endpoint": "/api/instruction/validate",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/validate -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"codeSnippets\": [{\"filePath\": \"<FILEPATH>\", \"content\": \"<CONTENT>\"}], \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_complete_task",
+      "description": "Mark a task as complete and get the next task. For backend/api_endpoint tasks, include apiDefinitions and/or generatedApis so the backend can register the implemented endpoints.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "The UUID of the completed task"
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "filesGenerated": {
+                "type": "number"
+              },
+              "linesOfCode": {
+                "type": "number"
+              },
+              "violationsDetected": {
+                "type": "number"
+              },
+              "complianceScore": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "filesGenerated",
+              "linesOfCode",
+              "complianceScore"
+            ]
+          },
+          "apiDefinitions": {
+            "type": "array",
+            "description": "Array of API definition objects generated for this task (required for backend/api_endpoint task completion). Each item is the full api_definition JSON.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "generatedApis": {
+            "type": "array",
+            "description": "Array of endpoints implemented by this task. Use when apiDefinitions is not available.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "generatedFiles": {
+            "type": "array",
+            "description": "EVERY file this task created or modified, as repo-relative paths (e.g. \"packages/sdk-x/src/server/routes.ts\"). Include source files, not only api_definitions. This is the ONLY signal telling the server which code the task actually shipped: it scans exactly these files for route declarations, so it can name any endpoint you opened without writing an api_definition for it, and can tell that a task genuinely opens no HTTP route without you declaring anything. Do NOT stage or commit first to make this work — the server deliberately does not read git here: over a mounted workspace \"git diff --name-only\" has been measured timing out at 120s, and its own guard treats a timeout as EMPTY output, which would look exactly like \"this task shipped nothing\". Omitting the list is not an error, but the check then reports \"unknown\" instead of a result, so nothing gets verified.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasHttpSurface": {
+            "type": "boolean",
+            "description": "Usually OMIT — this is now DERIVED by scanning the files you list in generatedFiles for route declarations, which is why supplying generatedFiles matters far more than answering this. Your value is honoured ONLY when that scan cannot decide (e.g. you sent no generatedFiles). In that case set FALSE only when the task genuinely ships NO HTTP route — a migration, a queue consumer, an event handler, a CI gate, or a pure module — and your evidence is then expected in the form MUST-67 already recognises: a unit test for pure logic, a .feature for a screen, a migration for schema. DO NOT invent an internal:// placeholder endpoint: a fabricated endpoint enters the SDK catalog and the test runner dispatches it as a real call, so it fails forever. IGNORED for api_endpoint/api_integration: those type names assert that a route ships, so if yours opens none, change the task type instead."
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "taskId",
+          "metrics"
+        ]
+      },
+      "endpoint": "/api/instruction/complete",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/complete -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"metrics\": {\"filesGenerated\": 0, \"linesOfCode\": 0, \"violationsDetected\": 0, \"complianceScore\": 0}, \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_rules",
+      "description": "Get code generation rules and best practices",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/rules",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/instruction/rules"
+    },
+    {
+      "name": "projexlight_get_api_definition_rules",
+      "description": "Refresh the STRICT api-definition authoring contract (variable forms {{cache}}/{{dynamic}}/{{static}}/{{baseUrl}}/{{var:name}}, MUST rules incl. FK->cache, complete payload, fieldEnums, statusTransitions, no static headers). ALWAYS call this before creating or editing any file under tests/api_definitions/ — especially if your instruction context was compacted or you are unsure of the rules.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/rules/api-definition",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/rules/api-definition"
+    },
+    {
+      "name": "projexlight_get_ui_feature_rules",
+      "description": "Refresh the STRICT UI/BDD feature-file authoring contract (mandatory tags @feature_id/@scenario_id/@scenario_type:UI/@ui_test/@portal/@login, the portals + authRealms model, relative-path navigation, and the rule that a quoted string is a SELECTOR KEY copied from the component rather than a label you invent). ALWAYS call this before creating or editing any file under tests/features/ (MUST-55) — especially if your context was compacted. The UI counterpart of projexlight_get_api_definition_rules.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/rules/ui-feature",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/rules/ui-feature"
+    },
+    {
+      "name": "projexlight_review_api_definitions",
+      "description": "API-DEFINITION REVIEW AGENT (incremental). (1) Verifies each NEW/CHANGED api_definition against the actual route/handler code and the authoring rules (FK->cache, no static headers, captureResponse, dependsOn, testability, fieldEnums). (2) COVERAGE: reports missingDefinitions — every endpoint in the CODE that has NO api_definition (catches endpoints the LLM forgot to write, or wrote some and missed others — critical for multi-agent runs). Unchanged files are skipped (content-hash cached). Run after creating/editing api_definitions; write the missing definitions, fix all findings, and re-run until findingsCount=0 and missingDefinitions is empty before committing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "tests/api_definitions/<resource>/<file>.json"
+            ],
+            "description": "SCOPE IT. The api_definition paths THIS task touched, repo-relative (e.g. \"tests/api_definitions/billing/billing-post.json\"). Unscoped, the walk opens EVERY definition in the project just to hash it — measured at ~9s per call on a bind mount to check the two you changed, and you pay it again on every re-run of the fix loop. Omit only for the pre-push corpus pass (step 5a.0), where finding routes with NO definition is the point."
+          },
+          "subdir": {
+            "type": "string",
+            "description": "Optional: scope to one resource dir (e.g. \"billing\")"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Re-verify all definitions, ignoring the cache"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/instruction/review-api-definitions",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/review-api-definitions -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\", \"files\": [\"tests/api_definitions/<resource>/<file>.json\"]}'"
+    },
+    {
+      "name": "projexlight_sync_feature_file",
+      "description": "SYNC A .feature FILE BACK INTO PROJEXLIGHT (reuse first, create last). Closes the round trip: ProjexLight can push scenarios DOWN into .feature files, but until now the only path back UP was a browser upload wizard — so scenarios YOU author never reached ProjexLight, and feature validation, the shared UI backlog and coverage never knew about them. RESOLUTION ORDER: (1) @scenario_id: tag that exists under this feature -> UPDATE its bdd_steps; (2) else match by normalized title WITHIN the feature -> REUSE that id; (3) else match by title ELSEWHERE in the project -> REUSE and report the move; (4) else CREATE. Create is the LAST resort — it never duplicates a scenario that already exists. New/reused ids are WRITTEN BACK into the file as @scenario_id: tags, which is what makes re-running idempotent: COMMIT THE FILE afterwards or the next sync will duplicate. Scenarios present in ProjexLight but in no file are REPORTED, never deleted. Run after authoring or editing a .feature file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureFile": {
+            "type": "string",
+            "description": "Path to the .feature file (absolute, or relative to the project root)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "featureId": {
+            "type": "string",
+            "description": "Optional override; normally read from the file's @feature_id: tag"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "Report what WOULD happen without writing anything (no DB changes, no tag write-back)"
+          }
+        },
+        "required": [
+          "featureFile"
+        ]
+      },
+      "endpoint": "/api/features/sync-feature-file",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/features/sync-feature-file -H 'Content-Type: application/json' -d '{\"featureFile\": \"tests/features/<screen>.feature\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_review_task_delta",
+      "description": "ACCEPTANCE-CRITERIA REVIEW OF THIS TASK'S DIFF (third-party review). Scope is the DELTA — the files this task changed — never the corpus: a corpus scan re-derives every definition and pays a ~100s prelude to answer a question about a handful of files, and it cannot see what YOU changed. TWO MODES. (1) Call with taskId only -> returns the review packet: changed files, the api_definitions you touched with their testCase/negative/errorCase/dataset counts and their coversCriterion declarations, plus the criteria to review against. Review it as a THIRD PARTY who did not write the diff — look for the gap, do not confirm your own work; for each criterion name the executable artifact that would FAIL if it regressed (an api_definition testCase for an endpoint, a Gherkin step for a screen). \"The code looks right\" is NOT evidence. (2) Call again with findings[] -> records anything not \"covered\" to .projexlight/context/criteria_gaps.json, which carries forward onto the NEXT task's description. It does NOT block projexlight_complete_task — the gap travels, the work continues. An EMPTY findings list clears the sticky. Run this BEFORE complete_task.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "UUID of the task being reviewed (required)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "src/routes/<resource>.ts",
+              "tests/api_definitions/<resource>/<file>.json"
+            ],
+            "description": "SEND THIS. Every file this task created or modified, repo-relative — the same list you pass to complete_task. The delta is (git vs the baseline stamped at get_instruction) UNION your list: git catches files you forgot, your list catches work already folded into a batch commit that git can no longer attribute to this task. Omitting it silently narrows the review."
+          },
+          "criteria": {
+            "type": "array",
+            "description": "The criteria to review against — normally copied from projexlight_get_instruction -> criteriaContext.taskCriteria",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Criterion id, e.g. \"<feature_uuid>#AC2\""
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Criterion text"
+                }
+              }
+            }
+          },
+          "findings": {
+            "type": "array",
+            "description": "RECORD MODE. Omit for packet mode. Pass [] to CLEAR the sticky after a clean review.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "criterionId": {
+                  "type": "string",
+                  "description": "Copy EXACTLY from the packet — the join key"
+                },
+                "criterion": {
+                  "type": "string",
+                  "description": "Criterion text"
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": [
+                    "covered",
+                    "partial",
+                    "missing"
+                  ],
+                  "description": "Anything other than \"covered\" is recorded as a gap and blocks completion"
+                },
+                "gap": {
+                  "type": "string",
+                  "description": "What is missing. Required when verdict is not \"covered\""
+                },
+                "evidence": {
+                  "type": "object",
+                  "description": "Name the executable proof",
+                  "properties": {
+                    "apiDefinitions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "scenarios": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "criterionId",
+                "verdict"
+              ]
+            }
+          },
+          "baseRef": {
+            "type": "string",
+            "description": "Git ref to diff against (default: HEAD)"
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "endpoint": "/api/instruction/review-task-delta",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/review-task-delta -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"files\": [\"src/routes/<resource>.ts\", \"tests/api_definitions/<resource>/<file>.json\"], \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_review_ui_features",
+      "description": "UI/BDD FEATURE REVIEW AGENT (incremental). Verifies every UI screen/page in the code has a Gherkin .feature file under tests/features/ (run via the Playwright/BDD Test MCP). Flags uncovered screens and re-checks when UI code or the feature corpus changes; covered+unchanged screens are skipped (content-hash cached). Run after generating/modifying UI code, then create/update the .feature files for flagged screens.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Re-check all screens, ignoring the cache"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/instruction/review-ui-features",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/review-ui-features -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_ui_feature_backlog",
+      "description": "Get the SHARED UI feature-file backlog: every BDD/UI scenario in this project still unvalidated, oldest-first, with its feature file, failure issues and blockedReason. THIS IS THE WORK LIST for the \"[UI FEATURE FILES] Fix deferred feature-file steps\" task — that task carries no list in its description on purpose, because a baked-in list goes stale the moment another developer fixes something. Call it when you pick up that task, and again to confirm your fixes dropped off. Scenarios that now pass disappear automatically. If a listed .feature file is not in your workspace, rebuild it from the scenario bdd_steps + the feature background in ProjexLight rather than guessing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "projectId": {
+            "type": "string",
+            "description": "Optional: project ID when the path is ambiguous"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/instruction/ui-feature-backlog",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/instruction/ui-feature-backlog?projectPath=<PROJECT_PATH>"
+    },
+    {
+      "name": "projexlight_generate_api_docs",
+      "description": "Generate HTML API documentation from tests/api_definitions/ for customers, users and QA. Modularized: an index.html + one page per resource + a QA test-plan.html. Each API documents what it does, the full request payload, the expected response, valid enum values / workflow stages to test, the prerequisite call chain (dependsOn), and the test cases with expected status codes (positive + validation/error). Run after api_definitions are created/fixed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          },
+          "outputDir": {
+            "type": "string",
+            "description": "Output dir (default docs/api_docs)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Doc title (optional)"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/instruction/generate-api-docs",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/generate-api-docs -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_pre_commit_regression_check",
+      "description": "MUST-32 PRE-COMMIT GATE. Call before EVERY git commit. Gathers EVIDENCE for a regression review — it does not grade or decide. Returns changedFiles, unified=3 diffs, and candidateReferences (symbols that left their file while another file still mentions the name, each already passed a presence test so it is genuinely gone from where it was removed — but a surviving mention may be a broken caller, a completed rename, a doc reference, or a deliberate break). You read reviewInstructions and the diffs and judge whether anything is a regression; there is no recommendation, severity or llmAutoAction field to defer to. IMPORTANT: in-container git against a bind-mounted worktree can be 100-1000x slower than the host and this call WILL time out on a large repo — ALWAYS pass changedFiles and gitDiff (computed on the host, e.g. by the calling pre-commit hook) rather than letting this endpoint shell out to git itself.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          },
+          "changedFiles": {
+            "type": "array",
+            "description": "HOST-COMPUTED changed-file list. STRONGLY PREFERRED — supplying it skips every in-container git call, which is the difference between this gate working and timing out. Either plain paths or full entries with counts.",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Bare file path."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "e.g. 'modified', 'added', 'deleted', 'untracked'"
+                    },
+                    "added": {
+                      "type": "integer"
+                    },
+                    "removed": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            }
+          },
+          "gitDiff": {
+            "type": "string",
+            "description": "Output of `git diff HEAD --unified=3` (one call covering all files). Pair with changedFiles — unified=3 is required, both the symbol extractor and the dangling-reference snippets need it."
+          },
+          "includeUntracked": {
+            "type": "boolean",
+            "description": "Include new/untracked files in the analysis so added public symbols are also surfaced. Default false."
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/pre-commit-regression-check",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/pre-commit-regression-check -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_decision_tree",
+      "description": "Get decision tree for specific coding scenarios",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "description": "The scenario to get decision logic for",
+            "enum": [
+              "file_creation",
+              "error_handling",
+              "database_query",
+              "api_design",
+              "validation"
+            ]
+          }
+        },
+        "required": [
+          "scenario"
+        ]
+      },
+      "endpoint": "/api/instruction/decision-tree",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/decision-tree -H 'Content-Type: application/json' -d '{\"scenario\": \"file_creation\"}'"
+    },
+    {
+      "name": "projexlight_quality_gates",
+      "description": "Get quality gate requirements for code validation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskType": {
+            "type": "string",
+            "description": "Type of task to get quality gates for"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/instruction/quality-gates",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/quality-gates -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_get_template",
+      "description": "Get code template for specific task type",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskType": {
+            "type": "string",
+            "description": "Type of task to get template for"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Framework to use (express, react, etc.)"
+          }
+        },
+        "required": [
+          "taskType"
+        ]
+      },
+      "endpoint": "/api/instruction/template",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/template -H 'Content-Type: application/json' -d '{\"taskType\": \"<TASKTYPE>\"}'"
+    },
+    {
+      "name": "projexlight_self_check",
+      "description": "Get self-check validation checklist to run before writing files",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/self-check",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/instruction/self-check"
+    },
+    {
+      "name": "projexlight_submit_feature_validation",
+      "description": "Submit feature validation results after completing all tasks in a feature",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "The UUID of the feature being validated"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "validated",
+              "validation_failed",
+              "partial"
+            ],
+            "description": "Validation status: validated (all pass), validation_failed (any fail), partial (some incomplete)"
+          },
+          "overallResult": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "partial"
+            ],
+            "description": "Overall result: pass (all criteria met), fail (criteria not met), partial (some criteria met)"
+          },
+          "acceptanceCriteriaResults": {
+            "type": "array",
+            "description": "Results for each acceptance criterion",
+            "items": {
+              "type": "object",
+              "properties": {
+                "criterion": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "implemented",
+                    "partial",
+                    "not_implemented"
+                  ]
+                },
+                "notes": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "scenarioResults": {
+            "type": "array",
+            "description": "Results for each test scenario",
+            "items": {
+              "type": "object",
+              "properties": {
+                "scenarioId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "partial"
+                  ]
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "featureId",
+          "status",
+          "overallResult"
+        ]
+      },
+      "endpoint": "/api/instruction/submit-feature-validation",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/submit-feature-validation -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\", \"status\": \"validated\", \"overallResult\": \"pass\"}'"
+    },
+    {
+      "name": "projexlight_get_pending_violations",
+      "description": "Get pending coding violations from pre-commit hook. Call after git commit to check for issues that need fixing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/pending-violations",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/instruction/pending-violations"
+    },
+    {
+      "name": "projexlight_clear_violations",
+      "description": "Clear pending violations after fixing. Call after fixing all issues and before git commit --amend.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/clear-violations",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/clear-violations -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_get_pending_test_failures",
+      "description": "Get pending test failures from pre-push hook. Call after git push attempt to check for failed tests. Returns auto-marked manual tests and failures requiring fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/pending-test-failures",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/instruction/pending-test-failures"
+    },
+    {
+      "name": "projexlight_clear_test_failures",
+      "description": "Clear pending test failures after fixing. Call after all tests pass before pushing again.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/clear-test-failures",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/clear-test-failures -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_mark_test_manual",
+      "description": "Mark a specific test as manual (requires user approval). Only use after 3+ failures and user confirmation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "apiDefinitionPath": {
+            "type": "string",
+            "description": "Path to the api_definition JSON file"
+          },
+          "testName": {
+            "type": "string",
+            "description": "Name of the test case to mark as manual"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for marking as manual test"
+          }
+        },
+        "required": [
+          "apiDefinitionPath",
+          "reason"
+        ]
+      },
+      "endpoint": "/api/instruction/mark-test-manual",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/mark-test-manual -H 'Content-Type: application/json' -d '{\"apiDefinitionPath\": \"tests/api_definitions/<resource>/<file>.json\", \"reason\": \"<REASON>\"}'"
+    },
+    {
+      "name": "projexlight_reset_failure_counts",
+      "description": "Reset failure counts for all tests. Use after major code changes or environment fixes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/instruction/reset-failure-counts",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/instruction/reset-failure-counts -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_set_context",
+      "description": "Set project context for multi-project setups. Call once at start of session to ensure correct credentials are used.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root (e.g., /c/Users/name/project)"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/context/set",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/context/set -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_context",
+      "description": "Get current project context. Shows which project credentials are active.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/context/current",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/context/current"
+    },
+    {
+      "name": "projexlight_import_validate",
+      "description": "Validate import data (epics.json, features.json, scenarios.json) before importing. Checks for required fields, valid cross-references, and detects duplicates.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epics": {
+            "type": "object",
+            "description": "Contents of epics.json (with \"epics\" array)",
+            "properties": {
+              "epics": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "description": "Contents of features.json (with \"features\" array)",
+            "properties": {
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "scenarios": {
+            "type": "object",
+            "description": "Contents of scenarios.json (with \"scenarios\" array)",
+            "properties": {
+              "scenarios": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "epics",
+          "features",
+          "scenarios"
+        ]
+      },
+      "endpoint": "/api/import/validate",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/import/validate -H 'Content-Type: application/json' -d '{\"epics\": {\"epics\": [{}]}, \"features\": {\"features\": [{}]}, \"scenarios\": {\"scenarios\": [{}]}}'"
+    },
+    {
+      "name": "projexlight_import_full",
+      "description": "Import complete Epic → Feature → Scenario structure in one request. Automatically creates ID mappings and handles duplicates. Recommended for most imports.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "manifest": {
+            "type": "object",
+            "description": "Import manifest with metadata (optional)",
+            "properties": {
+              "manifest_version": {
+                "type": "string"
+              },
+              "project_name": {
+                "type": "string"
+              },
+              "source_type": {
+                "type": "string"
+              }
+            }
+          },
+          "epics": {
+            "type": "object",
+            "description": "Contents of epics.json. Each epic REQUIRES acceptance_criteria (outcome-level, satisfiable by its features COLLECTIVELY, one per line) — the server rejects the whole import otherwise and names the offending epics.",
+            "properties": {
+              "epics": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "description": "Contents of features.json. Each feature REQUIRES acceptance_criteria (a list of testable criteria, each decomposable into >=1 task criterion) — the server rejects the whole import otherwise.",
+            "properties": {
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "scenarios": {
+            "type": "object",
+            "description": "Contents of scenarios.json. Scenarios need NO acceptance_criteria — their Given/When/Then bdd_steps ARE the criteria, and there is no acceptance_criteria column on scenarios.",
+            "properties": {
+              "scenarios": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "epics",
+          "features",
+          "scenarios"
+        ]
+      },
+      "endpoint": "/api/import/full",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/import/full -H 'Content-Type: application/json' -d '{\"epics\": {\"epics\": [{}]}, \"features\": {\"features\": [{}]}, \"scenarios\": {\"scenarios\": [{}]}}'"
+    },
+    {
+      "name": "projexlight_import_epics",
+      "description": "Import only epics from epics.json. Returns epic_id_mapping (temp_id → real_id) needed for feature import. Use when doing step-by-step import.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epics": {
+            "type": "array",
+            "description": "Array of epic objects from epics.json",
+            "items": {
+              "type": "object",
+              "properties": {
+                "temp_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "source_module": {
+                  "type": "string"
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Testable acceptance criteria, one observable outcome per entry, min 10 chars each."
+                }
+              },
+              "required": [
+                "temp_id",
+                "title",
+                "description"
+              ]
+            }
+          }
+        },
+        "required": [
+          "epics"
+        ]
+      },
+      "endpoint": "/api/import/epics",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/import/epics -H 'Content-Type: application/json' -d '{\"epics\": [{\"temp_id\": \"<TEMP_ID>\", \"title\": \"<TITLE>\", \"description\": \"<DESCRIPTION>\", \"source_module\": \"<SOURCE_MODULE>\"}]}'"
+    },
+    {
+      "name": "projexlight_import_features",
+      "description": "Import features with epic_id_mapping. Each feature's epic_temp_id is resolved to real epic_id. Use after projexlight_import_epics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "features": {
+            "type": "array",
+            "description": "Array of feature objects from features.json",
+            "items": {
+              "type": "object",
+              "properties": {
+                "temp_id": {
+                  "type": "string"
+                },
+                "epic_temp_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 10
+                  },
+                  "minItems": 1,
+                  "description": "REQUIRED. Testable criteria, one observable outcome per entry. Each must decompose into at least one TASK criterion and be coverable by a UI scenario or an api_definition testCase. The server REJECTS the whole import if any feature lacks these (HTTP 400) and names the offending features."
+                },
+                "source_feature_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "temp_id",
+                "epic_temp_id",
+                "title",
+                "description",
+                "acceptance_criteria"
+              ]
+            }
+          },
+          "epic_id_mapping": {
+            "type": "object",
+            "description": "Mapping from epic temp_id to real Projexlight ID (from projexlight_import_epics result)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "features",
+          "epic_id_mapping"
+        ]
+      },
+      "endpoint": "/api/import/features",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/import/features -H 'Content-Type: application/json' -d '{\"features\": [{\"temp_id\": \"<TEMP_ID>\", \"epic_temp_id\": \"<EPIC_TEMP_ID>\", \"title\": \"<TITLE>\", \"description\": \"<DESCRIPTION>\"}], \"epic_id_mapping\": {}}'"
+    },
+    {
+      "name": "projexlight_import_scenarios",
+      "description": "Import scenarios with feature_id_mapping. Each scenario's feature_temp_id is resolved to real feature_id. Use after projexlight_import_features.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "description": "Array of scenario objects from scenarios.json",
+            "items": {
+              "type": "object",
+              "properties": {
+                "temp_id": {
+                  "type": "string"
+                },
+                "feature_temp_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "source_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "temp_id",
+                "feature_temp_id",
+                "title"
+              ]
+            }
+          },
+          "feature_id_mapping": {
+            "type": "object",
+            "description": "Mapping from feature temp_id to real Projexlight ID (from projexlight_import_features result)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "scenarios",
+          "feature_id_mapping"
+        ]
+      },
+      "endpoint": "/api/import/scenarios",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/import/scenarios -H 'Content-Type: application/json' -d '{\"scenarios\": [{\"temp_id\": \"<TEMP_ID>\", \"feature_temp_id\": \"<FEATURE_TEMP_ID>\", \"title\": \"<TITLE>\", \"description\": \"<DESCRIPTION>\"}], \"feature_id_mapping\": {}}'"
+    },
+    {
+      "name": "projexlight_import_status",
+      "description": "Get import history and status for the project. Shows previous imports, counts, and whether duplicates would be detected.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/import/status",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/import/status"
+    },
+    {
+      "name": "projexlight_run_api_tests",
+      "description": "Run API tests and wait for the result, up to ~100s. Use it when you need the verdict now, e.g. verifying a fix with api_paths (the named definitions plus their dependsOn producers run, usually in seconds). If the run is still going after the wait it is NOT abandoned: the call returns status \"running\" with a testRunId, the run finishes on its own and writes its report and pending failures, and projexlight_get_api_test_status returns the result. For a full suite you do not need to watch, use projexlight_start_api_tests and carry on. Use api_test_mode=\"incremental\" for changed APIs or \"full\" for all APIs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "api_test_mode": {
+            "type": "string",
+            "enum": [
+              "incremental",
+              "full"
+            ],
+            "description": "Test mode: \"incremental\" tests only changed/new APIs (default), \"full\" tests ALL APIs in api_definitions"
+          },
+          "feature_id": {
+            "type": "string",
+            "description": "Optional: Test only APIs for a specific feature. Leave empty to test all."
+          },
+          "api_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional: Array of specific API definition file paths to test"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/test",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/test -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_start_api_tests",
+      "description": "Start API tests ASYNCHRONOUSLY and return immediately with a testRunId. RECOMMENDED for large projects. Poll projexlight_get_api_test_status to check progress and get results when complete. Call projexlight_clear_api_test_result after processing results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "api_test_mode": {
+            "type": "string",
+            "enum": [
+              "incremental",
+              "full"
+            ],
+            "description": "Test mode: \"incremental\" tests only changed/new APIs (default), \"full\" tests ALL APIs in api_definitions"
+          },
+          "feature_id": {
+            "type": "string",
+            "description": "Optional: Test only APIs for a specific feature. Leave empty to test all."
+          },
+          "api_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional: Array of specific API definition file paths to test"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/test/start",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/test/start -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_get_api_test_status",
+      "description": "Check API test status. Returns: \"running\" (with elapsed time), \"completed\" (with full results in result field), or \"idle\". When status is \"completed\", the result field contains the test results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/test/status",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/test/status"
+    },
+    {
+      "name": "projexlight_cancel_api_tests",
+      "description": "Cancel currently running API tests if stuck. Use after checking status shows tests running for too long.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/test/cancel",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/test/cancel -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_clear_api_test_result",
+      "description": "Clear stored test result after processing. Call this after projexlight_get_api_test_status returns \"completed\" and you have processed the results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/test/clear",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/test/clear -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_check_server_health",
+      "description": "CRITICAL: Check if the local application server is running BEFORE running API tests. Returns server status, detected port, and health endpoint response. If server is not running, API tests will fail.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "number",
+            "description": "Expected port the server should be running on (default: 3000)"
+          },
+          "health_endpoint": {
+            "type": "string",
+            "description": "Health endpoint to check (default: /health). Common alternatives: /api/health, /healthz, /ping"
+          },
+          "base_url": {
+            "type": "string",
+            "description": "Optional: Full base URL to check (e.g., http://localhost:3000). If provided, port is ignored."
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/test/server-health",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/test/server-health -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_validate_api_definition",
+      "description": "Validate API definition JSON structure before running tests. Checks required fields (endpoint, method, testCases) and ID references (taskId, featureId, epicId).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "api_definition": {
+            "type": "object",
+            "description": "The API definition object to validate",
+            "properties": {
+              "endpoint": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string"
+              },
+              "taskId": {
+                "type": "string"
+              },
+              "featureId": {
+                "type": "string"
+              },
+              "epicId": {
+                "type": "string"
+              },
+              "sprintId": {
+                "type": "string"
+              },
+              "testCases": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            },
+            "required": [
+              "endpoint",
+              "method",
+              "testCases"
+            ]
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Optional: Path to the API definition file for context in error messages"
+          }
+        },
+        "required": [
+          "api_definition"
+        ]
+      },
+      "endpoint": "/api/validate-definition",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/validate-definition -H 'Content-Type: application/json' -d '{\"api_definition\": {\"endpoint\": \"<ENDPOINT>\", \"method\": \"<METHOD>\", \"taskId\": \"<TASK_ID>\", \"featureId\": \"<FEATURE_UUID>\"}}'"
+    },
+    {
+      "name": "projexlight_legacy_detect_framework",
+      "description": "Detect the framework used in an existing project. Returns framework name, language, and confidence score. Use this as the first step in legacy API extraction.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root (e.g., /c/Users/name/project)"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/legacy/detect-framework",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/legacy/detect-framework -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_legacy_scan_routes",
+      "description": "Scan an existing project for API routes. Returns list of routes with method, path, source file, and line number. Supports Express, FastAPI, Flask, Django, Spring Boot, Gin, Rails, and Laravel.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Optional framework hint (express, fastapi, flask, django, springboot, gin, rails, laravel). Auto-detected if not provided.",
+            "enum": [
+              "express",
+              "fastapi",
+              "flask",
+              "django",
+              "springboot",
+              "gin",
+              "rails",
+              "laravel"
+            ]
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/legacy/scan-routes",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/legacy/scan-routes -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_legacy_extract_apis",
+      "description": "Extract APIs from an existing project and generate API definition JSON files. This is the main endpoint for legacy API extraction - it detects framework, scans routes, and generates test-ready API definitions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root"
+          },
+          "outputDir": {
+            "type": "string",
+            "description": "Optional output directory for API definitions. Default: {projectPath}/tests/api_definitions"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Optional framework hint for faster detection"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/legacy/extract-apis",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/legacy/extract-apis -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_legacy_generate_definitions",
+      "description": "Generate API definition files from previously scanned routes. Use after projexlight_legacy_scan_routes if you want more control over the generation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root"
+          },
+          "routes": {
+            "type": "array",
+            "description": "Optional array of route objects from scan-routes. If not provided, will re-scan.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "file": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "outputDir": {
+            "type": "string",
+            "description": "Output directory for API definitions"
+          }
+        },
+        "required": [
+          "projectPath"
+        ]
+      },
+      "endpoint": "/api/legacy/generate-definitions",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/legacy/generate-definitions -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_legacy_bootstrap",
+      "description": "Get the complete legacy extraction workflow. Use this instead of projexlight_init_session when working with existing projects that need API extraction rather than new feature development.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "/api/legacy/bootstrap",
+      "method": "GET",
+      "curl": "curl http://localhost:8766/api/legacy/bootstrap"
+    },
+    {
+      "name": "projexlight_create_task",
+      "description": "Create a new task in Projexlight. Used for creating API validation tasks per feature in legacy automation workflow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, e.g., \"Validate User Authentication APIs\""
+          },
+          "description": {
+            "type": "string",
+            "description": "Task description explaining what needs to be done"
+          },
+          "task_type": {
+            "type": "string",
+            "enum": [
+              "api_endpoint",
+              "frontend",
+              "backend",
+              "database",
+              "service_layer",
+              "testing",
+              "development"
+            ],
+            "description": "Type of task"
+          },
+          "feature_id": {
+            "type": "string",
+            "description": "UUID of parent feature (from import result)"
+          },
+          "epic_id": {
+            "type": "string",
+            "description": "UUID of parent epic (from import result)"
+          },
+          "sprint_id": {
+            "type": "string",
+            "description": "UUID of sprint to add task to"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Task priority (default: high)"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 10
+            },
+            "minItems": 1,
+            "description": "REQUIRED. One observable outcome per entry, verifiable against the RUNNING system — not a restatement of the description and not an implementation note. Must be a SUBSET of the parent feature's criteria: read them first with projexlight_get_feature and DECOMPOSE them, do not invent new scope. The evidence for each is an api_definition testCase (endpoints) or a Gherkin step (screens), per MUST-67. The server REJECTS a create without these (HTTP 400)."
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "task_type",
+          "feature_id",
+          "epic_id",
+          "sprint_id",
+          "acceptance_criteria"
+        ]
+      },
+      "endpoint": "/api/tasks/create",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/create -H 'Content-Type: application/json' -d '{\"title\": \"<TITLE>\", \"description\": \"<DESCRIPTION>\", \"task_type\": \"api_endpoint\", \"feature_id\": \"<FEATURE_ID>\", \"epic_id\": \"<EPIC_ID>\", \"sprint_id\": \"<SPRINT_ID>\", \"acceptance_criteria\": [\"<ACCEPTANCE_CRITERIA>\"]}'"
+    },
+    {
+      "name": "projexlight_get_tasks_by_feature",
+      "description": "Get all tasks for a specific feature. Useful for checking if API validation tasks already exist.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "feature_id": {
+            "type": "string",
+            "description": "UUID of the feature to get tasks for"
+          }
+        },
+        "required": [
+          "feature_id"
+        ]
+      },
+      "endpoint": "/api/tasks/by-feature",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/by-feature -H 'Content-Type: application/json' -d '{\"feature_id\": \"<FEATURE_ID>\"}'"
+    },
+    {
+      "name": "projexlight_implement",
+      "description": "Get complete implementation instructions for an epic, feature, or scenario. Returns a step-by-step workflow using Projexlight MCP tools.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "epic",
+              "feature",
+              "scenario"
+            ],
+            "description": "Type of entity to implement"
+          },
+          "entityId": {
+            "type": "string",
+            "description": "UUID of the epic, feature, or scenario"
+          }
+        },
+        "required": [
+          "entityType",
+          "entityId"
+        ]
+      },
+      "endpoint": "/api/implement",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/implement -H 'Content-Type: application/json' -d '{\"entityType\": \"epic\", \"entityId\": \"<ENTITYID>\"}'"
+    },
+    {
+      "name": "projexlight_get_epic",
+      "description": "Get an epic by its ID with details. Use to inspect an epic before creating features or tasks for it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epicId": {
+            "type": "string",
+            "description": "UUID of the epic to retrieve"
+          }
+        },
+        "required": [
+          "epicId"
+        ]
+      },
+      "endpoint": "/api/epics/get",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/epics/get -H 'Content-Type: application/json' -d '{\"epicId\": \"<EPIC_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_get_feature",
+      "description": "Get a feature by its ID with details including scenarios and tasks summary. Use to inspect a feature before creating scenarios or tasks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "UUID of the feature to retrieve"
+          }
+        },
+        "required": [
+          "featureId"
+        ]
+      },
+      "endpoint": "/api/features/get",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/features/get -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_get_scenario",
+      "description": "Get a scenario by its ID with full details including BDD steps.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "description": "UUID of the scenario to retrieve"
+          }
+        },
+        "required": [
+          "scenarioId"
+        ]
+      },
+      "endpoint": "/api/scenarios/get",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/get -H 'Content-Type: application/json' -d '{\"scenarioId\": \"<SCENARIO_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_update_scenario_steps",
+      "description": "Update a scenario BDD steps (Given/When/Then) with actual UI selectors after implementation. Makes the scenario automatable with Playwright/Cypress.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "description": "UUID of the scenario to update"
+          },
+          "given_conditions": {
+            "type": "string",
+            "description": "Updated Given steps with real page paths and UI selectors"
+          },
+          "when_actions": {
+            "type": "string",
+            "description": "Updated When steps with real UI interactions"
+          },
+          "then_expectations": {
+            "type": "string",
+            "description": "Updated Then steps with real UI assertions"
+          }
+        },
+        "required": [
+          "scenarioId",
+          "given_conditions",
+          "when_actions",
+          "then_expectations"
+        ]
+      },
+      "endpoint": "/api/scenarios/update-steps",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/update-steps -H 'Content-Type: application/json' -d '{\"scenarioId\": \"<SCENARIO_UUID>\", \"given_conditions\": \"<GIVEN_CONDITIONS>\", \"when_actions\": \"<WHEN_ACTIONS>\", \"then_expectations\": \"<THEN_EXPECTATIONS>\"}'"
+    },
+    {
+      "name": "projexlight_create_scenario",
+      "description": "Create a new BDD scenario under an existing feature with Given/When/Then steps. Use when implementing an epic or feature that needs new scenarios.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "UUID of the parent feature"
+          },
+          "title": {
+            "type": "string",
+            "description": "Scenario title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Scenario description"
+          },
+          "scenario_type": {
+            "type": "string",
+            "enum": [
+              "UI",
+              "API"
+            ],
+            "description": "Type (default: UI)"
+          },
+          "given_conditions": {
+            "type": "string",
+            "description": "BDD Given steps"
+          },
+          "when_actions": {
+            "type": "string",
+            "description": "BDD When steps"
+          },
+          "then_expectations": {
+            "type": "string",
+            "description": "BDD Then steps"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Priority (default: medium)"
+          }
+        },
+        "required": [
+          "featureId",
+          "title",
+          "given_conditions",
+          "when_actions",
+          "then_expectations"
+        ]
+      },
+      "endpoint": "/api/scenarios/create",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/create -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\", \"title\": \"<TITLE>\", \"given_conditions\": \"<GIVEN_CONDITIONS>\", \"when_actions\": \"<WHEN_ACTIONS>\", \"then_expectations\": \"<THEN_EXPECTATIONS>\"}'"
+    },
+    {
+      "name": "projexlight_get_task",
+      "description": "Get a task by UUID OR short ID with full details. The short ID is accepted in any form a person is likely to type: TK-4141, tk-4141, or just 4141 (the TK- prefix is added for you). Short IDs are unique per TENANT, not per project: the sequence runs across every project a tenant owns rather than restarting in each, so no project filter is needed to resolve one. They are NOT unique across tenants (TK-1 exists in 11 of them). projectPath picks the CREDENTIAL and the credential picks the TENANT — it does NOT narrow the search to one project, so sibling projects under one tenant resolve a short ID identically; read project_id on the result if you care which project it came from. Across tenants projectPath is decisive.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Task UUID, or short ID in any form: TK-4141, tk-4141, or just 4141"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path. Selects the credential, and therefore the TENANT the short ID resolves within."
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "endpoint": "/api/tasks/get",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/get -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_list_epics",
+      "description": "List all epics for the project. Use to find which epics exist before deciding what to create.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Filter by status (optional)"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Filter by priority (optional)"
+          },
+          "search": {
+            "type": "string",
+            "description": "Search term to filter epics (optional)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of results (default: 50)"
+          },
+          "offset": {
+            "type": "number",
+            "description": "Pagination offset (default: 0)"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/epics/list",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/epics/list -H 'Content-Type: application/json' -d '{}'"
+    },
+    {
+      "name": "projexlight_get_features_by_epic",
+      "description": "Get all features for a specific epic. Use to identify which features already exist and which need to be created for this epic.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epicId": {
+            "type": "string",
+            "description": "UUID of the epic to get features for"
+          }
+        },
+        "required": [
+          "epicId"
+        ]
+      },
+      "endpoint": "/api/epics/features",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/epics/features -H 'Content-Type: application/json' -d '{\"epicId\": \"<EPIC_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_get_scenarios_by_feature",
+      "description": "Get all scenarios for a specific feature. Use to identify which BDD scenarios already exist and which need to be created.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "UUID of the feature to get scenarios for"
+          },
+          "includeCompleted": {
+            "type": "string",
+            "description": "Include completed scenarios (default: true)",
+            "enum": [
+              "true",
+              "false"
+            ]
+          }
+        },
+        "required": [
+          "featureId"
+        ]
+      },
+      "endpoint": "/api/features/scenarios",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/features/scenarios -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_get_tasks_by_feature_lookup",
+      "description": "Get all tasks for a specific feature with optional status filter. Use to identify which tasks already exist and which need to be created.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "UUID of the feature to get tasks for"
+          },
+          "status": {
+            "type": "string",
+            "description": "Filter by task status (optional)"
+          }
+        },
+        "required": [
+          "featureId"
+        ]
+      },
+      "endpoint": "/api/features/tasks",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/features/tasks -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_get_tasks_by_scenario",
+      "description": "Get all tasks for a specific scenario. Use to identify which tasks already exist for a scenario.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "description": "UUID of the scenario to get tasks for"
+          }
+        },
+        "required": [
+          "scenarioId"
+        ]
+      },
+      "endpoint": "/api/scenarios/tasks",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/tasks -H 'Content-Type: application/json' -d '{\"scenarioId\": \"<SCENARIO_UUID>\"}'"
+    },
+    {
+      "name": "projexlight_list_tasks",
+      "description": "List/filter tasks by STATUS or TASK TYPE — the generic task query. Use this whenever you need tasks you do NOT already have an id for (\"what is still in the backlog?\", \"which api_endpoint tasks are left?\", \"show me everything blocked\"): every other task lookup needs a featureId, scenarioId or taskId you must already know. Filters combine (AND), and each of status/task_type/priority/cli_generation_status also accepts a comma-separated list to match ANY value, e.g. status=\"backlog,todo\". Two independent status axes: `status` is the board column a human moves, `cli_generation_status` is how far code generation got — filter on the one you mean. Pass includeCounts=true to get the project's status/task_type distribution instead of guessing which values it uses. Take an id off the result and pass it to projexlight_get_instruction to start coding it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Board status: backlog, ready_for_sprint, todo, in_progress, blocked, review, done, completed, archived. Comma-separated list allowed (matches ANY)."
+          },
+          "task_type": {
+            "type": "string",
+            "description": "Task type, e.g. api_endpoint, ui_component, service_layer, data_layer, crud_operations, database_migration, unit_testing, integration_testing, frontend, backend, database, testing, documentation, development. Comma-separated list allowed (matches ANY). NOTE: use service_layer, not service."
+          },
+          "cli_generation_status": {
+            "type": "string",
+            "description": "Code-generation status (independent of `status`): not_started, in_progress, completed, failed, manual. Comma-separated list allowed."
+          },
+          "priority": {
+            "type": "string",
+            "description": "Priority: low, medium, high, critical. Comma-separated list allowed."
+          },
+          "feature_id": {
+            "type": "string",
+            "description": "Scope to one feature (UUID)"
+          },
+          "epic_id": {
+            "type": "string",
+            "description": "Scope to one epic (UUID)"
+          },
+          "scenario_id": {
+            "type": "string",
+            "description": "Scope to one scenario (UUID)"
+          },
+          "sprint_id": {
+            "type": "string",
+            "description": "Scope to one sprint (UUID)"
+          },
+          "assigned_to": {
+            "type": "string",
+            "description": "Scope to one assignee (user UUID)"
+          },
+          "search": {
+            "type": "string",
+            "description": "Free-text match on title, description, business value or user story"
+          },
+          "includeCounts": {
+            "type": "boolean",
+            "description": "Also return meta.counts — how many tasks sit in each status, task_type and cli_generation_status for this project. Use it to discover the vocabulary before filtering."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size (default 50, max 200)"
+          },
+          "offset": {
+            "type": "number",
+            "description": "Pagination offset (default 0)"
+          },
+          "orderBy": {
+            "type": "string",
+            "description": "Sort column: created_at (default), updated_at, due_date, title, status, priority, task_type, story_points, short_id"
+          },
+          "orderDirection": {
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "description": "Sort direction (default DESC)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": []
+      },
+      "endpoint": "/api/tasks/list",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/list -H 'Content-Type: application/json' -d '{\"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_create_tasks_bulk",
+      "description": "Create multiple tasks at once for a feature. More efficient than creating tasks one by one. Each task requires title, description, task_type, feature_id, epic_id, sprint_id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "description": "Array of task objects to create",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Task description"
+                },
+                "task_type": {
+                  "type": "string",
+                  "enum": [
+                    "api_endpoint",
+                    "frontend",
+                    "backend",
+                    "database",
+                    "service_layer",
+                    "testing",
+                    "development"
+                  ],
+                  "description": "Type of task"
+                },
+                "feature_id": {
+                  "type": "string",
+                  "description": "UUID of parent feature"
+                },
+                "epic_id": {
+                  "type": "string",
+                  "description": "UUID of parent epic"
+                },
+                "sprint_id": {
+                  "type": "string",
+                  "description": "UUID of sprint"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                  ]
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 10
+                  },
+                  "minItems": 1,
+                  "description": "REQUIRED per task. One observable outcome per entry, verifiable against the RUNNING system, and a SUBSET of the parent feature's criteria. Read the feature's criteria first (projexlight_get_feature) and DECOMPOSE them across the tasks — collectively they should cover every feature criterion exactly once. The server validates each task INDEPENDENTLY and reports failures per index, so a partially-good batch still creates its valid tasks."
+                }
+              },
+              "required": [
+                "title",
+                "description",
+                "task_type",
+                "feature_id",
+                "epic_id",
+                "sprint_id",
+                "acceptance_criteria"
+              ]
+            }
+          }
+        },
+        "required": [
+          "tasks"
+        ]
+      },
+      "endpoint": "/api/tasks/create-bulk",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/create-bulk -H 'Content-Type: application/json' -d '{\"tasks\": [{\"title\": \"<TITLE>\", \"description\": \"<DESCRIPTION>\", \"task_type\": \"api_endpoint\", \"feature_id\": \"<FEATURE_ID>\"}]}'"
+    },
+    {
+      "name": "projexlight_update_task",
+      "description": "Update an existing task's fields (title, description, priority, status, acceptance_criteria, task_type, estimated_hours, story_points, assigned_to, due_date, ...). Pass taskId plus only the fields you want to change. Unlike complete_task (which only flips status to completed), this edits arbitrary task fields.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "UUID of the task to update"
+          },
+          "title": {
+            "type": "string",
+            "description": "New task title"
+          },
+          "description": {
+            "type": "string",
+            "description": "New task description"
+          },
+          "task_type": {
+            "type": "string",
+            "enum": [
+              "api_endpoint",
+              "frontend",
+              "backend",
+              "database",
+              "service_layer",
+              "testing",
+              "development"
+            ],
+            "description": "New task type"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "New priority"
+          },
+          "status": {
+            "type": "string",
+            "description": "New status (e.g. not_started, in_progress, completed, blocked, archived)"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Replacement acceptance criteria list"
+          },
+          "estimated_hours": {
+            "type": "number",
+            "description": "Estimated hours"
+          },
+          "story_points": {
+            "type": "number",
+            "description": "Story points"
+          },
+          "assigned_to": {
+            "type": "string",
+            "description": "UUID of the assignee"
+          },
+          "due_date": {
+            "type": "string",
+            "description": "Due date (ISO 8601)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "endpoint": "/api/tasks/update",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/update -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_delete_task",
+      "description": "Delete a task. Soft-deletes (archives) by default; pass permanent=true to hard-delete. A task is a leaf entity (only child sub-tasks cascade), so the blast radius is small. Use this instead of recreating tasks when you need to remove obsolete ones.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "UUID of the task to delete"
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "Hard-delete instead of archive (default: false)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "endpoint": "/api/tasks/delete",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/tasks/delete -H 'Content-Type: application/json' -d '{\"taskId\": \"<TASK_ID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_update_scenario",
+      "description": "Update a BDD scenario's fields (title, description, priority, status, scenario_type, labels, ...). Pass scenarioId plus only the fields to change. To rewrite the Given/When/Then steps with real UI selectors, use projexlight_update_scenario_steps instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "description": "UUID of the scenario to update"
+          },
+          "title": {
+            "type": "string",
+            "description": "New scenario title"
+          },
+          "description": {
+            "type": "string",
+            "description": "New scenario description"
+          },
+          "scenario_type": {
+            "type": "string",
+            "enum": [
+              "UI",
+              "API"
+            ],
+            "description": "New scenario type"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "New priority"
+          },
+          "status": {
+            "type": "string",
+            "description": "New status"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "scenarioId"
+        ]
+      },
+      "endpoint": "/api/scenarios/update",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/update -H 'Content-Type: application/json' -d '{\"scenarioId\": \"<SCENARIO_UUID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_delete_scenario",
+      "description": "Delete a BDD scenario. Child tasks are NOT deleted — tasks.scenario_id is ON DELETE SET NULL, so the scenario's tasks survive (still under their feature) but become detached from the deleted scenario.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "description": "UUID of the scenario to delete"
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "Hard-delete flag (forwarded; note the backend hard-deletes either way)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "scenarioId"
+        ]
+      },
+      "endpoint": "/api/scenarios/delete",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/scenarios/delete -H 'Content-Type: application/json' -d '{\"scenarioId\": \"<SCENARIO_UUID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_update_feature",
+      "description": "Update a feature's fields (title, description, feature_type, acceptance_criteria, technical_notes, priority, status, ...). Pass featureId plus only the fields to change. NOTE: there is intentionally no feature-delete tool — deleting a feature cascade-wipes its scenarios but orphans its tasks (SET NULL); set status=\"archived\" here instead if you need to retire a feature.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "UUID of the feature to update"
+          },
+          "title": {
+            "type": "string",
+            "description": "New feature title"
+          },
+          "description": {
+            "type": "string",
+            "description": "New feature description"
+          },
+          "feature_type": {
+            "type": "string",
+            "description": "New feature type"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Replacement acceptance criteria list"
+          },
+          "technical_notes": {
+            "type": "string",
+            "description": "Technical notes"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "New priority"
+          },
+          "status": {
+            "type": "string",
+            "description": "New status (e.g. active, archived)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "featureId"
+        ]
+      },
+      "endpoint": "/api/features/update",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/features/update -H 'Content-Type: application/json' -d '{\"featureId\": \"<FEATURE_UUID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_update_epic",
+      "description": "Update an epic's fields (title, description, priority, status). Pass epicId plus only the fields to change. GOVERNANCE ROLL-UP (MUST-76): an epic carries no work of its own — its completion is DEFINED as its features being complete — so once every child feature is done/completed/archived, set status=\"completed\" here. That is the ONE governance status change needing no further evidence: closing a FEATURE requires verifiable acceptance (passing scenarios or api_definitions), but closing an epic is pure derivation from its children. Pass the UUID: epicId does not accept a short id such as EP-331, and no short-id resolver exists for epics. NOTE: there is intentionally no epic-delete tool — deleting an epic cascades or orphans a whole subtree; set status=\"archived\" to retire one.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epicId": {
+            "type": "string",
+            "description": "UUID of the epic to update (not the EP-### short id)"
+          },
+          "title": {
+            "type": "string",
+            "description": "New epic title"
+          },
+          "description": {
+            "type": "string",
+            "description": "New epic description"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "New priority"
+          },
+          "status": {
+            "type": "string",
+            "description": "New status (e.g. active, completed, archived)"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Unix-style path to project root for multi-project setups. Auto-detected if not provided."
+          }
+        },
+        "required": [
+          "epicId"
+        ]
+      },
+      "endpoint": "/api/epics/update",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/epics/update -H 'Content-Type: application/json' -d '{\"epicId\": \"<EPIC_UUID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_get_defect_context",
+      "description": "FIX THIS DEFECT (call this FIRST). Fetches a defect by UUID or short ID (e.g. DEF-123) and returns everything needed to fix it in ONE payload, so no follow-up lookups are needed: the defect itself; its originating task (description, acceptance_criteria, technical_requirements); the feature and scenario for the intended behaviour and BDD steps; the api_library rows for the endpoints involved, including route_file_path so you can open the right file; the raw failure material (failure log, expected vs actual result, per-environment test results) rather than a summary; what was already tried (defect history and comments); and any known defect patterns for this project. Read the warnings array — it reports anything that could not be resolved, such as a missing originating task.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "defectId": {
+            "type": "string",
+            "description": "Defect UUID or short ID such as DEF-123"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          }
+        },
+        "required": [
+          "defectId"
+        ]
+      },
+      "endpoint": "/api/defect/context",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/defect/context -H 'Content-Type: application/json' -d '{\"defectId\": \"<DEFECTID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_resolve_defect_for_qa",
+      "description": "CLOSE A DEFECT FOR QA (call after the fix is implemented). Records what changed (files, commit, notes) and moves the defect to status=resolved, meaning fixed and awaiting QA. It CANNOT mark a defect verified or closed: the fixer does not get to declare its own fix tested, so that transition belongs to QA alone. Passing any status other than resolved is rejected.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "defectId": {
+            "type": "string",
+            "description": "Defect UUID or short ID such as DEF-123"
+          },
+          "filesChanged": {
+            "type": "array",
+            "description": "Paths of the files changed by the fix",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commit": {
+            "type": "string",
+            "description": "Commit SHA of the fix, if committed"
+          },
+          "notes": {
+            "type": "string",
+            "description": "What was changed and why"
+          },
+          "resolutionType": {
+            "type": "string",
+            "description": "Optional resolution type; defaults to fixed"
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path"
+          }
+        },
+        "required": [
+          "defectId"
+        ]
+      },
+      "endpoint": "/api/defect/resolve",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/defect/resolve -H 'Content-Type: application/json' -d '{\"defectId\": \"<DEFECTID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    },
+    {
+      "name": "projexlight_delete_api_library_entries",
+      "description": "DELETE api_library ROWS AND EVICT THEIR TEST-CACHE ENTRIES IN ONE OPERATION. Use this instead of deleting rows by hand: a hand-deleted row leaves .mcp-cache/api_test_cache.json still holding a tested_apis entry for that METHOD:endpoint, so the classifier never sees the definition as changed and the endpoint is never re-registered — it disappears from the catalog permanently and no re-run brings it back. projectId is REQUIRED and is never inferred, because a delete that guesses its project would remove another tenant catalog entry. Start with dryRun=true to see exactly what matches. The deleted rows are backed up under .mcp-cache/deleted_api_library/ before anything is removed. A row whose api_definition file still exists is REFUSED unless force=true, because that combination means the definition should be re-registered rather than deleted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "REQUIRED. Explicit project UUID to delete from. Never inferred."
+          },
+          "apis": {
+            "type": "array",
+            "description": "Rows to delete, matched pairwise on method + endpoint",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method, e.g. GET"
+                },
+                "endpoint": {
+                  "type": "string",
+                  "description": "Endpoint path, e.g. /api/keys/:key_id/rotate"
+                }
+              },
+              "required": [
+                "method",
+                "endpoint"
+              ]
+            }
+          },
+          "ids": {
+            "type": "array",
+            "description": "api_library row ids to delete",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "List what would be deleted and write nothing. Run this first."
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Allow deleting a row whose api_definition file still exists. Off by default on purpose."
+          },
+          "projectPath": {
+            "type": "string",
+            "description": "Project root path (locates .mcp-cache and tests/api_definitions)"
+          }
+        },
+        "required": [
+          "projectId"
+        ]
+      },
+      "endpoint": "/api/api-library/delete",
+      "method": "POST",
+      "curl": "curl -X POST http://localhost:8766/api/api-library/delete -H 'Content-Type: application/json' -d '{\"projectId\": \"<PROJECT_ID>\", \"projectPath\": \"<PROJECT_PATH>\"}'"
+    }
+  ]
+}

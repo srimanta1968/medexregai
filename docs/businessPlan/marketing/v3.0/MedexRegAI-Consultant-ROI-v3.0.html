@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MedexRegAI Consultant ROI</title>
+<meta name="description" content="What MedexRegAI saves a 510(k) consultant, built on a practising consultant's actual hours, with ROI for every plan.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfbfa;--surface:#ffffff;--ink:#14213d;--ink2:#3d4a63;--muted:#6b7488;--line:#e3e6ec;--soft:#f1f4f6;
+--brand:#0d6e66;--brand-soft:#e3f2ef;--accent:#b45309;--s0:#6B7CC4;--s1:#D97706;--s2:#0D9488;
+--crit:#b42318;--crit-bg:#fdecea;--maj:#b45309;--maj-bg:#fdf1e3;--min:#475467;--min-bg:#eef1f5;--ok:#067647;--ok-bg:#e6f4ec}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;
+--brand:#3cc2b2;--brand-soft:#173430;--accent:#f0a145;--s0:#7F8FD6;--s1:#C47608;--s2:#11A595;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}}
+:root[data-theme="dark"]{--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;
+--brand:#3cc2b2;--brand-soft:#173430;--accent:#f0a145;--s0:#7F8FD6;--s1:#C47608;--s2:#11A595;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.hero{padding:48px 0 28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:600}
+h1,h2{font-family:"Source Serif 4",Georgia,serif;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin:8px 0 12px;max-width:900px}
+h2{font-size:26px;margin:0 0 6px}
+h3{font-size:17px;margin:20px 0 8px}
+.lede{font-size:17px;color:var(--ink2);max-width:860px}
+.meta{color:var(--muted);font-size:13px;margin-top:14px}
+section{padding:36px 0;border-top:1px solid var(--line)}
+.sub{color:var(--ink2);max-width:880px;margin:0 0 18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi.brand{background:var(--brand-soft);border-color:transparent}
+.kpi.brand .v{color:var(--brand)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:600;font-size:12.5px;color:var(--ink2);position:sticky;top:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.small{font-size:12.5px}.muted{color:var(--muted)}.strong{font-weight:700}
+tr.phase td{background:var(--soft);font-weight:600;color:var(--brand);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+tfoot td{font-weight:600;background:var(--soft)}
+table.tasks{min-width:1020px}
+table.compare tr.hl td{background:var(--brand-soft)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.tag-H{background:var(--min-bg);color:var(--min)}.tag-A{background:var(--maj-bg);color:var(--maj)}
+.tag-V{background:var(--crit-bg);color:var(--crit)}.tag-M{background:var(--brand-soft);color:var(--brand)}
+.sev{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.sev-critical{background:var(--crit-bg);color:var(--crit)}.sev-major{background:var(--maj-bg);color:var(--maj)}
+.sev-minor{background:var(--min-bg);color:var(--min)}.sev-info{background:var(--ok-bg);color:var(--ok)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:6px 0 12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bargroup{margin-bottom:14px}.barlabel{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.barrow{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:8px;margin:3px 0}
+.barname{font-size:12px;color:var(--muted)}.barval{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink2);text-align:right}
+.bartrack{height:14px}
+.bar{height:14px;border-radius:0 4px 4px 0;cursor:default;min-width:2px}
+.bar.s0{background:var(--s0)}.bar.s1{background:var(--s1)}.bar.s2{background:var(--s2)}
+.bar:hover{filter:brightness(1.08);outline:2px solid var(--surface)}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:6px;font-size:12.5px;opacity:0;transition:opacity .1s;z-index:9;max-width:320px}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.catcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.catcard ul{margin:8px 0 0;padding-left:18px}.catcard li{margin:4px 0;font-size:13.5px}
+.calc{display:grid;grid-template-columns:300px 1fr;gap:16px}
+@media(max-width:860px){.calc{grid-template-columns:1fr}}
+.calc label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px;color:var(--ink2)}
+.calc input,.calc select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.note{background:var(--soft);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink2)}
+.note strong{color:var(--ink)}
+details{margin-top:14px}summary{cursor:pointer;font-weight:600;color:var(--brand)}
+ol.sources li{margin:5px 0;font-size:13.5px}a{color:var(--brand)}
+.callout{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--surface)}
+.big{font-size:44px;font-weight:700;color:var(--brand);letter-spacing:-.02em;line-height:1}
+footer{padding:30px 0 50px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line)}
+@media print{#tip,.calc{display:none}section{break-inside:avoid-page}}
+
+.hero h1{max-width:980px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:12.5px;font-weight:600;margin-right:6px}
+.planrow td{vertical-align:middle}
+tr.rec td{background:var(--brand-soft)}
+.badge{display:inline-block;background:var(--brand);color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:6px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.step .n{font-size:13px;font-weight:700;color:var(--brand)}
+.save{color:var(--brand);font-weight:700}
+.phasebar{display:grid;grid-template-columns:150px 1fr 84px;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+.phasebar .track{position:relative;height:16px}
+.phasebar .a{position:absolute;left:0;top:0;height:16px;background:var(--s0);border-radius:0 4px 4px 0}
+.phasebar .m{position:absolute;left:0;top:4px;height:8px;background:var(--s2);border-radius:0 4px 4px 0;box-shadow:0 0 0 2px var(--surface)}
+.phasebar .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+</style></head>
+<body>
+<div id="tip"></div>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">MedexRegAI for 510(k) consultants</div>
+  <h1>Get back 18 hours on a simple 510(k) and 38 on a complex one</h1>
+  <p class="lede">We built these numbers from a practising 510(k) consultant's actual hours, task by task. We count only the work a consultant really does, compare against a consultant who already uses general AI, and give no credit where MedexRegAI would not change the work.</p>
+  <div class="meta"><span class="pill">Built on real consultant hours</span><span class="pill">$150/h, the low end of market rates</span><span class="pill">All plans priced</span></div>
+  <div class="kpis">
+    <div class="kpi brand"><div class="v">18 h · $2,738</div><div class="l">saved on a simple Class II 510(k) (Huber needle): 98 h → 80 h</div></div>
+    <div class="kpi brand"><div class="v">38 h · $5,738</div><div class="l">saved on a complex 510(k) (connected infusion pump): 311 h → 273 h</div></div>
+    <div class="kpi"><div class="v">4.0x / 9.4x</div><div class="l">ROI per project on the Practice plan ($550 a project), simple / complex</div></div>
+    <div class="kpi"><div class="v">+1.8 projects</div><div class="l">a year for one consultant with 1,500 delivery hours and a quarter of projects complex</div></div>
+  </div>
+</header>
+
+<section id="basis">
+  <h2>1. How we built these numbers</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1 · Real hours</div><p class="small">A practising 510(k) consultant re-timed all 26 tasks of a Huber-needle Traditional 510(k): hours without AI and with the AI tools they use today.</p></div>
+    <div class="step"><div class="n">2 · Real scope</div><p class="small">The manufacturer does the test plan, biocompatibility plan, lab coordination, test-report review and risk file. We left those out of the consultant's hours.</p></div>
+    <div class="step"><div class="n">3 · Honest baseline</div><p class="small">We compare against the consultant's hours <em>with</em> general AI (Claude, ChatGPT, Gemini), not against working without AI.</p></div>
+    <div class="step"><div class="n">4 · Credit only where earned</div><p class="small">MedexRegAI gets credit only on research, verification, eSTAR planning, quality checks and review tracking. It gets no credit for meetings or for drafting sections from test reports.</p></div>
+  </div>
+</section>
+
+<section id="simple">
+  <h2>2. A simple 510(k): Huber needle, Traditional, product code PTI</h2>
+  <p class="sub">The consultant reported 104 hours without AI and 98 with AI for their share of the work. MedexRegAI brings that to 79.8 hours.</p>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><h3 style="margin-top:0">Hours by phase</h3>
+      <div class="legend"><span><i style="background:var(--s0)"></i>Today, with general AI</span><span><i style="background:var(--s2)"></i>With MedexRegAI</span></div>
+      <div class="phasebar" data-tip="Engagement: 4 h today, 4 h with MedexRegAI"><div>Engagement</div><div class="track"><div class="a" style="width:6.7%"></div><div class="m" style="width:6.7%"></div></div><div class="v">4 → 4</div></div><div class="phasebar" data-tip="Strategy and predicates: 24 h today, 13.8 h with MedexRegAI"><div>Strategy and predicates</div><div class="track"><div class="a" style="width:40.0%"></div><div class="m" style="width:22.9%"></div></div><div class="v">24 → 14</div></div><div class="phasebar" data-tip="eSTAR sections: 60 h today, 55 h with MedexRegAI"><div>eSTAR sections</div><div class="track"><div class="a" style="width:100.0%"></div><div class="m" style="width:91.7%"></div></div><div class="v">60 → 55</div></div><div class="phasebar" data-tip="FDA review: 10 h today, 7 h with MedexRegAI"><div>FDA review</div><div class="track"><div class="a" style="width:16.7%"></div><div class="m" style="width:11.7%"></div></div><div class="v">10 → 7</div></div></div>
+    <div class="card"><h3 style="margin-top:0">Where the time comes back</h3><ul style="padding-left:18px;margin:0">
+      <li><strong>Substantial equivalence:</strong> the SE table is pre-filled from the predicate's 510(k) summary, with every cell cited (10 → 6 h).</li>
+      <li><strong>Predicates you can defend:</strong> live K-number, recall and MAUDE checks on each candidate. In a draft 510(k) we reviewed, both predicate K-numbers were invalid.</li>
+      <li><strong>eSTAR and QC:</strong> a section plan with evidence matched to each section, plus a continuous check that every claim has evidence (14 → 10 h).</li>
+      <li><strong>Research and review:</strong> a dated library of guidance and recognised standards, and an FDA-clock dashboard during review (12 → 7.5 h).</li>
+    </ul></div>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>#</th><th>Consultant task, and what MedexRegAI does</th><th class="num">Today (h)<br><span class="small muted">with general AI</span></th><th class="num">With MedexRegAI (h)</th><th class="num">Saved (h)</th></tr></thead>
+  <tbody><tr><td class="num muted">1</td><td><strong>Client intake, device and IFU understanding, proposal and SOW</strong><div class="small muted">Meetings with the client. No time claimed.</div></td>
+    <td class="num">4</td><td class="num strong">4</td><td class="num muted">–</td></tr><tr><td class="num muted">2</td><td><strong>Confirm classification and product code</strong><div class="small muted">Product-code lookup against the FDA classification database; the consultant still confirms.</div></td>
+    <td class="num">2</td><td class="num strong">0.8</td><td class="num save">1.3</td></tr><tr><td class="num muted">3</td><td><strong>Pathway decision (Traditional/Special/Abbreviated) and Pre-Sub decision</strong><div class="small muted">Pathway is a judgement call. Precedent counts for the product code may shave a little.</div></td>
+    <td class="num">2</td><td class="num strong">2</td><td class="num muted">–</td></tr><tr><td class="num muted">4</td><td><strong>Predicate search, screening and shortlist</strong><div class="small muted">The percentage holds, but the hours are small: this consultant already searches in 2 h.</div></td>
+    <td class="num">2</td><td class="num strong">1</td><td class="num save">1</td></tr><tr><td class="num muted">5</td><td><strong>Predicate verification: K-number, status, cleared IFU, recalls, MAUDE</strong><div class="small muted">Live K-number, recall and MAUDE checks. The audited draft failed exactly here.</div></td>
+    <td class="num">2</td><td class="num strong">0.5</td><td class="num save">1.5</td></tr><tr><td class="num muted">6</td><td><strong>Substantial-equivalence comparison matrix</strong><div class="small muted">SE table pre-filled from the predicate's 510(k) summary with citations. The SE argument stays with the consultant.</div></td>
+    <td class="num">10</td><td class="num strong">6</td><td class="num save">4</td></tr><tr><td class="num muted">7</td><td><strong>Regulatory research library (guidances, recognised standards, editions)</strong><div class="small muted">Dated library of guidance and recognised standards with superseded-edition flags.</div></td>
+    <td class="num">6</td><td class="num strong">3.5</td><td class="num save">2.5</td></tr><tr><td class="num muted">12</td><td><strong>Device description</strong><div class="small muted">No credit today (the consultant gets nothing from general AI here). Upside: drafted from the manufacturer's design documents.</div></td>
+    <td class="num">8</td><td class="num strong">8</td><td class="num muted">–</td></tr><tr><td class="num muted">13</td><td><strong>Indications for Use / Form FDA 3881</strong><div class="small muted">Cut and paste; the manufacturer sets the indications.</div></td>
+    <td class="num">1</td><td class="num strong">1</td><td class="num muted">–</td></tr><tr><td class="num muted">14</td><td><strong>Labeling review (IFU, labels, power-injection and sharps labeling)</strong><div class="small muted">Labeling claims checked against the cleared predicate and the evidence; review remains.</div></td>
+    <td class="num">5</td><td class="num strong">4</td><td class="num save">1</td></tr><tr><td class="num muted">16</td><td><strong>Sterilisation and shelf-life section</strong><div class="small muted">No credit today. Upside: eSTAR-ready section drafted from the sterilisation validation report.</div></td>
+    <td class="num">6</td><td class="num strong">6</td><td class="num muted">–</td></tr><tr><td class="num muted">17</td><td><strong>Biocompatibility section</strong><div class="small muted">No credit today. Upside: section drafted from the biocompatibility reports with an endpoint check.</div></td>
+    <td class="num">6</td><td class="num strong">6</td><td class="num muted">–</td></tr><tr><td class="num muted">18</td><td><strong>Performance-testing section</strong><div class="small muted">No credit today. Upside: section drafted from the test reports, linked to the precedent test plan.</div></td>
+    <td class="num">10</td><td class="num strong">10</td><td class="num muted">–</td></tr><tr><td class="num muted">19</td><td><strong>510(k) Summary, cover letter, FDA 3601, Truthful &amp; Accuracy statement</strong><div class="small muted">No credit today. Upside: 510(k) Summary, cover letter, FDA 3601 and T&amp;A generated from the project record.</div></td>
+    <td class="num">8</td><td class="num strong">8</td><td class="num muted">–</td></tr><tr><td class="num muted">20</td><td><strong>eSTAR assembly, attachments, completeness check</strong><div class="small muted">v1 claimed 50%. Cut to 25%: MedexRegAI plans and checks the eSTAR but does not fill the FDA PDF form itself.</div></td>
+    <td class="num">8</td><td class="num strong">6</td><td class="num save">2</td></tr><tr><td class="num muted">21</td><td><strong>Claim-evidence cross-check, internal QC, gap analysis</strong><div class="small muted">Continuous claim-evidence check replaces most of a manual QC pass.</div></td>
+    <td class="num">6</td><td class="num strong">4</td><td class="num save">2</td></tr><tr><td class="num muted">22</td><td><strong>Client review cycles and sign-off</strong><div class="small muted">Client review stays human. A shared workspace with free client seats may save a little.</div></td>
+    <td class="num">2</td><td class="num strong">2</td><td class="num muted">–</td></tr><tr><td class="num muted">23</td><td><strong>CDRH Portal upload, acceptance/technical-screening monitoring</strong><div class="small muted">Upload stays manual. An as-submitted manifest may save a little.</div></td>
+    <td class="num">2</td><td class="num strong">2</td><td class="num muted">–</td></tr><tr><td class="num muted">25</td><td><strong>Review-period project management and client status reports</strong><div class="small muted">FDA-clock dashboard and open-deficiency tracking replace manual status reporting.</div></td>
+    <td class="num">6</td><td class="num strong">4</td><td class="num save">2</td></tr><tr><td class="num muted">26</td><td><strong>Clearance close-out, chronology and record hand-over</strong><div class="small muted">Immutable record and chronology export.</div></td>
+    <td class="num">2</td><td class="num strong">1</td><td class="num save">1</td></tr></tbody><tfoot><tr><td></td><td>Total for the consultant (20 tasks)</td><td class="num">98</td><td class="num">79.8</td><td class="num save">18.3</td></tr>
+  <tr><td></td><td>Value at $150/h</td><td class="num">$14,700</td><td class="num">$11,963</td><td class="num save">$2,738</td></tr></tfoot></table></div>
+</section>
+
+<section id="complex">
+  <h2>3. A complex 510(k): connected ambulatory infusion pump, product code FRN</h2>
+  <p class="sub">Calibrated from the same consultant's data: we applied the ratio they showed on each matching Huber task to the pump's larger workload, and left out the tasks the manufacturer owns. The result is 323 consultant hours without AI ($48,398), inside the published $40k to $85k fee band for complex 510(k)s.</p>
+  <div class="grid2">
+    <div><div class="tablewrap"><table><thead><tr><th>Phase</th><th class="num">Tasks</th><th class="num">Today (h)</th><th class="num">With MedexRegAI (h)</th><th class="num">Saved (h)</th></tr></thead><tbody>
+  <tr><td><strong>Engagement</strong></td><td class="num">1</td><td class="num">6</td><td class="num strong">6</td><td class="num muted">–</td></tr><tr><td><strong>Strategy and predicates</strong></td><td class="num">7</td><td class="num">76</td><td class="num strong">55</td><td class="num save">21</td></tr><tr><td><strong>Technical documentation</strong></td><td class="num">4</td><td class="num">130</td><td class="num strong">130</td><td class="num muted">–</td></tr><tr><td><strong>eSTAR sections</strong></td><td class="num">7</td><td class="num">79</td><td class="num strong">68</td><td class="num save">11</td></tr><tr><td><strong>FDA review</strong></td><td class="num">3</td><td class="num">19</td><td class="num strong">13</td><td class="num save">6</td></tr>
+  </tbody><tfoot><tr><td>Total for the consultant</td><td class="num">22</td><td class="num">311</td><td class="num">273</td><td class="num save">38</td></tr></tfoot></table></div></div>
+    <div class="card"><h3 style="margin-top:0">Hours by phase</h3>
+      <div class="legend"><span><i style="background:var(--s0)"></i>Today, with general AI</span><span><i style="background:var(--s2)"></i>With MedexRegAI</span></div>
+      <div class="phasebar" data-tip="Engagement: 6 h today, 6 h with MedexRegAI"><div>Engagement</div><div class="track"><div class="a" style="width:4.6%"></div><div class="m" style="width:4.6%"></div></div><div class="v">6 → 6</div></div><div class="phasebar" data-tip="Strategy and predicates: 76.5 h today, 55.2 h with MedexRegAI"><div>Strategy and predicates</div><div class="track"><div class="a" style="width:58.8%"></div><div class="m" style="width:42.5%"></div></div><div class="v">76 → 55</div></div><div class="phasebar" data-tip="Technical documentation: 130 h today, 130 h with MedexRegAI"><div>Technical documentation</div><div class="track"><div class="a" style="width:100.0%"></div><div class="m" style="width:100.0%"></div></div><div class="v">130 → 130</div></div><div class="phasebar" data-tip="eSTAR sections: 79.4 h today, 68.4 h with MedexRegAI"><div>eSTAR sections</div><div class="track"><div class="a" style="width:61.1%"></div><div class="m" style="width:52.6%"></div></div><div class="v">79 → 68</div></div><div class="phasebar" data-tip="FDA review: 19 h today, 13 h with MedexRegAI"><div>FDA review</div><div class="track"><div class="a" style="width:14.6%"></div><div class="m" style="width:10.0%"></div></div><div class="v">19 → 13</div></div>
+      <p class="small muted">Most of the saving is in strategy and predicates: an infusion-pump predicate sits among 146 recalls and 1.4 million MAUDE reports since 2021. Technical documentation (software, cybersecurity, human factors, EMC) gets no credit today.</p></div>
+  </div>
+</section>
+
+<section id="plans">
+  <h2>4. ROI on every plan</h2>
+  <p class="sub">ROI = (value of hours saved − MedexRegAI cost per project) ÷ cost per project, at $150/h. Every plan pays for itself on a single project. Plans with a $500 monthly retainer include standing FDA monitoring and free seats for your team and your clients.</p>
+  <div class="tablewrap"><table><thead><tr><th>Plan</th><th class="num">Price</th><th class="num">Cost per project</th><th class="num">Simple 510(k)<br><span class="small muted">net gain · ROI</span></th><th class="num">Complex 510(k)<br><span class="small muted">net gain · ROI</span></th><th>Best for</th></tr></thead><tbody>
+  <tr class="planrow "><td><strong>First Project</strong><div class="small muted">once per account</div></td>
+    <td class="num">$500</td><td class="num">$500</td>
+    <td class="num">$2,238 · <strong>4.5x</strong></td>
+    <td class="num">$5,238 · <strong>10.5x</strong></td><td class="small">Trying it on one live project</td></tr><tr class="planrow "><td><strong>Ad-hoc project</strong><div class="small muted">max 2 a year</div></td>
+    <td class="num">$1,500</td><td class="num">$1,500</td>
+    <td class="num">$1,238 · <strong>0.8x</strong></td>
+    <td class="num">$4,238 · <strong>2.8x</strong></td><td class="small">One or two filings a year</td></tr><tr class="planrow "><td><strong>Starter</strong><div class="small muted">5 projects + $500/mo</div></td>
+    <td class="num">$8,250</td><td class="num">$1,650</td>
+    <td class="num">$1,088 · <strong>0.7x</strong></td>
+    <td class="num">$4,088 · <strong>2.5x</strong></td><td class="small">A single device programme</td></tr><tr class="planrow "><td><strong>Team</strong><div class="small muted">12 projects + $500/mo</div></td>
+    <td class="num">$10,800</td><td class="num">$900</td>
+    <td class="num">$1,838 · <strong>2.0x</strong></td>
+    <td class="num">$4,838 · <strong>5.4x</strong></td><td class="small">Up to 12 projects a year</td></tr><tr class="planrow rec"><td><strong>Practice</strong><span class="badge">best value</span><div class="small muted">30 projects + $500/mo</div></td>
+    <td class="num">$16,500</td><td class="num">$550</td>
+    <td class="num">$2,188 · <strong>4.0x</strong></td>
+    <td class="num">$5,188 · <strong>9.4x</strong></td><td class="small">Multi-client consultancies, 13 to 30 projects</td></tr><tr class="planrow "><td><strong>Enterprise</strong><div class="small muted">100 projects + $500/mo</div></td>
+    <td class="num">$36,000</td><td class="num">$360</td>
+    <td class="num">$2,378 · <strong>6.6x</strong></td>
+    <td class="num">$5,378 · <strong>14.9x</strong></td><td class="small">Large firms and CROs</td></tr></tbody></table></div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="callout"><div class="big">6 h</div><p>is all MedexRegAI has to save to pay for itself on the Team plan, and 3.7 h on Practice. The consultant data supports 18 h on a simple 510(k).</p></div>
+    <div class="callout"><div class="big">$30,077</div><p>net gain a year for one consultant (1,500 delivery hours, 25% complex projects): about 9.9 projects today, 11.7 with MedexRegAI, after paying for the Team plan.</p></div>
+  </div>
+</section>
+
+<section id="calc">
+  <h2>5. Your numbers</h2>
+  <div class="calc">
+    <div class="card">
+      <label for="rate">Your hourly rate ($)</label><input id="rate" type="number" min="50" step="5" value="150">
+      <label for="planSel">Plan</label><select id="planSel"><option value="first">First Project ($500 per project)</option><option value="adhoc">Ad-hoc project ($1,500 per project)</option><option value="starter">Starter ($1,650 per project)</option><option value="team" selected>Team ($900 per project)</option><option value="practice">Practice ($550 per project)</option><option value="enterprise">Enterprise ($360 per project)</option></select>
+      <label for="cap">Delivery hours per year</label><input id="cap" type="number" min="200" step="50" value="1500">
+      <label for="mix">Share of complex projects (%)</label><input id="mix" type="number" min="0" max="100" step="5" value="25">
+    </div>
+    <div><div class="out" id="out"></div><div class="note" style="margin-top:12px" id="cap-note"></div></div>
+  </div>
+</section>
+
+<section id="beyond">
+  <h2>6. Value we do not count in the ROI</h2>
+  <div class="catgrid">
+    <div class="catcard"><span class="tag tag-M">Your client's team</span><ul>
+      <li>The manufacturer owns the test plan, biocompatibility plan, lab work and risk file.</li>
+      <li>Free client seats put them in your workspace, where they get the test plan derived from what cleared predicates tested, and complaint and recall themes as hazard inputs.</li>
+      <li>Test labs, the sterilizer and suppliers send their reports into one evidence record linked to each claim.</li></ul></div>
+    <div class="catcard"><span class="tag tag-V">Fewer FDA surprises</span><ul>
+      <li>FY2025 510(k)s averaged 1.69 review cycles and 66 days on hold.</li>
+      <li>7.2% failed eSTAR technical screening on the first try.</li>
+      <li>8.3% ended NSE or deleted, which means a new 510(k) and a new $28,653 fee.</li></ul></div>
+    <div class="catcard"><span class="tag tag-H">Defensible work</span><ul>
+      <li>Every predicate, standard and recall carries its FDA source and a dated snapshot.</li>
+      <li>An immutable submission record and chronology for every project.</li>
+      <li>MedexRegAI never files and never signs. You stay in charge.</li></ul></div>
+  </div>
+</section>
+
+<section id="next">
+  <h2>7. Coming next: features aimed at the remaining hours</h2>
+  <p class="sub">The consultant's biggest blocks of time are drafting eSTAR sections from test reports and producing the admin documents. General AI does not speed these up for them today. These features are on our roadmap; the figures below are targets, not part of the ROI above.</p>
+  <div class="tablewrap"><table><thead><tr><th>Planned feature</th><th class="num">Simple 510(k)</th><th class="num">Complex 510(k)</th></tr></thead><tbody>
+    <tr><td>eSTAR-ready sections drafted from test, sterilisation and biocompatibility reports</td><td class="num" rowspan="3" style="vertical-align:middle">+16 h</td><td class="num" rowspan="3" style="vertical-align:middle">+54 h</td></tr>
+    <tr><td>510(k) Summary, cover letter, FDA 3601 and Truthful & Accuracy statement generated from the project record</td></tr>
+    <tr><td>Device description drafted from the manufacturer's design documents; Pre-Sub background from the research library</td></tr>
+  </tbody><tfoot><tr><td>Total saving with these features (target)</td><td class="num">34 h · 4.6x on Team</td><td class="num">92 h · 14.4x on Team</td></tr></tfoot></table></div>
+</section>
+
+<section id="method">
+  <h2>8. The fine print</h2>
+  <div class="note">
+    <p><strong>Consultant data.</strong> One practising 510(k) consultant supplied their actual hours for the Huber-needle project (October 2026). Their hours are used as given. We are collecting more consultants' data and will publish averages and ranges.</p>
+    <p><strong>Complex project.</strong> The infusion-pump hours are calibrated, not measured. Each pump task uses the ratio that consultant showed on the matching Huber task. Technical-documentation sections keep our model's hours, because the consultant's Huber section hours matched our model. The Pre-Sub uses the consultant's overall ratio. Answering FDA's Additional Information letter is left out of both projects until we confirm who does it.</p>
+    <p><strong>MedexRegAI hours.</strong> MedexRegAI is launching in 2026–27. Savings are product targets, reviewed task by task against the consultant's real hours and conservatively reduced where needed (for example, eSTAR assembly is cut from a 50% to a 25% saving). They will be measured in a 12-week pilot.</p>
+    <p><strong>Prices</strong> are the MedexRegAI published price ladder; cost per project = plan price ÷ projects included. <strong>FDA figures</strong> come from openFDA (data updated 12 Oct 2026) and FDA's MDUFA V performance report (26 Aug 2026). Not regulatory advice.</p>
+  </div>
+</section>
+</div>
+<footer><div class="wrap">MedexRegAI · Projexlight · Consultant ROI v3.0 · October 2026</div></footer>
+<script>
+const H={"ai":98,"mc":79.75},P={"ai":310.90000000000003,"mc":272.65},PLANS={"first":{"key":"first","name":"First Project","note":"once per account","annual":500,"projects":1,"per":500},"adhoc":{"key":"adhoc","name":"Ad-hoc project","note":"max 2 a year","annual":1500,"projects":1,"per":1500},"starter":{"key":"starter","name":"Starter","note":"5 projects + $500/mo","annual":8250,"projects":5,"per":1650},"team":{"key":"team","name":"Team","note":"12 projects + $500/mo","annual":10800,"projects":12,"per":900},"practice":{"key":"practice","name":"Practice","note":"30 projects + $500/mo","annual":16500,"projects":30,"per":550},"enterprise":{"key":"enterprise","name":"Enterprise","note":"100 projects + $500/mo","annual":36000,"projects":100,"per":360}};
+const $=id=>document.getElementById(id);
+const usd=n=>(n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US");
+const f1=n=>n.toLocaleString("en-US",{maximumFractionDigits:1});
+function calc(){
+  const rate=+$("rate").value||0, pl=PLANS[$("planSel").value], cap=+$("cap").value||0, mix=Math.min(100,Math.max(0,+$("mix").value||0))/100;
+  const sH=H.ai-H.mc, sP=P.ai-P.mc, c=pl.per;
+  const ai=H.ai*(1-mix)+P.ai*mix, mc=H.mc*(1-mix)+P.mc*mix, nA=cap/ai, nM=cap/mc;
+  const yr=pl.projects>1?pl.annual*Math.ceil(nM/pl.projects):Math.ceil(nM)*pl.annual;
+  const t=[["Simple 510(k): ROI",((sH*rate-c)/c).toFixed(1)+"x","net "+usd(sH*rate-c)+" per project"],["Complex 510(k): ROI",((sP*rate-c)/c).toFixed(1)+"x","net "+usd(sP*rate-c)+" per project"],["Break-even",f1(c/rate)+" h","saved hours to cover "+usd(c)],["Projects a year",f1(nA)+" → "+f1(nM),"same hours, with MedexRegAI"]];
+  $("out").innerHTML=t.map(([l,v,s],i)=>'<div class="kpi'+(i<2?' brand':'')+'"><div class="l">'+l+'</div><div class="v" style="font-size:24px">'+v+'</div><div class="l">'+s+'</div></div>').join("");
+  $("cap-note").innerHTML="<strong>Annual view.</strong> "+f1(nM-nA)+" extra projects a year are worth about <strong>"+usd((nM-nA)*ai*rate)+"</strong> at "+usd(rate)+"/h. MedexRegAI for "+Math.ceil(nM)+" projects on this plan costs "+usd(yr)+". Net gain: <strong>"+usd((nM-nA)*ai*rate-yr)+"</strong> a year.";
+}
+["rate","planSel","cap","mix"].forEach(id=>{$(id).addEventListener("input",calc);$(id).addEventListener("change",calc)});calc();
+const tip=$("tip");
+document.addEventListener("mousemove",e=>{const t=e.target.closest("[data-tip]");if(t){tip.textContent=t.dataset.tip;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+12,innerWidth-330)+"px";tip.style.top=(e.clientY+14)+"px"}else tip.style.opacity=0});
+</script>
+</body></html>

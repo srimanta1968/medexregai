@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedexRegAI Project Plan &amp; Budget</title>
+<style>
+/* ============================================================
+   MedexRegAI — Requirements Specification
+   Palette: clinical paper + regulatory teal; semantic risk scale
+   kept separate from the accent so class/severity reads as data.
+   ============================================================ */
+
+:root{
+  /* light — the complete palette lives here */
+  --ground:      #F2F5F4;
+  --surface:     #FFFFFF;
+  --surface-2:   #E9EEEC;
+  --surface-3:   #DFE7E4;
+  --ink:         #0D1A1C;
+  --ink-2:       #3D5052;
+  --ink-3:       #6C7E7E;
+  --rule:        #D0DAD7;
+  --rule-strong: #A9B9B5;
+  --accent:      #15605E;
+  --accent-ink:  #0C4442;
+  --accent-soft: #DCEAE7;
+  --ok:          #2F6B4F;
+  --ok-soft:     #DDEBE2;
+  --warn:        #8A6212;
+  --warn-soft:   #F2E8CF;
+  --crit:        #9C3B2C;
+  --crit-soft:   #F3DFDA;
+  --info:        #25566E;
+  --info-soft:   #DCE7ED;
+  --shadow:      0 1px 2px rgba(13,26,28,.05), 0 8px 24px -12px rgba(13,26,28,.18);
+
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+  --sans:  -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:  "Cascadia Mono",Consolas,"SF Mono","Roboto Mono",ui-monospace,Menlo,monospace;
+
+  --measure: 74ch;
+  --rail: 15rem;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:      #0B1313;
+    --surface:     #111C1C;
+    --surface-2:   #172525;
+    --surface-3:   #1E2F2E;
+    --ink:         #E5EDEB;
+    --ink-2:       #A7B8B5;
+    --ink-3:       #7A8C8A;
+    --rule:        #243635;
+    --rule-strong: #3A5150;
+    --accent:      #55B7AB;
+    --accent-ink:  #7FD0C5;
+    --accent-soft: #12302E;
+    --ok:          #67AC85;
+    --ok-soft:     #162D22;
+    --warn:        #CB9E45;
+    --warn-soft:   #2E2614;
+    --crit:        #D87461;
+    --crit-soft:   #33201B;
+    --info:        #74A9C5;
+    --info-soft:   #15272F;
+    --shadow:      0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:      #0B1313;
+  --surface:     #111C1C;
+  --surface-2:   #172525;
+  --surface-3:   #1E2F2E;
+  --ink:         #E5EDEB;
+  --ink-2:       #A7B8B5;
+  --ink-3:       #7A8C8A;
+  --rule:        #243635;
+  --rule-strong: #3A5150;
+  --accent:      #55B7AB;
+  --accent-ink:  #7FD0C5;
+  --accent-soft: #12302E;
+  --ok:          #67AC85;
+  --ok-soft:     #162D22;
+  --warn:        #CB9E45;
+  --warn-soft:   #2E2614;
+  --crit:        #D87461;
+  --crit-soft:   #33201B;
+  --info:        #74A9C5;
+  --info-soft:   #15272F;
+  --shadow:      0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{ color:var(--accent-ink); text-decoration-thickness:1px; text-underline-offset:.15em; }
+a:hover{ color:var(--accent); }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+
+/* ---------- shell ---------- */
+.shell{
+  max-width:82rem;
+  margin:0 auto;
+  padding:0 1.5rem 6rem;
+  display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr);
+  gap:3.5rem;
+  align-items:start;
+}
+@media (max-width:60rem){
+  .shell{ grid-template-columns:minmax(0,1fr); gap:2rem; padding:0 1.15rem 4rem; }
+}
+
+/* ---------- masthead ---------- */
+.masthead{
+  grid-column:1 / -1;
+  border-bottom:2px solid var(--ink);
+  padding:3.25rem 0 1.5rem;
+  margin-bottom:.5rem;
+}
+.masthead .eyebrow{
+  font-family:var(--mono);
+  font-size:.7rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 .9rem;
+}
+.masthead h1{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(2.1rem,5.4vw,3.4rem);
+  line-height:1.06;
+  letter-spacing:-.015em;
+  margin:0 0 .5rem;
+  text-wrap:balance;
+}
+.masthead .standfirst{
+  font-family:var(--serif);
+  font-size:clamp(1.02rem,1.9vw,1.22rem);
+  line-height:1.5;
+  color:var(--ink-2);
+  max-width:60ch;
+  margin:0 0 2rem;
+}
+
+.docctl{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background:var(--surface);
+  overflow:hidden;
+}
+.docctl div{
+  padding:.6rem .85rem;
+  border-right:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+}
+.docctl dt{
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:0 0 .18rem;
+}
+.docctl dd{
+  margin:0;
+  font-family:var(--mono);
+  font-size:.8rem;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- index rail ---------- */
+.rail{
+  position:sticky;
+  top:1.75rem;
+  align-self:start;
+  max-height:calc(100vh - 3.5rem);
+  overflow-y:auto;
+  font-size:.82rem;
+  padding-right:.35rem;
+}
+.rail h2{
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:.4rem 0 .8rem;
+  font-weight:500;
+}
+.rail ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.12rem; counter-reset:r; }
+.rail li{ counter-increment:r; }
+.rail a{
+  display:grid;
+  grid-template-columns:1.6rem 1fr;
+  gap:.3rem;
+  padding:.24rem .4rem .24rem .1rem;
+  color:var(--ink-2);
+  text-decoration:none;
+  border-left:2px solid transparent;
+  border-radius:0 2px 2px 0;
+  line-height:1.35;
+}
+.rail a::before{
+  content:counter(r,decimal-leading-zero);
+  font-family:var(--mono);
+  font-size:.68rem;
+  color:var(--ink-3);
+  padding-top:.1em;
+}
+.rail a:hover{ color:var(--ink); background:var(--surface-2); border-left-color:var(--accent); }
+@media (max-width:60rem){
+  .rail{ position:static; max-height:none; border:1px solid var(--rule); border-radius:3px; background:var(--surface); padding:1rem 1.1rem; }
+}
+
+/* ---------- sections ---------- */
+main{ min-width:0; counter-reset:sec; }
+.sec{
+  counter-increment:sec;
+  padding-top:2.9rem;
+  scroll-margin-top:1.5rem;
+  max-width:var(--measure);
+}
+.sec > h2{
+  font-family:var(--serif);
+  font-size:clamp(1.4rem,2.9vw,1.86rem);
+  line-height:1.18;
+  font-weight:600;
+  letter-spacing:-.01em;
+  margin:0 0 1rem;
+  padding-bottom:.55rem;
+  border-bottom:1px solid var(--rule-strong);
+  text-wrap:balance;
+  display:grid;
+  grid-template-columns:2.6rem 1fr;
+  gap:.2rem;
+  align-items:baseline;
+}
+.sec > h2::before{
+  content:counter(sec) ".";
+  font-family:var(--mono);
+  font-size:.8rem;
+  font-weight:400;
+  color:var(--accent);
+  letter-spacing:0;
+}
+.sec h3{
+  font-family:var(--sans);
+  font-size:.98rem;
+  font-weight:650;
+  letter-spacing:.005em;
+  margin:2rem 0 .6rem;
+  color:var(--ink);
+}
+.sec h4{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  font-weight:500;
+  margin:1.6rem 0 .55rem;
+}
+.sec p{ margin:0 0 1rem; }
+.sec > p:first-of-type{ color:var(--ink-2); }
+
+.lead{ font-family:var(--serif); font-size:1.06rem; line-height:1.55; color:var(--ink-2); }
+
+ul.plain,ul.bul{ margin:0 0 1.1rem; padding-left:1.15rem; display:flex; flex-direction:column; gap:.4rem; }
+ul.bul li::marker{ color:var(--accent); }
+ul.plain{ list-style:none; padding-left:0; }
+
+code,.mono{ font-family:var(--mono); font-size:.86em; }
+p code,li code,td code{
+  background:var(--surface-2);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  padding:.05em .32em;
+  color:var(--ink);
+  white-space:nowrap;
+}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  padding:.16em .5em;
+  border-radius:2px;
+  border:1px solid currentColor;
+  white-space:nowrap;
+  line-height:1.5;
+}
+.c-must{ color:var(--crit);  background:var(--crit-soft); }
+.c-should{ color:var(--warn); background:var(--warn-soft); }
+.c-could{ color:var(--ink-3); background:var(--surface-2); }
+.c-p1{ color:var(--accent); background:var(--accent-soft); }
+.c-p2{ color:var(--info);   background:var(--info-soft); }
+.c-p3{ color:var(--ink-3);  background:var(--surface-2); }
+.c-ok{ color:var(--ok); background:var(--ok-soft); }
+
+/* ---------- tables ---------- */
+.tw{
+  overflow-x:auto;
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background:var(--surface);
+  margin:0 0 1.4rem;
+  box-shadow:var(--shadow);
+}
+table{ border-collapse:collapse; width:100%; font-size:.84rem; min-width:38rem; }
+thead th{
+  text-align:left;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:500;
+  color:var(--ink-3);
+  background:var(--surface-2);
+  padding:.6rem .8rem;
+  border-bottom:1px solid var(--rule-strong);
+  white-space:nowrap;
+  vertical-align:bottom;
+}
+tbody td{
+  padding:.65rem .8rem;
+  border-bottom:1px solid var(--rule);
+  vertical-align:top;
+  line-height:1.5;
+  color:var(--ink-2);
+}
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover td{ background:var(--surface-2); }
+td strong,td b{ color:var(--ink); font-weight:640; }
+td.num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.k{ font-family:var(--mono); font-size:.78rem; color:var(--ink); white-space:nowrap; }
+
+/* wide tables may break the measure */
+.sec .wide{ max-width:none; }
+
+/* ---------- requirement rows ---------- */
+.reqs{ display:flex; flex-direction:column; border:1px solid var(--rule); border-radius:3px; overflow:hidden; background:var(--surface); margin:0 0 1.5rem; box-shadow:var(--shadow); }
+.req{
+  display:grid;
+  grid-template-columns:5.2rem minmax(0,1fr) auto;
+  gap:.9rem;
+  padding:.7rem .9rem;
+  border-bottom:1px solid var(--rule);
+  align-items:baseline;
+  font-size:.87rem;
+}
+.req:last-child{ border-bottom:none; }
+.req:hover{ background:var(--surface-2); }
+.req .id{
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--accent);
+  letter-spacing:.02em;
+  padding-top:.12em;
+}
+.req .body{ color:var(--ink-2); min-width:0; }
+.req .body b{ color:var(--ink); font-weight:640; }
+.req .tags{ display:flex; gap:.3rem; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:34rem){
+  .req{ grid-template-columns:minmax(0,1fr); gap:.3rem; }
+  .req .tags{ justify-content:flex-start; }
+}
+.modhead{
+  display:flex;
+  align-items:baseline;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin:2rem 0 .6rem;
+}
+.modhead .mid{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.1em;
+  color:var(--surface);
+  background:var(--ink);
+  padding:.15em .45em;
+  border-radius:2px;
+}
+.modhead h3{ margin:0; font-size:1rem; }
+
+/* ---------- callouts ---------- */
+.note{
+  border-left:3px solid var(--accent);
+  background:var(--accent-soft);
+  padding:.85rem 1rem;
+  border-radius:0 3px 3px 0;
+  margin:0 0 1.3rem;
+  font-size:.88rem;
+  color:var(--ink-2);
+}
+.note.warn{ border-left-color:var(--warn); background:var(--warn-soft); }
+.note.crit{ border-left-color:var(--crit); background:var(--crit-soft); }
+.note strong{ color:var(--ink); }
+.note p{ margin:0 0 .5rem; }
+.note p:last-child{ margin:0; }
+
+/* ---------- scope matrix ---------- */
+.matrix{ min-width:44rem; }
+.matrix th.rowh{
+  text-align:left;
+  font-family:var(--sans);
+  font-size:.83rem;
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:0;
+  color:var(--ink);
+  background:var(--surface);
+  border-bottom:1px solid var(--rule);
+  border-right:1px solid var(--rule);
+  padding:.6rem .8rem;
+  white-space:nowrap;
+}
+.matrix td{ text-align:center; padding:.45rem .4rem; }
+.cell{
+  display:inline-block;
+  min-width:4.6rem;
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:.24em .3em;
+  border-radius:2px;
+}
+.m1{ background:var(--accent); color:var(--surface); }
+:root[data-theme="dark"] .m1{ color:#08201F; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .m1{ color:#08201F; } }
+.m2{ background:var(--info-soft); color:var(--info); border:1px solid var(--info); }
+.m3{ background:var(--surface-2); color:var(--ink-3); border:1px solid var(--rule); }
+.m0{ color:var(--ink-3); opacity:.5; }
+
+/* ---------- pipeline ---------- */
+.pipe{
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+  padding:.2rem 0 1rem;
+  margin:0 0 1.4rem;
+}
+.stage{
+  flex:0 0 11.5rem;
+  border:1px solid var(--rule);
+  background:var(--surface);
+  border-radius:3px;
+  padding:.75rem .8rem;
+  margin-right:1.35rem;
+  position:relative;
+}
+.stage:last-child{ margin-right:0; }
+.stage:not(:last-child)::after{
+  content:"›";
+  position:absolute;
+  right:-1.02rem;
+  top:50%;
+  transform:translateY(-55%);
+  font-size:1.25rem;
+  color:var(--rule-strong);
+  line-height:1;
+}
+.stage .lbl{
+  font-family:var(--mono);
+  font-size:.6rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:block;
+  margin-bottom:.3rem;
+}
+.stage .nm{ font-weight:640; font-size:.86rem; display:block; margin-bottom:.25rem; }
+.stage .dt{ font-size:.75rem; color:var(--ink-3); line-height:1.45; }
+
+/* ---------- kpi strip ---------- */
+.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:.9rem; margin:0 0 1.4rem; }
+.kpi{ border:1px solid var(--rule); border-top:2px solid var(--accent); background:var(--surface); border-radius:0 0 3px 3px; padding:.75rem .85rem; }
+.kpi .v{ font-family:var(--serif); font-size:1.55rem; line-height:1.1; color:var(--ink); font-variant-numeric:tabular-nums; display:block; }
+.kpi .l{ font-size:.75rem; color:var(--ink-3); line-height:1.4; display:block; margin-top:.25rem; }
+
+/* ---------- footer ---------- */
+.foot{
+  grid-column:1 / -1;
+  margin-top:4rem;
+  padding-top:1.2rem;
+  border-top:1px solid var(--rule-strong);
+  font-size:.78rem;
+  color:var(--ink-3);
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+}
+
+@media print{
+  .rail{ display:none; }
+  .shell{ grid-template-columns:1fr; max-width:none; }
+  .sec{ break-inside:avoid-page; }
+  body{ background:#fff; }
+}
+</style>
+<style>
+.req{ grid-template-columns:4.2rem minmax(0,1fr) auto; align-items:start; }
+.req .body{ line-height:1.55; }
+.matrix th.rowh{ font-size:.78rem; max-width:16rem; white-space:normal; }
+.matrix thead th{ text-align:center; white-space:normal; font-size:.6rem; }
+.matrix .cell{ min-width:3.1rem; font-size:.56rem; }
+.kpi .v{ font-size:1.4rem; }
+.sec h4{ margin-top:1.9rem; }
+</style>
+
+</head>
+<body>
+<div class="shell">
+
+<header class="masthead">
+  <p class="eyebrow">Project Plan &amp; Budget &middot; Pre-Seed Delivery Plan</p>
+  <h1>Building MedexRegAI</h1>
+  <p class="standfirst">A $1.0M, 18-month delivery and runway plan for the platform specified in MRA-REQ-001 &mdash; a shipped US baseline product at month&nbsp;6, general availability at month&nbsp;12, and a phased expansion from the US into other markets thereafter. Every line item, every assumption, every gate.</p>
+  <dl class="docctl">
+    <div><dt>Document</dt><dd>MRA-PLN-001</dd></div>
+    <div><dt>Revision</dt><dd>2.0</dd></div>
+    <div><dt>Date</dt><dd>2026-08-30</dd></div>
+    <div><dt>Status</dt><dd>Pre-seed funding plan</dd></div>
+    <div><dt>Budget</dt><dd>$1,000,000 / 18 mo</dd></div>
+    <div><dt>Baseline</dt><dd>Month 6</dd></div>
+  </dl>
+</header>
+
+<nav class="rail" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Executive summary</a></li>
+    <li><a href="#s2">What the $1M buys</a></li>
+    <li><a href="#s3">Structure &amp; timeline</a></li>
+    <li><a href="#s4">Phase 1 &mdash; scope</a></li>
+    <li><a href="#s5">Phase 1 &mdash; team &amp; cost</a></li>
+    <li><a href="#s6">Phase 2 &mdash; scope</a></li>
+    <li><a href="#s7">Phase 2 &mdash; team &amp; cost</a></li>
+    <li><a href="#s8">Sales &amp; marketing</a></li>
+    <li><a href="#s9">AI cost &amp; unit economics</a></li>
+    <li><a href="#s10">Consolidated budget</a></li>
+    <li><a href="#s11">The lean team</a></li>
+    <li><a href="#s12">Delivery model</a></li>
+    <li><a href="#s13">Cash flow &amp; runway</a></li>
+    <li><a href="#s14">Market expansion phases</a></li>
+    <li><a href="#s15">Assumptions &amp; exclusions</a></li>
+    <li><a href="#s16">Risks &amp; scope flexibility</a></li>
+    <li><a href="#s17">Gates &amp; decision points</a></li>
+    <li><a href="#s18">Recommendation</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="sec" id="s1">
+<h2>Executive summary</h2>
+
+<p class="lead">This plan delivers MedexRegAI on <b>$1,000,000 over 18 months</b>. A working <b>US baseline product ships at month&nbsp;6</b>, general availability follows at month&nbsp;12, and the product&rsquo;s scope then grows from the US into other markets in defined phases. The budget splits $200K design, $650K build, $150K sales and marketing &mdash; and the runway is sized so the plan does not depend on revenue arriving on schedule.</p>
+
+<div class="kpis">
+  <div class="kpi"><span class="v">$1.0M</span><span class="l">Total pre-seed budget, fully loaded &mdash; both phases plus go-to-market</span></div>
+  <div class="kpi"><span class="v">18 mo</span><span class="l">Runway from close to Series A readiness, on the round alone</span></div>
+  <div class="kpi"><span class="v">Month 6</span><span class="l">US baseline product live with design partners in production</span></div>
+  <div class="kpi"><span class="v">Month 12</span><span class="l">General availability &mdash; full Release 1, public API and MCP, billing</span></div>
+  <div class="kpi"><span class="v">7.1 FTE</span><span class="l">Peak team &mdash; hybrid onshore lead plus nearshore delivery pod</span></div>
+  <div class="kpi"><span class="v">$2.40</span><span class="l">Modelled AI inference cost per full generated report</span></div>
+</div>
+
+<h3>Budget at a glance</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Phase</th><th>Duration</th><th class="num">Budget</th><th class="num">Share</th><th>What it produces</th></tr></thead>
+<tbody>
+<tr><td><b>Phase 1</b> &middot; Architecture, design &amp; validated mock</td><td>14&ndash;20 weeks</td><td class="num"><b>$200,000</b></td><td class="num">20%</td><td>Baselined architecture, canonical data model, proven extraction, working mock, signed design partners</td></tr>
+<tr><td><b>Phase 2</b> &middot; Build, test &amp; deploy</td><td>28&ndash;40 weeks</td><td class="num"><b>$650,000</b></td><td class="num">65%</td><td>US baseline at month&nbsp;6; full Release&nbsp;1 and general availability at month&nbsp;12</td></tr>
+<tr><td><b>Sales &amp; marketing</b></td><td>Months 3&ndash;18</td><td class="num"><b>$150,000</b></td><td class="num">15%</td><td>Product-code SEO surface, design partners, GA launch, first ~36 paying customers</td></tr>
+<tr><td><b>Total programme</b></td><td>42&ndash;60 weeks of phase duration, run inside 18 months</td><td class="num"><b>$1,000,000</b></td><td class="num">100%</td><td>A shipped, sold, reference-backed product and a Series A story built on metrics</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>How 42&ndash;60 weeks of phase duration yields a month&nbsp;6 baseline.</strong> Phase&nbsp;1 and Phase&nbsp;2 <em>overlap</em>. Phase&nbsp;1 workstreams run to week&nbsp;20 &mdash; expert review, design-partner recruitment and design refinement continue while the build is underway &mdash; but the architecture baseline and the proven data-source contracts land at weeks&nbsp;8&ndash;12, and those are the only true dependencies the build has. Phase&nbsp;2 therefore starts at week&nbsp;9 and reaches the baseline release at week&nbsp;26. There is no funding gate between the phases in this plan, because the money is raised up front; §17 replaces the funding gate with evidence gates that trigger <em>scope</em> decisions instead.</p>
+</div>
+
+<h3>The three things this plan gets right</h3>
+
+<div class="reqs">
+  <div class="req"><span class="id">1</span><span class="body"><b>It ships something real at month 6, not month 12.</b> The baseline is deliberately the narrow core &mdash; device intake, classification and pathway, predicate discovery and comparison, standards and test plan, and a fully cited Regulatory Strategy Report, all reproducible against a dated snapshot. That is the demo that sells, the artefact that proves the data layer works, and the smallest thing a regulatory affairs professional will pay for.</span><span class="tags"><span class="chip c-ok">Ship</span></span></div>
+  <div class="req"><span class="id">2</span><span class="body"><b>It funds the go-to-market, not just the build.</b> $150,000 &mdash; 15% of the round &mdash; is ring-fenced for demand generation from month&nbsp;3. A pre-seed that spends 100% on engineering arrives at month&nbsp;18 with a product and no evidence anyone will buy it, which is the failure mode that kills the Series A.</span><span class="tags"><span class="chip c-ok">Sell</span></span></div>
+  <div class="req"><span class="id">3</span><span class="body"><b>It sequences markets rather than promising all of them.</b> US devices and IVDs are the entire baseline. EU groundwork starts at month&nbsp;13 and only if US net revenue retention clears 110%. UK, Canada, Australia, Japan, China, India and LatAm follow on Series A money, in the order set out in §14 &mdash; cheapest-and-nearest first.</span><span class="tags"><span class="chip c-ok">Expand</span></span></div>
+</div>
+
+<div class="note warn">
+<p><strong>What $1.0M does not buy, stated plainly.</strong> The fully-costed onshore programme for this scope is $5.0M. This plan reaches the same Release&nbsp;1 scope for a fifth of that through three levers, each with a real cost: a hybrid onshore-lead / nearshore-pod delivery model (§12), founder- and equity-weighted compensation for the first three roles, and a thinner contingency a thinner contingency &mdash; 5.9% against a normal 12&ndash;15%mdash; 7.1% against a normal 12a thinner contingency &mdash; 5.9% against a normal 12&ndash;15%ndash;15%. The consequence is that <em>scope flexibility replaces financial contingency</em>. §16 names exactly what gets cut, and in what order, if the week-12 evidence is worse than modelled.</p>
+</div>
+</section>
+
+<section class="sec" id="s2">
+<h2>What the $1M buys</h2>
+
+<p>One paragraph of context for readers who have not read MRA-REQ-001. MedexRegAI ingests the public FDA regulatory corpus &mdash; clearances, approvals, classifications, registrations, adverse events, recalls, standards and guidance &mdash; into a governed, versioned knowledge base, then applies retrieval-grounded AI to produce the artefacts a medical device team needs before it can sell: a pathway determination, a ranked predicate set, a testing plan, a submission gap audit, and a cost and timeline forecast. Every claim resolves to the FDA record it came from, and every analysis is reproducible against a dated snapshot.</p>
+
+<p>The commercial case sits in MRA-MKT-001: a $195M US serviceable market, a price band between $8,500 and $29,000 that no credible competitor occupies, and a differentiator &mdash; snapshot reproducibility &mdash; that no vendor in the category currently claims. The investor case sits in MRA-BIZ-001. <b>This document costs the build and defends the schedule.</b></p>
+
+<h3>Scale of the engineering problem</h3>
+<p>These are the figures that drive infrastructure, extraction and testing cost. All were measured directly against openFDA.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Dimension</th><th class="num">Scale</th><th>Cost consequence</th></tr></thead>
+<tbody>
+<tr><td>510(k) records to ingest and model</td><td class="num">175,814</td><td>Canonical model, predicate graph, entity resolution</td></tr>
+<tr><td>510(k) Summary PDFs to extract</td><td class="num">~90,000</td><td>The dominant one-time AI extraction cost (§9)</td></tr>
+<tr><td>PMA records</td><td class="num">56,962</td><td>Supplement chain modelling</td></tr>
+<tr><td>MAUDE adverse-event records</td><td class="num">25,711,469</td><td>Bulk pipeline design; statistical aggregation, <em>not</em> per-record LLM processing</td></tr>
+<tr><td>UDI / GUDID records</td><td class="num">5,083,948</td><td>Attribute-level competitive comparison</td></tr>
+<tr><td>Recall records</td><td class="num">58,999</td><td>Failure-mode clustering</td></tr>
+<tr><td>Registration &amp; listing records</td><td class="num">333,804</td><td>Entity resolution &mdash; the hardest data-quality problem in the build</td></tr>
+<tr><td>Product codes to classify against</td><td class="num">7,087 defined &middot; 1,488 active</td><td>Classification engine is a ~1,500-way problem, not 7,000-way</td></tr>
+<tr><td>Distinct source systems</td><td class="num">~20 across 3 tiers</td><td>Four have no clean API and need export parsing</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>What is in the baseline, and what is not</h3>
+<p>The word <em>baseline</em> is used throughout this document to mean a specific, testable thing: the smallest product a regulatory affairs professional will use on a real device and pay for. It is not a prototype, and it is not the full Release&nbsp;1.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Capability</th><th>Baseline &middot; M6</th><th>GA &middot; M12</th><th>Expansion &middot; M13+</th></tr></thead>
+<tbody>
+<tr><td>Device intake and regulatory profiling</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Classification &amp; pathway determination with reasoning chain</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Predicate discovery, ranking and indications-for-use diff</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Recognized standards &amp; precedent-derived test plan</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Cited Regulatory Strategy Report, PDF/DOCX export</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Immutable snapshot reproducibility &amp; citation-verification gate</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Consultant multi-client isolated workspaces</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Free public product-code explorer (~1,500 pages)</td><td><span class="chip c-ok">Baseline</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Submission gap audit</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>Cost, fee &amp; timeline model with confidence intervals</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>Post-market risk intelligence (MAUDE, recalls)</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>Watchlist &amp; change alerting &mdash; the retention mechanism</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>Public REST API + MCP tool server</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>Billing, metering &amp; self-serve onboarding</td><td>&mdash;</td><td><span class="chip c-p1">GA</span></td><td>&mdash;</td></tr>
+<tr><td>510(k) change assessment / letter-to-file</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip c-p2">M13&ndash;14</span></td></tr>
+<tr><td>AI/ML &amp; SaMD pathway support, PCCP drafting</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip c-p2">M14&ndash;15</span></td></tr>
+<tr><td>eSTAR-structured section drafting</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip c-p2">M15&ndash;16</span></td></tr>
+<tr><td>EU MDR/IVDR via EUDAMED</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip c-p2">M15&ndash;20</span></td></tr>
+<tr><td>UK, Canada, Australia, Japan, China, India, LatAm</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip c-p3">Series A &mdash; §14</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s3">
+<h2>Programme structure and timeline</h2>
+
+<p>Two overlapping phases and a continuous commercial workstream, run inside an 18-month runway. The organising constraint is the month-6 baseline: every sequencing decision below exists to protect that date.</p>
+
+<div class="pipe">
+  <div class="stage"><span class="lbl">Phase 1 &middot; wk 1&ndash;20</span><span class="nm">Design &amp; validate</span><span class="dt">Architecture, data model, source contracts and proven extraction, AI and evaluation design, API/MCP spec, synthetic-data mock, expert review, design partners, final approved mock.</span></div>
+  <div class="stage"><span class="lbl">Phase 2 &middot; wk 9&ndash;48</span><span class="nm">Build to baseline, then to GA</span><span class="dt">Data platform, AI layer, baseline application shipped at week 26; then Release 1 completion, hardening, compliance and general availability at week 48.</span></div>
+  <div class="stage"><span class="lbl">Expansion &middot; wk 49&ndash;78</span><span class="nm">Grow the scope</span><span class="dt">Change assessment, AI/ML and SaMD module, eSTAR section drafting, EU groundwork. Gated on US retention, not on calendar.</span></div>
+</div>
+
+<h3>Master schedule &mdash; 18 months</h3>
+<p><span class="chip c-p1">Peak</span> denotes the workstream&rsquo;s primary effort; <span class="chip c-p2">Act</span> denotes ongoing but reduced effort. Columns are two-month periods.</p>
+
+<div class="tw wide">
+<table class="matrix">
+<thead><tr><th class="rowh">Workstream</th><th>M1&ndash;2</th><th>M3&ndash;4</th><th>M5&ndash;6</th><th>M7&ndash;8</th><th>M9&ndash;10</th><th>M11&ndash;12</th><th>M13&ndash;14</th><th>M15&ndash;16</th><th>M17&ndash;18</th></tr></thead>
+<tbody>
+<tr><th class="rowh">Product &amp; programme leadership</th><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td></tr>
+<tr><th class="rowh">Architecture &amp; canonical data model</th><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">Data-source contracts &amp; extraction proving</th><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td></tr>
+<tr><th class="rowh">AI architecture, models &amp; evaluation design</th><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">UX design &amp; design system</th><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">Validated mock &amp; expert review</th><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td></tr>
+<tr><th class="rowh">2A &middot; Data platform &amp; pipeline</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td></tr>
+<tr><th class="rowh">2B &middot; AI layer &amp; core application</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">2C &middot; Release 1 completion modules</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">QA, evaluation &amp; accuracy gates</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td></tr>
+<tr><th class="rowh">2D &middot; Hardening, security &amp; compliance</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td></tr>
+<tr><th class="rowh">Launch, onboarding &amp; customer success</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td></tr>
+<tr><th class="rowh">Sales &amp; marketing</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td></tr>
+<tr><th class="rowh">Expansion &mdash; change assessment &amp; AI/ML module</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m0">&mdash;</span></td></tr>
+<tr><th class="rowh">Expansion &mdash; EU groundwork (EUDAMED)</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td></tr>
+<tr><th class="rowh">Series A preparation</th><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m0">&mdash;</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m2">Act</span></td><td><span class="cell m1">Peak</span></td><td><span class="cell m1">Peak</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Milestones</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Week / month</th><th>Milestone</th><th>Evidence it is complete</th></tr></thead>
+<tbody>
+<tr><td class="k">wk 6 &middot; M1.5</td><td><b>Architecture baseline approved</b></td><td>System architecture document, ADRs and canonical data model signed off; infrastructure cost model built on measured corpus volumes</td></tr>
+<tr><td class="k">wk 10 &middot; M2.5</td><td><b>Data-source register complete</b></td><td>All ~20 sources profiled with access method, schema, refresh, licence and a proven sample extraction &mdash; including the four with no clean API</td></tr>
+<tr><td class="k">wk 12 &middot; M3</td><td><b>Extraction quality demonstrated</b></td><td>Field-level accuracy measured on ~2,000 real 510(k) summaries spanning decades and scan quality. The single most plan-invalidating risk, retired first.</td></tr>
+<tr><td class="k">wk 14 &middot; M3.5</td><td><b>Working mock demonstrated &amp; expert-reviewed</b></td><td>Four baseline flows running end to end on synthetic data; RA panel confirms outputs are recognisable and defensible</td></tr>
+<tr><td class="k">wk 16 &middot; M4</td><td><b>Design partners signed</b></td><td>6&ndash;10 design partners under agreement with IP and confidentiality terms; mix of consultants and manufacturers</td></tr>
+<tr><td class="k">wk 20 &middot; M5</td><td><b>Data platform live</b></td><td>All Tier 1 sources ingested, validated and searchable; snapshot reproducibility demonstrated end to end</td></tr>
+<tr><td class="k">wk 26 &middot; M6</td><td><b>US BASELINE PRODUCT COMPLETE</b></td><td>Classification, pathway, predicate, standards and cited report passing the §15 accuracy thresholds of MRA-REQ-001; design partners working real devices in production</td></tr>
+<tr><td class="k">wk 34 &middot; M8</td><td><b>First revenue at list price</b></td><td>Pilots converted; self-serve Practitioner tier open; first Consultancy-tier logo closed</td></tr>
+<tr><td class="k">wk 44 &middot; M11</td><td><b>Release 1 feature-complete</b></td><td>Gap audit, cost and timeline model, post-market intelligence, alerting, API + MCP, billing all built; code freeze for hardening</td></tr>
+<tr><td class="k">wk 48 &middot; M12</td><td><b>GENERAL AVAILABILITY</b></td><td>Customers onboarding without hand-holding; penetration test remediated; SOC&nbsp;2 readiness underway; first public Accuracy Report published</td></tr>
+<tr><td class="k">wk 60 &middot; M15</td><td><b>Expansion modules shipped</b></td><td>510(k) change assessment and AI/ML&nbsp;/&nbsp;SaMD PCCP support live; eSTAR section drafting in beta</td></tr>
+<tr><td class="k">wk 78 &middot; M18</td><td><b>Series A ready</b></td><td>~36 paying customers, ~$520K ARR, NRR ≥ 115%, EU ingestion proven on the same data model</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s4">
+<h2>Phase 1 &mdash; scope, workstreams and deliverables</h2>
+
+<p class="lead">Fourteen to twenty weeks to remove the uncertainty that would otherwise be discovered expensively during the build. Phase&nbsp;1 produces decisions, a working mock and signed design partners. It overlaps Phase&nbsp;2 from week&nbsp;9, so the last four workstreams below run alongside the build rather than blocking it.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>WS</th><th>Workstream</th><th>Line items</th><th>Deliverable</th></tr></thead>
+<tbody>
+<tr><td class="k">1.1</td><td><b>Mobilisation</b></td><td>Charter, RAID log, delivery tooling, environments, cloud and vendor accounts, security baseline, ways of working</td><td>Programme charter &middot; operating rhythm</td></tr>
+<tr><td class="k">1.2</td><td><b>Requirements closure</b></td><td>Resolve the ten open questions in MRA-REQ-001 §17 and the six commercial decisions in MRA-MKT-001 §15; confirm the persona; ratify the scope boundary with regulatory counsel</td><td>Baselined requirements r1.0 &middot; decision register</td></tr>
+<tr><td class="k">1.3</td><td><b>Solution architecture</b></td><td>C4 model, deployment topology, tenancy and isolation design, security architecture, provenance and snapshot design, technology selection with ADRs, build-vs-buy, infrastructure cost model on measured volumes</td><td>System Architecture Document &middot; ADR set</td></tr>
+<tr><td class="k">1.4</td><td><b>Data architecture &amp; canonical model</b></td><td>Ten-entity logical model, physical schema and DDL, jurisdiction parameterisation, predicate-graph design, product-code dossier schema, indexing strategy (lexical, vector, graph), retention and versioning</td><td>Data model &middot; ERD &middot; DDL &middot; data dictionary</td></tr>
+<tr><td class="k">1.5</td><td><b>Data-source discovery &amp; contracts</b></td><td>Profile all ~20 sources: access, auth, rate limits, schema, volumes, refresh, licence, known defects. Prove a sample extraction for each. Special handling for the four with no clean API &mdash; De Novo, recognized standards, MDUFA reports, warning letters</td><td>Source register &middot; per-source contracts &middot; sample extracts</td></tr>
+<tr><td class="k">1.6</td><td><b>Extraction proving</b> <span class="chip c-must">Critical path</span></td><td>Structured extraction run against ~2,000 real 510(k) summaries spanning 1996&ndash;2026 and every quality level, with measured field-level accuracy on IFU, technological characteristics, predicates cited, testing performed and standards applied</td><td>Extraction accuracy report &middot; go / re-scope call</td></tr>
+<tr><td class="k">1.7</td><td><b>AI architecture &amp; model selection</b></td><td>Hybrid retrieval design and benchmark, extraction schema design, model tiering across Opus&nbsp;5 / Sonnet&nbsp;5 / Haiku&nbsp;4.5, embedding benchmark on labelled predicate pairs, prompt architecture, guardrail and citation-verification design, inference cost model, model-portability abstraction</td><td>AI Architecture Document &middot; model selection &middot; cost model</td></tr>
+<tr><td class="k">1.8</td><td><b>Evaluation methodology</b></td><td>Design the held-out sets; define scoring; seed-label a representative subset to prove the method; design the evaluation harness that becomes the release gate</td><td>Evaluation methodology &middot; seed-labelled corpus</td></tr>
+<tr><td class="k">1.9</td><td><b>Ingestion &amp; migration plan</b></td><td>Bulk-versus-delta per source, backfill sequencing and volumes, snapshot promotion and rollback, reprocessing design, schema-drift detection, quarantine and reconciliation</td><td>Ingestion plan &middot; backfill schedule</td></tr>
+<tr><td class="k">1.10</td><td><b>API, MCP &amp; tooling design</b></td><td>OpenAPI specification, MCP tool definitions, import tools with PHI screening, export tools (PDF, DOCX, HTML, CSV, structured JSON), webhook design, authentication and tenancy enforcement</td><td>OpenAPI spec &middot; MCP tool spec &middot; import/export design</td></tr>
+<tr><td class="k">1.11</td><td><b>UX design &amp; use-case elaboration</b></td><td>Elaborate the baseline use cases into journeys, information architecture, design system, evidence-first interaction patterns, high-fidelity screens for the four baseline flows, accessibility to WCAG&nbsp;2.1&nbsp;AA</td><td>Design system &middot; hi-fi screens &middot; journey maps</td></tr>
+<tr><td class="k">1.12</td><td><b>Synthetic data &amp; working mock</b></td><td>Synthetic device profiles across classes and panels; a clickable, functional prototype covering intake, classification and pathway, predicate discovery and comparison, and report generation, at representative latency</td><td>Deployed mock &middot; reusable test fixtures</td></tr>
+<tr><td class="k">1.13</td><td><b>Expert &amp; domain review</b></td><td>Two structured review cycles with the RA expert panel against the mock and the architecture; capture and triage findings; validate that outputs are recognisable and defensible to a professional</td><td>Expert review report &middot; finding disposition log</td></tr>
+<tr><td class="k">1.14</td><td><b>Design-partner recruitment</b></td><td>ICP definition, target list, outreach, discovery interviews, design-partner agreements with IP and confidentiality terms, pilot success criteria. Runs to week&nbsp;20, overlapping the build.</td><td>6&ndash;10 signed design partners</td></tr>
+<tr><td class="k">1.15</td><td><b>Design upgrade &amp; final approval</b></td><td>Incorporate expert and partner feedback, revise architecture, model, use cases and screens, rebuild the mock, obtain sign-off. Overlaps the build.</td><td>Final approved mock &middot; updated baseline</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>Why 1.6 is called out as critical path.</strong> Everything in this business rests on one unproven assumption: that ~90,000 510(k) Summary PDFs of wildly varying age and scan quality can be turned into structured, confidence-scored fields at usable accuracy. If that is false, the product is a search tool and the differentiation in MRA-MKT-001 §7 evaporates. Proving it on 2,000 real documents costs roughly $6,000 of inference and three weeks of engineering, and it happens before a single dollar of the build is committed to that design. This is the single highest-leverage $6,000 in the plan.</p>
+</div>
+</section>
+
+<section class="sec" id="s5">
+<h2>Phase 1 &mdash; team, line items and cost</h2>
+
+<h3>Rate card</h3>
+<p>Fully loaded monthly cost per FTE: salary or contract rate, employer taxes, benefits, equipment and allocated overhead. Onshore rates are US 2026 rates discounted for early-stage equity-weighted compensation; nearshore rates are Latin America / Eastern Europe senior contract rates.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Role</th><th>Location</th><th class="num">$ / month</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>AI/ML lead &mdash; technical co-founder</td><td>Onshore</td><td class="num">7,500</td><td>Against a $28,000 market rate for an AI/ML architect; the difference is carried in equity (§12)</td></tr>
+<tr><td>Product &amp; regulatory lead &mdash; CEO</td><td>Onshore</td><td class="num">6,500</td><td>Against $18,500 market; carries product, programme, the design-partner relationship and founder-led sales</td></tr>
+<tr><td>Solution &amp; data architect</td><td>Onshore, contract</td><td class="num">14,000</td><td>Fractional. Heavy in Phase 1, continuity only in Phase 2</td></tr>
+<tr><td>RA domain expert</td><td>Onshore, $180/hr</td><td class="num">28,800</td><td>Engaged fractionally. The role most often cut and least survivable</td></tr>
+<tr><td>Senior data engineer</td><td>Nearshore</td><td class="num">9,500</td><td>Against $21,000 onshore</td></tr>
+<tr><td>Senior backend engineer</td><td>Nearshore</td><td class="num">9,000</td><td>Against $19,500 onshore</td></tr>
+<tr><td>AI/ML engineer</td><td>Nearshore</td><td class="num">8,500</td><td>Against $18,000 onshore</td></tr>
+<tr><td>UX / product designer</td><td>Contract</td><td class="num">8,000</td><td>Against $16,000 onshore employed</td></tr>
+<tr><td>Frontend engineer</td><td>Nearshore</td><td class="num">7,500</td><td>Against $16,500 onshore</td></tr>
+<tr><td>QA / evaluation engineer</td><td>Nearshore</td><td class="num">6,500</td><td>Test automation plus ML evaluation engineering</td></tr>
+<tr><td>DevOps / platform engineer</td><td>Nearshore, fractional</td><td class="num">9,000</td><td>Engaged at 0.3 FTE across Phase 2</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Phase 1 labour</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Role</th><th class="num">FTE</th><th class="num">Months</th><th class="num">FTE-mo</th><th class="num">Cost</th><th>Primary workstreams</th></tr></thead>
+<tbody>
+<tr><td>AI/ML lead &mdash; technical co-founder</td><td class="num">1.0</td><td class="num">4.0</td><td class="num">4.0</td><td class="num">$30,000</td><td>1.6, 1.7, 1.8, 1.12</td></tr>
+<tr><td>Product &amp; regulatory lead &mdash; CEO</td><td class="num">1.0</td><td class="num">4.0</td><td class="num">4.0</td><td class="num">$26,000</td><td>1.1, 1.2, 1.11, 1.14, 1.15</td></tr>
+<tr><td>Solution &amp; data architect</td><td class="num">0.6</td><td class="num">3.0</td><td class="num">1.8</td><td class="num">$25,200</td><td>1.3, 1.4, 1.9, 1.10</td></tr>
+<tr><td>Senior data engineer (nearshore)</td><td class="num">0.5</td><td class="num">3.0</td><td class="num">1.5</td><td class="num">$14,250</td><td>1.5, 1.6, 1.12</td></tr>
+<tr><td>UX / product designer (contract)</td><td class="num">0.5</td><td class="num">3.0</td><td class="num">1.5</td><td class="num">$12,000</td><td>1.11, 1.12, 1.15</td></tr>
+<tr><td>RA domain expert (fractional)</td><td class="num">0.15</td><td class="num">4.0</td><td class="num">0.6</td><td class="num">$17,280</td><td>1.2, 1.8, 1.13</td></tr>
+<tr><td><b>Labour subtotal</b></td><td class="num"><b>3.75 peak</b></td><td class="num">&mdash;</td><td class="num"><b>13.4</b></td><td class="num"><b>$124,730</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Phase 1 non-labour</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Line item</th><th class="num">Cost</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Expert review panel &mdash; 2 external RA reviewers</td><td class="num">$18,000</td><td>40 hours each at $225/hr, independent of the embedded SME. Two full cycles against the mock.</td></tr>
+<tr><td>Evaluation-set design &amp; seed labelling</td><td class="num">$16,000</td><td>60 labelled summaries plus 25 pathway profiles &mdash; enough to prove the scoring method before the build depends on it</td></tr>
+<tr><td>AI / LLM API spend</td><td class="num">$8,000</td><td>Extraction proving on ~2,000 documents, model benchmarking, embedding evaluation, mock operation</td></tr>
+<tr><td>Legal &mdash; design-partner &amp; IP terms</td><td class="num">$4,500</td><td>Design-partner agreements, confidentiality and IP terms, DPA template, counsel review of the scope boundary</td></tr>
+<tr><td>Cloud &amp; development environments</td><td class="num">$3,000</td><td>4 months at $750 &mdash; single sandbox, no production footprint</td></tr>
+<tr><td>Software, tooling &amp; licences</td><td class="num">$2,500</td><td>Design tools, source control, CI, project tooling</td></tr>
+<tr><td><b>Non-labour subtotal</b></td><td class="num"><b>$52,000</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Phase 1 total</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Component</th><th class="num">Amount</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Duration</td><td class="num">14&ndash;20 weeks</td><td>Weeks 1&ndash;20; overlaps Phase 2 from week 9</td></tr>
+<tr><td>Labour</td><td class="num">$124,730</td><td>3.75 FTE peak, hybrid</td></tr>
+<tr><td>Non-labour</td><td class="num">$52,000</td><td>Expert panel, seed labelling, inference, legal, cloud, tooling</td></tr>
+<tr><td>Contingency</td><td class="num">$23,270</td><td>13.2%</td></tr>
+<tr><td><b>Phase 1 total</b></td><td class="num"><b>$200,000</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s6">
+<h2>Phase 2 &mdash; scope, workstreams and deliverables</h2>
+
+<p class="lead">Forty weeks to build, test and deploy &mdash; but split at week&nbsp;26 by the baseline release. Stages 2A and 2B produce the baseline; 2C and 2D produce general availability. Each stage ends with something demonstrable to a real regulatory user.</p>
+
+<h3>Stage 2A &middot; Data platform and pipeline &mdash; weeks 9&ndash;22</h3>
+<div class="tw">
+<table>
+<thead><tr><th>WS</th><th>Line items</th></tr></thead>
+<tbody>
+<tr><td class="k">2A.1</td><td><b>Infrastructure foundation</b> &mdash; cloud accounts, network and tenancy isolation, infrastructure as code, secrets management, CI/CD, environment promotion, observability, backup and restore</td></tr>
+<tr><td class="k">2A.2</td><td><b>Tier 1 connectors</b> &mdash; 510(k), classification, PMA, De Novo, registration and listing, recognized standards, MDUFA performance, guidance and eCFR, user-fee schedule. Bulk-first with API deltas; four require export parsing rather than an API</td></tr>
+<tr><td class="k">2A.3</td><td><b>Raw landing &amp; archive</b> &mdash; immutable object storage, snapshot partitioning, checksums and retrieval metadata, replay capability</td></tr>
+<tr><td class="k">2A.4</td><td><b>Normalisation &amp; entity resolution</b> &mdash; parsing, typing, deduplication, company-name resolution with alias curation, product-code validation, date normalisation, quarantine and reconciliation</td></tr>
+<tr><td class="k">2A.5</td><td><b>Canonical model build</b> &mdash; ten entities, referential integrity, predicate graph as recursive edge tables, product-code dossier materialisation</td></tr>
+<tr><td class="k">2A.6</td><td><b>Provenance &amp; snapshot framework</b> &mdash; source lineage on every record, immutable addressable snapshots, diffing, the reproducibility guarantee. <span class="chip c-must">The moat</span></td></tr>
+<tr><td class="k">2A.7</td><td><b>Indexing</b> &mdash; lexical (BM25) for identifiers, vector index over narrative text, graph traversal; per-snapshot rebuild and versioning</td></tr>
+<tr><td class="k">2A.8</td><td><b>Pipeline console</b> &mdash; per-source status, record counts, snapshot deltas, schema-drift detection, halt-on-drift, reprocessing controls</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Stage 2B &middot; AI layer and baseline application &mdash; weeks 14&ndash;26 <span class="chip c-must">Baseline</span></h3>
+<div class="tw">
+<table>
+<thead><tr><th>WS</th><th>Line items</th></tr></thead>
+<tbody>
+<tr><td class="k">2B.1</td><td><b>Extraction pipeline at corpus scale</b> &mdash; schema-constrained extraction of indications for use, technological characteristics, predicates cited, testing performed, standards applied and substantial-equivalence rationale from ~90,000 summaries, with confidence scoring and source spans</td></tr>
+<tr><td class="k">2B.2</td><td><b>Hybrid retrieval &amp; reranking</b> &mdash; lexical&ndash;dense fusion, cross-encoder reranker, product-code and class filtering</td></tr>
+<tr><td class="k">2B.3</td><td><b>Classification &amp; pathway engine</b> &mdash; ranked product-code shortlist with reasoning, supervised reranker on historical assignments, pathway determination, exemption logic, high-consequence flagging</td></tr>
+<tr><td class="k">2B.4</td><td><b>Predicate discovery &amp; comparison</b> &mdash; similarity ranking, indications-for-use diff, technological-characteristics comparison, recall and withdrawal screening, lineage graph</td></tr>
+<tr><td class="k">2B.5</td><td><b>Standards &amp; testing plan</b> &mdash; recognized standards filtering, precedent-derived test plan with prevalence counts, guidance extraction</td></tr>
+<tr><td class="k">2B.6</td><td><b>Guardrails &amp; citation verification</b> &mdash; automated verification against the knowledge base as a hard gate, refusal on insufficient evidence, scope limiter, claim stripping and logging</td></tr>
+<tr><td class="k">2B.7</td><td><b>Report studio</b> &mdash; Regulatory Strategy Report with inline citations, versioning and immutability, PDF/DOCX/HTML export, branding</td></tr>
+<tr><td class="k">2B.8</td><td><b>Application core</b> &mdash; device intake and profiling, project workspaces, organisations and RBAC, audit trail, document upload with PHI screening, <b>consultant multi-client isolated workspaces</b></td></tr>
+<tr><td class="k">2B.9</td><td><b>Evaluation harness</b> &mdash; automated accuracy runs against held-out sets, per-stage quality metrics, promotion gating on model and prompt changes. Release gate for the baseline.</td></tr>
+<tr><td class="k">2B.10</td><td><b>Public product-code explorer</b> &mdash; ~1,500 indexable pages built from the dossier aggregate. Zero marginal cost, and the cheapest acquisition channel available (MRA-MKT-001 §12)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>Week 26 is the baseline gate.</strong> The product stops here and is put in front of paying design partners on real devices, with the §15 accuracy thresholds met and nothing else shipped. Stage 2C does not start until a regulatory professional has run a live device through the baseline and accepted the output. Building 2C before that evidence exists is how a team spends month&nbsp;7 through month&nbsp;12 perfecting features nobody validated.</p>
+</div>
+
+<h3>Stage 2C &middot; Release 1 completion &mdash; weeks 27&ndash;44</h3>
+<div class="tw">
+<table>
+<thead><tr><th>WS</th><th>Line items</th></tr></thead>
+<tbody>
+<tr><td class="k">2C.1</td><td><b>Submission gap audit</b> &mdash; content checklist, evidence tracking, precedent-ranked gap analysis</td></tr>
+<tr><td class="k">2C.2</td><td><b>Post-market risk intelligence</b> &mdash; adverse-event and recall pattern analysis, failure-theme clustering, design-risk mapping, MAUDE limitation disclosures</td></tr>
+<tr><td class="k">2C.3</td><td><b>Cost, fee &amp; timeline model</b> &mdash; user-fee calculation, review-duration forecasting with confidence intervals, programme cost ranges, pathway deltas. Statistical, never LLM-generated.</td></tr>
+<tr><td class="k">2C.4</td><td><b>Competitive &amp; market signals</b> &mdash; landscape per product code, UDI attribute comparison, establishment footprint, entrant density</td></tr>
+<tr><td class="k">2C.5</td><td><b>Supplier &amp; partner qualification</b> &mdash; registration status, inspection and warning-letter history, identity disambiguation</td></tr>
+<tr><td class="k">2C.6</td><td><b>Watchlist &amp; alerting</b> &mdash; subscriptions on product codes and companies, change notification on saved projects. <span class="chip c-must">Retention mechanism</span></td></tr>
+<tr><td class="k">2C.7</td><td><b>Public API &amp; MCP interface</b> &mdash; REST endpoints, MCP tool server, authentication, rate limiting, developer documentation</td></tr>
+<tr><td class="k">2C.8</td><td><b>Billing &amp; metering</b> &mdash; subscription tiers, usage metering on reports and analyses, fair-use enforcement, invoicing</td></tr>
+<tr><td class="k">2C.9</td><td><b>Human review queue</b> &mdash; low-confidence extraction triage, correction capture feeding evaluation data</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Stage 2D &middot; Hardening, compliance and launch &mdash; weeks 36&ndash;48</h3>
+<div class="tw">
+<table>
+<thead><tr><th>WS</th><th>Line items</th></tr></thead>
+<tbody>
+<tr><td class="k">2D.1</td><td><b>Performance engineering</b> &mdash; meet the 3-second p95 interactive target and 10-minute p95 report generation; load and soak testing; caching and cost optimisation</td></tr>
+<tr><td class="k">2D.2</td><td><b>Security hardening</b> &mdash; threat modelling, tenant-isolation verification, dependency and container scanning, penetration testing and remediation</td></tr>
+<tr><td class="k">2D.3</td><td><b>SOC 2 Type II readiness</b> &mdash; control design and implementation, evidence collection, compliance automation platform. Certification is post-GA; readiness is in scope</td></tr>
+<tr><td class="k">2D.4</td><td><b>Accessibility</b> &mdash; WCAG 2.1 AA audit and remediation across both themes</td></tr>
+<tr><td class="k">2D.5</td><td><b>Validation support package</b> &mdash; intended-use statement, risk assessment, functional test evidence, change-control documentation for customer qualification. A sales asset no Group&nbsp;C competitor can produce</td></tr>
+<tr><td class="k">2D.6</td><td><b>Production deployment</b> &mdash; production environment, runbooks, on-call, incident response, status page, backup and restore verification</td></tr>
+<tr><td class="k">2D.7</td><td><b>Launch</b> &mdash; onboarding materials, support processes, documentation, first public Accuracy Report, general availability</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s7">
+<h2>Phase 2 &mdash; team, line items and cost</h2>
+
+<h3>Phase 2 labour</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Role</th><th class="num">FTE</th><th class="num">Months</th><th class="num">FTE-mo</th><th class="num">Cost</th><th>Primary stages</th></tr></thead>
+<tbody>
+<tr><td>AI/ML lead &mdash; technical co-founder</td><td class="num">1.0</td><td class="num">14.0</td><td class="num">14.0</td><td class="num">$105,000</td><td>2B, 2C, expansion</td></tr>
+<tr><td>Product &amp; regulatory lead &mdash; CEO</td><td class="num">1.0</td><td class="num">14.0</td><td class="num">14.0</td><td class="num">$91,000</td><td>All</td></tr>
+<tr><td>Senior data engineer (nearshore)</td><td class="num">1.0</td><td class="num">8.0</td><td class="num">8.0</td><td class="num">$76,000</td><td>2A, 2B</td></tr>
+<tr><td>Senior backend engineer (nearshore)</td><td class="num">1.0</td><td class="num">7.0</td><td class="num">7.0</td><td class="num">$63,000</td><td>2B, 2C</td></tr>
+<tr><td>AI/ML engineer (nearshore)</td><td class="num">1.0</td><td class="num">5.0</td><td class="num">5.0</td><td class="num">$42,500</td><td>2B, 2C</td></tr>
+<tr><td>Frontend engineer (nearshore)</td><td class="num">1.0</td><td class="num">5.0</td><td class="num">5.0</td><td class="num">$37,500</td><td>2B, 2C</td></tr>
+<tr><td>QA / evaluation engineer (nearshore)</td><td class="num">0.6</td><td class="num">8.0</td><td class="num">4.8</td><td class="num">$31,200</td><td>2B, 2C, 2D</td></tr>
+<tr><td>DevOps / platform (fractional)</td><td class="num">0.25</td><td class="num">8.0</td><td class="num">2.0</td><td class="num">$18,000</td><td>2A, 2D</td></tr>
+<tr><td>Solution &amp; data architect (continuity)</td><td class="num">0.15</td><td class="num">7.0</td><td class="num">1.05</td><td class="num">$14,700</td><td>2A, 2B</td></tr>
+<tr><td>RA domain expert (fractional)</td><td class="num">0.10</td><td class="num">10.0</td><td class="num">1.0</td><td class="num">$28,800</td><td>2B, 2C</td></tr>
+<tr><td><b>Labour subtotal</b></td><td class="num"><b>7.1 peak</b></td><td class="num">&mdash;</td><td class="num"><b>61.85</b></td><td class="num"><b>$507,700</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Phase 2 non-labour</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Category</th><th>Line item</th><th class="num">Cost</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Infrastructure</td><td>Cloud &mdash; dev, staging, production</td><td class="num">$26,000</td><td>Ramped: $1.5K/mo months 1&ndash;3, $3K months 4&ndash;6, $5K months 7&ndash;9. Postgres with pgvector dominates</td></tr>
+<tr><td>AI</td><td>Corpus extraction backfill &amp; re-runs</td><td class="num">$18,000</td><td>A single full pass is ~$2,150; budget assumes 6&ndash;8 full re-runs as the schema evolves (§9)</td></tr>
+<tr><td>AI</td><td>Evaluation runs, development &amp; embeddings</td><td class="num">$9,000</td><td>~120 evaluation runs, prompt iteration, ~2.5B tokens embedded</td></tr>
+<tr><td>Data quality</td><td>Evaluation set construction</td><td class="num">$18,000</td><td>Reduced panel: 150 hand-labelled summaries, 50 blind pathway reviews, 25 expert predicate panels. Expert time at $150&ndash;$225/hr</td></tr>
+<tr><td>Compliance</td><td>Penetration test &amp; SOC 2 readiness tooling</td><td class="num">$12,000</td><td>Single pen-test round plus a compliance automation platform. Audit deferred to post-GA</td></tr>
+<tr><td>Services</td><td>Third-party services</td><td class="num">$7,000</td><td>Identity, billing, email, observability, error tracking, PDF rendering</td></tr>
+<tr><td>Services</td><td>Software licences &amp; dev tooling</td><td class="num">$5,000</td><td>9 months</td></tr>
+<tr><td></td><td><b>Non-labour subtotal</b></td><td class="num"><b>$95,000</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Phase 2 total</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Component</th><th class="num">Amount</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Duration</td><td class="num">28&ndash;40 weeks</td><td>Build window weeks 9&ndash;48: baseline at week 26, GA at week 48. The engineering budget line then carries the expansion pod to month 18 (§14)</td></tr>
+<tr><td>Peak team</td><td class="num">7.1 FTE</td><td>Months 5&ndash;10</td></tr>
+<tr><td>Labour</td><td class="num">$507,700</td><td>Hybrid &mdash; 2 onshore leads, 4 nearshore engineers, 4 fractional roles</td></tr>
+<tr><td>Non-labour</td><td class="num">$95,000</td><td>Cloud, inference, evaluation data, compliance, services</td></tr>
+<tr><td>Contingency</td><td class="num">$47,300</td><td>7.9%</td></tr>
+<tr><td><b>Phase 2 total</b></td><td class="num"><b>$650,000</b></td><td></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s8">
+<h2>Sales and marketing &mdash; $150,000</h2>
+
+<p class="lead">Fifteen per cent of the round, spent from month&nbsp;3, on the two channels MRA-MKT-001 §12 ranks highest by efficiency: programmatic SEO built from the platform&rsquo;s own data structure, and the consultant channel. There is no sales hire in this plan. Selling is founder-led until month&nbsp;18 and the numbers are modelled on that basis.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Line item</th><th class="num">Cost</th><th>When</th><th>Why this and not something else</th></tr></thead>
+<tbody>
+<tr><td><b>Growth &amp; content lead</b> &mdash; 0.5 FTE</td><td class="num">$78,000</td><td>M6&ndash;18</td><td>Owns the product-code page programme, the Accuracy Report, the consultant referral programme and inbound qualification. The one commercial hire the plan makes, and it is a half one.</td></tr>
+<tr><td><b>Events</b> &mdash; RAPS chapters, MD&amp;M, The MedTech Conference</td><td class="num">$24,000</td><td>M8, M12, M16</td><td>The buyer is a defined professional community with its own society. Three events, booth-light and presentation-heavy; peer endorsement beats vendor claims in this segment.</td></tr>
+<tr><td><b>Programmatic SEO build-out</b></td><td class="num">$18,000</td><td>M5&ndash;10</td><td>Turning ~1,500 product-code dossiers into indexable public pages: page templating, schema markup, technical SEO, editorial layer. Near-zero marginal cost thereafter; no competitor does this at scale.</td></tr>
+<tr><td><b>Design-partner &amp; pilot incentives, travel</b></td><td class="num">$12,000</td><td>M3&ndash;8</td><td>Participation incentives and on-site time with the first ten partners. The time study that substantiates the 60% research-hour claim comes out of this line.</td></tr>
+<tr><td><b>Brand, website, report templates &amp; demo assets</b></td><td class="num">$10,000</td><td>M4&ndash;7</td><td>The report <em>is</em> the product to a buyer who has not logged in. It has to look like something a consultant would put their name on.</td></tr>
+<tr><td><b>CRM, sales tooling &amp; paid experiments</b></td><td class="num">$8,000</td><td>M6&ndash;18</td><td>Instrumented, small, and killed fast if the SEO channel performs as modelled.</td></tr>
+<tr><td><b>Total</b></td><td class="num"><b>$150,000</b></td><td>M3&ndash;18</td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>The arithmetic this line has to satisfy.</strong> $150,000 acquiring ~36 paying customers is a blended CAC of roughly <b>$4,200</b> &mdash; against the MRA-MKT-001 §13 target of under $6,000 for Practitioner and under $18,000 for Team and Consultancy. At a Year-1 blended ACV of $14,500 and ~90% gross margin, that is a <b>CAC payback of about four months</b>. These are founder-led-sales economics and they will compress as the motion moves to inside sales; the Series A model should assume CAC rises toward $6,000&ndash;$9,000. It is still a very good number, and the reason is structural: the acquisition channel is a by-product of the product&rsquo;s own data.</p>
+</div>
+</section>
+
+<section class="sec" id="s9">
+<h2>AI cost model and unit economics</h2>
+
+<p>AI inference is the line item investors most expect to be frightening and which is, on this workload, comparatively modest. The reason is architectural: the expensive work &mdash; extracting 90,000 documents &mdash; happens once against immutable source documents and is cached forever, while the per-user work is small and heavily cacheable.</p>
+
+<h3>Model pricing used</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Model</th><th class="num">Input $/MTok</th><th class="num">Output $/MTok</th><th>Applied to</th></tr></thead>
+<tbody>
+<tr><td>Claude Opus 5</td><td class="num">$5.00</td><td class="num">$25.00</td><td>Report synthesis, substantial-equivalence reasoning, gap audit &mdash; low volume, high stakes</td></tr>
+<tr><td>Claude Sonnet 5</td><td class="num">$2.00</td><td class="num">$10.00</td><td>Predicate comparison, standards mapping, drafting, Q&amp;A &mdash; the working majority</td></tr>
+<tr><td>Claude Haiku 4.5</td><td class="num">$1.00</td><td class="num">$5.00</td><td>Bulk pipeline extraction, classification pre-filtering, summarisation, routing</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Two discounts materially change the arithmetic, and both are architectural decisions already in MRA-REQ-001 §8. The Batch API halves cost for asynchronous work, which covers the entire corpus backfill. Prompt caching reads at ~0.1× input price, which covers the repeated regulatory context in interactive analysis.</p>
+
+<h3>One-time corpus extraction</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Workload</th><th class="num">Documents</th><th>Model &amp; mode</th><th class="num">Cost</th></tr></thead>
+<tbody>
+<tr><td>510(k) Summary extraction &mdash; bulk pass</td><td class="num">90,000</td><td>Haiku 4.5, batch</td><td class="num">$1,103</td></tr>
+<tr><td>510(k) Summary &mdash; second pass on low-confidence</td><td class="num">22,500</td><td>Sonnet 5, batch</td><td class="num">$551</td></tr>
+<tr><td>Guidance documents</td><td class="num">~2,000</td><td>Sonnet 5, batch</td><td class="num">$120</td></tr>
+<tr><td>Recall narratives</td><td class="num">59,000</td><td>Haiku 4.5, batch</td><td class="num">$118</td></tr>
+<tr><td>MAUDE narrative sampling for failure-mode clustering</td><td class="num">200,000</td><td>Haiku 4.5, batch</td><td class="num">$230</td></tr>
+<tr><td>De Novo classification orders</td><td class="num">~400</td><td>Sonnet 5, batch</td><td class="num">$20</td></tr>
+<tr><td><b>Single full pass</b></td><td class="num">&mdash;</td><td></td><td class="num"><b>$2,142</b></td></tr>
+<tr><td><b>Budgeted &mdash; 6&ndash;8 re-runs as the schema evolves</b></td><td class="num">&mdash;</td><td></td><td class="num"><b>$18,000</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>The counter-intuitive result.</strong> Extracting the entire historical FDA summary corpus costs roughly $2,100 in inference. The budget carries $18,000 because the extraction schema will change several times during the build &mdash; the re-runs, not the run, are the cost. Note also that MAUDE&rsquo;s 25.7 million records are handled statistically, not by sending each to a model; doing otherwise would add roughly $30,000 per pass for little analytical gain, and it is the one design drift that would break these economics.</p>
+</div>
+
+<h3>Per-report marginal cost</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Component</th><th class="num">Tokens</th><th class="num">Cost</th></tr></thead>
+<tbody>
+<tr><td>~15 upstream Sonnet 5 analyses (classification, predicate, standards, competitive)</td><td class="num">450K in / 45K out</td><td class="num">$1.35</td></tr>
+<tr><td>Opus 5 report synthesis &mdash; 50% of input served from cache</td><td class="num">150K in / 25K out</td><td class="num">$1.04</td></tr>
+<tr><td>Citation verification pass</td><td class="num">&mdash;</td><td class="num">$0.01</td></tr>
+<tr><td><b>Total per full cited report</b></td><td class="num">&mdash;</td><td class="num"><b>$2.40</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Gross margin at the entry tier</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Line</th><th class="num">Per customer / year</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Revenue &mdash; Practitioner tier</td><td class="num">$8,500</td><td>MRA-MKT-001 §9 pricing architecture</td></tr>
+<tr><td>AI inference</td><td class="num">$24</td><td>10-report fair-use allowance at $2.40, plus exploratory query headroom</td></tr>
+<tr><td>Cloud &amp; hosting, allocated</td><td class="num">$320</td><td>Production infrastructure at ~300 customers, divided per account</td></tr>
+<tr><td>Third-party services (identity, billing, email, PDF)</td><td class="num">$95</td><td>Per-seat pass-through</td></tr>
+<tr><td>Support &amp; customer success, allocated</td><td class="num">$450</td><td>Fractional, self-serve-first motion</td></tr>
+<tr><td><b>Gross margin</b></td><td class="num"><b>~89%</b></td><td>Rising with scale; AI is 0.3% of revenue</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note warn">
+<p><strong>Where this estimate could be wrong.</strong> The per-report figure assumes an average 510(k) summary extracts from about 12,000 input tokens and that half the synthesis context is cacheable. If summaries prove longer, or the agentic reasoning loop needs more turns than modelled, per-report cost could double to roughly $5 &mdash; still comfortably inside the under-$8 target in MRA-MKT-001 §13, and still under 1% of revenue. AI inference is not the risk in this business. People and regulatory data quality are, exactly as they would be for any system whose value proposition is being defensibly correct.</p>
+</div>
+</section>
+
+<section class="sec" id="s10">
+<h2>Consolidated budget</h2>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Category</th><th class="num">Phase 1</th><th class="num">Phase 2</th><th class="num">S&amp;M</th><th class="num">Total</th><th class="num">% of total</th></tr></thead>
+<tbody>
+<tr><td>Engineering labour &mdash; AI/ML</td><td class="num">$30,000</td><td class="num">$147,500</td><td class="num">&mdash;</td><td class="num">$177,500</td><td class="num">17.8%</td></tr>
+<tr><td>Engineering labour &mdash; data</td><td class="num">$14,250</td><td class="num">$76,000</td><td class="num">&mdash;</td><td class="num">$90,250</td><td class="num">9.0%</td></tr>
+<tr><td>Engineering labour &mdash; application &amp; platform</td><td class="num">&mdash;</td><td class="num">$118,500</td><td class="num">&mdash;</td><td class="num">$118,500</td><td class="num">11.9%</td></tr>
+<tr><td>QA &amp; evaluation engineering</td><td class="num">&mdash;</td><td class="num">$31,200</td><td class="num">&mdash;</td><td class="num">$31,200</td><td class="num">3.1%</td></tr>
+<tr><td>Architecture</td><td class="num">$25,200</td><td class="num">$14,700</td><td class="num">&mdash;</td><td class="num">$39,900</td><td class="num">4.0%</td></tr>
+<tr><td>Product &amp; programme</td><td class="num">$26,000</td><td class="num">$91,000</td><td class="num">&mdash;</td><td class="num">$117,000</td><td class="num">11.7%</td></tr>
+<tr><td>Design</td><td class="num">$12,000</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$12,000</td><td class="num">1.2%</td></tr>
+<tr><td>Regulatory domain expertise</td><td class="num">$17,280</td><td class="num">$28,800</td><td class="num">&mdash;</td><td class="num">$46,080</td><td class="num">4.6%</td></tr>
+<tr><td><b>Labour subtotal</b></td><td class="num"><b>$124,730</b></td><td class="num"><b>$507,700</b></td><td class="num">&mdash;</td><td class="num"><b>$632,430</b></td><td class="num"><b>63.2%</b></td></tr>
+<tr><td>Evaluation data &amp; expert panels</td><td class="num">$34,000</td><td class="num">$18,000</td><td class="num">&mdash;</td><td class="num">$52,000</td><td class="num">5.2%</td></tr>
+<tr><td>AI inference</td><td class="num">$8,000</td><td class="num">$27,000</td><td class="num">&mdash;</td><td class="num">$35,000</td><td class="num">3.5%</td></tr>
+<tr><td>Cloud infrastructure</td><td class="num">$3,000</td><td class="num">$26,000</td><td class="num">&mdash;</td><td class="num">$29,000</td><td class="num">2.9%</td></tr>
+<tr><td>Security &amp; compliance</td><td class="num">&mdash;</td><td class="num">$12,000</td><td class="num">&mdash;</td><td class="num">$12,000</td><td class="num">1.2%</td></tr>
+<tr><td>Legal</td><td class="num">$4,500</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$4,500</td><td class="num">0.5%</td></tr>
+<tr><td>Services, licences &amp; tooling</td><td class="num">$2,500</td><td class="num">$12,000</td><td class="num">&mdash;</td><td class="num">$14,500</td><td class="num">1.5%</td></tr>
+<tr><td><b>Non-labour subtotal</b></td><td class="num"><b>$52,000</b></td><td class="num"><b>$95,000</b></td><td class="num">&mdash;</td><td class="num"><b>$147,000</b></td><td class="num"><b>14.7%</b></td></tr>
+<tr><td>Sales &amp; marketing</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><b>$150,000</b></td><td class="num"><b>$150,000</b></td><td class="num"><b>15.0%</b></td></tr>
+<tr><td>Contingency</td><td class="num">$23,270</td><td class="num">$47,300</td><td class="num">&mdash;</td><td class="num">$70,570</td><td class="num">7.1%</td></tr>
+<tr><td><b>TOTAL</b></td><td class="num"><b>$200,000</b></td><td class="num"><b>$650,000</b></td><td class="num"><b>$150,000</b></td><td class="num"><b>$1,000,000</b></td><td class="num"><b>100%</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>How this compares to the fully-costed programme</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Scenario</th><th class="num">Total</th><th class="num">Duration to GA</th><th>What changes</th></tr></thead>
+<tbody>
+<tr><td><b>Pre-seed plan</b> <span class="chip c-ok">This document</span></td><td class="num">$1,000,000</td><td class="num">12 months</td><td>Hybrid delivery, founder-weighted compensation, 7.1 FTE peak, reduced expert panel, SOC 2 readiness only, single pen test, 7.1% contingency, GTM funded in-round</td></tr>
+<tr><td>Fully-costed onshore (MRA-PLN-001 r1.0)</td><td class="num">$5,012,000</td><td class="num">12 months</td><td>19.1 FTE peak, full evaluation programme, SOC 2 audit initiated, two pen tests, 12&ndash;15% contingency, GTM excluded</td></tr>
+<tr><td>Fully-costed hybrid (MRA-PLN-001 r1.0)</td><td class="num">$3,415,000</td><td class="num">13 months</td><td>Same scope, judgement roles onshore, 32% saving</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<p><strong>The honest reconciliation.</strong> This plan is not the $3.4M hybrid programme with the fat trimmed. It reaches the same <em>Release&nbsp;1 scope</em> with roughly a third of the FTE-months by doing three things differently: the founders take equity instead of market salary (a $585,000 difference over 18 months &mdash; see §12), the evaluation panel is 150 labelled summaries rather than 300 plus 100 blind pathway reviews, and general availability is defined as &ldquo;customers onboard without hand-holding&rdquo; rather than &ldquo;SOC&nbsp;2 audit complete&rdquo;. Each of those is a real reduction, each is named in §15 and §16, and none of them touches the two things the product cannot survive without: reproducibility and citation verification.</p>
+</div>
+</section>
+
+<section class="sec" id="s11">
+<h2>The lean team</h2>
+
+<p class="lead">Asked directly: what is the smallest team that can deliver this? Below the numbers on the right, the work does not fail &mdash; it serialises, and the schedule extends faster than the saving accumulates. The month-6 baseline is what makes the floor a floor.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Function</th><th class="num">This plan</th><th class="num">Fully funded</th><th>Why the number is what it is</th></tr></thead>
+<tbody>
+<tr><td><b>AI/ML engineering</b></td><td class="num">2</td><td class="num">4</td><td>One lead plus one engineer. Three tracks must run &mdash; extraction, retrieval and ranking, reasoning and report chain. At two people they run <em>sequentially within the month</em>, which is exactly why the baseline is scoped to the four flows it is scoped to. A third engineer is the first Series A hire.</td></tr>
+<tr><td><b>Data engineering</b></td><td class="num">1</td><td class="num">3</td><td>Twenty sources across three tiers, four with no API, plus entity resolution across 333,804 registration records. One senior can carry the Tier&nbsp;1 connector set to the baseline <em>only because</em> Tier 2 sources (UDI, MAUDE) are deferred to GA. That deferral is what makes one work.</td></tr>
+<tr><td><b>Backend / full-stack</b></td><td class="num">1</td><td class="num">2</td><td>API, workspaces, RBAC, audit, billing, export. One senior carries it because the AI engineers own their own service surfaces.</td></tr>
+<tr><td><b>Frontend</b></td><td class="num">1</td><td class="num">2</td><td>Evidence-first UI at WCAG 2.1 AA across two themes is more front-end work than a typical B2B application. Five months is tight; the design system from Phase 1 is what makes it possible.</td></tr>
+<tr><td><b>QA / evaluation</b></td><td class="num">0.6</td><td class="num">3</td><td>Not conventional QA: 100% citation groundedness is a hard release gate, so the function spans test automation and ML evaluation engineering. At 0.6 FTE the evaluation harness is built once and run automatically; there is no manual regression capacity, which is a real and accepted limitation.</td></tr>
+<tr><td><b>DevOps / platform</b></td><td class="num">0.25</td><td class="num">1</td><td>Fractional works only because deployment is single-region, single-tenant-per-schema and IaC from day one. It stops working the moment EU data residency arrives &mdash; which is why that is a Series A item.</td></tr>
+<tr><td><b>Architecture</b></td><td class="num">0.6 → 0.15</td><td class="num">1 → 0.6</td><td>Heavy in Phase 1, continuity only afterwards. The ADR discipline in WS 1.3 exists so the design survives the architect leaving.</td></tr>
+<tr><td><b>Product &amp; programme</b></td><td class="num">1</td><td class="num">2</td><td>One founder carries product, programme, the design-partner relationship and founder-led sales. This is the role most at risk of overload, and the growth hire at month 6 exists partly to relieve it.</td></tr>
+<tr><td><b>RA domain expert</b></td><td class="num">0.15 → 0.10</td><td class="num">0.5</td><td>The accuracy targets are unreachable without embedded regulatory judgement. Fractional is survivable; zero is not. <span class="chip c-must">Do not cut</span></td></tr>
+<tr><td><b>UX design</b></td><td class="num">0.5 → 0</td><td class="num">0.5</td><td>Contract, Phase 1 only. The design system is the deliverable; the frontend engineer extends it thereafter.</td></tr>
+<tr><td><b>Growth &amp; content</b></td><td class="num">0.5</td><td class="num">1 + rep</td><td>From month 6. No sales rep in the 18-month plan; the first rep is a Series A hire once the motion is proven repeatable.</td></tr>
+<tr><td><b>Peak total</b></td><td class="num"><b>7.1 FTE</b></td><td class="num">19.1 FTE</td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note crit">
+<p><strong>The false economy to avoid, restated for a pre-seed budget.</strong> The two roles that look most cuttable are the RA domain expert and the QA/evaluation function. Together they are 7.7% of this budget &mdash; $77,280. The accuracy thresholds in MRA-REQ-001 §15 (90% product-code top-3, 95% pathway agreement, 100% citation groundedness) are release gates, and without embedded regulatory judgement and dedicated evaluation engineering they cannot be measured, let alone passed. Cutting them saves less than 8% and produces a product the target buyer will not trust, which MRA-MKT-001 §14 identifies as the critical commercial risk. They are already fractional. They do not go lower.</p>
+</div>
+</section>
+
+<section class="sec" id="s12">
+<h2>Delivery model</h2>
+
+<p>At $5M the delivery model is a 32% cost lever. At $1M it is the difference between the plan existing and not existing.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Model</th><th class="num">Cost for this scope</th><th>Feasible on $1M?</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>Full onshore</td><td class="num">$5,012,000</td><td>No</td><td>The MRA-PLN-001 r1.0 base case. The right answer if the money exists. It does not, at pre-seed.</td></tr>
+<tr><td><b>Hybrid</b> <span class="chip c-ok">This plan</span></td><td class="num">$1,000,000</td><td>Yes</td><td>Judgement-heavy roles onshore &mdash; product, regulatory, AI/ML lead, architecture. Specifiable roles nearshore &mdash; data, backend, frontend, QA automation. Costs roughly four weeks to timezone overlap and onboarding, already inside the schedule.</td></tr>
+<tr><td>Maximum offshore</td><td class="num">~$820,000</td><td>Yes, but</td><td>Saves ~$180K and costs 8&ndash;10 weeks. On a problem where domain nuance decides correctness, moving the AI/ML lead offshore is the one saving that reliably costs more than it saves. Not recommended.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The compensation assumption, stated explicitly</h3>
+<div class="note warn">
+<p>This budget costs the technical co-founder at <b>$7,500/month</b> against a $28,000 market rate for an AI/ML architect, and the product and regulatory lead at <b>$6,500/month</b> against $18,500. Over the 18 months both are engaged, that is a <b>$585,000 difference</b> carried in equity rather than cash &mdash; 58% of the round.</p>
+<p>If either role must be paid at market, the round needs to be approximately <b>$1.6M</b>, or the schedule extends by roughly five months and the month-6 baseline is lost. This is the single largest assumption in the document and it should be tested before the round closes, not after. It is also the reason the cap table matters more than usual here: the plan is partly financed by the founders.</p>
+</div>
+
+<h3>What stays onshore, and why</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Role</th><th>Location</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>Product &amp; regulatory lead</td><td>Onshore</td><td>Owns the design-partner relationship, runs founder-led sales, and makes the accuracy-versus-scope trade-off weekly. Cannot be remote from the customer.</td></tr>
+<tr><td>AI/ML lead</td><td>Onshore</td><td>Every correctness decision in this product is a domain decision wearing an engineering costume. This is the role where a timezone gap costs a week per question.</td></tr>
+<tr><td>RA domain expert</td><td>Onshore</td><td>US regulatory judgement is the input; there is no nearshore substitute.</td></tr>
+<tr><td>Solution &amp; data architect</td><td>Onshore, contract</td><td>Phase 1 only. The ADRs are the handover artefact.</td></tr>
+<tr><td>Data, backend, frontend, QA, DevOps</td><td>Nearshore</td><td>Specifiable work against a baselined architecture and an OpenAPI contract. This is precisely what Phase 1 exists to produce.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s13">
+<h2>Cash flow and the 18-month runway</h2>
+
+<p class="lead">The round is sized so the plan does not depend on revenue. Every dollar collected extends runway past month&nbsp;18 rather than being required to reach it.</p>
+
+<h3>Spend by quarter</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Quarter</th><th>Months</th><th>Activity</th><th class="num">Phase 1</th><th class="num">Phase 2</th><th class="num">S&amp;M</th><th class="num">Spend</th><th class="num">Cumulative</th></tr></thead>
+<tbody>
+<tr><td><b>Q1</b></td><td>1&ndash;3</td><td>Architecture, data-source contracts, extraction proving, AI design, mock build begins</td><td class="num">$105,000</td><td class="num">$10,000</td><td class="num">$3,000</td><td class="num">$118,000</td><td class="num">$118,000</td></tr>
+<tr><td><b>Q2</b></td><td>4&ndash;6</td><td>Mock validated, design partners signed, data platform live, <b>baseline shipped at month 6</b></td><td class="num">$95,000</td><td class="num">$85,000</td><td class="num">$6,000</td><td class="num">$186,000</td><td class="num">$304,000</td></tr>
+<tr><td><b>Q3</b></td><td>7&ndash;9</td><td>Release 1 completion modules; pilots convert to list price; SEO surface live; first revenue</td><td class="num">&mdash;</td><td class="num">$180,000</td><td class="num">$35,000</td><td class="num">$215,000</td><td class="num">$519,000</td></tr>
+<tr><td><b>Q4</b></td><td>10&ndash;12</td><td>Hardening, security, compliance, <b>general availability at month 12</b>, first Accuracy Report</td><td class="num">&mdash;</td><td class="num">$161,000</td><td class="num">$35,000</td><td class="num">$196,000</td><td class="num">$715,000</td></tr>
+<tr><td><b>Q5</b></td><td>13&ndash;15</td><td>Change assessment and AI/ML modules; commercial scale-up; EU groundwork begins</td><td class="num">&mdash;</td><td class="num">$114,000</td><td class="num">$36,000</td><td class="num">$150,000</td><td class="num">$865,000</td></tr>
+<tr><td><b>Q6</b></td><td>16&ndash;18</td><td>eSTAR drafting, EU ingestion proven, Series A process</td><td class="num">&mdash;</td><td class="num">$100,000</td><td class="num">$35,000</td><td class="num">$135,000</td><td class="num">$1,000,000</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Peak monthly burn is approximately <b>$72,000</b>, in months 7&ndash;9. Average burn across the 18 months is <b>$55,600</b>. Exit burn at month 18 is approximately <b>$45,000</b>, because the delivery pod steps down after general availability while the commercial spend holds.</p>
+
+<h3>Runway with revenue &mdash; base case</h3>
+<p>Revenue is modelled on annual prepaid contracts, which is standard in this segment and materially helps cash. Customer counts and blended ACV follow the base case in MRA-MKT-001 §11.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Quarter</th><th class="num">New customers</th><th class="num">Blended ACV</th><th class="num">Cash collected</th><th class="num">Spend</th><th class="num">Net</th><th class="num">Cash at end</th></tr></thead>
+<tbody>
+<tr><td>Close</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$1,000,000</td></tr>
+<tr><td>Q1 &middot; M1&ndash;3</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$0</td><td class="num">$118,000</td><td class="num">&minus;$118,000</td><td class="num">$882,000</td></tr>
+<tr><td>Q2 &middot; M4&ndash;6</td><td class="num">6 pilots</td><td class="num">$5,000</td><td class="num">$30,000</td><td class="num">$186,000</td><td class="num">&minus;$156,000</td><td class="num">$726,000</td></tr>
+<tr><td>Q3 &middot; M7&ndash;9</td><td class="num">5</td><td class="num">$12,000</td><td class="num">$60,000</td><td class="num">$215,000</td><td class="num">&minus;$155,000</td><td class="num">$571,000</td></tr>
+<tr><td>Q4 &middot; M10&ndash;12</td><td class="num">8</td><td class="num">$14,000</td><td class="num">$112,000</td><td class="num">$196,000</td><td class="num">&minus;$84,000</td><td class="num">$487,000</td></tr>
+<tr><td>Q5 &middot; M13&ndash;15</td><td class="num">10</td><td class="num">$15,000</td><td class="num">$150,000</td><td class="num">$150,000</td><td class="num">$0</td><td class="num">$487,000</td></tr>
+<tr><td>Q6 &middot; M16&ndash;18</td><td class="num">13</td><td class="num">$16,000</td><td class="num">$208,000</td><td class="num">$135,000</td><td class="num">+$73,000</td><td class="num"><b>$560,000</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><span class="v">18 mo</span><span class="l">Runway on the round alone, assuming zero revenue</span></div>
+  <div class="kpi"><span class="v">~30 mo</span><span class="l">Runway in the base case, with $560K collected and the exit burn at $45K/mo</span></div>
+  <div class="kpi"><span class="v">Q6</span><span class="l">First cash-flow-positive quarter in the base case</span></div>
+  <div class="kpi"><span class="v">$522K</span><span class="l">Exit ARR at month 18 &mdash; ~36 net customers at $14,500 blended</span></div>
+</div>
+
+<h3>Downside case &mdash; half the revenue</h3>
+<p>If customer acquisition runs at half the base case &mdash; 18 net customers and $260K ARR at month&nbsp;18 &mdash; cash collected falls to roughly $280,000 and the cash position at month&nbsp;18 is approximately <b>$280,000</b>, or six further months at the exit burn. The plan still reaches month 24 without a bridge. That resilience is the entire reason the round is sized at $1M rather than $700K, and the reason the go-to-market line is funded from the start rather than added later.</p>
+
+<h3>Post-GA run rate, for reference</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Component</th><th class="num">Annual</th><th>Basis</th></tr></thead>
+<tbody>
+<tr><td>Engineering, product &amp; growth team</td><td class="num">$540,000</td><td>~5.5 FTE hybrid, steady state after GA</td></tr>
+<tr><td>Cloud infrastructure</td><td class="num">$96,000</td><td>Production at ~300 customers</td></tr>
+<tr><td>AI inference</td><td class="num">$18,000</td><td>~300 customers at modelled per-report cost plus exploratory usage</td></tr>
+<tr><td>Compliance &mdash; SOC 2 audit and surveillance</td><td class="num">$55,000</td><td>Audit initiated post-GA; ISO/IEC 42001 targeted at month 24</td></tr>
+<tr><td>Services, licences &amp; tooling</td><td class="num">$36,000</td><td></td></tr>
+<tr><td>Sales &amp; marketing</td><td class="num">$120,000</td><td>Founder-led plus growth lead; excludes the first sales rep</td></tr>
+<tr><td><b>Total run rate</b></td><td class="num"><b>$865,000</b></td><td>Against $522K ARR at month 18 &mdash; the gap the Series A closes</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s14">
+<h2>Market expansion after the baseline</h2>
+
+<p class="lead">The baseline is US devices and IVDs, and nothing else. Scope then grows outward in phases, cheapest-and-nearest first, each phase gated on the commercial health of the one before it. The canonical data model is jurisdiction-parameterised from day one (MRA-REQ-001 §7), so each new market is an ingestion and mapping exercise rather than a re-platform &mdash; that is the property that makes this ladder affordable at all.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Market phase</th><th>Window</th><th>Jurisdictions</th><th>What it adds</th><th>Funded by</th></tr></thead>
+<tbody>
+<tr><td><b>M0 &middot; Baseline</b> <span class="chip c-ok">Committed</span></td><td class="num">M0&ndash;6</td><td><b>United States</b> &mdash; devices &amp; IVDs</td><td>Classification, pathway, predicate, standards, cited report, snapshot reproducibility, consultant workspaces</td><td>Pre-seed</td></tr>
+<tr><td><b>M1 &middot; US depth</b> <span class="chip c-ok">Committed</span></td><td class="num">M7&ndash;12</td><td><b>United States</b> &mdash; full Release 1</td><td>Gap audit, cost and timeline model, post-market intelligence, alerting, API + MCP, billing, GA</td><td>Pre-seed</td></tr>
+<tr><td><b>M2 &middot; US adjacency</b></td><td class="num">M13&ndash;16</td><td><b>United States</b> &mdash; new modules</td><td>510(k) change assessment, AI/ML and SaMD PCCP support, eSTAR-structured section drafting, non-US-applicant onboarding (52% of clearances come from non-US filers who need US determination and have no domestic tool)</td><td>Pre-seed</td></tr>
+<tr><td><b>M3 &middot; Europe</b></td><td class="num">M15&ndash;22</td><td><b>EU</b> &mdash; MDR / IVDR</td><td>EUDAMED ingestion, Notified Body and certificate data, EU classification rules, GSPR mapping, EU data residency option</td><td>Pre-seed tail → Series A</td></tr>
+<tr><td><b>M4 &middot; Anglosphere</b></td><td class="num">M21&ndash;30</td><td><b>UK</b> (MHRA / UKCA), <b>Canada</b> (Health Canada MDL), <b>Australia</b> (TGA / ARTG)</td><td>Reliance and MDSAP-aligned pathways, English-language corpora, low incremental data cost, high overlap with the existing customer base</td><td>Series A</td></tr>
+<tr><td><b>M5 &middot; North Asia</b></td><td class="num">M29&ndash;40</td><td><b>Japan</b> (PMDA / JMDN), <b>China</b> (NMPA)</td><td>Large markets, but require language handling, local representation and lower-quality public data. Highest cost per market on this ladder.</td><td>Series A</td></tr>
+<tr><td><b>M6 &middot; Emerging</b></td><td class="num">M36&ndash;48</td><td><b>India</b> (CDSCO), <b>LatAm</b> (ANVISA, COFEPRIS)</td><td>Fast-growing and registration-led. Best served through an in-country-representative partner channel rather than built alone.</td><td>Series A / B</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Why this order and not another</h3>
+<div class="reqs">
+  <div class="req"><span class="id">E-1</span><span class="body"><b>US depth before any new geography.</b> The same buyer paying more is cheaper than a new buyer paying the same. Release 2 modules roughly double per-account value against the identical customer (MRA-MKT-001 §11), and net revenue retention is the metric a Series A is priced on. Opening a second jurisdiction before US NRR clears 110% would be buying breadth with money that should buy depth.</span><span class="tags"><span class="chip c-p1">Rule</span></span></div>
+  <div class="req"><span class="id">E-2</span><span class="body"><b>EU first among geographies.</b> It is the largest non-US market, EUDAMED is public and increasingly machine-readable, the data model already carries a jurisdiction on every submission, and a large share of existing US customers also sell into the EU &mdash; so it lands as an upsell into a warm base rather than a cold market entry. It is also the only geography already committed in MRA-REQ-001 §4.</span><span class="tags"><span class="chip c-p1">Rule</span></span></div>
+  <div class="req"><span class="id">E-3</span><span class="body"><b>UK, Canada and Australia before Japan and China.</b> English-language corpora, reliance and MDSAP-aligned pathways, and heavy overlap with customers already on the platform. The incremental data cost per market is a fraction of North Asia&rsquo;s, and each one is a genuine expansion SKU for existing accounts.</span><span class="tags"><span class="chip c-p2">Rule</span></span></div>
+  <div class="req"><span class="id">E-4</span><span class="body"><b>Non-US applicants are a segment, not a geography.</b> 52% of US clearances come from non-US applicants &mdash; China alone is 18%, South Korea 6%. These firms need <em>US</em> pathway determination and have no domestic tool for it. Serving them requires no new data at all, only localisation and a distribution partner, which is why it sits in M2 at month 13 rather than waiting behind EU.</span><span class="tags"><span class="chip c-p1">Cheap win</span></span></div>
+  <div class="req"><span class="id">E-5</span><span class="body"><b>India and LatAm through partners.</b> Registration-led markets where the value is market access execution rather than pre-market determination, and where an in-country representative already owns the relationship. Building these alone is the expensive way to learn that Pure Global&rsquo;s flat-fee model already serves them.</span><span class="tags"><span class="chip c-p3">Partner</span></span></div>
+</div>
+
+<div class="note crit">
+<p><strong>The expansion gate.</strong> No second jurisdiction opens until, on the US business: net revenue retention is ≥ 110%, annual logo churn is &lt; 12%, and at least 30% of pipeline is consultant-sourced. A vertical product that expands geographically before it has retained its first market is not expanding &mdash; it is running from a retention problem, and the second market inherits it.</p>
+</div>
+</section>
+
+<section class="sec" id="s15">
+<h2>Assumptions and exclusions</h2>
+
+<h3>Assumptions this budget rests on</h3>
+<ul class="bul">
+  <li><b>Founder compensation is below market.</b> $7,500/month for the technical co-founder and $6,500/month for the product and regulatory lead, with the ~$585,000 difference carried in equity over 18 months. This is the largest single assumption in the plan (§12).</li>
+  <li><b>Hybrid delivery is available and works.</b> Four to five senior nearshore engineers with 4+ hours of daily overlap, recruited or contracted in month&nbsp;3. A four-week onboarding cost is inside the schedule; a twelve-week one is not.</li>
+  <li><b>Scope is the baseline plus Release&nbsp;1 as defined in MRA-REQ-001 &mdash; US medical devices and IVDs.</b> Every geography beyond the US is out of this budget except EU groundwork in months 15&ndash;18 (§14).</li>
+  <li><b>All Release&nbsp;1 data sources remain free public US Government data.</b> Only GMDN/EMDN nomenclature would carry a licence cost, and it is avoided in the baseline.</li>
+  <li><b>Regulatory expert availability, not cost, is the binding constraint.</b> The panel is budgeted at $52,000 across both phases; whether named people will commit hours is a separate question and it must be answered in month&nbsp;1.</li>
+  <li><b>Single-region US cloud deployment.</b> EU data residency is a Series A item, not a pre-seed one.</li>
+  <li><b>SOC 2 Type II is readiness-only within the 18 months.</b> Controls designed and implemented, evidence collection running, audit initiated after GA. Certification requires an observation period beyond this programme.</li>
+  <li><b>Model pricing is current as of August 2026 and assumed stable.</b> Historically this pricing has fallen rather than risen, so it is a conservative assumption; and at 3.5% of budget, even a doubling is absorbed by contingency.</li>
+  <li><b>Revenue is not required to reach month 18.</b> The base case collects $560,000; the plan is solvent to month&nbsp;18 at zero revenue.</li>
+</ul>
+
+<h3>Explicitly excluded</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Excluded</th><th>Where it belongs</th><th class="num">Indicative</th></tr></thead>
+<tbody>
+<tr><td>SOC 2 Type II audit and certification</td><td>Post-GA, funded from revenue or Series A</td><td class="num">$45K&ndash;65K</td></tr>
+<tr><td>ISO/IEC 42001 certification</td><td>Month 24 &mdash; Greenlight Guru already holds it and says so in market</td><td class="num">$55K&ndash;80K</td></tr>
+<tr><td>First inside-sales hire</td><td>Series A, once the motion is proven repeatable</td><td class="num">$180K / yr loaded</td></tr>
+<tr><td>Geographies beyond the US and EU groundwork</td><td>Series A &mdash; §14 phases M4&ndash;M6</td><td class="num">$1.2M&ndash;2.0M</td></tr>
+<tr><td>eQMS connectors and embed partnerships</td><td>Series A &mdash; commercial instrument, not an integration project</td><td class="num">$150K&ndash;300K</td></tr>
+<tr><td>Executive compensation above the stated founder rates, and corporate G&amp;A</td><td>Series A</td><td class="num">&mdash;</td></tr>
+<tr><td>Office space, facilities and general IT</td><td>Remote-first; not budgeted</td><td class="num">&mdash;</td></tr>
+<tr><td>Licensed nomenclature (GMDN / EMDN)</td><td>Only if EU expansion requires it</td><td class="num">$15K / yr</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s16">
+<h2>Risks and scope flexibility</h2>
+
+<p class="lead">At $1M the contingency is 7.1%, against 12&ndash;15% on a normally-provisioned programme. That difference is not absorbed by optimism; it is absorbed by a pre-agreed cut list. Every risk below names what gets dropped rather than what gets paid for.</p>
+
+<div class="tw wide">
+<table>
+<thead><tr><th>Risk</th><th>Sev.</th><th class="num">Exposure</th><th>Mitigation &mdash; and what is cut if it lands</th></tr></thead>
+<tbody>
+<tr><td><b>PDF extraction quality below expectation.</b> Older 510(k) summaries are scanned, inconsistent and sometimes near-illegible. The entire differentiation rests on structuring them.</td><td><span class="chip c-must">Critical</span></td><td class="num">4&ndash;6 wk</td><td>Proven in Phase 1 WS 1.6 on ~2,000 real documents by week&nbsp;12, before the build commits. <b>If it lands:</b> restrict structured extraction to post-2010 summaries (roughly 60% of the corpus and ~85% of what users actually cite), degrade gracefully to structured-only analysis for older records, and state the limitation in the product. The baseline date holds.</td></tr>
+<tr><td><b>Expert availability, not cost, gates the schedule.</b> The evaluation sets and review cycles depend on scarce regulatory professionals whose day job is billable.</td><td><span class="chip c-must">Critical</span></td><td class="num">4&ndash;8 wk</td><td>Contract the panel in month&nbsp;1 with committed hours, not best efforts. Budgeted at $52,000. <b>If it lands:</b> reduce the blind pathway review from 50 profiles to 25 and publish the smaller sample size openly rather than delaying the release.</td></tr>
+<tr><td><b>Founder compensation assumption fails.</b> A founding role must be paid at or near market.</td><td><span class="chip c-must">Critical</span></td><td class="num">$300K+</td><td>Test before the round closes (§12). <b>If it lands:</b> the round must be ~$1.3&ndash;1.6M, or the nearshore pod drops from five to three and the baseline moves from month&nbsp;6 to month&nbsp;9. There is no third option.</td></tr>
+<tr><td><b>Nearshore recruitment slips.</b> Four to five senior engineers must be in seat by month&nbsp;4.</td><td><span class="chip c-should">High</span></td><td class="num">3&ndash;6 wk</td><td>Begin sourcing in month&nbsp;1, in parallel with Phase 1 &mdash; not at the Phase&nbsp;2 boundary. Contract through an established nearshore partner rather than direct-hiring ten individuals. <b>If it lands:</b> defer the frontend hire and ship the baseline with a reduced UI surface.</td></tr>
+<tr><td><b>Entity resolution proves harder than modelled.</b> 333,804 registration records with inconsistent company naming.</td><td><span class="chip c-should">High</span></td><td class="num">$30K&ndash;60K</td><td>Dedicated workstream in 2A.4 with human-curated alias tables. <b>If it lands:</b> surface ambiguity to the user rather than resolving it silently &mdash; which converts a correctness problem into a UX one &mdash; and defer supplier qualification (2C.5) past GA.</td></tr>
+<tr><td><b>Accuracy thresholds not met at first attempt.</b> 90% product-code top-3 and 95% pathway agreement are demanding.</td><td><span class="chip c-should">High</span></td><td class="num">4&ndash;6 wk</td><td>Evaluation harness built early in 2B.9 so the gap is visible in month&nbsp;5, not month&nbsp;11. <b>If it lands:</b> ship the baseline to design partners with published, lower measured accuracy and a mandatory review banner, rather than delaying. A professional will accept a stated 84% far more readily than an unstated one.</td></tr>
+<tr><td><b>Scope creep from design partners.</b> Partners will ask for their own edge cases, and at pre-seed the temptation to say yes is enormous.</td><td><span class="chip c-should">High</span></td><td class="num">$100K&ndash;200K</td><td>Requirements baselined at week&nbsp;20 with formal change control. The product lead owns the boundary. <b>If it lands:</b> it is the fastest route to missing month&nbsp;6, and the only mitigation is refusal.</td></tr>
+<tr><td><b>Project-shaped churn.</b> A team files and leaves; the tool has no reason to be opened for eighteen months.</td><td><span class="chip c-should">High</span></td><td class="num">Y2 revenue</td><td>Watchlist and alerting (2C.6) and change assessment (M13&ndash;14) are the retention mechanism and are treated as revenue requirements, not features. Cohort retention is tracked from the first pilot, not from GA.</td></tr>
+<tr><td><b>FDA source changes mid-build.</b> Endpoints and formats change without notice.</td><td><span class="chip c-could">Medium</span></td><td class="num">$15K&ndash;30K</td><td>Schema assertions and halt-on-drift funded within 2A.8. The raw archive means recovery is reprocessing, not re-fetching &mdash; and a competitor without a raw archive degrades silently when this happens, which is a demo, not just an engineering property.</td></tr>
+<tr><td><b>Key-person dependency on the AI/ML lead.</b></td><td><span class="chip c-could">Medium</span></td><td class="num">8&ndash;12 wk</td><td>ADRs from Phase 1 exist specifically so the design survives turnover. At this team size the risk cannot be engineered away, only documented against. It is a real pre-seed risk and it should be priced as one.</td></tr>
+<tr><td><b>Cloud cost overrun at corpus scale.</b> Vector index size and Postgres sizing are the uncertain items.</td><td><span class="chip c-could">Medium</span></td><td class="num">$10K&ndash;25K</td><td>Infrastructure cost model produced in Phase 1 WS 1.3 against measured corpus volumes rather than estimates.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The cut list, in order</h3>
+<p>If the programme is running hot at week&nbsp;20, these are dropped in this sequence. The list exists so the decision is made once, calmly, in advance &mdash; rather than five times, badly, under pressure.</p>
+
+<div class="reqs">
+  <div class="req"><span class="id">CUT-1</span><span class="body"><b>IVDs move out of the baseline.</b> Ship non-IVD devices at month&nbsp;6, add IVDs at month&nbsp;8. Saves roughly four weeks. This is the cheapest cut available and it costs the least commercially, because the beachhead segments in MRA-MKT-001 §12 are device-led.</span><span class="tags"><span class="chip c-ok">First</span></span></div>
+  <div class="req"><span class="id">CUT-2</span><span class="body"><b>UDI attribute comparison and supplier qualification move past GA.</b> Both are Tier&nbsp;2 data and neither is load-bearing for the pathway determination that sells the product.</span><span class="tags"><span class="chip c-ok">Second</span></span></div>
+  <div class="req"><span class="id">CUT-3</span><span class="body"><b>Structured extraction restricted to post-2010 summaries.</b> Roughly 60% of the corpus, ~85% of what users cite in practice. Older records remain searchable at the structured-metadata level with the limitation stated on screen.</span><span class="tags"><span class="chip c-should">Third</span></span></div>
+  <div class="req"><span class="id">CUT-4</span><span class="body"><b>SOC 2 readiness tooling deferred to month 14.</b> Controls are still designed from day one; only the compliance-automation platform and evidence collection slip. Costs nothing in the SMB and consultant segments; costs deals in the mid-market, which is why it is fourth and not first.</span><span class="tags"><span class="chip c-should">Fourth</span></span></div>
+  <div class="req"><span class="id">CUT-5</span><span class="body"><b>EU groundwork drops out of the 18 months entirely.</b> It moves wholly into the Series A. This is the last cut before the baseline itself is touched, and it is preferable to every alternative below it.</span><span class="tags"><span class="chip c-should">Fifth</span></span></div>
+  <div class="req"><span class="id">NEVER</span><span class="body"><b>What is never cut.</b> Snapshot reproducibility (2A.6), citation verification as a hard gate (2B.6), the RA domain expert, and the evaluation harness. These four are the product&rsquo;s only defensible ground &mdash; MRA-MKT-001 §7 identifies them as the three rows in the competitive matrix where MedexRegAI stands alone. Cutting any of them saves money and destroys the company.</span><span class="tags"><span class="chip c-must">Protected</span></span></div>
+</div>
+</section>
+
+<section class="sec" id="s17">
+<h2>Gates and decision points</h2>
+
+<p>The r1.0 plan used a single funding gate to convert a $5M bet into a $983K option. That instrument is not available here: the money is raised up front. These gates therefore control <em>scope</em>, and each one has a named consequence rather than a review meeting.</p>
+
+<div class="reqs">
+  <div class="req"><span class="id">G-1</span><span class="body"><b>Week 6 &mdash; architecture baselined.</b> System architecture document, canonical data model and ADR set approved, with an infrastructure cost model built on measured corpus volumes. <em>If not met:</em> the nearshore pod start slips a fortnight rather than onboarding onto an unstable design.</span><span class="tags"><span class="chip c-p1">Scope</span></span></div>
+  <div class="req"><span class="id">G-2</span><span class="body"><b>Week 10 &mdash; every data source proven, not assumed.</b> All ~20 sources profiled with a working sample extraction, including the four with no clean API. <em>If not met:</em> any source that cannot be extracted reliably is re-scoped out of the baseline now, not discovered in month&nbsp;5.</span><span class="tags"><span class="chip c-p1">Scope</span></span></div>
+  <div class="req"><span class="id">G-3</span><span class="body"><b>Week 12 &mdash; extraction quality demonstrated on real documents.</b> Measured field-level accuracy on ~2,000 summaries spanning decades and scan quality. This is the technical risk most likely to invalidate the plan and it is retired before the build depends on it. <em>If not met:</em> CUT-3 executes immediately.</span><span class="tags"><span class="chip c-must">Critical</span></span></div>
+  <div class="req"><span class="id">G-4</span><span class="body"><b>Week 14 &mdash; expert validation passed.</b> The RA panel confirms the mock&rsquo;s outputs are recognisable, defensible and useful to a regulatory professional. A panel that says &ldquo;interesting, but I would not rely on it&rdquo; is a stop, not a caveat. <em>If not met:</em> the design cycle repeats before any Stage 2B work begins &mdash; the one place in this plan where schedule yields to evidence.</span><span class="tags"><span class="chip c-must">Critical</span></span></div>
+  <div class="req"><span class="id">G-5</span><span class="body"><b>Week 20 &mdash; design partners signed.</b> At least six under agreement, mixed consultants and manufacturers per the MRA-MKT-001 beachhead. <em>If not met:</em> fewer than four is a demand signal that no amount of engineering fixes, and it triggers a positioning review before GA spend is committed.</span><span class="tags"><span class="chip c-must">Critical</span></span></div>
+  <div class="req"><span class="id">G-6</span><span class="body"><b>Week 26 &mdash; the baseline gate.</b> Accuracy thresholds met, snapshot reproducibility demonstrated end to end, and at least four design partners running real devices through the product. <em>If not met:</em> Stage 2C does not start. The team fixes the baseline rather than adding to it.</span><span class="tags"><span class="chip c-must">Baseline</span></span></div>
+  <div class="req"><span class="id">G-7</span><span class="body"><b>Week 48 &mdash; the GA gate.</b> Customers onboard without hand-holding, support load per customer inside target, penetration test remediated, first Accuracy Report published. <em>If not met:</em> GA slips and the commercial spend holds at its month-9 level rather than scaling into a product that is not ready to be sold self-serve.</span><span class="tags"><span class="chip c-p1">GA</span></span></div>
+  <div class="req"><span class="id">G-8</span><span class="body"><b>Month 12 &mdash; the expansion gate.</b> US net revenue retention ≥ 110%, annual logo churn &lt; 12%, consultant-sourced pipeline ≥ 30%. <em>If not met:</em> no second jurisdiction opens. The months 13&ndash;18 engineering budget goes into US retention instead, and the Series A story becomes depth rather than breadth.</span><span class="tags"><span class="chip c-must">Expansion</span></span></div>
+</div>
+
+<h3>Decisions needed before month 1</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>#</th><th>Decision</th><th>Recommendation</th><th>Consequence if deferred</th></tr></thead>
+<tbody>
+<tr><td class="k">D1</td><td>Confirm founder compensation at $7,500 / $6,500 with the balance in equity</td><td>Confirm, in writing, before the round closes</td><td>The single largest budget assumption. If it fails at month&nbsp;3 the plan is unrecoverable inside $1M.</td></tr>
+<tr><td class="k">D2</td><td>Name and contract the RA expert panel with committed hours</td><td>Month 1, contracted &mdash; not best-efforts</td><td>The most likely cause of schedule slip. Everything downstream of accuracy stalls.</td></tr>
+<tr><td class="k">D3</td><td>Select the nearshore delivery partner or begin direct sourcing</td><td>Month 1, in parallel with Phase 1</td><td>Four to five senior engineers cannot be in seat by month&nbsp;4 if sourcing starts at month&nbsp;3.</td></tr>
+<tr><td class="k">D4</td><td>Confirm the baseline scope &mdash; devices and IVDs, or devices only</td><td>Both, with CUT-1 pre-agreed as the release valve</td><td>The baseline definition drifts, and with it the month-6 date.</td></tr>
+<tr><td class="k">D5</td><td>Approve the MRA-MKT-001 §9 pricing architecture, in particular the $8,500 entry and the Consultancy tier</td><td>Approve now; metering design depends on it</td><td>Billing gets built against the wrong model and the first ten deals set the price by accident.</td></tr>
+<tr><td class="k">D6</td><td>Close the ten open questions in MRA-REQ-001 §17 and the six commercial decisions in MRA-MKT-001 §15</td><td>Scheduled for closure by week&nbsp;8 as WS 1.2</td><td>Requirements cannot be baselined at week&nbsp;20, and change control has nothing to control against.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="sec" id="s18">
+<h2>Recommendation</h2>
+
+<div class="note">
+<p><strong>Raise $1,000,000 and run this plan.</strong> $200,000 to design and validate, $650,000 to build and deploy, $150,000 to sell. A US baseline product in the hands of paying design partners at <b>month&nbsp;6</b>, general availability at <b>month&nbsp;12</b>, and approximately <b>$520,000 of ARR across ~36 customers at month&nbsp;18</b> &mdash; with the market expansion ladder in §14 gated on US retention rather than on ambition.</p>
+</div>
+
+<h3>Why this shape</h3>
+<div class="reqs">
+  <div class="req"><span class="id">R-1</span><span class="body"><b>The month-6 baseline is the whole plan.</b> Everything else is sequenced around it. It converts an 18-month runway into a 12-month selling window, it produces the reference customers that make the Series A a metrics conversation rather than a story one, and it forces the scope discipline that a pre-seed engineering team otherwise lacks.</span><span class="tags"><span class="chip c-ok">Core</span></span></div>
+  <div class="req"><span class="id">R-2</span><span class="body"><b>The riskiest technical assumption is tested in week 12 for $8,000.</b> If ~90,000 510(k) summaries cannot be structured at usable accuracy, the product is a search tool and the thesis changes. Knowing that at week&nbsp;12 rather than month&nbsp;9 is worth more than any amount of contingency.</span><span class="tags"><span class="chip c-ok">Core</span></span></div>
+  <div class="req"><span class="id">R-3</span><span class="body"><b>15% on go-to-market is not overhead, it is the Series A.</b> An investor at the next round will ask for net revenue retention, CAC payback and consultant-sourced pipeline. None of those metrics exists if the round funds only engineering. The $150,000 line is the cheapest de-risking in the document.</span><span class="tags"><span class="chip c-ok">Core</span></span></div>
+  <div class="req"><span class="id">R-4</span><span class="body"><b>Do not cut the two roles that look cuttable.</b> The RA domain expert and the QA/evaluation function are 7.7% of budget and are what the accuracy release gates depend on. They are already fractional. Cutting them saves $77,280 and produces a product the target buyer will not trust &mdash; the identified critical commercial risk in MRA-MKT-001 §14.</span><span class="tags"><span class="chip c-must">Protected</span></span></div>
+  <div class="req"><span class="id">R-5</span><span class="body"><b>Expand only after the US retains.</b> The temptation at month&nbsp;12 will be to announce a second jurisdiction, because it is a better slide than a retention number. Gate G-8 exists to make that decision on evidence. A vertical product that expands geographically before retaining its first market is running from a problem it will take with it.</span><span class="tags"><span class="chip c-must">Discipline</span></span></div>
+</div>
+
+<h3>What happens on close</h3>
+<div class="tw wide">
+<table>
+<thead><tr><th>Week</th><th>Action</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td class="k">0</td><td>Round closes; founder compensation and equity confirmed in writing (D1)</td><td>CEO</td></tr>
+<tr><td class="k">1</td><td>RA expert panel contracted with committed hours &mdash; the critical-path dependency (D2)</td><td>Product &amp; regulatory lead</td></tr>
+<tr><td class="k">1</td><td>Nearshore sourcing begins, in parallel with Phase 1 (D3)</td><td>CEO</td></tr>
+<tr><td class="k">1&ndash;2</td><td>Architecture and data-source workstreams start; cloud and tooling stood up</td><td>Solution architect</td></tr>
+<tr><td class="k">2</td><td>Extraction proving begins &mdash; the highest-leverage $8,000 in the plan</td><td>AI/ML lead</td></tr>
+<tr><td class="k">3</td><td>Open questions Q1&ndash;Q10 and commercial decisions C1&ndash;C6 scheduled for closure (D6)</td><td>Product &amp; regulatory lead</td></tr>
+<tr><td class="k">4</td><td>Design-partner outreach begins against the MRA-MKT-001 §12 beachhead</td><td>CEO</td></tr>
+<tr><td class="k">12</td><td>Extraction gate G-3 &mdash; the go / re-scope call</td><td>AI/ML lead</td></tr>
+<tr><td class="k">26</td><td><b>Baseline gate G-6 &mdash; the product ships</b></td><td>All</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>MRA-PLN-001 &middot; Rev 2.0 &middot; Companion to MRA-REQ-001 r0.2, MRA-MKT-001 r1.0 and MRA-BIZ-001 r1.0</span>
+  <span>Model pricing current August 2026 &middot; Corpus figures from openFDA 2026-08-24</span>
+</footer>
+
+</div>
+</body>
+</html>

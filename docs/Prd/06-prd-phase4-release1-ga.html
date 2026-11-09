@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRD 4 Release 1 GA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html" class="on">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#catalogue"><span>2</span>Project catalogue</a></li>
+    <li><a href="#intel"><span>3</span>Intelligence features</a></li>
+    <li><a href="#workspace"><span>4</span>Workspace upgrades</a></li>
+    <li><a href="#trust"><span>5</span>Trust and accuracy</a></li>
+    <li><a href="#platform"><span>6</span>Platform</a></li>
+    <li><a href="#accept"><span>7</span>Exit gate</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-104</span><span>Phase 4</span><span>M7–12</span><span>Rev 1.0</span></div>
+  <h1>PRD 4: Release 1 general availability</h1>
+  <p class="sub">Complete the five-project catalogue, add post-market and cost intelligence, publish accuracy and the Determination Guarantee, and make the workspace good enough for consultancies to run every client on it.</p>
+  <div class="meta">
+    <div><b>Business plan</b>GA at M12 with the volume curve published</div>
+    <div><b>Projects added</b>PR-3 (M8), PR-4 (M10), PR-5 (M13 if trade approved)</div>
+    <div><b>Gate</b>G4: NRR ≥ 110%, repeat ≥ 2.2, consultant accounts ≥ 30%</div>
+    <div><b>Detail level</b>Scope-level PRD; refined after the pilot report</div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose</h2>
+  <p>Phase 4 turns a working baseline into a product sold without hand-holding. For the consultancy, it widens the evidence the gap check can draw on (post-market and test-plan intelligence) and adds the trust features that let them put our output in front of their clients.</p>
+</section>
+
+<section id="catalogue">
+  <h2><span class="n">2</span>Project catalogue</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Project</th><th>Contents</th><th>Ships</th><th>Requirements</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P4-01</td><td>PR-3 Compliance Requirements Assessment</td><td>Recognised standards, precedent test plan, applicable CFR obligations, submission checklist, full gap analysis against comparable clearances</td><td>M8</td><td>FR-4.1–4.5, FR-5.1–5.5 (full corpus), FR-5.4 QMSR prerequisites</td></tr>
+      <tr><td class="id">P4-02</td><td>PR-4 Cost and Timeline Analysis</td><td>FY user fees with small-business rate; review-time distribution from MDUFA decision data with confidence intervals; programme cost range with editable assumptions</td><td>M10</td><td>FR-7.1–7.4. Ships only if clearly better than free calculators (BP)</td></tr>
+      <tr><td class="id">P4-03</td><td>PR-5 Market and Competitive Landscape</td><td>Entrant density, clearance velocity, incumbents, establishment footprint, failure themes</td><td>M12 → M13 (proposed)</td><td>FR-3.5, FR-8.1–8.2</td></tr>
+      <tr><td class="id">P4-04</td><td>Focused report types</td><td>Predicate analysis, landscape, test plan, investor summary</td><td>M9</td><td>FR-10.6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="intel">
+  <h2><span class="n">3</span>Intelligence features</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P4-10</td><td>Adverse-event patterns per product code (device and patient problem codes, event types over time) with MAUDE limitations stated</td><td>FR-6.1, 6.4</td><td><span class="chip c-must">Must</span></td><td>Limitations text shown wherever counts appear</td></tr>
+      <tr><td class="id">P4-11</td><td>Recall history clustered into failure themes</td><td>FR-6.2</td><td><span class="chip c-must">Must</span></td><td>Themes cite recall records</td></tr>
+      <tr><td class="id">P4-12</td><td>Post-market findings mapped to hazard categories usable in the client's risk file, and fed to the gap check as risk-section evidence</td><td>FR-6.3</td><td><span class="chip c-should">Should</span></td><td>Exportable to the client's risk file format (XLSX)</td></tr>
+      <tr><td class="id">P4-13</td><td>Combination-product and SaMD detection with extra considerations</td><td>FR-2.7</td><td><span class="chip c-should">Should</span></td><td>Flags software and cybersecurity sections in the eSTAR plan</td></tr>
+      <tr><td class="id">P4-14</td><td>Multiple device variants under one analysis</td><td>FR-1.5</td><td><span class="chip c-could">Could</span></td><td>Variants share the predicate set; differences shown</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="workspace">
+  <h2><span class="n">4</span>Workspace upgrades from the pilot</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P4-20</td><td>Project assistant: cited Q&A over the project, its evidence, deficiencies and the FDA corpus (Veeva V-AI1 pattern)</td><td>REQ Regulatory Q&A use case</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P4-21</td><td>Evidence version comparison: summary of what changed between two versions of a test report</td><td>V-AI2 pattern</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P4-22</td><td>Watchlist and alerts: a cited predicate recalled, a standard's recognition lapsing, new guidance for the product code</td><td>FR-11.5, FR-6.5</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P4-23</td><td>White-label report branding for consultancies</td><td>BP add-on ($200/month)</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P4-24</td><td>Edited-versus-generated text distinguished in exports and the audit record</td><td>FR-10.5</td><td><span class="chip c-should">Should</span></td></tr>
+      <tr><td class="id">P4-25</td><td>Pilot backlog items triaged to GA (PRD 3, P3-04)</td><td>Pilot</td><td><span class="chip c-must">Must</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="trust">
+  <h2><span class="n">5</span>Trust and accuracy</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P4-30</td><td>Quarterly Accuracy Report from held-out sets: code, pathway, predicate, citation, extraction, high-consequence flag rate</td><td>BP §12, §15</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P4-31</td><td>Determination Guarantee: automatic credit refund when a qualified reviewer finds a determination materially wrong; claim workflow and audit</td><td>BP M-1</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P4-32</td><td>Human review queue for operators, with corrections flowing into evaluation data</td><td>FR-12.4</td><td><span class="chip c-must">Must</span></td></tr>
+      <tr><td class="id">P4-33</td><td>Validation support package for customers who qualify the tool: intended use, risk assessment, test evidence, change control</td><td>REQ compliance posture; BP add-on $10K/yr</td><td><span class="chip c-should">Should</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="platform">
+  <h2><span class="n">6</span>Platform</h2>
+  <ul class="plain">
+    <li>Published volume curve and all add-on prices on the website (BP R-2).</li>
+    <li>SSO/SAML add-on, DPA and SLA terms (BP add-on $500/month).</li>
+    <li>Support tooling: in-product guidance, documentation; support cost per project tracked, with a $40 alarm (BP T-3).</li>
+    <li>SOC 2 readiness continued; penetration-test remediation complete.</li>
+  </ul>
+</section>
+
+<section id="accept">
+  <h2><span class="n">7</span>Exit gate G4 (M12)</h2>
+  <ul class="plain">
+    <li>Business-plan gate: net revenue retention ≥ 110%, project repeat rate ≥ 2.2, consultant-sourced accounts ≥ 30%.</li>
+    <li>Funnel at ≥ 60% of plan, or the repricing decision is taken (BP R-3).</li>
+    <li>First Accuracy Report published; Determination Guarantee live.</li>
+  </ul>
+</section>
+
+<footer>MRA-PRD-104 · PRD 4 Release 1 GA · Traces to MRA-REQ-001 Phase 2 and MRA-BIZ-001 r6 §13.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

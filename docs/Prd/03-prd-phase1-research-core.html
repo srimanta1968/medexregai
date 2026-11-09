@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRD 1 Research Core</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html" class="on">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#users"><span>2</span>Users</a></li>
+    <li><a href="#scope"><span>3</span>Scope</a></li>
+    <li><a href="#flows"><span>4</span>Workflows</a></li>
+    <li><a href="#fr"><span>5</span>Requirements</a></li>
+    <li><a href="#data"><span>6</span>Data</a></li>
+    <li><a href="#ai"><span>7</span>AI</a></li>
+    <li><a href="#nfr"><span>8</span>Non-functional</a></li>
+    <li><a href="#ux"><span>9</span>Screens</a></li>
+    <li><a href="#accept"><span>10</span>Exit gate</a></li>
+    <li><a href="#open"><span>11</span>Risks and questions</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-101</span><span>Phases 0–1</span><span>Weeks 1–12</span><span>Rev 1.0</span></div>
+  <h1>PRD 1: Foundation and Research Core</h1>
+  <p class="sub">The data foundation, tenancy and the two research features that carry most of a 510(k) consultant's hours: the Predicate Finder and the Research and Evidence Library.</p>
+  <div class="meta">
+    <div><b>Pilot areas</b>1 Predicates · 2 Research and evidence</div>
+    <div><b>Business plan</b>PR-2 Predicate and Comparative Study (baseline M6)</div>
+    <div><b>Exit</b>Week-12 gate G1</div>
+    <div><b>Architecture</b><a href="08-architecture.html">MRA-PRD-008</a></div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose and outcome</h2>
+  <p>A consultant describes a device and gets a ranked, cited predicate shortlist with side-by-side comparisons and recall flags. All the FDA research for the project sits in one library next to the client's own evidence. Every fact links to the FDA record and the dated snapshot it came from.</p>
+  <div class="kpis">
+    <div class="kpi"><b>≥ 60%</b><span>less time on predicate search and SE comparison</span></div>
+    <div class="kpi"><b>≥ 60%</b><span>less time collecting FDA research</span></div>
+    <div class="kpi"><b>≥ 0.80</b><span>predicate precision@5 vs expert</span></div>
+    <div class="kpi"><b>100%</b><span>citation groundedness</span></div>
+  </div>
+</section>
+
+<section id="users">
+  <h2><span class="n">2</span>Users</h2>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>User</th><th>Role in the pilot</th><th>Main jobs in this phase</th></tr></thead>
+    <tbody>
+      <tr><td>RA consultant (editor)</td><td>Does the research</td><td>Profile the device, find predicates, build the research library, export the SE table</td></tr>
+      <tr><td>Senior RA / principal (reviewer)</td><td>Signs off</td><td>Review the predicate rationale; approve outputs</td></tr>
+      <tr><td>Client engineer (read-only or editor)</td><td>Supplies evidence</td><td>Upload or link test reports and design inputs</td></tr>
+      <tr><td>Consultancy admin (owner)</td><td>Runs the account</td><td>Create client workspaces, invite users, set roles</td></tr>
+      <tr><td>MedexRegAI operator</td><td>Internal</td><td>Run ingestion, review low-confidence extractions, run evaluations</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="scope">
+  <h2><span class="n">3</span>Scope</h2>
+  <div class="cards">
+    <div class="card"><span class="k">In scope</span><h4>Phase 0 · Foundation</h4><p>Baseline time study · architecture ADRs · repo, CI and environments · pilot tenant · seed evaluation set (50 devices) · eSTAR section template draft · design system start.</p></div>
+    <div class="card"><span class="k">In scope</span><h4>Phase 1 · Research Core</h4><p>Ingestion and snapshots for the pilot product codes · summary extraction · hybrid search · Predicate Finder · Research and Evidence Library · citation gate · workspaces, roles, audit · SE table export.</p></div>
+    <div class="card"><span class="k">Out of scope</span><h4>Later phases</h4><p>Pathway determination UI (Phase 3) · eSTAR plan and gap check (Phase 2) · billing · MAUDE analytics · cost and timeline · full-corpus extraction (Phase 3) · any filing with FDA.</p></div>
+  </div>
+</section>
+
+<section id="flows">
+  <h2><span class="n">4</span>Workflows</h2>
+  <h3><span class="n">4.1</span>Find and evaluate predicates</h3>
+  <ol class="plain">
+    <li>The consultant opens a client workspace and creates a <strong>Device Project</strong> from a free-text description, with an optional draft IFU and documents.</li>
+    <li>The system extracts a structured profile: intended use, population, anatomy, technology, patient contact, sterility, energy, software. It asks for missing attributes that matter.</li>
+    <li>The consultant edits fields. Every edit is kept as an override.</li>
+    <li>The system proposes candidate product codes (top 5 with confidence), and the consultant picks or overrides one.</li>
+    <li>The system returns ranked predicates. Each has an IFU similarity score, technology similarity, recency, and recall or withdrawal flags.</li>
+    <li>The consultant opens a predicate side-by-side: IFU and technological characteristics, with each difference marked and noted where it may raise new questions.</li>
+    <li>The consultant saves a <strong>predicate set</strong>, writes a rationale for each inclusion or rejection, and exports the SE comparison table (DOCX/XLSX).</li>
+  </ol>
+  <h3><span class="n">4.2</span>Build the research library</h3>
+  <ol class="plain">
+    <li>On saving predicates, the library fills itself: predicate summaries, the regulation, device-specific guidance, recognised standards cited by comparable clearances, and the code's recalls.</li>
+    <li>The consultant adds items by search, tags them by topic and eSTAR section, and pins key passages.</li>
+    <li>The client engineer uploads or links evidence: test reports, protocols, design inputs. Each becomes an <strong>Evidence Item</strong> with type, date, version and hash.</li>
+    <li>Every library item shows its source, retrieval time and snapshot. Re-running against a newer snapshot shows what changed.</li>
+  </ol>
+</section>
+
+<section id="fr">
+  <h2><span class="n">5</span>Functional requirements</h2>
+  <p class="lede">IDs <span class="mono">P1-x</span> are phase requirements. The "Source" column traces each to MRA-REQ-001 or to the new FR-13 group.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Source</th><th>Priority</th><th>Acceptance criteria</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">Tenancy, access and audit</td></tr>
+      <tr><td class="id">P1-01</td><td>Organisation → client workspace → device project hierarchy, with strict data isolation between workspaces</td><td>FR-11.1, FR-11.2 (R2 → pilot)</td><td><span class="chip c-must">Must</span></td><td>A user in workspace A can't read, search or receive suggestions from workspace B; verified by automated tests at the data layer</td></tr>
+      <tr><td class="id">P1-02</td><td>Roles: owner, editor, reviewer, read-only, per workspace</td><td>FR-11.1</td><td><span class="chip c-must">Must</span></td><td>Permission matrix tested for every endpoint</td></tr>
+      <tr><td class="id">P1-03</td><td>Append-only audit trail: who did what, when, on which snapshot, with what inputs and outputs</td><td>FR-11.3</td><td><span class="chip c-must">Must</span></td><td>Every create, update, analysis run and export writes an event; events can't be edited or deleted; hash-chained</td></tr>
+      <tr><td class="id">P1-04</td><td>Single sign-on with Google and Microsoft accounts; email login</td><td>REQ Integrations (R1)</td><td><span class="chip c-must">Must</span></td><td>Pilot users sign in with their consultancy identity</td></tr>
+      <tr class="grp"><td colspan="5">Device project and profile</td></tr>
+      <tr><td class="id">P1-10</td><td>Create a device project from free text; extract a structured profile</td><td>FR-1.1</td><td><span class="chip c-must">Must</span></td><td>Profile fields filled with source spans; ≥ 90% field accuracy on the evaluation set</td></tr>
+      <tr><td class="id">P1-11</td><td>Edit any field; edits are overrides that survive re-extraction</td><td>FR-1.2</td><td><span class="chip c-must">Must</span></td><td>Re-extraction never overwrites a user value; the override is visible</td></tr>
+      <tr><td class="id">P1-12</td><td>Prompt for missing attributes that change classification</td><td>FR-1.4</td><td><span class="chip c-must">Must</span></td><td>Sterility, invasiveness, contact duration and software are asked when absent</td></tr>
+      <tr><td class="id">P1-13</td><td>Candidate product codes (top 5) with confidence, class, regulation, panel, exemption flags and reasoning</td><td>FR-2.1, 2.2, 2.6</td><td><span class="chip c-must">Must</span></td><td>Correct code in top 3 for ≥ 90% of the evaluation set; override recomputes downstream analysis</td></tr>
+      <tr class="grp"><td colspan="5">Predicate Finder</td></tr>
+      <tr class="hl"><td class="id">P1-20</td><td>Ranked predicates scored on IFU similarity, technology similarity and recency, filtered by product code</td><td>FR-3.1</td><td><span class="chip c-must">Must</span></td><td>Precision@5 ≥ 0.80 vs the expert set; results in &lt; 3 s at p95</td></tr>
+      <tr class="hl"><td class="id">P1-21</td><td>Side-by-side IFU and technological characteristics; each difference marked with a note on whether it may raise new questions of safety or effectiveness</td><td>FR-3.2</td><td><span class="chip c-must">Must</span></td><td>Every compared attribute cites the source summary passage</td></tr>
+      <tr class="hl"><td class="id">P1-22</td><td>Recalled, withdrawn or Class I-recall-linked predicates excluded or flagged, never shown as clean</td><td>FR-3.3</td><td><span class="chip c-must">Must</span></td><td>100% of recall-linked devices in the evaluation set flagged</td></tr>
+      <tr><td class="id">P1-23</td><td>Predicate lineage graph for a chosen predicate</td><td>FR-3.4</td><td><span class="chip c-should">Should</span></td><td>At least 3 generations shown where data exists</td></tr>
+      <tr class="hl"><td class="id">P1-24</td><td>Save a predicate set with per-entry rationale (include or reject)</td><td>FR-3.7 (Should → Must)</td><td><span class="chip c-must">Must</span></td><td>Set is versioned; rationale and author recorded in the audit trail</td></tr>
+      <tr class="hl"><td class="id">P1-25</td><td>Export the SE comparison table (DOCX and XLSX) in a layout suited to the eSTAR predicate comparison section</td><td>FR-3.2 widened, FR-10.3</td><td><span class="chip c-must">Must</span></td><td>Export opens cleanly in Word and Excel; every row carries its citation</td></tr>
+      <tr class="grp"><td colspan="5">Research and Evidence Library</td></tr>
+      <tr class="hl"><td class="id">P1-30</td><td>Per-project library auto-filled from the predicate set: summaries, regulation, device-specific guidance, recognised standards cited by comparable clearances, recalls for the code</td><td>FR-4.1, 4.5, 6.2 (subset)</td><td><span class="chip c-must">Must</span></td><td>Library created within 2 minutes of saving a predicate set</td></tr>
+      <tr><td class="id">P1-31</td><td>Search the corpus (lexical and semantic) and add items to the library</td><td>REQ AI layer</td><td><span class="chip c-must">Must</span></td><td>Exact codes and K-numbers always found by lexical match</td></tr>
+      <tr><td class="id">P1-32</td><td>Tag items by topic and eSTAR section; pin passages; add notes</td><td>New</td><td><span class="chip c-must">Must</span></td><td>Tags reused by the Phase 2 eSTAR plan</td></tr>
+      <tr><td class="id">P1-33</td><td>Standards show recognition status, extent and transition dates, with supersession warnings</td><td>FR-4.2</td><td><span class="chip c-must">Must</span></td><td>Matches the FDA recognised-standards database at the snapshot date</td></tr>
+      <tr class="hl"><td class="id">P1-34</td><td>Register client evidence items (upload or link): type, standard, version, date, lab, result, hash</td><td>FR-1.3 (→ Must), FR-13.3</td><td><span class="chip c-must">Must</span></td><td>Linked files are not copied; the hash detects changes at the source</td></tr>
+      <tr><td class="id">P1-35</td><td>Extract key fields from uploaded test reports (standard, sample size, result, date)</td><td>FR-13.3</td><td><span class="chip c-should">Should</span></td><td>Extracted fields need user confirmation; confidence shown</td></tr>
+      <tr><td class="id">P1-36</td><td>Re-run the project against a newer snapshot and show a diff of what changed</td><td>FR-10.4, BP M-2</td><td><span class="chip c-should">Should</span></td><td>Diff lists added, removed and changed predicates, standards and recalls</td></tr>
+      <tr class="grp"><td colspan="5">Citations and output</td></tr>
+      <tr><td class="id">P1-40</td><td>Every factual claim carries an inline citation to the FDA record and snapshot</td><td>FR-10.2, NFR-5</td><td><span class="chip c-must">Must</span></td><td>Citation gate blocks any claim that doesn't resolve; removals are logged</td></tr>
+      <tr><td class="id">P1-41</td><td>Non-removable scope and limitations statement on screens and exports</td><td>FR-10.7</td><td><span class="chip c-must">Must</span></td><td>Present on every export</td></tr>
+      <tr><td class="id">P1-42</td><td>Export or delete all workspace data</td><td>FR-11.6</td><td><span class="chip c-must">Must</span></td><td>Machine-readable export; deletion within 30 days (NFR-14)</td></tr>
+      <tr class="grp"><td colspan="5">Operations</td></tr>
+      <tr><td class="id">P1-50</td><td>Pipeline console: per-source status, last run, record counts, snapshot delta</td><td>FR-12.1</td><td><span class="chip c-must">Must</span></td><td>Operator sees freshness for every source</td></tr>
+      <tr><td class="id">P1-51</td><td>Schema-drift detection; halt snapshot promotion on failed validation</td><td>FR-12.2, NFR-11</td><td><span class="chip c-must">Must</span></td><td>Simulated drift halts promotion and alerts</td></tr>
+      <tr><td class="id">P1-52</td><td>Review queue for low-confidence extractions; corrections become evaluation data</td><td>FR-12.4</td><td><span class="chip c-should">Should</span></td><td>Items below the confidence threshold never enter the predicate graph unreviewed</td></tr>
+      <tr><td class="id">P1-53</td><td>Evaluation suite runs against any model or prompt change before promotion</td><td>FR-12.5</td><td><span class="chip c-must">Must</span></td><td>CI job publishes scores; promotion blocked on regression</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2><span class="n">6</span>Data requirements</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Source</th><th>Pilot scope (wk 3–12)</th><th>Phase 3 scope (M6)</th><th>Refresh</th></tr></thead>
+    <tbody>
+      <tr><td>FDA 510(k) database + summary PDFs</td><td>All clearances in the pilot product codes and their predicate chains</td><td>Full corpus</td><td>Weekly</td></tr>
+      <tr><td>Product classification database</td><td>Full (small)</td><td>Full</td><td>Weekly</td></tr>
+      <tr><td>Recalls (device recall database)</td><td>Pilot codes</td><td>Full</td><td>Weekly</td></tr>
+      <tr><td>Recognised consensus standards</td><td>Full</td><td>Full</td><td>Monthly</td></tr>
+      <tr><td>Guidance documents</td><td>Device-specific guidance for pilot codes plus cross-cutting (biocompatibility, software, cybersecurity, sterility, shelf life, EMC)</td><td>All final and draft device guidance</td><td>Weekly check</td></tr>
+      <tr><td>De Novo decisions</td><td>Pilot codes</td><td>Full</td><td>Weekly</td></tr>
+      <tr><td>Registration and listing</td><td>Not needed</td><td>Full (for PR-5 and suppliers)</td><td>Weekly</td></tr>
+    </tbody>
+  </table></div>
+  <p>Entities used: ProductCode, Regulation, Submission, IndicationsForUse, Device, Company, Standard, Recall, Guidance (REQ §7), plus the new <strong>Workspace, DeviceProject, DeviceProfile, PredicateSet, LibraryItem, EvidenceItem, DocumentRef, AuditEvent</strong> (see <a href="08-architecture.html#model">Architecture §6</a>).</p>
+</section>
+
+<section id="ai">
+  <h2><span class="n">7</span>AI requirements</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Task</th><th>Approach</th><th>Model tier</th><th>Guard</th></tr></thead>
+    <tbody>
+      <tr><td>Summary extraction (IFU, predicates cited, standards, tests, technology)</td><td>Schema-constrained extraction (structured outputs), per-field confidence and source span; batch processing</td><td>Bulk: Claude Haiku 5.5 via Batch API; escalate low-confidence items to Sonnet 5.5</td><td>Below-threshold fields go to the review queue, not the graph</td></tr>
+      <tr><td>Device profile extraction</td><td>Structured outputs from free text and uploads</td><td>Standard: Claude Sonnet 5.5</td><td>Missing-attribute prompts; overrides win</td></tr>
+      <tr><td>Product-code candidates</td><td>Hybrid retrieval over classification definitions plus LLM reranking with reasoning</td><td>Standard</td><td>Always a ranked set, never a single label</td></tr>
+      <tr><td>Predicate ranking</td><td>Lexical (codes) + vector (IFU, technology) retrieval, product-code filter, cross-encoder rerank, LLM comparison</td><td>Standard; Deep (Opus 5.5) for the final SE note</td><td>Recall screen applied after ranking; withdrawn devices never clean</td></tr>
+      <tr><td>Side-by-side difference notes</td><td>LLM over retrieved summary passages with record IDs</td><td>Standard</td><td>Citation gate: every statement maps to a passage ID</td></tr>
+      <tr><td>Test-report field extraction</td><td>Structured outputs over uploaded PDFs</td><td>Standard</td><td>User confirmation required; client data never used for training (NFR-8)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="nfr">
+  <h2><span class="n">8</span>Non-functional targets for this phase</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>NFR</th><th>Target in Phase 1</th></tr></thead>
+    <tbody>
+      <tr><td>NFR-1 Latency</td><td>Search and predicate lookup &lt; 3 s at p95; library build &lt; 2 min</td></tr>
+      <tr><td>NFR-4 Freshness</td><td>Pilot sources ≤ 7 days stale; freshness visible in the UI</td></tr>
+      <tr><td>NFR-5 Traceability</td><td>Every displayed fact one click from its source record and snapshot</td></tr>
+      <tr><td>NFR-6 Reproducibility</td><td>Same snapshot and inputs give materially the same output; differences traceable to logged model or prompt versions</td></tr>
+      <tr><td>NFR-7 Security</td><td>TLS, encryption at rest, tenant isolation enforced in the database (row-level security), secrets in a vault</td></tr>
+      <tr><td>NFR-8 Confidentiality</td><td>Client input never used to train shared models; never crosses tenants</td></tr>
+      <tr><td>NFR-9 No PHI</td><td>Uploads scanned for likely PHI with a warning</td></tr>
+      <tr><td>NFR-12 Cost</td><td>Model spend tracked per tenant and operation from day one</td></tr>
+      <tr><td>NFR-13 Accessibility</td><td>WCAG 2.1 AA for every screen in this phase</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ux">
+  <h2><span class="n">9</span>Screens</h2>
+  <div class="cards">
+    <div class="card"><span class="k">S1</span><h4>Workspaces</h4><p>Client workspaces and their projects; invite users; roles.</p></div>
+    <div class="card"><span class="k">S2</span><h4>Device profile</h4><p>Extracted fields with source spans, overrides, missing-attribute prompts, product-code candidates.</p></div>
+    <div class="card"><span class="k">S3</span><h4>Predicate results</h4><p>Ranked list with scores, recall flags, filters by year and company; add to set.</p></div>
+    <div class="card"><span class="k">S4</span><h4>Side-by-side</h4><p>IFU and technology rows, differences marked, citations inline; rationale box.</p></div>
+    <div class="card"><span class="k">S5</span><h4>Research Library</h4><p>Items by type and eSTAR section, pinned passages, evidence items, snapshot diff.</p></div>
+    <div class="card"><span class="k">S6</span><h4>Operator console</h4><p>Sources, snapshots, drift alerts, review queue, evaluation scores.</p></div>
+  </div>
+</section>
+
+<section id="accept">
+  <h2><span class="n">10</span>Exit gate G1 (week 12)</h2>
+  <ul class="plain">
+    <li>Live 510(k) #1: RA-PRED + RA-RES hours ≥ 50% below baseline.</li>
+    <li>Extraction field-level F1 ≥ 0.90 on 300 hand-labelled summaries in pilot codes.</li>
+    <li>Predicate precision@5 ≥ 0.80 against the expert set (50 devices).</li>
+    <li>Product code in top 3 for ≥ 90% of the evaluation set.</li>
+    <li>100% citation groundedness on all exports.</li>
+    <li>The customer's RA lead accepts ≥ 75% of outputs without material correction.</li>
+    <li>Tenant-isolation tests pass; audit trail complete.</li>
+  </ul>
+</section>
+
+<section id="open">
+  <h2><span class="n">11</span>Risks and open questions</h2>
+  <ul class="plain">
+    <li>Older summaries are scanned images. OCR quality decides the extraction fallback (post-2010 only).</li>
+    <li>Which embedding model? Choose by benchmark on labelled predicate pairs in week 6 (ADR-006).</li>
+    <li>Does the customer want Excel or Word as the main SE table format? Ask in Phase 0.</li>
+    <li>Are linked-file permissions (SharePoint) enough, or do we need a copy for extraction? Default: fetch on demand, store only extracted text and hash.</li>
+  </ul>
+</section>
+
+<footer>MRA-PRD-101 · PRD 1 Foundation and Research Core · Traces to MRA-REQ-001 r0.2 FR-1, 2, 3, 4, 10, 11, 12.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

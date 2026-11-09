@@ -1,0 +1,208 @@
+
+[00:00:02] Hello, and welcome to the full RIM Suite demo. 
+[00:00:05] I like to start off every day by checking my product and seeing 
+[00:00:08] the latest regulatory 
+[00:00:10] data across all global markets. 
+[00:00:12] As we know with regulatory data, there's 
+[00:00:15] a lot of it, and it's very rarely presented in 
+[00:00:18] a clean and digestible format, which is why I really like to 
+[00:00:21] use these dashboards to give me a snapshot into exactly where this product 
+[00:00:24] is registered. And at the top, 
+[00:00:26] I can see it is broken down by 
+[00:00:28] marketing status. So for instance, if I wanted 
+[00:00:30] to remove any registrations that are currently not marketed, 
+[00:00:34] I can simply deselect it from my dashboard, and the dynamic results 
+[00:00:37] will show exactly the data that 
+[00:00:39] I'm interested in. As I scroll down and and we start to get into more 
+[00:00:43] granular detail, I can see a breakdown, 
+[00:00:45] in this case, 
+[00:00:46] for the drug substance and 
+[00:00:49] drug product manufacturers. 
+[00:00:50] Each colored bar represents 
+[00:00:52] a single country, which when I hover over it, can show me exactly 
+[00:00:57] which manufacturing 
+[00:00:58] sites producing, in this case, the drug products for the 
+[00:01:02] Romanian markets. 
+[00:01:04] We can also see for each manufacturing 
+[00:01:05] site, a specific 
+[00:01:08] role that it plays within our supply chain. Now our supply 
+[00:01:10] chain is always a complex 
+[00:01:12] picture. Each of the sites and each of the roles that goes 
+[00:01:15] into finishing and releasing, that finalized 
+[00:01:18] product can be captured 
+[00:01:21] and depicted within this single graph. 
+[00:01:23] As we scroll down, we've got additional details. 
+[00:01:26] Now in this case, 
+[00:01:27] we've got a single pack 
+[00:01:29] size, but in certain markets, we might have 
+[00:01:32] two approved shelf life according to the relevant 
+[00:01:36] regulatory conditions in each market. 
+[00:01:38] Of course, the shelf 
+[00:01:39] life goes hand in hand with this specific storage 
+[00:01:42] conditions, but as 
+[00:01:43] well as all of the details about what is approved in 
+[00:01:46] each market for my given products. 
+[00:01:48] I also really like to have a snapshot into exactly what is outstanding 
+[00:01:52] for my product in 
+[00:01:54] all of these global markets. I can see any of the open or ongoing 
+[00:01:57] questions broken down by the topic in the assigned department here 
+[00:02:02] as well as any pending commitments. And for today, 
+[00:02:05] I'm actually really interested in something that has been 
+[00:02:07] ongoing as a regulatory 
+[00:02:09] activity within Europe. Specifically, if I click into one 
+[00:02:12] of these graphs, I can chase up 
+[00:02:15] one of the events that I've 
+[00:02:16] been planning for a couple of months now to extend 
+[00:02:19] the shelf life to twenty four months. 
+[00:02:21] Our event is currently in the planning stages. 
+[00:02:24] We've identified the product details that 
+[00:02:26] are affected by this change. 
+[00:02:27] So what we now need to do is 
+[00:02:29] conduct an impact assessment 
+[00:02:30] to ask the system exactly which registrations 
+[00:02:33] in which markets are likely to be affected by this change. 
+[00:02:37] Based upon the product details that are designed 
+[00:02:40] to be changed in this event, 
+[00:02:42] the system has brought back a 
+[00:02:43] total of forty eight registration records across 
+[00:02:46] a whole range of different countries that are likely 
+[00:02:49] to be impacted by this change. Now that's 
+[00:02:51] left for me to do is simply 
+[00:02:53] create the country specific 
+[00:02:54] records to track this change on a more local level. Once all of the impacted 
+[00:02:58] markets have 
+[00:02:59] been identified, we've requested the local disposition 
+[00:03:02] from our experts on the ground. This is where the local affiliates 
+[00:03:06] provide their expertise 
+[00:03:08] on whether a change is needed in their market, but also 
+[00:03:10] the strategy of implementation We can 
+[00:03:13] see for Switzerland, as indeed for the rest of 
+[00:03:15] the markets, prior approval is required. So we actually need to go and produce a submission package to apply 
+[00:03:20] for this change, hopefully get the approval before we indeed 
+[00:03:24] implement it. Now when it comes to preparing a local submission package, the 
+[00:03:28] submission content plan is the 
+[00:03:29] best place to start. This is where we can see the 
+[00:03:32] entire structure of the submission down the left hand 
+[00:03:35] side, any statuses of match documents 
+[00:03:37] indicated by the highlighted pulls, 
+[00:03:39] as well as starting to leverage some of 
+[00:03:41] the project management fields so 
+[00:03:43] that we can understand exactly who's 
+[00:03:45] responsible for individual documents or modules in this 
+[00:03:49] upcoming submission as well as planning dates. 
+[00:03:51] Of course, these project management fields can be visualized 
+[00:03:54] in the submission 
+[00:03:55] content plan itself, but what I personally prefer to do is to utilize 
+[00:03:59] our reports and dashboards 
+[00:04:00] to give me a real time 
+[00:04:02] snapshot into how each of the deliverables are progressing. 
+[00:04:05] You can see at the top, this is broken down by the module of the document, 
+[00:04:08] the deliverable owners. But what 
+[00:04:11] really helps me work through my process in 
+[00:04:13] the most efficient manner is as soon as the document is indeed approved 
+[00:04:17] in the submission content plan, it's published 
+[00:04:19] out 
+[00:04:20] as part of Vault's continuous publishing and validation that runs in the background, which means I can start to see 
+[00:04:26] any validation errors, be it high, medium, 
+[00:04:29] or low at this early stage in the process so 
+[00:04:33] that I can immediately try to resolve 
+[00:04:35] any validation errors at this early 
+[00:04:37] stage before 
+[00:04:39] we have to worry about any kind 
+[00:04:40] of mandatory submission deadline. This not only helps us avoid 
+[00:04:43] last minute delays, 
+[00:04:45] but it also helps to minimize and effectively eliminate 
+[00:04:49] any publishing rework that may need to be done 
+[00:04:52] as we're doing it on a continuous 
+[00:04:54] basis, and we're starting far earlier in 
+[00:04:57] the submission process. Of course, any documents that perhaps still need to go 
+[00:05:01] through the authoring process can be done through collaborative authoring. 
+[00:05:04] This ensures that multiple authors 
+[00:05:07] can come into the document at the same time and all provide content changes to the 
+[00:05:12] document. The latest 
+[00:05:14] version always being able to be saved back to Vault 
+[00:05:17] RIM or indeed checked in. Once 
+[00:05:19] the authoring is complete for a document 
+[00:05:21] and is indeed 
+[00:05:22] approved, it will then be published out as part of the continuous publishing and validation. It's 
+[00:05:27] really simple for me to 
+[00:05:29] perform my publishing review prior 
+[00:05:31] to submission to the health authorities by 
+[00:05:33] coming in, checking the contents of the 
+[00:05:35] documents, any of the publishing details, and navigating down 
+[00:05:38] the XML backbone 
+[00:05:40] through the viewer pane on the left 
+[00:05:41] hand side. Once I'm happy with the 
+[00:05:43] submission content and it's ready to be dispatched to the health authorities, 
+[00:05:46] it's really simple for me to take that submission package that resides in the archive 
+[00:05:51] and submit it directly to the health authority 
+[00:05:53] via their gateway. As we progress and we submit 
+[00:05:56] all of our submissions as they relate to this change, I find it 
+[00:06:00] really useful to keep a track of exactly what 
+[00:06:02] has been dispatched as we can see displayed 
+[00:06:04] at the top of the dashboard. But, importantly, out of 
+[00:06:08] the dispatch submissions, how many were on 
+[00:06:11] time? Well, luckily for this change, we can see a hundred percent 
+[00:06:14] have currently been 
+[00:06:15] dispatched ahead of schedule with a breakdown on the 
+[00:06:19] right hand side of, on average, how many days 
+[00:06:22] to spare did we have between our internal plan submission 
+[00:06:25] due date and the actual submission date. 
+[00:06:29] Now once we've started to track these outgoing submissions to the authorities, 
+[00:06:33] we're likely to hear back either in the case of health 
+[00:06:36] authority questions, perhaps a commitment, 
+[00:06:39] or in the best scenario, an approval. 
+[00:06:42] In the event that we do receive any questions from the 
+[00:06:46] corresponding health authorities, 
+[00:06:48] I can simply forward any email correspondence to a Vault email address, 
+[00:06:52] and Vault will ingest and automatically classify using 
+[00:06:56] the RIMbot to bring in these questions. 
+[00:06:59] Once a health authority question record has been set up 
+[00:07:02] to track what product and topic the question is on, 
+[00:07:07] I can start to leverage historical data to help build a 
+[00:07:10] baseline to better respond to this 
+[00:07:13] question more efficiently. 
+[00:07:14] I can do that by clicking in this icon to see any historical 
+[00:07:19] related questions. 
+[00:07:20] As I can see in the report, actually, 
+[00:07:22] there was a similar question that has been responded to 
+[00:07:25] asking to provide additional stability data to support the 
+[00:07:28] shelf life extension for the FDA. 
+[00:07:31] I can copy the response or any response documents that we 
+[00:07:35] dispatched to address this question and use it as a 
+[00:07:38] starting point to hopefully better address the question 
+[00:07:41] we've just received. 
+[00:07:42] When we get the approval, 
+[00:07:44] we actually need to update some of the registration records 
+[00:07:46] that are associated with this change. 
+[00:07:48] This can be done really simply using some of the wizards that 
+[00:07:51] I have at my disposal within Vault RIM. 
+[00:07:53] I can run the wizard to update all of the impacted 
+[00:07:56] registrations in one fell swoop, 
+[00:07:58] meaning that I not only populate pre-specified values 
+[00:08:01] in the registration records ensuring data quality, 
+[00:08:04] but it's also done in an automated process that allows 
+[00:08:07] me to work efficiently and accurately. 
+[00:08:09] Now that we've been able to run the wizard, 
+[00:08:11] it doesn't matter how much data we're updating. 
+[00:08:14] Bulk can handle it all in bulk. 
+[00:08:16] So to me, all I need to do is come back to my dashboard that I like to 
+[00:08:20] start off every day looking at and scroll down to the specific 
+[00:08:24] section that we've updated. 
+[00:08:26] And we can clearly see that we've got new additional 
+[00:08:30] approved shelf life for the twenty four month. 
+[00:08:34] This is my signal that I can communicate it to other 
+[00:08:37] stakeholders within the organization, 
+[00:08:39] or if they have access to this dashboard, 
+[00:08:41] they can see exactly the same data that I am now seeing. 
+[00:08:45] So we're now going into the change management and, hopefully, 
+[00:08:48] the implementation of the shelf life extension to all of the 
+[00:08:51] impacted markets. 
+[00:08:53] Furthermore, to support our colleagues in the supply chain, 
+[00:08:56] when it comes to releasing new batches of the twenty four 
+[00:09:00] month shelf life, they can get a real time snapshot of what is 
+[00:09:04] the latest current version of the stability data documents. 
+[00:09:08] They can choose to either go to the source document or the 
+[00:09:11] submitted PDF version that is stored in the archive. 
+[00:09:15] To learn more about this product, 
+[00:09:16] please visit Veeva dot com forward slash Vault RIM. 

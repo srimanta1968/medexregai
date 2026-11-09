@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI System Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD</b>
+  <a href="index.html">Overview</a>
+  <a href="01-capability-comparison.html">Veeva vs us</a>
+  <a href="02-project-plan.html">Project plan</a>
+  <a href="03-prd-phase1-research-core.html">PRD 1</a>
+  <a href="04-prd-phase2-submission-workspace.html">PRD 2</a>
+  <a href="05-prd-phase3-baseline-launch.html">PRD 3</a>
+  <a href="06-prd-phase4-release1-ga.html">PRD 4</a>
+  <a href="07-prd-phase5-us-adjacency.html">PRD 5</a>
+  <a href="08-architecture.html" class="on">Architecture</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#principles"><span>1</span>Principles</a></li>
+    <li><a href="#context"><span>2</span>System context</a></li>
+    <li><a href="#containers"><span>3</span>Containers</a></li>
+    <li><a href="#pipeline"><span>4</span>Data pipeline</a></li>
+    <li><a href="#storage"><span>5</span>Storage</a></li>
+    <li><a href="#model"><span>6</span>Data model</a></li>
+    <li><a href="#ai"><span>7</span>AI architecture</a></li>
+    <li><a href="#flows"><span>8</span>Key flows</a></li>
+    <li><a href="#security"><span>9</span>Tenancy and security</a></li>
+    <li><a href="#integrations"><span>10</span>Integrations</a></li>
+    <li><a href="#deploy"><span>11</span>Deployment</a></li>
+    <li><a href="#ops"><span>12</span>Operations</a></li>
+    <li><a href="#evolution"><span>13</span>By phase</a></li>
+    <li><a href="#adr"><span>14</span>Decisions (ADRs)</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-008</span><span>Architecture</span><span>Rev 1.0 · 8 Oct 2026</span></div>
+  <h1>MedexRegAI system architecture</h1>
+  <p class="sub">How the platform is built: a governed FDA knowledge base, retrieval-grounded AI with a citation gate, and a multi-tenant workspace for consultancies. This extends REQ §6–8 with the Submission Workspace, tenancy, integrations and deployment.</p>
+  <div class="meta">
+    <div><b>Builds on</b>MRA-REQ-001 §6 Data architecture, §7 Canonical model, §8 AI architecture</div>
+    <div><b>New here</b>Workspace domain (FR-13), tenancy, integrations, deployment, model update</div>
+    <div><b>Shape</b>Modular monolith + workers; one PostgreSQL; object storage; Claude API</div>
+    <div><b>Status</b>Proposed. ADR-001 to ADR-010 to be approved in Phase 0</div>
+  </div>
+</header>
+
+<section id="principles">
+  <h2><span class="n">1</span>Architecture principles</h2>
+  <ol class="plain">
+    <li><strong>Provenance is structural.</strong> Every curated fact carries source, retrieval time and snapshot. Every AI-derived field also carries model, prompt version, confidence and source span (REQ §6).</li>
+    <li><strong>The model never recalls facts.</strong> It reasons over retrieved records and cites them. A deterministic citation gate removes anything that doesn't resolve (REQ §8 hard rule).</li>
+    <li><strong>Isolation in the database.</strong> Tenant and workspace isolation is enforced by PostgreSQL row-level security, including vector search, not only by application code.</li>
+    <li><strong>Registers, not repositories.</strong> Client files stay in their storage. We keep links, hashes, extracted text and structure.</li>
+    <li><strong>Boring, few moving parts.</strong> A team of about seven runs this. One relational database with vectors, one object store, one cache, one queue. Split only on measured need.</li>
+    <li><strong>Reproducible by design.</strong> Immutable raw data, snapshot-versioned curated data and indexes, versioned prompts, and stored outputs.</li>
+  </ol>
+</section>
+
+<section id="context">
+  <h2><span class="n">2</span>System context</h2>
+  <div class="diagram"><svg viewBox="0 0 980 330" role="img" aria-label="System context diagram">
+    <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="bx" x="10" y="20" width="200" height="56" rx="8"/><text class="t" x="110" y="44" text-anchor="middle">RA consultant / reviewer</text><text class="s" x="110" y="62" text-anchor="middle">consultancy users</text>
+    <rect class="bx" x="10" y="96" width="200" height="56" rx="8"/><text class="t" x="110" y="120" text-anchor="middle">Client engineer</text><text class="s" x="110" y="138" text-anchor="middle">evidence owner</text>
+    <rect class="bx" x="10" y="172" width="200" height="56" rx="8"/><text class="t" x="110" y="196" text-anchor="middle">Founder / free-tier user</text><text class="s" x="110" y="214" text-anchor="middle">self-serve buyer</text>
+    <rect class="bx" x="10" y="248" width="200" height="56" rx="8"/><text class="t" x="110" y="272" text-anchor="middle">MedexRegAI operator</text><text class="s" x="110" y="290" text-anchor="middle">pipeline, evaluation</text>
+    <rect class="bx-a" x="330" y="100" width="300" height="130" rx="10"/>
+    <text class="t" x="480" y="145" text-anchor="middle" style="font-size:16px">MedexRegAI platform</text>
+    <text class="s" x="480" y="168" text-anchor="middle">FDA knowledge base · research projects</text>
+    <text class="s" x="480" y="185" text-anchor="middle">Submission Workspace · billing</text>
+    <text class="s" x="480" y="202" text-anchor="middle">web app · API · MCP (M15)</text>
+    <rect class="bx-s" x="750" y="10" width="220" height="50" rx="8"/><text class="t" x="860" y="32" text-anchor="middle">FDA public data</text><text class="s" x="860" y="48" text-anchor="middle">openFDA, PDFs, guidance, standards</text>
+    <rect class="bx-s" x="750" y="70" width="220" height="50" rx="8"/><text class="t" x="860" y="92" text-anchor="middle">Claude API</text><text class="s" x="860" y="108" text-anchor="middle">Opus 5.5 · Sonnet 5.5 · Haiku 5.5</text>
+    <rect class="bx-s" x="750" y="130" width="220" height="50" rx="8"/><text class="t" x="860" y="152" text-anchor="middle">Client storage</text><text class="s" x="860" y="168" text-anchor="middle">SharePoint/OneDrive, Google Drive</text>
+    <rect class="bx-s" x="750" y="190" width="220" height="50" rx="8"/><text class="t" x="860" y="212" text-anchor="middle">Email inbound</text><text class="s" x="860" y="228" text-anchor="middle">forwarded FDA correspondence</text>
+    <rect class="bx-s" x="750" y="250" width="220" height="50" rx="8"/><text class="t" x="860" y="272" text-anchor="middle">Identity, payments</text><text class="s" x="860" y="288" text-anchor="middle">SSO provider · Stripe</text>
+    <path class="ln" d="M210 48 H300 V140 H328" marker-end="url(#a1)"/><path class="ln" d="M210 124 H300" /><path class="ln" d="M210 200 H300 V190 H328" marker-end="url(#a1)"/><path class="ln" d="M210 276 H300 V210" />
+    <path class="ln" d="M748 35 H690 V120 H632" marker-end="url(#a1)"/><path class="ln" d="M632 140 H690 V95 H748" marker-end="url(#a1)"/>
+    <path class="ln" d="M748 155 H632" marker-end="url(#a1)"/><path class="ln" d="M748 215 H690 V190 H632" marker-end="url(#a1)"/><path class="ln" d="M632 215 H680 V275 H748" marker-end="url(#a1)"/>
+    <text class="lbl" x="640" y="132">read-only</text>
+  </svg></div>
+  <p><small>We never send anything to FDA. The CDRH Portal upload is done by the user outside the platform and recorded afterwards.</small></p>
+</section>
+
+<section id="containers">
+  <h2><span class="n">3</span>Containers</h2>
+  <div class="diagram"><svg viewBox="0 0 980 400" role="img" aria-label="Container diagram">
+    <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="bx-a" x="10" y="20" width="220" height="70" rx="8"/><text class="t" x="120" y="46" text-anchor="middle">Web app</text><text class="s" x="120" y="64" text-anchor="middle">Next.js, React, TypeScript</text><text class="s" x="120" y="79" text-anchor="middle">+ public product-code pages</text>
+    <rect class="bx-a" x="280" y="20" width="240" height="70" rx="8"/><text class="t" x="400" y="46" text-anchor="middle">API service</text><text class="s" x="400" y="64" text-anchor="middle">Python, FastAPI · REST, OpenAPI</text><text class="s" x="400" y="79" text-anchor="middle">auth, tenancy, workspace, billing</text>
+    <rect class="bx-a" x="570" y="20" width="190" height="70" rx="8"/><text class="t" x="665" y="46" text-anchor="middle">AI service</text><text class="s" x="665" y="64" text-anchor="middle">retrieval, agents, prompts</text><text class="s" x="665" y="79" text-anchor="middle">citation gate, model router</text>
+    <rect class="bx-a" x="800" y="20" width="170" height="70" rx="8"/><text class="t" x="885" y="46" text-anchor="middle">Workers</text><text class="s" x="885" y="64" text-anchor="middle">jobs: reports, checks,</text><text class="s" x="885" y="79" text-anchor="middle">intake, sync</text>
+    <rect class="bx" x="10" y="150" width="220" height="70" rx="8"/><text class="t" x="120" y="176" text-anchor="middle">Ingestion pipeline</text><text class="s" x="120" y="194" text-anchor="middle">connectors, extraction,</text><text class="s" x="120" y="209" text-anchor="middle">snapshots, index builds</text>
+    <rect class="bx" x="280" y="150" width="240" height="70" rx="8"/><text class="t" x="400" y="176" text-anchor="middle">Integration service</text><text class="s" x="400" y="194" text-anchor="middle">Graph and Drive change feeds,</text><text class="s" x="400" y="209" text-anchor="middle">inbound email, Stripe webhooks</text>
+    <rect class="bx" x="570" y="150" width="190" height="70" rx="8"/><text class="t" x="665" y="176" text-anchor="middle">Evaluation harness</text><text class="s" x="665" y="194" text-anchor="middle">held-out sets, CI gate,</text><text class="s" x="665" y="209" text-anchor="middle">Accuracy Report</text>
+    <rect class="bx" x="800" y="150" width="170" height="70" rx="8"/><text class="t" x="885" y="176" text-anchor="middle">MCP server</text><text class="s" x="885" y="194" text-anchor="middle">M15 · same API</text><text class="s" x="885" y="209" text-anchor="middle">as tools</text>
+    <rect class="bx-s" x="10" y="290" width="300" height="90" rx="8"/><text class="t" x="160" y="316" text-anchor="middle">PostgreSQL 16</text><text class="s" x="160" y="334" text-anchor="middle">canonical model · workspace domain · ledger</text><text class="s" x="160" y="350" text-anchor="middle">pgvector · full-text / BM25 · row-level security</text><text class="s" x="160" y="366" text-anchor="middle">job queue tables · audit chain</text>
+    <rect class="bx-s" x="340" y="290" width="220" height="90" rx="8"/><text class="t" x="450" y="316" text-anchor="middle">Object storage (S3)</text><text class="s" x="450" y="334" text-anchor="middle">raw source files (Object Lock)</text><text class="s" x="450" y="350" text-anchor="middle">extracted text · reports</text><text class="s" x="450" y="366" text-anchor="middle">manifests · audit anchors</text>
+    <rect class="bx-s" x="590" y="290" width="170" height="90" rx="8"/><text class="t" x="675" y="316" text-anchor="middle">Redis</text><text class="s" x="675" y="334" text-anchor="middle">hot lookups, rate limits,</text><text class="s" x="675" y="350" text-anchor="middle">response cache by</text><text class="s" x="675" y="366" text-anchor="middle">prompt hash + snapshot</text>
+    <rect class="bx-w" x="790" y="290" width="180" height="90" rx="8"/><text class="t" x="880" y="316" text-anchor="middle">Claude API</text><text class="s" x="880" y="334" text-anchor="middle">Messages, Batches,</text><text class="s" x="880" y="350" text-anchor="middle">Files, structured outputs,</text><text class="s" x="880" y="366" text-anchor="middle">citations, caching</text>
+    <path class="ln" d="M230 55 H278" marker-end="url(#a2)"/><path class="ln" d="M520 55 H568" marker-end="url(#a2)"/><path class="ln" d="M760 55 H798" marker-end="url(#a2)"/>
+    <path class="ln" d="M400 90 V288" marker-end="url(#a2)"/><path class="ln" d="M665 90 V120 H160 V288" marker-end="url(#a2)"/><path class="ln" d="M700 90 V120 H880 V288" marker-end="url(#a2)"/>
+    <path class="ln" d="M120 220 V250 H450 V288" marker-end="url(#a2)"/><path class="ln" d="M885 90 V148" />
+  </svg></div>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Container</th><th>Technology (proposed)</th><th>Responsibility</th><th>Phase</th></tr></thead>
+    <tbody>
+      <tr><td>Web app</td><td>Next.js (React, TypeScript), server rendering for public pages</td><td>All user screens; product-code pages for search engines; WCAG 2.1 AA in both themes</td><td>1</td></tr>
+      <tr><td>API service</td><td>Python 3.12, FastAPI, SQLAlchemy, Pydantic; OpenAPI contract</td><td>Auth and session, tenancy context, projects, workspace domain, exports, billing ledger</td><td>1</td></tr>
+      <tr><td>AI service</td><td>Python module in the same codebase (separately scalable process); Anthropic Python SDK</td><td>Retrieval, reranking, agent workflows, prompt registry, model router, citation gate, cost metering</td><td>1</td></tr>
+      <tr><td>Workers</td><td>Same codebase; Postgres-backed durable job queue (ADR-005)</td><td>Report generation, gap re-checks, correspondence intake, storage sync, exports</td><td>1</td></tr>
+      <tr><td>Ingestion pipeline</td><td>Python; scheduled jobs; Claude Batch API for bulk extraction</td><td>Acquire, land, normalise, enrich, curate, index, promote snapshots (§4)</td><td>0–1</td></tr>
+      <tr><td>Integration service</td><td>Microsoft Graph, Google Drive API, inbound email (SES), Stripe</td><td>Storage links and change detection, FDA correspondence intake, payments</td><td>2–3</td></tr>
+      <tr><td>Evaluation harness</td><td>Python; versioned datasets in S3; runs in CI</td><td>Blocks promotion on regression; produces the Accuracy Report</td><td>0–1</td></tr>
+      <tr><td>MCP server</td><td>Thin adapter over the public API</td><td>Agent access for API customers</td><td>5</td></tr>
+    </tbody>
+  </table></div>
+  <p>Shape: a <strong>modular monolith</strong> (one repository, one API deployable, workers from the same image) with clear internal modules: <span class="mono">corpus</span>, <span class="mono">research</span>, <span class="mono">workspace</span>, <span class="mono">ai</span>, <span class="mono">billing</span>, <span class="mono">integrations</span>, <span class="mono">audit</span>. Splitting into services waits for a measured reason.</p>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">4</span>Data pipeline</h2>
+  <div class="diagram"><svg viewBox="0 0 980 150" role="img" aria-label="Seven-stage ingestion pipeline">
+    <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <g>
+      <rect class="bx" x="5" y="30" width="125" height="80" rx="8"/><text class="hd" x="67" y="50" text-anchor="middle">1 ACQUIRE</text><text class="s" x="67" y="70" text-anchor="middle">bulk + API deltas</text><text class="s" x="67" y="86" text-anchor="middle">URL, time, checksum</text>
+      <rect class="bx" x="145" y="30" width="125" height="80" rx="8"/><text class="hd" x="207" y="50" text-anchor="middle">2 LAND</text><text class="s" x="207" y="70" text-anchor="middle">raw bytes, S3</text><text class="s" x="207" y="86" text-anchor="middle">Object Lock</text>
+      <rect class="bx" x="285" y="30" width="125" height="80" rx="8"/><text class="hd" x="347" y="50" text-anchor="middle">3 NORMALISE</text><text class="s" x="347" y="70" text-anchor="middle">parse, dedupe,</text><text class="s" x="347" y="86" text-anchor="middle">entity resolution</text>
+      <rect class="bx-a" x="425" y="30" width="125" height="80" rx="8"/><text class="hd" x="487" y="50" text-anchor="middle">4 ENRICH</text><text class="s" x="487" y="70" text-anchor="middle">PDF text, OCR,</text><text class="s" x="487" y="86" text-anchor="middle">LLM extraction</text>
+      <rect class="bx" x="565" y="30" width="125" height="80" rx="8"/><text class="hd" x="627" y="50" text-anchor="middle">5 CURATE</text><text class="s" x="627" y="70" text-anchor="middle">canonical model,</text><text class="s" x="627" y="86" text-anchor="middle">predicate graph</text>
+      <rect class="bx" x="705" y="30" width="125" height="80" rx="8"/><text class="hd" x="767" y="50" text-anchor="middle">6 INDEX</text><text class="s" x="767" y="70" text-anchor="middle">BM25, vectors,</text><text class="s" x="767" y="86" text-anchor="middle">dossiers</text>
+      <rect class="bx-a" x="845" y="30" width="130" height="80" rx="8"/><text class="hd" x="910" y="50" text-anchor="middle">7 PROMOTE</text><text class="s" x="910" y="70" text-anchor="middle">validate, then</text><text class="s" x="910" y="86" text-anchor="middle">snapshot live</text>
+      <path class="ln" d="M130 70 H143" marker-end="url(#a3)"/><path class="ln" d="M270 70 H283" marker-end="url(#a3)"/><path class="ln" d="M410 70 H423" marker-end="url(#a3)"/><path class="ln" d="M550 70 H563" marker-end="url(#a3)"/><path class="ln" d="M690 70 H703" marker-end="url(#a3)"/><path class="ln" d="M830 70 H843" marker-end="url(#a3)"/>
+      <text class="lbl" x="487" y="132" text-anchor="middle">low-confidence → review queue</text><text class="lbl" x="910" y="132" text-anchor="middle">drift or failed checks → halt</text>
+    </g>
+  </svg></div>
+  <ul class="plain">
+    <li><strong>Snapshots.</strong> Curated rows carry <span class="mono">valid_from_snapshot</span> and <span class="mono">valid_to_snapshot</span>, so any past snapshot can be queried without copying tables. Indexes and dossiers are built per snapshot and switched atomically on promotion.</li>
+    <li><strong>Extraction.</strong> 510(k) summaries go through text extraction (OCR for scanned files), then schema-constrained extraction with Claude Haiku 5.5 via the <strong>Message Batches API</strong> (half the price of synchronous calls). Low-confidence fields are retried with Sonnet 5.5, then routed to human review.</li>
+    <li><strong>Pilot scope.</strong> The same pipeline runs on the pilot product codes first (Phase 1), then the full corpus (Phase 3). Nothing about the pipeline changes between them.</li>
+  </ul>
+</section>
+
+<section id="storage">
+  <h2><span class="n">5</span>Storage</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Layer</th><th>Technology</th><th>Holds</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Raw archive</td><td>S3 with Object Lock, partitioned by source and date</td><td>Every source file as fetched; extracted text</td><td>Replayable; never overwritten (REQ §6)</td></tr>
+      <tr><td>Relational</td><td>PostgreSQL 16 (managed, Multi-AZ)</td><td>Canonical model, workspace domain, ledger, audit, jobs</td><td>Row-level security on every tenant table</td></tr>
+      <tr><td>Vector</td><td>pgvector in the same database (HNSW indexes)</td><td>IFU, technology, guidance passages, deficiencies, evidence text</td><td>Same database means RLS also isolates vector search; split only on measured load</td></tr>
+      <tr><td>Lexical</td><td>PostgreSQL full-text search; BM25 extension if needed (ADR-003)</td><td>Product codes, K-numbers, CFR citations, names</td><td>Exact identifiers must match lexically (REQ §8)</td></tr>
+      <tr><td>Graph</td><td>Edge tables with recursive queries</td><td>Predicate lineage, code hierarchy</td><td>No graph database in Release 1</td></tr>
+      <tr><td>Documents</td><td>S3 + metadata rows</td><td>Reports, manifests, exports; uploaded client files only when the user uploads instead of linking</td><td>Linked files aren't copied; we keep extracted text and hash</td></tr>
+      <tr><td>Cache</td><td>Redis (managed)</td><td>Hot lookups, rate limits, response cache</td><td>Cache keys include snapshot ID and prompt version</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="model">
+  <h2><span class="n">6</span>Data model</h2>
+  <p>The ten corpus entities in REQ §7 stay as they are (ProductCode, Regulation, Submission, IndicationsForUse, Device, Company, Establishment, Standard, AdverseEvent/Recall, Guidance). The workspace domain below is new. Every row carries <span class="mono">org_id</span> and <span class="mono">workspace_id</span> for row-level security.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Entity</th><th>Key attributes</th><th>Relationships</th><th>PRD</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="4">Tenancy and research</td></tr>
+      <tr><td>Organisation</td><td>name, plan, retainer status, settings (cross-client reuse on/off)</td><td>→ Workspace (many) · → User (many) · → CreditLedger</td><td>1, 3</td></tr>
+      <tr><td>Workspace</td><td>client name, status, storage connections</td><td>→ DeviceProject (many) · → Membership (role)</td><td>1</td></tr>
+      <tr><td>DeviceProject</td><td>name, pathway, stage, selected product code, snapshot pinned</td><td>→ DeviceProfile · → PredicateSet · → LibraryItem · → EstarPlan · → SubmissionEvent</td><td>1</td></tr>
+      <tr><td>DeviceProfile</td><td>extracted attributes with source spans; overrides</td><td>→ DeviceProject</td><td>1</td></tr>
+      <tr><td>PredicateSet / PredicateEntry</td><td>version; per entry: submission ref, scores, include/reject, rationale, difference notes</td><td>→ Submission (corpus)</td><td>1</td></tr>
+      <tr><td>LibraryItem</td><td>corpus record ref or evidence ref, tags, eSTAR section, pinned passages</td><td>→ corpus entity or EvidenceItem</td><td>1</td></tr>
+      <tr><td>EvidenceItem</td><td>type (test report, protocol, design input…), standard, lab, result, date</td><td>→ DocumentRef (versions) · ↔ Claim, PlanSection (TraceLink)</td><td>1–2</td></tr>
+      <tr><td>DocumentRef</td><td>source system, external ID, URL, version label, SHA-256, author, modified time, extracted text location</td><td>→ EvidenceItem</td><td>1–2</td></tr>
+      <tr class="grp"><td colspan="4">Submission Workspace</td></tr>
+      <tr><td>EstarTemplate</td><td>FDA template version, device type, section tree</td><td>→ EstarPlan</td><td>2</td></tr>
+      <tr><td>EstarPlan / PlanSection</td><td>per section: applicability, owner, due and actual dates, status, N/A reason</td><td>→ TraceLink · → GapFinding</td><td>2</td></tr>
+      <tr><td>Claim</td><td>type (IFU, labeling, performance, SE difference), text, origin</td><td>↔ EvidenceItem, PlanSection via TraceLink</td><td>2</td></tr>
+      <tr><td>TraceLink</td><td>from, to, author, time, version</td><td>generic link table</td><td>2</td></tr>
+      <tr><td>GapRule / GapFinding</td><td>rule kind (completeness, precedent), evidence counts, severity, status, justification</td><td>→ PlanSection · cites corpus records</td><td>2</td></tr>
+      <tr><td>FdaCorrespondence</td><td>type, received date, sender, classification rationale, source file ref</td><td>→ Deficiency (many) · → DeviceProject</td><td>2</td></tr>
+      <tr><td>Deficiency / Response</td><td>number, text, section tag, topic, owner, status, deadline; response doc ref</td><td>→ EvidenceItem (new evidence) · embedding for similarity</td><td>2, 5</td></tr>
+      <tr><td>SubmissionEvent / Manifest</td><td>type (original, AI response, resubmission), date, eSTAR version; manifest entries (DocumentRef + hash)</td><td>→ DeviceProject; manifest immutable</td><td>2</td></tr>
+      <tr><td>Clearance</td><td>K-number, decision date, cleared IFU, product code</td><td>→ DeviceProject · → Change (PRD 5)</td><td>2, 5</td></tr>
+      <tr class="grp"><td colspan="4">Platform</td></tr>
+      <tr><td>CreditLedger / LedgerEntry</td><td>purchases, allocations to workspaces, consumption, refunds, deferred revenue</td><td>→ Organisation · → Workspace</td><td>3</td></tr>
+      <tr><td>Report</td><td>type, snapshot ID, model and prompt versions, immutable file, citations list</td><td>→ DeviceProject</td><td>1, 3</td></tr>
+      <tr><td>AuditEvent</td><td>actor, action, object, inputs hash, outputs hash, snapshot, time, previous-event hash</td><td>append-only, hash-chained; daily anchor to S3 Object Lock</td><td>1</td></tr>
+      <tr><td>AiCall</td><td>route, model, prompt version, tokens, cost, cache hits, latency, tenant</td><td>→ AuditEvent</td><td>1</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ai">
+  <h2><span class="n">7</span>AI architecture</h2>
+  <h3><span class="n">7.1</span>Model tiers (updates REQ §8)</h3>
+  <p>REQ §8 named Claude Opus 5, Sonnet 5 and Haiku 4.5. The current generation is cheaper and stronger at each tier, so the tiering moves up one generation. Final choices are confirmed against the evaluation set (ADR-007).</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Tier</th><th>Model (API ID)</th><th>Price per million tokens (in / out)</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>Deep</td><td>Claude Opus 5.5 (<span class="mono">claude-opus-5-5</span>)</td><td>$4 / $20</td><td>Report synthesis, SE reasoning, pathway determination, response drafting (PRD 5)</td></tr>
+      <tr><td>Standard</td><td>Claude Sonnet 5.5 (<span class="mono">claude-sonnet-5-5</span>)</td><td>$2 / $10</td><td>Predicate comparison, profile extraction, correspondence classification, deficiency splitting, project Q&A</td></tr>
+      <tr><td>Bulk</td><td>Claude Haiku 5.5 (<span class="mono">claude-haiku-5-5</span>)</td><td>$0.10 / $0.50 (prompts up to 100K tokens)</td><td>Corpus extraction through the Batch API, pre-filtering, routing, evidence auto-match tie-breaks</td></tr>
+      <tr><td>Embeddings</td><td>Separate embedding model chosen by benchmark (ADR-006)</td><td>—</td><td>Vectors for IFU, technology, guidance, deficiencies. The Claude API doesn't provide embeddings</td></tr>
+    </tbody>
+  </table></div>
+  <h3><span class="n">7.2</span>Claude API features used</h3>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Feature</th><th>Where</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Structured outputs (JSON schema) and strict tool schemas</td><td>All extraction, classification and deficiency splitting</td><td>Schema-valid results without parsing heuristics. Current Opus and Sonnet don't allow forcing a specific tool call, so we rely on schemas and tool choice "auto"</td></tr>
+      <tr><td>Message Batches API</td><td>Corpus extraction, nightly re-checks</td><td>Half the price for non-interactive work</td></tr>
+      <tr><td>Prompt caching</td><td>Stable system prompts, per-product-code context, evaluation runs</td><td>Lower cost and latency for repeated context</td></tr>
+      <tr><td>Document citations (page and character locations)</td><td>Supporting-passage suggestions in client evidence (P2-23)</td><td>Page-located quotes from the user's PDFs. Can't be combined with structured outputs, so used only on prose routes</td></tr>
+      <tr><td>Files API</td><td>Client PDFs used across several calls</td><td>Upload once, reference many times</td></tr>
+      <tr><td>Adaptive thinking and effort settings</td><td>Per route: low for routing, medium/high for synthesis</td><td>Opus 5.5 defaults to medium effort, so each route sets effort explicitly</td></tr>
+      <tr><td>Server-side fallback on refusal</td><td>All Opus 5.5 and Sonnet 5.5 routes</td><td>A safety refusal on a benign regulatory text falls back instead of failing the job; every refusal is logged</td></tr>
+    </tbody>
+  </table></div>
+  <h3><span class="n">7.3</span>Retrieval and the citation gate</h3>
+  <ol class="plain">
+    <li><strong>Retrieve.</strong> Lexical search for identifiers, plus vector search for narrative, filtered by product code, snapshot and tenant, then a cross-encoder rerank.</li>
+    <li><strong>Reason.</strong> The model gets numbered records (record ID + passage ID) and must cite them as <span class="mono">[R:id#p]</span>.</li>
+    <li><strong>Gate.</strong> A deterministic verifier checks that each cited ID exists in the snapshot, that the quoted span matches the passage, and that every sentence with a factual entity (code, K-number, CFR, standard, date, number) carries a citation. Failing sentences are removed and logged. The gate can't be turned off.</li>
+    <li><strong>Store.</strong> The output is saved with snapshot, model, prompt version and citation list (FR-10.4).</li>
+  </ol>
+  <h3><span class="n">7.4</span>Prompt registry and evaluation</h3>
+  <ul class="plain">
+    <li>Prompts live in the repository with version IDs. Every AI call logs the prompt version (AiCall).</li>
+    <li>The evaluation harness runs held-out sets on every prompt or model change. Promotion is blocked on regression (FR-12.5).</li>
+    <li>Pilot sets: 50 devices with expert predicates, 300 labelled summaries, the customer's past AI letters (deficiency splitting), 100 profiles for pathway (Phase 3).</li>
+  </ul>
+</section>
+
+<section id="flows">
+  <h2><span class="n">8</span>Key flows</h2>
+  <h3><span class="n">8.1</span>Predicate search (PRD 1)</h3>
+  <div class="diagram"><svg viewBox="0 0 980 120" role="img" aria-label="Predicate search flow">
+    <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="bx" x="5" y="25" width="140" height="64" rx="8"/><text class="t" x="75" y="52" text-anchor="middle">Device profile</text><text class="s" x="75" y="70" text-anchor="middle">+ product code</text>
+    <rect class="bx" x="170" y="25" width="150" height="64" rx="8"/><text class="t" x="245" y="52" text-anchor="middle">Hybrid retrieve</text><text class="s" x="245" y="70" text-anchor="middle">BM25 + vectors, RLS</text>
+    <rect class="bx" x="345" y="25" width="140" height="64" rx="8"/><text class="t" x="415" y="52" text-anchor="middle">Rerank</text><text class="s" x="415" y="70" text-anchor="middle">IFU, tech, recency</text>
+    <rect class="bx-w" x="510" y="25" width="140" height="64" rx="8"/><text class="t" x="580" y="52" text-anchor="middle">Recall screen</text><text class="s" x="580" y="70" text-anchor="middle">flag or exclude</text>
+    <rect class="bx-a" x="675" y="25" width="140" height="64" rx="8"/><text class="t" x="745" y="52" text-anchor="middle">Compare</text><text class="s" x="745" y="70" text-anchor="middle">Sonnet 5.5, cited</text>
+    <rect class="bx-a" x="840" y="25" width="135" height="64" rx="8"/><text class="t" x="907" y="52" text-anchor="middle">Citation gate</text><text class="s" x="907" y="70" text-anchor="middle">then display</text>
+    <path class="ln" d="M145 57 H168" marker-end="url(#a4)"/><path class="ln" d="M320 57 H343" marker-end="url(#a4)"/><path class="ln" d="M485 57 H508" marker-end="url(#a4)"/><path class="ln" d="M650 57 H673" marker-end="url(#a4)"/><path class="ln" d="M815 57 H838" marker-end="url(#a4)"/>
+  </svg></div>
+  <h3><span class="n">8.2</span>FDA letter intake (PRD 2)</h3>
+  <div class="diagram"><svg viewBox="0 0 980 120" role="img" aria-label="FDA correspondence intake flow">
+    <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="bx" x="5" y="25" width="150" height="64" rx="8"/><text class="t" x="80" y="52" text-anchor="middle">Forward email</text><text class="s" x="80" y="70" text-anchor="middle">or upload</text>
+    <rect class="bx" x="180" y="25" width="150" height="64" rx="8"/><text class="t" x="255" y="52" text-anchor="middle">Inbound mail</text><text class="s" x="255" y="70" text-anchor="middle">route by address</text>
+    <rect class="bx-a" x="355" y="25" width="150" height="64" rx="8"/><text class="t" x="430" y="52" text-anchor="middle">Classify</text><text class="s" x="430" y="70" text-anchor="middle">type + rationale</text>
+    <rect class="bx-a" x="530" y="25" width="150" height="64" rx="8"/><text class="t" x="605" y="52" text-anchor="middle">Split</text><text class="s" x="605" y="70" text-anchor="middle">deficiencies, tags</text>
+    <rect class="bx-w" x="705" y="25" width="120" height="64" rx="8"/><text class="t" x="765" y="52" text-anchor="middle">User confirms</text><text class="s" x="765" y="70" text-anchor="middle">edit, accept</text>
+    <rect class="bx-a" x="850" y="25" width="125" height="64" rx="8"/><text class="t" x="912" y="52" text-anchor="middle">Track</text><text class="s" x="912" y="70" text-anchor="middle">clock, similar</text>
+    <path class="ln" d="M155 57 H178" marker-end="url(#a5)"/><path class="ln" d="M330 57 H353" marker-end="url(#a5)"/><path class="ln" d="M505 57 H528" marker-end="url(#a5)"/><path class="ln" d="M680 57 H703" marker-end="url(#a5)"/><path class="ln" d="M825 57 H848" marker-end="url(#a5)"/>
+  </svg></div>
+  <h3><span class="n">8.3</span>Continuous gap check (PRD 2)</h3>
+  <p>Any change to the plan, evidence, a linked file's hash, the profile or the pinned snapshot enqueues a <span class="mono">gap.recheck(project)</span> job. Completeness rules run in SQL. Precedent rules read prebuilt per-product-code expectation tables (built at snapshot promotion from extracted tests and standards). Findings are diffed against the last run, so only real changes notify users.</p>
+</section>
+
+<section id="security">
+  <h2><span class="n">9</span>Tenancy, security and compliance</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Control</th><th>Design</th><th>Requirement</th></tr></thead>
+    <tbody>
+      <tr><td>Isolation</td><td>Row-level security on every tenant table keyed by org and workspace; the API sets the session context per request; integration tests attempt cross-tenant reads on every endpoint</td><td>FR-11.2, NFR-7, NFR-8</td></tr>
+      <tr><td>Cross-client reuse</td><td>Off by default; an org setting allows deficiency similarity across that org's workspaces only; results redact client identity</td><td>FR-13.5</td></tr>
+      <tr><td>Encryption</td><td>TLS 1.2+ in transit; KMS encryption at rest for database, S3 and Redis; secrets in a managed secrets store</td><td>NFR-7</td></tr>
+      <tr><td>Model data handling</td><td>Client content sent to the Claude API only for the request at hand; never used to train shared models; no PHI by design (upload scan)</td><td>NFR-8, NFR-9</td></tr>
+      <tr><td>Audit</td><td>Hash-chained AuditEvent table; daily root hash anchored to an Object Lock bucket</td><td>FR-11.3; Part 11-enabling controls</td></tr>
+      <tr><td>Access</td><td>SSO (Google, Microsoft) via a managed identity provider; SAML/SCIM add-on later; MFA for owners and operators</td><td>REQ Integrations</td></tr>
+      <tr><td>Retention</td><td>Client data kept for the contract term; deletion within 30 days of request; public FDA data kept indefinitely</td><td>NFR-14</td></tr>
+      <tr><td>Assurance</td><td>SOC 2 readiness from Phase 3; external penetration test before public launch; validation support package for customers (Phase 4)</td><td>REQ compliance posture</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="integrations">
+  <h2><span class="n">10</span>Integrations</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Integration</th><th>Mechanism</th><th>Scope</th><th>Phase</th></tr></thead>
+    <tbody>
+      <tr><td>SharePoint / OneDrive</td><td>Microsoft Graph with delegated read access; file picker; delta queries for change detection</td><td>Link files, read content for extraction, detect new versions</td><td>2</td></tr>
+      <tr><td>Google Drive</td><td>Drive API with read-only scope; picker; changes feed</td><td>Same</td><td>2</td></tr>
+      <tr><td>Inbound email</td><td>Per-workspace forwarding address; inbound mail service drops the message into S3 and enqueues intake</td><td>FDA correspondence</td><td>2</td></tr>
+      <tr><td>Identity</td><td>Managed identity provider (ADR-004) with Google and Microsoft sign-in; SAML/SCIM add-on</td><td>All users</td><td>1</td></tr>
+      <tr><td>Payments</td><td>Stripe Checkout and Billing for cards and subscriptions; our own credit ledger is the system of record for credits</td><td>Self-serve and retainer</td><td>3</td></tr>
+      <tr><td>Exports</td><td>DOCX (python-docx), XLSX, PDF, JSON</td><td>SE table, plan, matrix, response skeleton, chronology, reports</td><td>1–2</td></tr>
+      <tr><td>Public API and MCP</td><td>REST (OpenAPI) and MCP tool server over the same service layer</td><td>API add-on customers</td><td>5</td></tr>
+      <tr><td>eQMS / PLM</td><td>Vendor APIs (Greenlight Guru first)</td><td>Read document refs, push gap items</td><td>5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="deploy">
+  <h2><span class="n">11</span>Deployment and environments</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Aspect</th><th>Proposal</th><th>ADR</th></tr></thead>
+    <tbody>
+      <tr><td>Cloud and region</td><td>AWS, one US region; a second region only for EU data residency (Series A)</td><td>ADR-001</td></tr>
+      <tr><td>Compute</td><td>Containers on a managed container service (web, API, workers, pipeline); auto-scaling on queue depth</td><td>ADR-002</td></tr>
+      <tr><td>Data services</td><td>Managed PostgreSQL 16 with pgvector (Multi-AZ, point-in-time recovery); S3; managed Redis</td><td>ADR-003</td></tr>
+      <tr><td>Infrastructure as code</td><td>Terraform; one module per environment</td><td>ADR-008</td></tr>
+      <tr><td>Environments</td><td>dev, staging, production. The pilot runs in production as its own tenant</td><td>—</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions: tests, tenant-isolation suite, evaluation gate, image build, staged rollout</td><td>ADR-009</td></tr>
+      <tr><td>Front door</td><td>CDN and web application firewall; public product-code pages cached at the edge</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ops">
+  <h2><span class="n">12</span>Operations and observability</h2>
+  <ul class="plain">
+    <li><strong>Tracing</strong> across retrieval, reasoning and the gate (OpenTelemetry), so a wrong answer can be traced to the stage that caused it (NFR-15).</li>
+    <li><strong>AI cost</strong> per tenant, route and model from AiCall; alert when cost per project exceeds the unit-economics target (BP $2.40 inference per project).</li>
+    <li><strong>Data freshness</strong> per source shown in the UI and the pipeline console (NFR-4).</li>
+    <li><strong>SLOs:</strong> 99.5% monthly availability (NFR-2); p95 search &lt; 3 s; full report &lt; 10 min.</li>
+    <li><strong>Runbooks</strong> for drift halt, failed promotion, model refusal spikes and restore.</li>
+  </ul>
+</section>
+
+<section id="evolution">
+  <h2><span class="n">13</span>Architecture by phase</h2>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Phase</th><th>Architecture added</th></tr></thead>
+    <tbody>
+      <tr><td>0 · Foundation</td><td>Repository, CI, Terraform, environments; ADRs; evaluation harness skeleton; tenancy schema with RLS</td></tr>
+      <tr><td>1 · Research Core</td><td>Pipeline stages 1–7 for pilot codes; snapshots; hybrid search; AI service with citation gate; audit chain; research and evidence modules; exports</td></tr>
+      <tr><td>2 · Submission Workspace</td><td>Workspace domain tables; job-driven gap re-check; integration service (Graph, Drive, inbound email); deficiency embeddings</td></tr>
+      <tr><td>3 · Baseline launch</td><td>Full-corpus batch extraction; product-code page rendering at the edge; Stripe and credit ledger; funnel analytics; hardening</td></tr>
+      <tr><td>4 · GA</td><td>MAUDE and recall analytics; watchlist and alert engine; review queue; Accuracy Report pipeline; SSO/SAML</td></tr>
+      <tr><td>5 · Adjacency</td><td>Public API and MCP server; webhooks; eQMS connectors; response-drafting agent; Lead Finder module with model-isolation guard</td></tr>
+      <tr><td>Series A</td><td>Jurisdiction parameter live (EU): second region, EUDAMED ingestion on the same canonical model</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="adr">
+  <h2><span class="n">14</span>Architecture decisions (ADRs) to approve in Phase 0</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>ADR</th><th>Decision</th><th>Alternatives considered</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="id">ADR-001</td><td>AWS, one US region</td><td>GCP, Azure</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-002</td><td>Modular monolith in Python plus a Next.js front end</td><td>Microservices; full TypeScript stack</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-003</td><td>PostgreSQL with pgvector and full-text/BM25 in one database</td><td>Separate OpenSearch or vector database</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-004</td><td>Managed identity provider with Google and Microsoft SSO; SAML later</td><td>Self-built authentication</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-005</td><td>Postgres-backed durable job queue; move to a workflow engine only if multi-step jobs outgrow it</td><td>Temporal, Celery with a broker</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-006</td><td>Embedding model chosen by benchmark on labelled predicate pairs (week 6)</td><td>Fixed choice up front</td><td><span class="chip c-should">Open</span></td></tr>
+      <tr><td class="id">ADR-007</td><td>Claude model tiers: Opus 5.5, Sonnet 5.5, Haiku 5.5, confirmed by evaluation</td><td>Previous generation per REQ §8</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-008</td><td>Terraform for all infrastructure</td><td>CDK, Pulumi</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-009</td><td>Evaluation gate in CI blocks promotion on regression</td><td>Manual review</td><td><span class="chip c-should">Proposed</span></td></tr>
+      <tr><td class="id">ADR-010</td><td>"Registers, not repositories": no document storage beyond uploads and extracted text</td><td>Full document management</td><td><span class="chip c-should">Proposed</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>MRA-PRD-008 · System architecture · Extends MRA-REQ-001 r0.2 §6–8. Model prices as published for the Claude API, October 2026.</footer>
+</main>
+</div>
+<script src="assets/prd.js"></script>
+</body>
+</html>

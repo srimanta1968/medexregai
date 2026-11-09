@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI PRD v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD v2.0</b>
+  <a href="index.html">Overview</a>
+  <a href="01-prd-v2.0.html" class="on">PRD v2.0</a>
+  <a href="02-delivery-plan-v2.0.html">Delivery plan</a>
+  <a href="03-architecture-v2.0.html">Architecture</a>
+  <a href="ui2.0/index.html">UI 2.0</a>
+  <a href="../index.html">PRD v1.0 set</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose"><span>1</span>Purpose</a></li>
+    <li><a href="#feedback"><span>2</span>Feedback → requirements</a></li>
+    <li><a href="#roi"><span>3</span>Where the ROI is</a></li>
+    <li><a href="#principles"><span>4</span>Product principles</a></li>
+    <li><a href="#users"><span>5</span>Users</a></li>
+    <li><a href="#workflow"><span>6</span>Workflow</a></li>
+    <li><a href="#fr14"><span>7</span>FR-14 requirements</a></li>
+    <li><a href="#keep"><span>8</span>Kept from v1.0</a></li>
+    <li><a href="#moves"><span>9</span>What moves</a></li>
+    <li><a href="#nfr"><span>10</span>Non-functional</a></li>
+    <li><a href="#screens"><span>11</span>Screens and outputs</a></li>
+    <li><a href="#metrics"><span>12</span>Metrics</a></li>
+    <li><a href="#out"><span>13</span>Out of scope</a></li>
+    <li><a href="#questions"><span>14</span>Open questions</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-201</span><span>PRD v2.0</span><span>Rev 2.0 · 7 Nov 2026</span><span>Draft for founder approval</span></div>
+  <h1>Client Evidence to Submission</h1>
+  <p class="sub">MedexRegAI reads client files where they already sit, sorts them into eSTAR sections, finds what is missing or contradictory, and drafts sections in Word with every statement linked to its source page. The consultant reviews, decides and files, as they do today.</p>
+  <div class="meta">
+    <div><b>Primary buyer</b>US 510(k) regulatory consultancies, multi-client</div>
+    <div><b>Second buyer</b>Manufacturers' RA teams that file repeatedly (fallback (a) in the viability review)</div>
+    <div><b>New requirement group</b>FR-14.1 – FR-14.24 (FR-14.1–14.19 from addendum Rev 0.1; FR-14.20–14.24 new here)</div>
+    <div><b>Build gate</b>Gate V on 18 Dec 2026: problem size, solvability and willingness to pay (<a href="02-delivery-plan-v2.0.html#gatev">delivery plan §3</a>)</div>
+  </div>
+</header>
+
+<section id="purpose">
+  <h2><span class="n">1</span>Purpose and outcome</h2>
+  <p>A consultant connects one client project folder. Within an hour they see every file sorted by eSTAR section and version, a list of what is missing, and the places where the client's documents disagree with each other. A drafted request goes to the client, who uploads files through a link with no account. The consultant then gets Word drafts of the evidence-heavy sections and tables, with every statement traceable to a file, version and page, and FDA checks already run on the draft. They edit in Word, and the edits come back as human-approved text. They file the eSTAR themselves.</p>
+  <div class="kpis">
+    <div class="kpi"><b>≥ 25%</b><span>fewer whole-project consultant hours on a live 510(k) (G3′, proposed)</span></div>
+    <div class="kpi"><b>≥ 30%</b><span>fewer hours on the drafted sections (G2′)</span></div>
+    <div class="kpi"><b>≥ 70%</b><span>of drafted statements accepted without material change</span></div>
+    <div class="kpi"><b>0</b><span>uncited facts in any draft or export</span></div>
+    <div class="kpi"><b>&lt; 1 h</b><span>from connecting a folder to the sorted file list and gap list</span></div>
+    <div class="kpi"><b>&lt; 8 h</b><span>for a firm to complete its own risk-based tool assessment</span></div>
+  </div>
+</section>
+
+<section id="feedback">
+  <h2><span class="n">2</span>Consultant feedback, traced to requirements</h2>
+  <p class="lede">Each point in the 30 October email, what our evidence says about it, how the product answers it, and the test that will show whether the answer works.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>#</th><th>What the consultant said</th><th>What our evidence shows</th><th>Design answer</th><th>Requirements</th><th>Test target (proposed)</th></tr></thead>
+    <tbody>
+      <tr><td class="id">F1</td><td>The bigger challenge is managing client-submitted information and turning it into submissions</td><td><span class="chip c-gap">Supported</span> 60 of 98 h are sections, admin documents, assembly, QC and client review. v3.0 saves only 5 h of them. Our task list had no line for chasing or reconciling files.</td><td>The product starts at the client folder: intake, sort, gap and contradiction check, then drafting</td><td>FR-14.1–14.15</td><td>Workbook A3: median ≥ 25% of section hours are finding, chasing and reconciling</td></tr>
+      <tr><td class="id">F2</td><td>An AI platform is a nice-to-have</td><td><span class="chip c-gap">Supported for v1.0 scope</span> 18 of 98 h saved (19%). After adoption costs, a firm's first year returns 0.06x if half of freed hours become revenue.</td><td>Aim at the 60 h block. Make value visible before drafting works, through the contradiction check.</td><td>FR-14.8, 14.10, 14.20</td><td>≥ 3 of 5 peers mark the organiser or drafter "would pay" or higher; ≥ 3 paid pilots</td></tr>
+      <tr><td class="id">F3</td><td>Another solution needs internal training</td><td>No ROI file counted training</td><td>Consultants work in Word plus one review screen. Clients need no login. First useful output without a training session.</td><td>FR-14.9, 14.14, 14.19</td><td>&lt; 1 h to first useful output, measured in the pilot</td></tr>
+      <tr><td class="id">F4</td><td>…and validation</td><td>v1.0 sold the validation pack as a $10K-a-year add-on, so we would have charged for the objection. FDA's CSA guidance says supporting software "often carries lower risk", but it is written for manufacturers and the firm decides.</td><td>A free validation pack from day one. Every statement is reviewed and traceable, which supports a lower-risk assessment.</td><td>FR-14.16</td><td>A firm finishes its own risk-based assessment in &lt; 8 h</td></tr>
+      <tr><td class="id">F5</td><td>…and maintenance</td><td>Model and prompt changes were already versioned and regression-tested (P1-53)</td><td>Hosted, nothing to install, release notes and a model change log in the validation pack</td><td>FR-14.16, P1-53</td><td>No routine work for the firm's IT staff</td></tr>
+      <tr><td class="id">F6</td><td>Firms already run an eQMS (TrackWise or equivalent), accounting, onboarding, sales and data-exchange tools (Dropbox or equivalent)</td><td><span class="chip c-later">Partly fixed</span> "Registers, not repositories" fits, but v1.0 connected only SharePoint and Drive, at Phase 2, with no Dropbox or Box. The eQMS connector named Greenlight Guru, not TrackWise, at M13–22.</td><td>Not a system of record. Read-only links to Dropbox, Box, SharePoint/OneDrive and Drive, plus email and upload. Word out. Dated PDF/DOCX records that any eQMS can file. No eQMS, accounting or CRM integration required.</td><td>FR-14.1, 14.2, 14.18</td><td>Peers report no required integration beyond their file store</td></tr>
+      <tr><td class="id">F7</td><td>Client information comes as test reports, clinical protocols, raw data, specifications and drawings, in Word, Excel, PowerPoint, PDF and others</td><td><span class="chip c-gap">Gap</span> v1.0 extracted four fields from test reports, as a "Should". PowerPoint, raw data and drawings were not mentioned.</td><td>Multi-format parsing with page, sheet and slide locations. Drawings by title block and revision. Raw data identified and linked to its report. Unreadable files listed, never skipped.</td><td>FR-14.3–14.7</td><td>Classification ≥ 90% correct; drawing revision ≥ 95% correct on real packages</td></tr>
+      <tr><td class="id">F8</td><td>(Implied) client files are confidential</td><td>NFR-7 and NFR-8 already cover tenant isolation and no training on client data</td><td>Data-handling pack, per-project deletion, a contract clause firms can give their clients, SOC 2 work brought forward</td><td>FR-14.17, NFR-16–18</td><td>Peers confirm their client agreements would allow it</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><p><strong>One caveat about the feedback.</strong> The peers were reacting to the idea of another tool, without product details. That is still a real barrier, because it is the reaction our sales outreach would get. It also means "nice-to-have" was a verdict on a category, not on this design. Gate V tests the design.</p></div>
+</section>
+
+<section id="roi">
+  <h2><span class="n">3</span>Where the ROI is, and how v2.0 improves it</h2>
+  <h3><span class="n">3.1</span>Where the hours go (Consultant #1, Huber needle 510(k), with general AI)</h3>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Task group</th><th>Tasks</th><th>Hours today</th><th>Saved, v3.0 committed</th><th>Saved %</th><th>v2.0 focus</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td><strong>Client material into submission</strong></td><td>12–14, 16–22</td><td>60</td><td>5.0</td><td>8%</td><td>P0: the product starts here</td></tr>
+      <tr><td>Classification, pathway, predicates, SE, research</td><td>2–7</td><td>24</td><td>10.3</td><td>43%</td><td>P0, thin: checks on the draft and the SE table only</td></tr>
+      <tr><td>Upload, review-period management, close-out</td><td>23, 25, 26</td><td>10</td><td>3.0</td><td>30%</td><td>P0 readiness package; P1 FDA question tracker</td></tr>
+      <tr><td>Intake meetings, proposal, SOW</td><td>1</td><td>4</td><td>0</td><td>0%</td><td>Not in scope</td></tr>
+      <tr><td><strong>Total</strong></td><td>20 tasks</td><td><strong>98</strong></td><td><strong>18.3</strong></td><td><strong>19%</strong></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p><small>n = 1. Grouping is ours. Saved hours are v3.0 committed targets, not measurements.</small></p>
+
+  <h3><span class="n">3.2</span>Hours saved per project: v3.0 committed vs v2.0 target</h3>
+  <div class="tbl"><table class="w-mid">
+    <thead><tr><th>Source of saving</th><th>Simple 510(k)</th><th>Complex 510(k)</th><th>Requirements</th></tr></thead>
+    <tbody>
+      <tr><td>Committed in v3.0 (thin FDA checks, SE table, verification)</td><td>18.3 h</td><td>38 h</td><td>Kept P1 items</td></tr>
+      <tr><td>Section drafts from client reports</td><td>+5.5 h</td><td>+33 h</td><td>FR-14.10, 14.11</td></tr>
+      <tr><td>Admin documents from the project record</td><td>+3 h</td><td>+4 h</td><td>FR-14.13</td></tr>
+      <tr><td>Device description and smaller steps</td><td>+6.7 h</td><td>+17 h</td><td>FR-14.12, 14.15</td></tr>
+      <tr class="hl"><td><strong>v2.0 target</strong></td><td><strong>33.5 h</strong></td><td><strong>92 h</strong></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p><small>The complex figure is calibrated from a pump project, not measured. If manufacturers write most technical documents, the +33 h shrinks.</small></p>
+
+  <h3><span class="n">3.3</span>The four ROI levers, and what the product does about each</h3>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>Lever</th><th>v1.0 position</th><th>v2.0 design</th><th>Requirements</th><th>Effect (modelled)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 · Hours saved</strong></td><td>Saved most where the hours were fewest</td><td>Intake, sorting, contradictions and drafting on the 60 h block</td><td>FR-14.1–14.15, 14.21, 14.24</td><td>18 → 34 h simple; 38 → 92 h complex</td></tr>
+      <tr><td><strong>2 · Adoption cost</strong></td><td>Not counted; validation sold at $10K/yr</td><td>Free validation and data-handling pack, Word as the review surface, no client login, nothing to install</td><td>FR-14.14, 14.16–14.19</td><td>First-year adoption 60 h → 20 h, about $6,000 at $150/h (our assumption)</td></tr>
+      <tr><td><strong>3 · What freed hours become</strong></td><td>Assumed all freed hours became revenue</td><td>Per-client usage export so firms can rebill; time capture proves the saving per project, which fixed-fee firms keep</td><td>FR-14.20, 14.22</td><td>At $900 a project, the fee is about 5% of a $17,500 engagement</td></tr>
+      <tr><td><strong>4 · Rework avoided</strong></td><td>Gap check against precedent (Phase 2)</td><td>Contradictions caught before FDA does; impact list when a client sends a new revision</td><td>FR-14.8, 14.21</td><td>Fewer holds and Additional Information requests; about $1,500 simple and $2,900 complex per filing in v1 modelling, not counted in the targets</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.4</span>A firm's first year, all levers together</h3>
+  <p class="lede">Team plan ($10,800), 12 projects a year, 25% complex, $150 an hour. Adoption hours and the share of freed hours that become revenue are our assumptions.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Scenario</th><th>Hours freed a year</th><th>Year-1 cost incl. adoption</th><th>Net, all hours monetised</th><th>Net, half monetised</th></tr></thead>
+    <tbody>
+      <tr><td>v1.0 scope, 60 h adoption</td><td>279</td><td>$19,800</td><td>$22,005 · 1.1x</td><td>$1,103 · 0.06x</td></tr>
+      <tr><td>v1.0 scope, 20 h adoption</td><td>279</td><td>$13,800</td><td>$28,005 · 2.0x</td><td>$7,103 · 0.5x</td></tr>
+      <tr><td>v2.0 targets, 60 h adoption</td><td>578</td><td>$19,800</td><td>$66,825 · 3.4x</td><td>$23,513 · 1.2x</td></tr>
+      <tr class="hl"><td><strong>v2.0 targets, 20 h adoption</strong></td><td>578</td><td>$13,800</td><td>$72,825 · 5.3x</td><td><strong>$29,513 · 2.1x</strong></td></tr>
+    </tbody>
+  </table></div>
+  <h3><span class="n">3.5</span>Upside not yet counted in the targets</h3>
+  <ul class="plain">
+    <li><strong>Chasing, sorting and reconciling client files.</strong> Never measured, and possibly the largest block. Workbook A3 measures it.</li>
+    <li><strong>Answering FDA's Additional Information letter.</strong> About +3.5 h simple and +9 h complex as an expected value. Who does this work is unclear (Part B, and a question for Consultant #1).</li>
+    <li><strong>eSTAR pre-fill through XML.</strong> Part of an 8 h task. FDA supports XML export and import in Acrobat Pro, but our route is untested (1-week spike).</li>
+    <li><strong>Manufacturer in the same workspace.</strong> About 10 h on a simple project. Modelled, not validated.</li>
+  </ul>
+</section>
+
+<section id="principles">
+  <h2><span class="n">4</span>Product principles</h2>
+  <ol class="plain">
+    <li><strong>Hours first, measured hours.</strong> Build in the order a consultant's measured hours are spent. When the measurement changes, the order changes.</li>
+    <li><strong>Fit around what firms run.</strong> We are not a system of record, a document control system or an eQMS. Files stay in Dropbox, Box, SharePoint or Drive. Records leave as PDF or DOCX.</li>
+    <li><strong>Registers, not repositories</strong> (kept from v1.0). We store links, hashes, extracted text with locations, statuses and relationships. Uploaded files are kept only when the user uploads instead of linking.</li>
+    <li><strong>Word is the review surface.</strong> The consultant's working document stays theirs. We add comments that link to sources and read their edits back.</li>
+    <li><strong>Every statement has a source.</strong> The citation gate now covers client files as well as FDA records: file, version and page, or the statement is removed.</li>
+    <li><strong>Never silently guess.</strong> Unclear versions, unreadable files and low-confidence values are shown and asked about, never decided quietly.</li>
+    <li><strong>The consultant decides, files and signs.</strong> We never file with FDA, never sign, and never message a client without the consultant's approval.</li>
+    <li><strong>Remove adoption cost before charging for it.</strong> Validation, data handling and onboarding material are part of the product, not add-ons.</li>
+  </ol>
+</section>
+
+<section id="users">
+  <h2><span class="n">5</span>Users</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>User</th><th>New in v2.0?</th><th>Main jobs</th><th>What they must not need</th></tr></thead>
+    <tbody>
+      <tr><td><strong>RA consultant</strong> (editor)</td><td>Same user, new jobs</td><td>Connect the client folder, resolve versions and contradictions, approve client requests, review drafts in Word</td><td>A training session; a new place to store files</td></tr>
+      <tr><td><strong>Senior RA / principal</strong> (reviewer)</td><td>—</td><td>Approve drafts and contradiction resolutions; sign off records</td><td>Re-checking every source by hand</td></tr>
+      <tr><td><strong>Client contributor</strong></td><td>Changed: no account</td><td>Receive a request list; upload through a secure link</td><td>An account, a login or training</td></tr>
+      <tr><td><strong>Firm quality / IT owner</strong></td><td><span class="chip c-ours">New</span></td><td>Decide whether to allow the tool: read the validation and data-handling packs, approve connector scopes, file records in the eQMS</td><td>Installation, routine maintenance, an eQMS integration project</td></tr>
+      <tr><td><strong>Consultancy admin</strong> (owner)</td><td>—</td><td>Create client workspaces, invite users, set roles, export usage for rebilling</td><td>—</td></tr>
+      <tr><td><strong>Manufacturer RA/QA lead</strong></td><td><span class="chip c-later">Second buyer</span></td><td>The same workflow on their own design history files</td><td>Validated in fallback (a) before any build for them</td></tr>
+      <tr><td><strong>MedexRegAI operator</strong></td><td>—</td><td>Run the pipelines, review low-confidence items, run evaluations</td><td>Access to client content beyond what a support ticket allows</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="workflow">
+  <h2><span class="n">6</span>End-to-end workflow</h2>
+  <div class="diagram" role="img" aria-label="Five-step workflow: connect, read and sort, find problems, draft, consultant decides">
+    <svg viewBox="0 0 1000 210" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <g>
+        <rect class="bx-s" x="10" y="30" width="170" height="130" rx="10"/>
+        <text class="hd" x="26" y="56">1 · CONNECT</text>
+        <text class="t" x="26" y="82">Client folder</text>
+        <text class="s" x="26" y="104">Dropbox, Box, SharePoint,</text>
+        <text class="s" x="26" y="120">Drive (read-only), email,</text>
+        <text class="s" x="26" y="136">upload link</text>
+      </g>
+      <line class="ln" x1="180" y1="95" x2="208" y2="95" marker-end="url(#ar)"/>
+      <g>
+        <rect class="bx-a" x="210" y="30" width="180" height="130" rx="10"/>
+        <text class="hd" x="226" y="56">2 · READ AND SORT</text>
+        <text class="t" x="226" y="82">Every file located</text>
+        <text class="s" x="226" y="104">DOCX, XLSX, PPTX, PDF, scans,</text>
+        <text class="s" x="226" y="120">CSV, drawings → type, version,</text>
+        <text class="s" x="226" y="136">eSTAR section</text>
+      </g>
+      <line class="ln" x1="390" y1="95" x2="418" y2="95" marker-end="url(#ar)"/>
+      <g>
+        <rect class="bx-a" x="420" y="30" width="180" height="130" rx="10"/>
+        <text class="hd" x="436" y="56">3 · FIND PROBLEMS</text>
+        <text class="t" x="436" y="82">Gaps and conflicts</text>
+        <text class="s" x="436" y="104">Missing items, old versions,</text>
+        <text class="s" x="436" y="120">spec vs drawing vs report vs IFU;</text>
+        <text class="s" x="436" y="136">client request + upload link</text>
+      </g>
+      <line class="ln" x1="600" y1="95" x2="628" y2="95" marker-end="url(#ar)"/>
+      <g>
+        <rect class="bx-a" x="630" y="30" width="180" height="130" rx="10"/>
+        <text class="hd" x="646" y="56">4 · DRAFT</text>
+        <text class="t" x="646" y="82">Sections in Word</text>
+        <text class="s" x="646" y="104">Text, tables, admin documents;</text>
+        <text class="s" x="646" y="120">each statement → file, page;</text>
+        <text class="s" x="646" y="136">FDA checks on the draft</text>
+      </g>
+      <line class="ln" x1="810" y1="95" x2="838" y2="95" marker-end="url(#ar)"/>
+      <g>
+        <rect class="bx-w" x="840" y="30" width="150" height="130" rx="10"/>
+        <text class="hd" x="856" y="56">5 · CONSULTANT</text>
+        <text class="t" x="856" y="82">Reviews, files</text>
+        <text class="s" x="856" y="104">Edits in Word; fills and</text>
+        <text class="s" x="856" y="120">files eSTAR; records go</text>
+        <text class="s" x="856" y="136">to the eQMS as PDF</text>
+      </g>
+      <text class="lbl" x="420" y="195">Steps 2–4 run again whenever a client file changes (FR-14.21)</text>
+      <path class="ln" d="M720,160 C720,185 300,185 300,162" marker-end="url(#ar)"/>
+    </svg>
+  </div>
+  <div class="story"><b>Story.</b> A consultant connects the client's Dropbox folder for a sterile single-use device. In 40 minutes the tool lists 212 files in 11 eSTAR sections, marks 3 superseded test reports, and flags that the IFU states a 3-year shelf life while the ageing report supports 2 years. It drafts a request for the missing EO residuals report, the consultant edits and approves it, and the client uploads the report through the link. Next day the consultant opens a Word draft of the sterilisation and shelf-life section. Each sentence carries a comment pointing to the report page, and the shelf-life conflict is listed as an open item. <small>(Illustrative; figures are not measurements.)</small></div>
+</section>
+
+<section id="fr14">
+  <h2><span class="n">7</span>Functional requirements: FR-14 Client Evidence to Submission</h2>
+  <p class="lede">P0 = prove in the pilot (weeks 1–26 after Gate V). P1 = after the pilot proves value (to M12). Acceptance criteria are proposed and are fixed at Gate V. FR-14.1–14.19 come from addendum Rev 0.1, some with tighter criteria. FR-14.20–14.24 are new in v2.0.</p>
+  <div class="tbl"><table class="w-xl">
+    <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Phase</th><th>Acceptance criteria (proposed)</th><th>Answers</th><th>Replaces / amends</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="7">Intake</td></tr>
+      <tr><td class="id">FR-14.1</td><td>Read-only project-folder connectors: Dropbox, Box, SharePoint/OneDrive, Google Drive. Build the two most reported in Part A first; the other two follow in Phase 1.</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Connected in under 5 minutes; files not copied; change detected within 24 h; access revocable by the user; scopes listed in the data-handling pack</td><td>F6</td><td>Arch §10; PRD-002 §10</td></tr>
+      <tr><td class="id">FR-14.2</td><td>Local upload and a per-project forwarding address where no connector is allowed</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Attachments land on the right project within 2 minutes</td><td>F6</td><td>P2-30, widened</td></tr>
+      <tr><td class="id">FR-14.3</td><td>Parse DOCX, XLSX, PPTX, PDF (native and scanned), CSV and images, keeping the page, sheet, cell range or slide of every extracted fact</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Every extracted fact has a source location; unreadable or password-protected files are listed with the reason, never silently skipped</td><td>F7</td><td>P1-35, widened</td></tr>
+      <tr><td class="id">FR-14.4</td><td>Drawings: read title block, part number, revision and visible dimensions from PDF or image exports. Native CAD files are listed by name only.</td><td><span class="chip c-should">Should</span></td><td>1</td><td>Revision correct on ≥ 95% of the evaluation set; dimensions need user confirmation</td><td>F7</td><td>New</td></tr>
+      <tr><td class="id">FR-14.5</td><td>Raw data: identify the file's structure and suggest which report used it. Analysis of raw data is out of scope.</td><td><span class="chip c-could">Could</span></td><td>2</td><td>Link suggested; user confirms</td><td>F7</td><td>New</td></tr>
+      <tr><td class="id">FR-14.6</td><td>Classify each file by document type and eSTAR section, with a stated reason</td><td><span class="chip c-must">Must</span></td><td>1</td><td>≥ 90% correct on real packages; one-click correction; corrections become evaluation data</td><td>F1</td><td>P2-04, moved earlier</td></tr>
+      <tr><td class="id">FR-14.7</td><td>Detect duplicates and versions, and propose the current version</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Never chooses silently: unclear cases are asked; the version chain is visible</td><td>F1</td><td>P2-40, moved earlier</td></tr>
+      <tr class="grp"><td colspan="7">Gaps, contradictions and client requests</td></tr>
+      <tr><td class="id">FR-14.8</td><td>Contradiction check across client documents: device name, model, dimensions, materials, sterilisation method, shelf life, IFU wording, standard and edition, sample size, result against acceptance criterion</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Each finding shows both sources and pages; ≥ 70% of findings judged real by the RA lead; deterministic comparison wherever the values are structured</td><td>F1, F2</td><td>New; extends P2-22</td></tr>
+      <tr><td class="id">FR-14.9</td><td>Missing-information list per eSTAR section, and a drafted request to the client. The client uploads through a secure link with no account; responses are filed to the project.</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Client needs no login or training; link expires; the consultant approves every message; status tracked until received</td><td>F1, F3</td><td>New; extends P2-11</td></tr>
+      <tr class="grp"><td colspan="7">Drafting and output</td></tr>
+      <tr><td class="id">FR-14.10</td><td>Draft eSTAR section text for sterilisation and shelf life, biocompatibility, and performance testing (bench, EMC and electrical safety where present), from client reports</td><td><span class="chip c-must">Must</span></td><td>2</td><td>Each factual statement links to a file, version and page; uncited statements removed by the gate; ≥ 70% accepted without material change</td><td>F1</td><td>P5-20 to P5-22, moved earlier</td></tr>
+      <tr><td class="id">FR-14.11</td><td>Summary tables from test reports (test, standard and edition, sample size, acceptance criterion, result, report reference)</td><td><span class="chip c-must">Must</span></td><td>2</td><td>Values match the source exactly; every mismatch flagged; user confirms</td><td>F1</td><td>P5-21, moved earlier</td></tr>
+      <tr><td class="id">FR-14.12</td><td>Device description from design documents, with precedent wording from the predicate summary shown beside it</td><td><span class="chip c-should">Should</span></td><td>2</td><td>Warns on claim creep against the IFU and the evidence</td><td>F1</td><td>P5-22, moved earlier</td></tr>
+      <tr><td class="id">FR-14.13</td><td>Administrative documents: 510(k) Summary, cover letter, FDA 3601, Truthful and Accuracy statement</td><td><span class="chip c-should">Should</span></td><td>2</td><td>Generated from project data; signature fields left blank; never signed by us</td><td>F1</td><td>New</td></tr>
+      <tr><td class="id">FR-14.14</td><td>Word as the review surface: export with comments that link to sources; re-import edits and record them as human-approved</td><td><span class="chip c-must">Must</span></td><td>2</td><td>No formatting loss on the firm's own template; edits distinguished from generated text (FR-10.5); a Word add-in follows only if peers ask for it</td><td>F3</td><td>P4-24, moved earlier</td></tr>
+      <tr><td class="id">FR-14.15</td><td>eSTAR readiness package: attachment list with file names under 124 characters, size warnings (1 GB per attachment, 4 GB in total) and no zip files</td><td><span class="chip c-must">Must</span></td><td>2</td><td>Checks follow FDA's current eSTAR page and are versioned per template</td><td>F1</td><td>New; extends P2-01</td></tr>
+      <tr class="grp"><td colspan="7">Adoption</td></tr>
+      <tr><td class="id">FR-14.16</td><td>Free validation pack: intended use, risk assessment template, test evidence, release notes and model change log</td><td><span class="chip c-must">Must</span></td><td>0–1</td><td>A firm can finish its own risk-based assessment in under 8 hours; updated with each release</td><td>F4, F5</td><td>P4-33; removes the $10K add-on</td></tr>
+      <tr><td class="id">FR-14.17</td><td>Data-handling pack: where data goes, subprocessors, no training on client data, retention, deletion, and a clause firms can give their clients</td><td><span class="chip c-must">Must</span></td><td>0–1</td><td>Reviewed by counsel; per-project deletion completes within the stated period</td><td>F8</td><td>NFR-8, NFR-14</td></tr>
+      <tr><td class="id">FR-14.18</td><td>Records for the eQMS: dated PDF or DOCX exports of the project record, reviews and decisions. No eQMS connector is required.</td><td><span class="chip c-must">Must</span></td><td>2</td><td>A firm can file the record in any eQMS by hand</td><td>F6</td><td>P5-33 deferred, not removed</td></tr>
+      <tr><td class="id">FR-14.19</td><td>First-use path that needs no training session</td><td><span class="chip c-must">Must</span></td><td>1</td><td>A new user gets the sorted folder and gap list within 1 hour; measured in the pilot</td><td>F3</td><td>New</td></tr>
+      <tr class="grp"><td colspan="7">New in v2.0: proving and keeping the ROI</td></tr>
+      <tr><td class="id">FR-14.20</td><td>Time capture by activity, using the workbook A3 activity codes (chase, find, version, map, trace, read, reconcile, tabulate, write, forms, attachments, client review)</td><td><span class="chip c-must">Must</span></td><td>1</td><td>Optional, editable, one click per entry; totals by project and activity export to CSV; used for G2′ and G3′</td><td>F2</td><td>P3-01, moved earlier and recoded</td></tr>
+      <tr><td class="id">FR-14.21</td><td>Revision impact: when a client sends a new version of a file, list every sorted item, finding, drafted statement and table cell that cited the old version</td><td><span class="chip c-must">Must</span></td><td>2</td><td>All affected statements listed within 10 minutes of the change being detected; nothing re-drafted without the consultant's approval</td><td>F1</td><td>New; extends P2-22 hash mismatch</td></tr>
+      <tr><td class="id">FR-14.22</td><td>Per-client usage export for rebilling</td><td><span class="chip c-should">Should</span></td><td>3</td><td>Projects, pages processed and drafts per client workspace, as CSV</td><td>F2</td><td>P2-52, moved earlier</td></tr>
+      <tr><td class="id">FR-14.23</td><td>Additional Information letter: split it into tracked deficiencies and show the client files and drafted statements each one affects</td><td><span class="chip c-should">Should</span></td><td>4</td><td>≥ 95% of deficiencies split correctly on pilot letters; user confirms before saving</td><td>F1</td><td>P2-30 to P2-34, narrowed</td></tr>
+      <tr><td class="id">FR-14.24</td><td>Firm style sources: use the firm's own section templates and past submission wording (tenant-scoped, opt-in per firm) when drafting</td><td><span class="chip c-should">Should</span></td><td>2</td><td>Drafts follow the firm template's headings; past wording never crosses tenants; turning it off removes it from drafting within 1 hour</td><td>F3</td><td>New</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="keep">
+  <h2><span class="n">8</span>Kept from v1.0, at P0 (thin)</h2>
+  <p class="lede">These stay in Phase 1 because they give our highest committed saving (SE table 4 h, verification 1.5 h) and the trust layer that drafting depends on. Each is kept narrow.</p>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>IDs</th><th>Requirement (v1.0)</th><th>Kept as</th></tr></thead>
+    <tbody>
+      <tr><td class="id">P1-01 – P1-04</td><td>Organisation → client workspace → project; roles; hash-chained audit; SSO</td><td>Unchanged. Client isolation matters more now that client files flow in.</td></tr>
+      <tr><td class="id">P1-10 – P1-13</td><td>Device profile and product-code candidates</td><td>Profile filled from client documents rather than free text; product code confirmed by the consultant</td></tr>
+      <tr><td class="id">P1-22</td><td>Recall and withdrawal flags on predicates</td><td>Unchanged, run on the predicate named in the draft</td></tr>
+      <tr><td class="id">P1-25</td><td>SE comparison table export</td><td>Built from the chosen predicate's summary plus the client's device facts</td></tr>
+      <tr><td class="id">P1-40 – P1-42</td><td>Citation gate, scope statement, export and delete</td><td>Gate extended to client sources (Architecture §7)</td></tr>
+      <tr><td class="id">P1-50 – P1-53</td><td>Pipeline console, drift halt, review queue, evaluation gate</td><td>Unchanged; the evaluation suite adds client-document sets</td></tr>
+      <tr><td class="id">New thin checks</td><td>K-number verification, recall and MAUDE lookups for the predicate and product code; thin guidance and standards lookup for drafting</td><td>FDA data becomes the check on the draft, not the headline</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="moves">
+  <h2><span class="n">9</span>What moves from v1.0</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Item</th><th>v1.0</th><th>v2.0</th></tr></thead>
+    <tbody>
+      <tr><td>P1-20, P1-21, P1-23, P1-24 predicate ranking, side-by-side, lineage</td><td>Phase 1</td><td>Phase 4 (P1 priority); thin search kept for the SE table</td></tr>
+      <tr><td>P1-30 – P1-33, P1-36 research library, standards status, snapshot diff</td><td>Phase 1</td><td>Phase 4; thin guidance and standards lookup for drafting only</td></tr>
+      <tr><td>P2-01 – P2-07 eSTAR plan</td><td>Phase 2</td><td>Section map in Phase 1 (FR-14.6); owners, dates and reminders in Phase 4</td></tr>
+      <tr><td>P2-10 – P2-15 continuous gap check</td><td>Phase 2</td><td>Completeness rules in Phase 1 (FR-14.9); precedent rules in Phase 4</td></tr>
+      <tr><td>P2-20 – P2-24 claim–evidence matrix</td><td>Phase 2</td><td>Phase 4; drafted statements already carry their evidence links</td></tr>
+      <tr><td>P2-30 – P2-36 FDA interaction tracker</td><td>Phase 2</td><td>Phase 4, narrowed to FR-14.23</td></tr>
+      <tr><td>P2-40 – P2-45 submission record and chronology</td><td>Phase 2</td><td>Version register in Phase 1 (FR-14.7); manifests and chronology in Phase 4</td></tr>
+      <tr><td>P3-20 – P3-43 pathway, self-serve checkout, free tier, product-code pages</td><td>M6</td><td>Phase 5, gated on G3′</td></tr>
+      <tr><td>P4-33 validation support package ($10K/yr)</td><td>M7–12</td><td>FR-14.16, free, Phase 0–1</td></tr>
+      <tr><td>P5-10 AI-letter response drafting</td><td>M13–22</td><td>Phase 4, if FR-14.23 is used</td></tr>
+      <tr><td>P5-20 – P5-22 drafting assists</td><td>M13–22</td><td>Phase 2, as FR-14.10 – 14.12</td></tr>
+      <tr><td>P5-30, P5-31 API and MCP; Lead Finder</td><td>M15</td><td>Phase 5, dates reset from G3′</td></tr>
+      <tr><td>P5-33 eQMS connectors</td><td>M13–22</td><td>Deferred; FR-14.18 exports instead. Build one only when two paying firms ask for the same eQMS.</td></tr>
+      <tr><td>eSTAR form filling</td><td>Out of scope</td><td>1-week XML spike in Phase V; if it works, export in Phase 4. We still never file.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="nfr">
+  <h2><span class="n">10</span>Non-functional requirements</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>NFR</th><th>Target</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="id">NFR-1</td><td>Folder of 500 files sorted within 60 minutes; Word draft of one section within 10 minutes</td><td>Changed</td></tr>
+      <tr><td class="id">NFR-5</td><td>Every displayed fact one click from its source: FDA record and snapshot, or client file, version and page</td><td>Widened</td></tr>
+      <tr><td class="id">NFR-7</td><td>TLS, encryption at rest, row-level security for tenant and workspace isolation, secrets in a vault</td><td>Kept</td></tr>
+      <tr><td class="id">NFR-8</td><td>Client content never used to train shared models; never crosses tenants</td><td>Kept</td></tr>
+      <tr><td class="id">NFR-9</td><td>No PHI by design; uploads scanned for likely PHI, with a warning and redaction prompt (clinical protocols and data raise this risk)</td><td>Widened</td></tr>
+      <tr><td class="id">NFR-12</td><td>AI cost measured per project; starting estimate $9 simple and $36 complex, replacing the $2.40 alert</td><td>Changed</td></tr>
+      <tr><td class="id">NFR-14</td><td>Per-project deletion within 30 days, or sooner if the data-handling pack states it; deletion certificate on request</td><td>Widened</td></tr>
+      <tr><td class="id">NFR-16</td><td>Client documents treated as untrusted input: instructions inside files never change system behaviour (prompt-injection tests in CI)</td><td><span class="chip c-ours">New</span></td></tr>
+      <tr><td class="id">NFR-17</td><td>Least-privilege connector scopes; read-only; tokens revocable by the user and the firm admin</td><td><span class="chip c-ours">New</span></td></tr>
+      <tr><td class="id">NFR-18</td><td>SOC 2 readiness starts in Phase 3 (pilot proof), not after GA</td><td><span class="chip c-ours">New</span></td></tr>
+      <tr><td class="id">NFR-13</td><td>WCAG 2.1 AA on every screen; Word outputs use real headings and table headers</td><td>Kept</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="screens">
+  <h2><span class="n">11</span>Screens and outputs</h2>
+  <div class="cards">
+    <div class="card"><span class="k">S1</span><h4>Connect</h4><p>Pick a folder in Dropbox, Box, SharePoint or Drive, or get the upload link and forwarding address. Shows scopes in plain words.</p></div>
+    <div class="card"><span class="k">S2</span><h4>Sorted folder</h4><p>Files by eSTAR section and type, version chains, unreadable files, one-click corrections.</p></div>
+    <div class="card"><span class="k">S3</span><h4>Problems</h4><p>Missing items and contradictions side by side with both source pages; resolve, accept with reason, or ask the client.</p></div>
+    <div class="card"><span class="k">S4</span><h4>Client request</h4><p>Drafted request list, edited and approved by the consultant; status until received.</p></div>
+    <div class="card"><span class="k">S5</span><h4>Review</h4><p>The single review screen: draft status per section, open items, revision impact, Word export and re-import.</p></div>
+    <div class="card"><span class="k">S6</span><h4>Records</h4><p>Dated PDF/DOCX record, readiness package, validation and data-handling packs, usage export.</p></div>
+  </div>
+  <p>Outputs are Word section drafts with source comments, Excel summary tables, the readiness attachment list, admin documents with blank signature fields, and the eQMS record. eSTAR XML is added only if the spike works.</p>
+</section>
+
+<section id="metrics">
+  <h2><span class="n">12</span>Success metrics</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Metric</th><th>Target (proposed)</th><th>Measured by</th><th>Gate</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td><strong>Whole-project consultant hours</strong></td><td>≥ 25% below the firm's own baseline</td><td>FR-14.20 time capture vs Phase 0 baseline</td><td>G3′</td></tr>
+      <tr><td>Hours on drafted sections</td><td>≥ 30% lower</td><td>FR-14.20, write + tabulate + reconcile codes</td><td>G2′</td></tr>
+      <tr><td>Statements accepted without material change</td><td>≥ 70%</td><td>Word re-import diff</td><td>G2′</td></tr>
+      <tr><td>Uncited facts</td><td>0</td><td>Citation gate log and spot audit</td><td>All</td></tr>
+      <tr><td>File classification accuracy</td><td>≥ 90%</td><td>Corrections on real packages</td><td>G1′</td></tr>
+      <tr><td>Contradiction findings judged real</td><td>≥ 70%; ≥ 1 real contradiction the consultant had to fix per package</td><td>RA lead review</td><td>G1′</td></tr>
+      <tr><td>RA lead accepts findings</td><td>≥ 75%</td><td>Review screen decisions</td><td>G1′</td></tr>
+      <tr><td>Time to first useful output</td><td>&lt; 1 hour</td><td>Product analytics (no client content)</td><td>G1′</td></tr>
+      <tr><td>Firm's own validation effort</td><td>&lt; 8 hours</td><td>Pilot firm's log</td><td>G3′</td></tr>
+      <tr><td>FDA deficiencies</td><td>No increase vs the firm's history</td><td>FDA correspondence on pilot filings</td><td>G3′</td></tr>
+      <tr><td>Paying firms</td><td>≥ 3, with no blocking IT or quality objection</td><td>Signed pilots</td><td>Gate V, G3′</td></tr>
+      <tr><td>AI cost per project</td><td>Measured; alert at 2× the estimate</td><td>AiCall metering</td><td>G3′</td></tr>
+    </tbody>
+  </table></div>
+  <p>The v1.0 target of 50% on scoped research activities is retired. On Consultant #1's data those activities are a small share of the project. Scoped results are still reported next to the whole-project figure.</p>
+</section>
+
+<section id="out">
+  <h2><span class="n">13</span>Out of scope</h2>
+  <ul class="plain">
+    <li>Filing with FDA, CDRH Portal transmission, or signing anything.</li>
+    <li>Being a system of record: no check-in/out, e-signatures, Part 11 document control or training matrices.</li>
+    <li>Replacing the eQMS, document management, accounting, onboarding, sales or data-exchange tools.</li>
+    <li>Analysis of raw data and native CAD parsing (Ecosystem stage 2 at the earliest).</li>
+    <li>Writing clinical or expert judgement: the tool drafts from evidence and flags what needs judgement.</li>
+    <li>Messaging clients without the consultant's approval.</li>
+    <li>Using any client's data for another client or for model training. The future data-use opt-in has no effect in stage 1.</li>
+  </ul>
+</section>
+
+<section id="questions">
+  <h2><span class="n">14</span>Open questions (answered by Gate V or Phase 0)</h2>
+  <ol class="plain">
+    <li>How much of the 60 hours is finding, chasing and reconciling, and how much is judgement? (Workbook A3.)</li>
+    <li>Which two file stores do peers use most? That decides the first two connectors. (A2.)</li>
+    <li>Do client agreements allow an outside AI service to process client files, and what would have to be true? (A4.)</li>
+    <li>Who writes the technical sections: consultant or manufacturer? This sets the size of the complex-project saving. (A3.)</li>
+    <li>Does generated eSTAR XML import cleanly into a blank nIVD v7.1 template? (Spike.)</li>
+    <li>What happens to freed hours: more projects, less billing, or margin? (A5.)</li>
+    <li>Have peers tried Complizen or Assyro for drafting, and what did they find? (Calls.)</li>
+  </ol>
+</section>
+<footer>MRA-PRD-201 · PRD v2.0 · Rev 2.0 · 7 Nov 2026 · Absorbs addendum Rev 0.1 (30 Oct 2026). Traces to MRA-REQ-001 r0.2 FR-1, 3, 5, 10, 11, 12, 13. Internal.</footer>
+</main>
+</div>
+<script src="../assets/prd.js"></script>
+</body>
+</html>

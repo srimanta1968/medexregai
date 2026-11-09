@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedexRegAI PRD v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../assets/prd.css">
+</head>
+<body>
+<nav class="topbar" aria-label="Document set">
+  <b>MedexRegAI PRD v2.0</b>
+  <a href="index.html" class="on">Overview</a>
+  <a href="01-prd-v2.0.html">PRD v2.0</a>
+  <a href="02-delivery-plan-v2.0.html">Delivery plan</a>
+  <a href="03-architecture-v2.0.html">Architecture</a>
+  <a href="ui2.0/index.html">UI 2.0</a>
+  <a href="../index.html">PRD v1.0 set</a>
+</nav>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#why"><span>1</span>Why v2.0</a></li>
+    <li><a href="#docs"><span>2</span>Documents</a></li>
+    <li><a href="#changes"><span>3</span>What changed</a></li>
+    <li><a href="#status"><span>4</span>Status and evidence</a></li>
+    <li><a href="#sources"><span>5</span>Sources</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>MRA-PRD-200</span><span>Product requirements set</span><span>Rev 2.0 · 7 Nov 2026</span><span>Internal</span></div>
+  <h1>PRD v2.0: from FDA research to client evidence</h1>
+  <p class="sub">A rewrite of the PRD set after consultant feedback. We keep the FDA data layer, but the product now starts where consultants say their time goes: turning the files clients send into eSTAR-ready sections that a consultant reviews in Word.</p>
+  <div class="meta">
+    <div><b>Supersedes</b>MRA-PRD-002 and the build order in PRD 1–5 (Rev 1.0, 8 Oct 2026). Absorbs the v4.0 PRD addendum (Rev 0.1).</div>
+    <div><b>Status</b>Draft for founder approval. Product build starts only after Gate V (18 Dec 2026).</div>
+    <div><b>Companion</b>Business plan r7 (<a href="../../businessPlan/MedexRegAI-BusinessPlan-PreSeed-v7.html">MRA-BIZ-001 r7</a>)</div>
+    <div><b>Evidence base</b>One consultant's task hours (n = 1), one consultant email, and public FDA sources. Targets are proposed, not measured.</div>
+  </div>
+</header>
+
+<section id="why">
+  <h2><span class="n">1</span>Why there is a v2.0</h2>
+  <div class="kpis">
+    <div class="kpi"><b>60 of 98 h</b><span>Consultant hours spent turning client material into the submission. v1.0 does not reach this until M13–22.</span></div>
+    <div class="kpi"><b>10 of 98 h</b><span>FDA research, predicate search and verification. v1.0 builds this first.</span></div>
+    <div class="kpi"><b>18 → 34 h</b><span>Hours saved on a simple 510(k): v3.0 committed vs v2.0 target. Complex: 38 → 92 h. Targets only.</span></div>
+    <div class="kpi"><b>0.06x → 2.1x</b><span>A firm's modelled first-year return (Team plan, half of freed hours monetised)</span></div>
+  </div>
+  <p>On 30 October 2026 a practising 510(k) consultant told us that peers doubted the product's value and its fit with their existing IT. Consultancies already run an eQMS (TrackWise or equivalent), accounting, onboarding, sales and data-exchange tools (Dropbox or equivalent). Any new tool adds training, validation and maintenance. In their view the real challenge is managing what clients send (test reports, clinical protocols, raw data, specifications and drawings, in Word, Excel, PowerPoint, PDF and other formats) and turning it into submissions. So the platform as planned would be a nice-to-have.</p>
+  <p>Our own time data supports this. v1.0 kept the right rule (build in the order the hours are spent) but applied it to the wrong task list. v2.0 keeps the rule and changes the order.</p>
+</section>
+
+<section id="docs">
+  <h2><span class="n">2</span>Documents in this set</h2>
+  <div class="cards">
+    <a class="card pick" href="01-prd-v2.0.html"><span class="k">MRA-PRD-201</span><h4>PRD v2.0: Client Evidence to Submission</h4><p>Each feedback point traced to a requirement, where the ROI comes from, users, scope, the FR-14 requirements, what we keep from v1.0, metrics and out-of-scope items.</p></a>
+    <a class="card" href="02-delivery-plan-v2.0.html"><span class="k">MRA-PRD-202</span><h4>Prioritised delivery plan</h4><p>P0, P1 and P2 priorities, Phase V tests to 18 Dec, Phases 0–5, the week-by-week pilot, gates, team, engineering budget check, risks and decisions.</p></a>
+    <a class="card" href="03-architecture-v2.0.html"><span class="k">MRA-PRD-203</span><h4>System architecture v2.0</h4><p>Client-document pipeline, read-only connectors, contradiction engine, drafting with source citations, Word round trip, new data model, security for untrusted files, and ADR-011 to ADR-018.</p></a>
+    <a class="card" href="ui2.0/index.html"><span class="k">MRA-PRD-204</span><h4>UI 2.0: screens, phase by phase</h4><p>Concept screens for each build phase, with notes and questions for reviewers. Uses fictional data and is safe to show consultants.</p></a>
+  </div>
+</section>
+
+<section id="changes">
+  <h2><span class="n">3</span>What changed from v1.0</h2>
+  <div class="tbl"><table class="w-wide">
+    <thead><tr><th>Area</th><th>v1.0 (8 Oct 2026)</th><th>v2.0 (this set)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Headline problem</strong></td><td>Predicate and research hours ("largest block of hours")</td><td>Client material into submission sections (60 of 98 h measured)</td></tr>
+      <tr><td><strong>First build</strong></td><td>Predicate Finder and Research Library</td><td>Client file intake, sorting, gap and contradiction check (FR-14.1–14.9)</td></tr>
+      <tr><td><strong>eSTAR section drafting</strong></td><td>M13–22 (PRD 5), and the business plan pushed it past the Series A</td><td>Phase 2, weeks 11–20 of the pilot (FR-14.10–14.15)</td></tr>
+      <tr><td><strong>FDA research</strong></td><td>The headline product</td><td>A thin layer of checks on the draft (K-number, recalls, MAUDE, SE table, citation gate). Full research tools move to Phase 4.</td></tr>
+      <tr><td><strong>Connectors</strong></td><td>SharePoint and Google Drive at Phase 2; Greenlight Guru eQMS at M13+</td><td>Dropbox, Box, SharePoint/OneDrive and Drive in Phase 1, read-only. No eQMS connector needed: dated PDF/DOCX records go into any eQMS.</td></tr>
+      <tr><td><strong>File formats</strong></td><td>Four fields from test reports ("Should")</td><td>DOCX, XLSX, PPTX, PDF (native and scanned), CSV, images and drawing title blocks, each fact tied to a page, sheet or slide</td></tr>
+      <tr><td><strong>Validation pack</strong></td><td>$10K-a-year add-on at M7–12</td><td>Free from day one, with a data-handling pack and a clause firms can give their clients</td></tr>
+      <tr><td><strong>Review surface</strong></td><td>Our web screens</td><td>Microsoft Word, plus a single review screen. Clients need no login.</td></tr>
+      <tr><td><strong>Success measure</strong></td><td>50% on scoped research activities</td><td>Whole-project hours at least 25% lower, with section hours at least 30% lower and at least 70% of statements accepted (proposed)</td></tr>
+      <tr><td><strong>Deferred</strong></td><td>—</td><td>Lead Finder, self-serve checkout, free tier, product-code pages, PR-1/PR-4/PR-5, API and MCP move to Phase 5, gated on the pilot result</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="status">
+  <h2><span class="n">4</span>Status, and what is still unproven</h2>
+  <div class="callout warn"><p><strong>Nothing in v2.0 has been validated yet.</strong> On 7 Nov 2026 we have one consultant's hours (Huber needle 510(k), 98 h with general AI) and one email. The peer workbook (Part A) is due back on 20 Nov. We have not yet measured how much of the 60 hours is finding, chasing and reconciling information and how much is expert judgement. If it is mostly judgement, drafting will not help much and the "nice-to-have" verdict stands. Gate V exists to answer that before we spend build money.</p></div>
+  <ul class="plain">
+    <li>Every hour and ROI figure from v3.0/v4.0 is labelled <em>committed</em>, <em>target</em> or <em>modelled</em>. None is a measured product result, because no product exists.</li>
+    <li>Consultant #1's written permission to use their anonymised hours is still outstanding (owner: CEO).</li>
+    <li>Competitors' capabilities (Complizen, Assyro) are vendor claims that we have not verified.</li>
+  </ul>
+</section>
+
+<section id="sources">
+  <h2><span class="n">5</span>Sources</h2>
+  <ul class="plain">
+    <li>Consultant email, 30 Oct 2026 (private, paraphrased, not quoted externally).</li>
+    <li><code>docs/businessPlan/marketing/v4.0</code>: viability review, PRD addendum Rev 0.1, viability and ROI deck, workbook Part A/B, consultant reply.</li>
+    <li><code>docs/businessPlan/marketing/v3.0</code>: ROI claim review and Consultant #1 task hours.</li>
+    <li>PRD set Rev 1.0 (<code>docs/Prd</code>), business plan r6 (<code>MRA-BIZ-001</code>).</li>
+    <li>FDA eSTAR Program page (content current 21 Sep 2026); FDA Computer Software Assurance guidance (3 Feb 2026, nonbinding, written for manufacturers).</li>
+  </ul>
+</section>
+<footer>MedexRegAI · PRD v2.0 set · Rev 2.0 · 7 Nov 2026 · Internal: contains a private consultant communication in paraphrase. Do not forward outside the founding team.</footer>
+</main>
+</div>
+<script src="../assets/prd.js"></script>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consultant ROI Worksheet</title>
+<meta name="description" content="End-to-end 510(k) task plan, AI capability split, hours and ROI for consultants using MedexRegAI: Huber needle vs infusion pump.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfbfa;--surface:#ffffff;--ink:#14213d;--ink2:#3d4a63;--muted:#6b7488;--line:#e3e6ec;--soft:#f1f4f6;
+--brand:#0d6e66;--brand-soft:#e3f2ef;--accent:#b45309;--s0:#6B7CC4;--s1:#D97706;--s2:#0D9488;
+--crit:#b42318;--crit-bg:#fdecea;--maj:#b45309;--maj-bg:#fdf1e3;--min:#475467;--min-bg:#eef1f5;--ok:#067647;--ok-bg:#e6f4ec}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;
+--brand:#3cc2b2;--brand-soft:#173430;--accent:#f0a145;--s0:#7F8FD6;--s1:#C47608;--s2:#11A595;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}}
+:root[data-theme="dark"]{--bg:#121416;--surface:#1a1d20;--ink:#e8ecf1;--ink2:#c3cad5;--muted:#8e98a8;--line:#2c3137;--soft:#20252a;
+--brand:#3cc2b2;--brand-soft:#173430;--accent:#f0a145;--s0:#7F8FD6;--s1:#C47608;--s2:#11A595;--crit:#f97066;--crit-bg:#3a1d1b;--maj:#f0a145;--maj-bg:#38281a;--min:#b0b8c5;--min-bg:#262b31;--ok:#47cd89;--ok-bg:#16301f}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.hero{padding:48px 0 28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:600}
+h1,h2{font-family:"Source Serif 4",Georgia,serif;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin:8px 0 12px;max-width:900px}
+h2{font-size:26px;margin:0 0 6px}
+h3{font-size:17px;margin:20px 0 8px}
+.lede{font-size:17px;color:var(--ink2);max-width:860px}
+.meta{color:var(--muted);font-size:13px;margin-top:14px}
+section{padding:36px 0;border-top:1px solid var(--line)}
+.sub{color:var(--ink2);max-width:880px;margin:0 0 18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi.brand{background:var(--brand-soft);border-color:transparent}
+.kpi.brand .v{color:var(--brand)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:600;font-size:12.5px;color:var(--ink2);position:sticky;top:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.small{font-size:12.5px}.muted{color:var(--muted)}.strong{font-weight:700}
+tr.phase td{background:var(--soft);font-weight:600;color:var(--brand);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+tfoot td{font-weight:600;background:var(--soft)}
+table.tasks{min-width:1020px}
+table.compare tr.hl td{background:var(--brand-soft)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.tag-H{background:var(--min-bg);color:var(--min)}.tag-A{background:var(--maj-bg);color:var(--maj)}
+.tag-V{background:var(--crit-bg);color:var(--crit)}.tag-M{background:var(--brand-soft);color:var(--brand)}
+.sev{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.sev-critical{background:var(--crit-bg);color:var(--crit)}.sev-major{background:var(--maj-bg);color:var(--maj)}
+.sev-minor{background:var(--min-bg);color:var(--min)}.sev-info{background:var(--ok-bg);color:var(--ok)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:6px 0 12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bargroup{margin-bottom:14px}.barlabel{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.barrow{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:8px;margin:3px 0}
+.barname{font-size:12px;color:var(--muted)}.barval{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink2);text-align:right}
+.bartrack{height:14px}
+.bar{height:14px;border-radius:0 4px 4px 0;cursor:default;min-width:2px}
+.bar.s0{background:var(--s0)}.bar.s1{background:var(--s1)}.bar.s2{background:var(--s2)}
+.bar:hover{filter:brightness(1.08);outline:2px solid var(--surface)}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:6px;font-size:12.5px;opacity:0;transition:opacity .1s;z-index:9;max-width:320px}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.catcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.catcard ul{margin:8px 0 0;padding-left:18px}.catcard li{margin:4px 0;font-size:13.5px}
+.calc{display:grid;grid-template-columns:300px 1fr;gap:16px}
+@media(max-width:860px){.calc{grid-template-columns:1fr}}
+.calc label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px;color:var(--ink2)}
+.calc input,.calc select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.note{background:var(--soft);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink2)}
+.note strong{color:var(--ink)}
+details{margin-top:14px}summary{cursor:pointer;font-weight:600;color:var(--brand)}
+ol.sources li{margin:5px 0;font-size:13.5px}a{color:var(--brand)}
+.callout{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--surface)}
+.big{font-size:44px;font-weight:700;color:var(--brand);letter-spacing:-.02em;line-height:1}
+footer{padding:30px 0 50px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line)}
+@media print{#tip,.calc{display:none}section{break-inside:avoid-page}}
+</style></head>
+<body>
+<div id="tip"></div>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">MedexRegAI · Consultant value worksheet</div>
+  <h1>Filing the Enhanced Safety Huber Needle 510(k): the full consultant workload, what AI can take, and the ROI</h1>
+  <p class="lede">This worksheet follows one real draft submission from engagement to FDA clearance. For each task it shows the hours without AI, with general AI (Claude, ChatGPT, Gemini) and with MedexRegAI, then repeats the exercise for a complex infusion-pump 510(k). Facts were checked against FDA's own data on 22 October 2026; the hours are modelled estimates, explained in the method section.</p>
+  <div class="meta">Prepared by Projexlight · Rate basis $150/h · Source draft: Huber_Needle_510k_Submission_Package_Draft.pdf</div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">226 h</div><div class="l">Huber needle, no AI ($33,900)</div></div>
+    <div class="kpi"><div class="v">177 h</div><div class="l">With general AI ($26,550)</div></div>
+    <div class="kpi brand"><div class="v">122 h</div><div class="l">With MedexRegAI ($18,300)</div></div>
+    <div class="kpi brand"><div class="v">8.2x</div><div class="l">ROI per project vs general AI (net $7,350)</div></div>
+    <div class="kpi brand"><div class="v">23.1x</div><div class="l">ROI on a complex infusion pump (net $20,775)</div></div>
+  </div>
+</header>
+
+<section id="audit">
+  <h2>1. Before anything else: the draft would not survive FDA review as written</h2>
+  <p class="sub">We checked every verifiable claim in the draft against the openFDA 510(k), classification, recall and MAUDE databases and against three cleared Huber-needle 510(k) summaries. Both predicate K-numbers fail. That is exactly the error a chatbot cannot catch for you, because it cannot query the FDA record each time it answers.</p>
+  <div class="tablewrap"><table class="findings"><thead><tr><th>Severity</th><th>Item in the draft</th><th>What the FDA record shows</th><th>Evidence</th></tr></thead><tbody>
+  <tr><td><span class="sev sev-critical">Critical</span></td><td><strong>Primary predicate K031234 (Smiths Medical GRIPPER Plus)</strong></td><td>No such K-number exists in the FDA 510(k) database. The GRIPPER PLUS Needle was cleared as K021999 (Deltec, Inc., 13 Aug 2002, product code FPA).</td><td class="small muted">openFDA /device/510k (k_number:K031234 returns no match); FDA 510(k) DB K021999</td></tr><tr><td><span class="sev sev-critical">Critical</span></td><td><strong>Secondary predicate K083456 (B. Braun PowerLoc)</strong></td><td>K083456 is a Nihon Kohden CO2 Sensor Kit (product code CCK, 2009). PowerLoc is a C.R. Bard / BD product, not B. Braun. The current PowerLoc Max is K241353 (PTI, 27 Nov 2024).</td><td class="small muted">openFDA K083456; K241353 510(k) summary</td></tr><tr><td><span class="sev sev-major">Major</span></td><td><strong>Classification name</strong></td><td>Code PTI is 'Non-Coring (Huber) Needle'. 'Needle, Hypodermic, Single Lumen' is the name of code FMI. Both fall under 21 CFR 880.5570.</td><td class="small muted">openFDA /device/classification PTI, FMI</td></tr><tr><td><span class="sev sev-major">Major</span></td><td><strong>Power-injection predicate</strong></td><td>The draft says its predicate is 'non-power rated or up to 300 psi'. Cleared power-injectable PTI devices exist: K241353 (325 psi; 5 mL/s at 11.8 cP for 19/20G, 2 mL/s for 22G) and K252355 (300 psi). A power-rated predicate makes the 300 psi claim much easier to defend.</td><td class="small muted">K241353 and K252355 510(k) summaries</td></tr><tr><td><span class="sev sev-major">Major</span></td><td><strong>Biocompatibility standards and endpoints</strong></td><td>Since ISO 10993-10:2021, Part 10 covers sensitisation only; irritation moved to ISO 10993-23:2021. The draft also omits genotoxicity and subacute/subchronic toxicity, which the cleared Huber needle K230715 evaluated.</td><td class="small muted">PMDA summary of ISO 10993-10 Ed.4; K230715 510(k) summary</td></tr><tr><td><span class="sev sev-minor">Minor</span></td><td><strong>Standard editions and scope</strong></td><td>ASTM F3212 is cited without an edition; K252355 cites ASTM F3212-16(2023). F3212 is a coring test method, not a needle-geometry specification ('Huber design per ASTM F3212').</td><td class="small muted">K252355 510(k) summary; ASTM/ANSI catalogue</td></tr><tr><td><span class="sev sev-minor">Minor</span></td><td><strong>Recall and complaint history not used</strong></td><td>BD recalled PowerLoc/SafeStep sets (K153440) in June 2020 for tubing cracks near the Luer/Y-site (terminated 29 Jul 2022). Top PTI MAUDE problems: fluid/blood leak (48), break (23), fail-safe did not operate (19). Neither is reflected in the draft's risk or test rationale.</td><td class="small muted">openFDA /device/recall and /device/event, product code PTI</td></tr><tr><td><span class="sev sev-info">Info</span></td><td><strong>Verified correct</strong></td><td>Product code PTI, 21 CFR 880.5570, Class II, General Hospital panel, EtO SAL 10^-6, and the 'blood path indirect, &gt;24 h to 30 days' categorisation (matches K252355) are all consistent with the FDA record.</td><td class="small muted">openFDA classification; K252355</td></tr>
+  </tbody></table></div>
+  <div class="note" style="margin-top:14px"><strong>Why it matters.</strong> FDA runs its acceptance review within the first 15 calendar days. Historically 63% to 68% of 510(k)s received a first-cycle Additional Information request (FY2018 to FY2022), and an applicant has 180 days to respond. A non-existent predicate is a defect a reviewer finds immediately. Section 5 quantifies this rework using FDA's own review statistics.</div>
+</section>
+
+<section id="plan">
+  <h2>2. The end-to-end consultant task plan: Huber needle 510(k)</h2>
+  <p class="sub">26 tasks across five phases, from the first client call to the clearance hand-over. Each task shows who can realistically do it and how many consultant hours remain under each way of working.</p>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><h3 style="margin-top:0">Device profile (verified)</h3><table><tr><td class="muted small" style="width:38%">Product code</td><td class="small">PTI, Non-Coring (Huber) Needle (verified, FDA classification DB)</td></tr><tr><td class="muted small" style="width:38%">Regulation</td><td class="small">21 CFR 880.5570, Class II, General Hospital</td></tr><tr><td class="muted small" style="width:38%">Pathway</td><td class="small">Traditional 510(k); power-injection claim (300 psi, 5 mL/s)</td></tr><tr><td class="muted small" style="width:38%">PTI clearances</td><td class="small">14 total; 9 decided 2021 to 2026</td></tr><tr><td class="muted small" style="width:38%">Median FDA review</td><td class="small">141 days (PTI clearances 2021 to 2026, openFDA)</td></tr><tr><td class="muted small" style="width:38%">Recalls / MAUDE</td><td class="small">0 recalls since 2021 (12 in 2020, BD); 132 MAUDE reports since 2021</td></tr><tr><td class="muted small" style="width:38%">Third-party review</td><td class="small">Not eligible (PTI third-party flag = N), so the FDA fee applies</td></tr><tr><td class="muted small" style="width:38%">FDA fee FY2027</td><td class="small">$28,653 standard / $7,163 small business</td></tr></table></div>
+    <div class="card"><h3 style="margin-top:0">How to read the "Who can do it" column</h3>
+      <p style="margin:8px 0"><span class="tag tag-H">Human-only</span> <span class="small muted">Judgement, relationships, accountability. No AI replaces it.</span></p><p style="margin:8px 0"><span class="tag tag-A">General AI drafts</span> <span class="small muted">Claude, ChatGPT and Gemini draft this well today; the consultant reviews.</span></p><p style="margin:8px 0"><span class="tag tag-V">AI + full re-verification</span> <span class="small muted">General AI helps, but every regulatory fact must be re-checked by hand.</span></p><p style="margin:8px 0"><span class="tag tag-M">MedexRegAI differentiator</span> <span class="small muted">Needs the structured FDA record, project state and traceability.</span></p>
+    </div>
+  </div>
+  <div class="tablewrap"><table class="tasks">
+  <thead><tr><th>#</th><th>Task</th><th>Who can do it</th><th>General AI today (Claude / ChatGPT / Gemini)</th><th>What MedexRegAI adds</th>
+  <th class="num">No AI (h)</th><th class="num">+ General AI (h)</th><th class="num">+ MedexRegAI (h)</th></tr></thead>
+  <tbody><tr class="phase"><td colspan="8">Phase 0 Engagement</td></tr><tr><td class="num muted">1</td><td><strong>Client intake, device and IFU understanding, proposal and SOW</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Drafts the proposal, question list and SOW text.</td><td class="small">Device profile intake pre-filled from the FDA classification record.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">5</td></tr><tr class="phase"><td colspan="8">Phase 1 Strategy</td></tr><tr><td class="num muted">2</td><td><strong>Confirm classification and product code</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Suggests codes, but can mix up names. The draft PDF pairs code PTI with FMI's name.</td><td class="small">Product-code prediction against the FDA classification database, with confidence and reasoning (FR-2.1).</td>
+      <td class="num">4</td><td class="num">3</td><td class="num strong">1</td></tr><tr><td class="num muted">3</td><td><strong>Pathway decision (Traditional/Special/Abbreviated) and Pre-Sub decision</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Explains the options in general terms.</td><td class="small">Pathway reasoning chain with precedent counts for the product code (FR-2.3).</td>
+      <td class="num">4</td><td class="num">3</td><td class="num strong">1.5</td></tr><tr><td class="num muted">4</td><td><strong>Predicate search, screening and shortlist</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Web search returns a few names. No full 510(k) index is queried.</td><td class="small">Ranks every PTI/FPA/FMI clearance by IFU and technology fit (FR-3.1). PRD target: at least 60% less time.</td>
+      <td class="num">16</td><td class="num">13</td><td class="num strong">6</td></tr><tr><td class="num muted">5</td><td><strong>Predicate verification: K-number, status, cleared IFU, recalls, MAUDE</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">No time saved: every K-number has to be re-checked. The draft's two K-numbers both failed.</td><td class="small">Live K-number validation, recall and MAUDE screening on each candidate, with the citation required before output (FR-3.7, NFR-5).</td>
+      <td class="num">8</td><td class="num">8</td><td class="num strong">2</td></tr><tr><td class="num muted">6</td><td><strong>Substantial-equivalence comparison matrix</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Formats the table well. Predicate-side facts are unverified.</td><td class="small">Side-by-side SE table pre-filled from the predicate's 510(k) summary, with each cell cited (FR-3.2).</td>
+      <td class="num">10</td><td class="num">7</td><td class="num strong">4</td></tr><tr><td class="num muted">7</td><td><strong>Regulatory research library (guidances, recognised standards, editions)</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Lists likely guidances, sometimes with superseded editions (e.g. ISO 10993-10 still listed for irritation).</td><td class="small">Dated, snapshotted library of guidance and recognised standards, with superseded-edition flags (FR-4.1, FR-10.4).</td>
+      <td class="num">10</td><td class="num">7</td><td class="num strong">4</td></tr><tr class="phase"><td colspan="8">Phase 2 Testing</td></tr><tr><td class="num muted">8</td><td><strong>Standards and test-plan derivation (performance, sharps, sterility, packaging)</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Gives a generic test list.</td><td class="small">Test plan derived from what cleared PTI predicates actually tested (K241353, K252355, K230715) (FR-4.3).</td>
+      <td class="num">12</td><td class="num">9</td><td class="num strong">5</td></tr><tr><td class="num muted">9</td><td><strong>Biocompatibility evaluation plan (ISO 10993-1 categorisation, endpoints)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts the endpoint matrix. Can miss endpoints (the draft omits genotoxicity).</td><td class="small">Endpoint matrix checked against category precedent.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">4</td></tr><tr><td class="num muted">10</td><td><strong>Test-lab coordination, quotes and protocol review</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Drafts emails and RFQs.</td><td class="small">Sends the test-plan export to labs (roadmap).</td>
+      <td class="num">12</td><td class="num">11</td><td class="num strong">10</td></tr><tr><td class="num muted">11</td><td><strong>Test-report review and V&amp;V summary tables</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Summarises uploaded reports and builds the tables.</td><td class="small">Links each report to the claim it supports (claim-evidence matrix).</td>
+      <td class="num">20</td><td class="num">15</td><td class="num strong">13</td></tr><tr class="phase"><td colspan="8">Phase 3 eSTAR</td></tr><tr><td class="num muted">12</td><td><strong>Device description</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Strong first draft.</td><td class="small">Same, plus terminology taken from predicate summaries.</td>
+      <td class="num">6</td><td class="num">3.5</td><td class="num strong">3</td></tr><tr><td class="num muted">13</td><td><strong>Indications for Use / Form FDA 3881</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the text.</td><td class="small">Compares IFU wording with the predicate's cleared IFU.</td>
+      <td class="num">2</td><td class="num">1</td><td class="num strong">1</td></tr><tr><td class="num muted">14</td><td><strong>Labeling review (IFU, labels, power-injection and sharps labeling)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Reviews uploaded labeling against a prompt.</td><td class="small">Checks labeling claims against the cleared predicate and the evidence.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">5</td></tr><tr><td class="num muted">15</td><td><strong>Risk management summary (ISO 14971)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts hazard tables.</td><td class="small">Feeds MAUDE themes for PTI in (leak 48, break 23, fail-safe 19) as hazard inputs (FR-6).</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">5</td></tr><tr><td class="num muted">16</td><td><strong>Sterilisation and shelf-life section</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts from the reports.</td><td class="small">Same, plus edition check on cited standards.</td>
+      <td class="num">6</td><td class="num">4</td><td class="num strong">3.5</td></tr><tr><td class="num muted">17</td><td><strong>Biocompatibility section</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts from the reports.</td><td class="small">Same, plus endpoint completeness flag.</td>
+      <td class="num">6</td><td class="num">4</td><td class="num strong">3.5</td></tr><tr><td class="num muted">18</td><td><strong>Performance-testing section</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts from the reports.</td><td class="small">Same, plus links to the precedent test plan.</td>
+      <td class="num">10</td><td class="num">7</td><td class="num strong">6</td></tr><tr><td class="num muted">19</td><td><strong>510(k) Summary, cover letter, FDA 3601, Truthful &amp; Accuracy statement</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the boilerplate.</td><td class="small">Pre-filled from the project record.</td>
+      <td class="num">6</td><td class="num">4</td><td class="num strong">3</td></tr><tr><td class="num muted">20</td><td><strong>eSTAR assembly, attachments, completeness check</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Cannot see the eSTAR form state or track sections.</td><td class="small">eSTAR section plan with owners and evidence auto-match (FR-13.1, 13.3). PRD target: at least 50% less time.</td>
+      <td class="num">10</td><td class="num">9</td><td class="num strong">5</td></tr><tr><td class="num muted">21</td><td><strong>Claim-evidence cross-check, internal QC, gap analysis</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">One-off review of the pasted text only.</td><td class="small">Continuous gap check. Each claim is tied to evidence or flagged as unsupported (FR-13.2, FR-5.3). PRD target: at least 40% less time.</td>
+      <td class="num">12</td><td class="num">10</td><td class="num strong">7</td></tr><tr><td class="num muted">22</td><td><strong>Client review cycles and sign-off</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Summarises the redlines.</td><td class="small">Free client seats and a shared workspace.</td>
+      <td class="num">8</td><td class="num">7</td><td class="num strong">6</td></tr><tr class="phase"><td colspan="8">Phase 4 FDA review</td></tr><tr><td class="num muted">23</td><td><strong>CDRH Portal upload, acceptance/technical-screening monitoring</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">No help.</td><td class="small">Freezes the as-submitted manifest with file hashes (FR-13.7).</td>
+      <td class="num">2</td><td class="num">2</td><td class="num strong">1.5</td></tr><tr><td class="num muted">24</td><td><strong>AI-request response (expected value: 65% x 24 h)</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Drafts replies to each deficiency you paste in.</td><td class="small">Splits the letter into deficiencies, finds similar past deficiencies, tracks responses (FR-13.4, 13.5). PRD target: at least 40% less time.</td>
+      <td class="num">16</td><td class="num">13</td><td class="num strong">9.5</td></tr><tr><td class="num muted">25</td><td><strong>Review-period project management and client status reports</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts the status emails.</td><td class="small">Portfolio dashboard with FDA clock and open deficiencies.</td>
+      <td class="num">10</td><td class="num">9</td><td class="num strong">6</td></tr><tr><td class="num muted">26</td><td><strong>Clearance close-out, chronology and record hand-over</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Cannot rebuild the history.</td><td class="small">Immutable submission record and chronology export (FR-13.6). PRD target: at least 70% less time.</td>
+      <td class="num">4</td><td class="num">3.5</td><td class="num strong">1.5</td></tr></tbody>
+  <tfoot><tr><td></td><td colspan="4"><strong>Total consultant hours</strong></td><td class="num">226</td><td class="num">177</td><td class="num strong">122</td></tr>
+  <tr><td></td><td colspan="4">Labour value at $150/h</td><td class="num">$33,900</td><td class="num">$26,550</td><td class="num strong">$18,300</td></tr></tfoot>
+  </table></div>
+</section>
+
+<section id="split">
+  <h2>3. Who does what: consultant, general AI, MedexRegAI</h2>
+  <p class="sub">General AI is already good at drafting text. It does not save time where the work depends on the FDA record, on project state over five months, or on proving where a claim came from. That is where MedexRegAI is designed to work.</p>
+  <div class="catgrid">
+    <div class="catcard"><span class="tag tag-H">Consultant only</span><ul>
+      <li>Client relationship, scoping, pricing, expectation management</li><li>Regulatory strategy and pathway judgement; signing off the SE argument</li>
+      <li>Pre-Sub meetings and every interactive call with the FDA reviewer</li><li>Choosing labs, negotiating protocols, judging test deviations</li>
+      <li>Final accountability for content; the client signs the Truthful & Accuracy statement</li></ul></div>
+    <div class="catcard"><span class="tag tag-A">General AI does well today</span><ul>
+      <li>First drafts: device description, test summaries, cover letter, 510(k) Summary</li><li>Summarising uploaded test reports into tables</li>
+      <li>Emails, RFQs, status reports, redline summaries</li><li>Explaining a standard or guidance in plain language</li></ul></div>
+    <div class="catcard"><span class="tag tag-V">General AI: verify everything</span><ul>
+      <li>Product code and classification name (the draft mixes PTI and FMI)</li><li>SE table: well formatted, but predicate facts unverified</li>
+      <li>Biocompatibility endpoints and standard editions</li><li>Peer-reviewed tests found 3% to 13% hallucinated citation URLs from deep-research agents (arXiv 2604.03173)</li></ul></div>
+    <div class="catcard"><span class="tag tag-M">Only MedexRegAI (by design)</span><ul>
+      <li>Ranks predicates across the whole 510(k) database with live K-number, recall and MAUDE checks</li><li>Test plan derived from what cleared predicates actually tested</li>
+      <li>Citation gate: no regulatory claim is output without a source record</li><li>eSTAR section plan, continuous gap check, claim-evidence matrix</li>
+      <li>AI-letter deficiency extraction and firm-wide precedent search</li><li>Immutable snapshots, chronology export, multi-client workspaces with rebillable credits</li></ul></div>
+  </div>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h3 style="margin-top:0">Huber needle: hours by type of work</h3>
+      <div class="legend"><span><i style="background:var(--s0)"></i>No AI</span><span><i style="background:var(--s1)"></i>+ General AI</span><span><i style="background:var(--s2)"></i>+ MedexRegAI</span></div>
+      <div class="bargroup"><div class="barlabel">Human-only</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:17.0%" data-tip="Human-only | No AI: 34 h = $5,100"></div></div><span class="barval">34 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:14.5%" data-tip="Human-only | + General AI: 29 h = $4,350"></div></div><span class="barval">29 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:12.0%" data-tip="Human-only | + MedexRegAI: 24 h = $3,600"></div></div><span class="barval">24 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">General AI drafts</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:28.0%" data-tip="General AI drafts | No AI: 56 h = $8,400"></div></div><span class="barval">56 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:19.3%" data-tip="General AI drafts | + General AI: 38.5 h = $5,775"></div></div><span class="barval">38.5 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:16.5%" data-tip="General AI drafts | + MedexRegAI: 33 h = $4,950"></div></div><span class="barval">33 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">AI + full re-verification</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:24.0%" data-tip="AI + full re-verification | No AI: 48 h = $7,200"></div></div><span class="barval">48 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:18.5%" data-tip="AI + full re-verification | + General AI: 37 h = $5,550"></div></div><span class="barval">37 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:12.5%" data-tip="AI + full re-verification | + MedexRegAI: 25 h = $3,750"></div></div><span class="barval">25 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">MedexRegAI differentiator</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:44.0%" data-tip="MedexRegAI differentiator | No AI: 88 h = $13,200"></div></div><span class="barval">88 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:36.3%" data-tip="MedexRegAI differentiator | + General AI: 72.5 h = $10,875"></div></div><span class="barval">72.5 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:20.0%" data-tip="MedexRegAI differentiator | + MedexRegAI: 40 h = $6,000"></div></div><span class="barval">40 h</span></div>
+  </div></div>
+    <div class="card"><h3 style="margin-top:0">Infusion pump: hours by type of work</h3>
+      <div class="legend"><span><i style="background:var(--s0)"></i>No AI</span><span><i style="background:var(--s1)"></i>+ General AI</span><span><i style="background:var(--s2)"></i>+ MedexRegAI</span></div>
+      <div class="bargroup"><div class="barlabel">Human-only</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:51.5%" data-tip="Human-only | No AI: 103 h = $15,450"></div></div><span class="barval">103 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:42.0%" data-tip="Human-only | + General AI: 84 h = $12,600"></div></div><span class="barval">84 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:33.5%" data-tip="Human-only | + MedexRegAI: 67 h = $10,050"></div></div><span class="barval">67 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">General AI drafts</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:100.0%" data-tip="General AI drafts | No AI: 200 h = $30,000"></div></div><span class="barval">200 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:74.5%" data-tip="General AI drafts | + General AI: 149 h = $22,350"></div></div><span class="barval">149 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:64.5%" data-tip="General AI drafts | + MedexRegAI: 129 h = $19,350"></div></div><span class="barval">129 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">AI + full re-verification</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:51.0%" data-tip="AI + full re-verification | No AI: 102 h = $15,300"></div></div><span class="barval">102 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:39.5%" data-tip="AI + full re-verification | + General AI: 79 h = $11,850"></div></div><span class="barval">79 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:24.5%" data-tip="AI + full re-verification | + MedexRegAI: 49 h = $7,350"></div></div><span class="barval">49 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">MedexRegAI differentiator</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:97.5%" data-tip="MedexRegAI differentiator | No AI: 195 h = $29,250"></div></div><span class="barval">195 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:79.5%" data-tip="MedexRegAI differentiator | + General AI: 159 h = $23,850"></div></div><span class="barval">159 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:40.8%" data-tip="MedexRegAI differentiator | + MedexRegAI: 81.5 h = $12,225"></div></div><span class="barval">81.5 h</span></div>
+  </div></div>
+  </div>
+  <p class="small muted">Most of the gap between general AI and MedexRegAI sits in the "MedexRegAI differentiator" and "verify everything" rows. Human-only work shrinks only a little, and it should.</p>
+</section>
+
+<section id="compare">
+  <h2>4. Side by side: a simple 510(k) vs a complex one</h2>
+  <p class="sub">Comparison project: an ambulatory infusion pump with wireless connectivity (product code FRN). It needs software documentation, cybersecurity (FD&C Act section 524B), human factors, EMC and electrical safety, and a Pre-Sub, and its predicates carry a heavy recall and complaint history. The more research and evidence-tracing a project needs, the more MedexRegAI saves, while its price per project stays the same.</p>
+  <div class="grid2">
+    <div><div class="tablewrap"><table class="compare"><thead><tr><th>Measure (per project)</th><th class="num">Huber needle<br><span class="muted small">PTI, Traditional 510(k)</span></th><th class="num">Infusion pump<br><span class="muted small">FRN, complex Traditional 510(k)</span></th></tr></thead><tbody>
+  <tr class=""><td>Median FDA review time, 2021 to 2026 clearances (openFDA)</td><td class="num">141 days</td><td class="num">214 days</td></tr>
+  <tr class=""><td>Recall records since 2021 (openFDA)</td><td class="num">0</td><td class="num">146</td></tr>
+  <tr class=""><td>MAUDE reports since 2021 (openFDA)</td><td class="num">132</td><td class="num">1,404,342</td></tr>
+  <tr class=""><td>Consultant tasks in the plan</td><td class="num">26</td><td class="num">28</td></tr>
+  <tr class=""><td>Hours, no AI</td><td class="num">226</td><td class="num">600</td></tr>
+  <tr class=""><td>Hours, consultant + general AI</td><td class="num">177</td><td class="num">471</td></tr>
+  <tr class="hl"><td>Hours, consultant + MedexRegAI</td><td class="num">122</td><td class="num">326.5</td></tr>
+  <tr class="hl"><td>Hours saved by MedexRegAI vs general AI</td><td class="num">55</td><td class="num">144.5</td></tr>
+  <tr class="hl"><td>Value of those hours at $150/h</td><td class="num">$8,250</td><td class="num">$21,675</td></tr>
+  <tr class=""><td>MedexRegAI cost per project (base case: Team plan, fully loaded)</td><td class="num">$900</td><td class="num">$900</td></tr>
+  <tr class="hl"><td>Net gain per project vs general AI</td><td class="num">$7,350</td><td class="num">$20,775</td></tr>
+  <tr class="hl strong"><td>ROI vs general AI ((gain - cost) / cost), base case</td><td class="num">8.2x</td><td class="num">23.1x</td></tr>
+  <tr class=""><td>Sensitivity: ROI at Practice plan ($550/project)</td><td class="num">14.0x</td><td class="num">38.4x</td></tr>
+  <tr class=""><td>Sensitivity: ROI at ad-hoc price ($1,500/project, worst case)</td><td class="num">4.5x</td><td class="num">13.4x</td></tr>
+  <tr class=""><td>Hours saved vs no AI</td><td class="num">104 (46%)</td><td class="num">273.5 (46%)</td></tr>
+  <tr class=""><td>ROI vs no AI</td><td class="num">16.3x</td><td class="num">44.6x</td></tr>
+  <tr class=""><td>Hours to recover MedexRegAI cost</td><td class="num">6.0 h</td><td class="num">6.0 h</td></tr>
+  </tbody></table></div></div>
+    <div class="card"><h3 style="margin-top:0">Total consultant hours per project</h3>
+      <div class="legend"><span><i style="background:var(--s0)"></i>No AI</span><span><i style="background:var(--s1)"></i>+ General AI</span><span><i style="background:var(--s2)"></i>+ MedexRegAI</span></div>
+      <div class="bargroup"><div class="barlabel">Huber needle (PTI)</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:37.7%" data-tip="Huber needle (PTI) | No AI: 226 h = $33,900"></div></div><span class="barval">226 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:29.5%" data-tip="Huber needle (PTI) | + General AI: 177 h = $26,550"></div></div><span class="barval">177 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:20.3%" data-tip="Huber needle (PTI) | + MedexRegAI: 122 h = $18,300"></div></div><span class="barval">122 h</span></div>
+  </div><div class="bargroup"><div class="barlabel">Infusion pump (FRN)</div>
+    <div class="barrow"><span class="barname">No AI</span><div class="bartrack"><div class="bar s0" style="width:100.0%" data-tip="Infusion pump (FRN) | No AI: 600 h = $90,000"></div></div><span class="barval">600 h</span></div><div class="barrow"><span class="barname">+ General AI</span><div class="bartrack"><div class="bar s1" style="width:78.5%" data-tip="Infusion pump (FRN) | + General AI: 471 h = $70,650"></div></div><span class="barval">471 h</span></div><div class="barrow"><span class="barname">+ MedexRegAI</span><div class="bartrack"><div class="bar s2" style="width:54.4%" data-tip="Infusion pump (FRN) | + MedexRegAI: 326.5 h = $48,975"></div></div><span class="barval">326.5 h</span></div>
+  </div>
+      <h3>Device profile: infusion pump (verified)</h3>
+      <table><tr><td class="muted small" style="width:38%">Product code</td><td class="small">FRN, Pump, Infusion (verified, FDA classification DB)</td></tr><tr><td class="muted small" style="width:38%">Regulation</td><td class="small">21 CFR 880.5725, Class II, General Hospital</td></tr><tr><td class="muted small" style="width:38%">Pathway</td><td class="small">Traditional 510(k), Pre-Sub recommended; software, cybersecurity, HF, EMC</td></tr><tr><td class="muted small" style="width:38%">FRN clearances</td><td class="small">30 decided 2021 to 2026 (27 Traditional)</td></tr><tr><td class="muted small" style="width:38%">Median FDA review</td><td class="small">214 days (FRN clearances 2021 to 2026, openFDA); max 1,079</td></tr><tr><td class="muted small" style="width:38%">Recalls / MAUDE</td><td class="small">146 recall records since 2021; 1,404,342 MAUDE reports since 2021</td></tr><tr><td class="muted small" style="width:38%">Key FDA guidance</td><td class="small">Infusion Pumps Total Product Life Cycle (2014); device software functions (2023); premarket cybersecurity (section 524B)</td></tr><tr><td class="muted small" style="width:38%">FDA fee FY2027</td><td class="small">$28,653 standard / $7,163 small business</td></tr></table>
+    </div>
+  </div>
+  <details><summary>Show the full 28-task plan for the infusion pump</summary><div style="margin-top:12px"><div class="tablewrap"><table class="tasks">
+  <thead><tr><th>#</th><th>Task</th><th>Who can do it</th><th>General AI today (Claude / ChatGPT / Gemini)</th><th>What MedexRegAI adds</th>
+  <th class="num">No AI (h)</th><th class="num">+ General AI (h)</th><th class="num">+ MedexRegAI (h)</th></tr></thead>
+  <tbody><tr class="phase"><td colspan="8">Phase 0 Engagement</td></tr><tr><td class="num muted">1</td><td><strong>Client intake, device understanding, proposal and SOW</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Drafts the proposal.</td><td class="small">Device profile intake.</td>
+      <td class="num">12</td><td class="num">9</td><td class="num strong">7</td></tr><tr class="phase"><td colspan="8">Phase 1 Strategy</td></tr><tr><td class="num muted">2</td><td><strong>Confirm classification and product code (FRN vs MRZ accessories)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Suggests codes; needs verification.</td><td class="small">Product-code prediction with reasoning.</td>
+      <td class="num">6</td><td class="num">5</td><td class="num strong">2</td></tr><tr><td class="num muted">3</td><td><strong>Pathway and Pre-Sub decision</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Explains the options.</td><td class="small">Pathway reasoning with precedent.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">3</td></tr><tr><td class="num muted">4</td><td><strong>Pre-Sub (Q-Sub) package, FDA meeting, minutes</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Drafts the questions and the package.</td><td class="small">Pre-fills background from the research library.</td>
+      <td class="num">40</td><td class="num">30</td><td class="num strong">24</td></tr><tr><td class="num muted">5</td><td><strong>Predicate search, screening and shortlist</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">A few names from web search.</td><td class="small">Ranks all FRN clearances by fit (FR-3.1).</td>
+      <td class="num">30</td><td class="num">24</td><td class="num strong">10</td></tr><tr><td class="num muted">6</td><td><strong>Predicate verification incl. recalls and MAUDE</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Manual re-checking against 146 recalls and 1.4M MAUDE reports.</td><td class="small">Automated recall and MAUDE screening per predicate (FR-3.7).</td>
+      <td class="num">24</td><td class="num">22</td><td class="num strong">6</td></tr><tr><td class="num muted">7</td><td><strong>Substantial-equivalence comparison matrix</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Formats the table.</td><td class="small">Pre-filled and cited SE table.</td>
+      <td class="num">20</td><td class="num">14</td><td class="num strong">8</td></tr><tr><td class="num muted">8</td><td><strong>Research library (TPLC, software, cybersecurity, HF, EMC guidance, standards)</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Lists guidances; editions unverified.</td><td class="small">Snapshotted, dated library.</td>
+      <td class="num">20</td><td class="num">14</td><td class="num strong">7</td></tr><tr class="phase"><td colspan="8">Phase 2 Testing</td></tr><tr><td class="num muted">9</td><td><strong>Standards and test-plan derivation</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Generic list.</td><td class="small">Precedent-derived test plan.</td>
+      <td class="num">24</td><td class="num">18</td><td class="num strong">10</td></tr><tr><td class="num muted">10</td><td><strong>Biocompatibility plan (fluid path)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts the matrix.</td><td class="small">Precedent check.</td>
+      <td class="num">10</td><td class="num">8</td><td class="num strong">5</td></tr><tr><td class="num muted">11</td><td><strong>Test-lab coordination and protocol review</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Drafts emails.</td><td class="small">Test-plan export.</td>
+      <td class="num">24</td><td class="num">22</td><td class="num strong">20</td></tr><tr><td class="num muted">12</td><td><strong>Test-report review and V&amp;V summaries (60601-1, -1-2, -1-8, -2-24)</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Summarises the reports.</td><td class="small">Claim-evidence links.</td>
+      <td class="num">40</td><td class="num">30</td><td class="num strong">26</td></tr><tr><td class="num muted">13</td><td><strong>Software documentation review (Enhanced documentation level)</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Summarises SRS, architecture and V&amp;V.</td><td class="small">Section plan and evidence links.</td>
+      <td class="num">50</td><td class="num">38</td><td class="num strong">34</td></tr><tr><td class="num muted">14</td><td><strong>Cybersecurity package (threat model, SBOM, 524B)</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the narratives.</td><td class="small">Section plan and evidence links.</td>
+      <td class="num">40</td><td class="num">30</td><td class="num strong">27</td></tr><tr><td class="num muted">15</td><td><strong>Human-factors / usability summary</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the summary.</td><td class="small">Links to use-related risks from MAUDE.</td>
+      <td class="num">24</td><td class="num">18</td><td class="num strong">16</td></tr><tr><td class="num muted">16</td><td><strong>EMC, electrical safety and wireless coexistence summary</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the summary.</td><td class="small">Evidence links.</td>
+      <td class="num">16</td><td class="num">12</td><td class="num strong">10</td></tr><tr class="phase"><td colspan="8">Phase 3 eSTAR</td></tr><tr><td class="num muted">17</td><td><strong>Device description, IFU, Form 3881</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Strong first draft.</td><td class="small">Compares IFU with the predicate's cleared IFU.</td>
+      <td class="num">14</td><td class="num">9</td><td class="num strong">7</td></tr><tr><td class="num muted">18</td><td><strong>Labeling review</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Reviews the labeling against a prompt.</td><td class="small">Checks labeling claims against evidence.</td>
+      <td class="num">16</td><td class="num">12</td><td class="num strong">9</td></tr><tr><td class="num muted">19</td><td><strong>Risk management (TPLC hazard categories, ISO 14971)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts hazard tables.</td><td class="small">MAUDE and recall themes as hazard inputs (FR-6).</td>
+      <td class="num">30</td><td class="num">22</td><td class="num strong">14</td></tr><tr><td class="num muted">20</td><td><strong>Sterilisation and shelf life (administration sets)</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the section.</td><td class="small">Edition check.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">5</td></tr><tr><td class="num muted">21</td><td><strong>Admin documents (summary, cover letter, 3601, T&amp;A)</strong></td>
+      <td><span class="tag tag-A">General AI drafts</span></td>
+      <td class="small">Drafts the boilerplate.</td><td class="small">Pre-filled.</td>
+      <td class="num">8</td><td class="num">6</td><td class="num strong">4</td></tr><tr><td class="num muted">22</td><td><strong>eSTAR assembly and completeness check</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Cannot track form state.</td><td class="small">eSTAR section plan and evidence auto-match.</td>
+      <td class="num">20</td><td class="num">18</td><td class="num strong">9</td></tr><tr><td class="num muted">23</td><td><strong>Claim-evidence QC and gap analysis</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">One-off review.</td><td class="small">Continuous gap check.</td>
+      <td class="num">30</td><td class="num">25</td><td class="num strong">15</td></tr><tr><td class="num muted">24</td><td><strong>Client review cycles and sign-off</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">Summarises the redlines.</td><td class="small">Shared workspace, free seats.</td>
+      <td class="num">16</td><td class="num">14</td><td class="num strong">11</td></tr><tr class="phase"><td colspan="8">Phase 4 FDA review</td></tr><tr><td class="num muted">25</td><td><strong>CDRH Portal upload and screening</strong></td>
+      <td><span class="tag tag-H">Human-only</span></td>
+      <td class="small">No help.</td><td class="small">As-submitted manifest.</td>
+      <td class="num">3</td><td class="num">3</td><td class="num strong">2</td></tr><tr><td class="num muted">26</td><td><strong>AI-request response (expected value: 65% x 60 h)</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Drafts each reply.</td><td class="small">Deficiency extraction and similar-deficiency search.</td>
+      <td class="num">39</td><td class="num">31</td><td class="num strong">22</td></tr><tr><td class="num muted">27</td><td><strong>Review-period PM and status reports (214-day median)</strong></td>
+      <td><span class="tag tag-V">AI + full re-verification</span></td>
+      <td class="small">Drafts the emails.</td><td class="small">FDA clock dashboard.</td>
+      <td class="num">20</td><td class="num">18</td><td class="num strong">11</td></tr><tr><td class="num muted">28</td><td><strong>Close-out, chronology and hand-over</strong></td>
+      <td><span class="tag tag-M">MedexRegAI differentiator</span></td>
+      <td class="small">Cannot rebuild the history.</td><td class="small">Immutable record and chronology export.</td>
+      <td class="num">8</td><td class="num">7</td><td class="num strong">2.5</td></tr></tbody>
+  <tfoot><tr><td></td><td colspan="4"><strong>Total consultant hours</strong></td><td class="num">600</td><td class="num">471</td><td class="num strong">326.5</td></tr>
+  <tr><td></td><td colspan="4">Labour value at $150/h</td><td class="num">$90,000</td><td class="num">$70,650</td><td class="num strong">$48,975</td></tr></tfoot>
+  </table></div></div></details>
+</section>
+
+<section id="rework">
+  <h2>5. Rework: what FDA's own numbers say, and what MedexRegAI can recover</h2>
+  <p class="sub">Rework after filing is normal in a 510(k): most submissions go through more than one review cycle. These figures come from FDA's MDUFA V Performance Report (26 Aug 2026), FY2025 cohort of CDRH 510(k)s.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="v">1.69</div><div class="l">average review cycles per 510(k): about 0.7 rounds of FDA questions per filing</div></div>
+    <div class="kpi"><div class="v">66 days</div><div class="l">average time on hold while the submitter responds (80th percentile 150, max 362)</div></div>
+    <div class="kpi"><div class="v">7.2%</div><div class="l">failed eSTAR technical screening on first try (8.67% so far in FY2026)</div></div>
+    <div class="kpi"><div class="v">14.2%</div><div class="l">of accepted 510(k)s ended without clearance: NSE 4.23%, withdrawn 5.92%, deleted 4.06%</div></div>
+    <div class="kpi"><div class="v">7 of 9</div><div class="l">Huber-needle (PTI) clearances since 2021 took over 90 calendar days, a sign of a hold (FRN pumps: 21 of 30)</div></div>
+  </div>
+  <h3>This draft: 35 hours of rework already certain</h3>
+  <div class="grid2">
+    <div class="tablewrap"><table><thead><tr><th>Rework caused by the defects in section 1</th><th class="num">Hours</th></tr></thead><tbody>
+      <tr><td>Re-select predicates (both K-numbers invalid) and re-verify</td><td class="num">10</td></tr><tr><td>Rebuild the SE comparison matrix against the new predicate</td><td class="num">8</td></tr><tr><td>Re-base the power-injection test rationale on a power-rated predicate</td><td class="num">6</td></tr><tr><td>Update the biocompatibility plan (ISO 10993-23; genotoxicity and subchronic endpoints)</td><td class="num">4</td></tr><tr><td>Standard-edition sweep (ASTM F3212-16(2023), ISO 80369-7:2021, etc.)</td><td class="num">3</td></tr><tr><td>Add recall and MAUDE history to the risk file and test rationale</td><td class="num">4</td></tr>
+      </tbody><tfoot><tr><td>Total (modelled)</td><td class="num">35 h = $5,250</td></tr></tfoot></table></div>
+    <div class="note"><strong>When it is found matters more than whether.</strong> Found before filing, it is 35 hours of work. Found by FDA, the same work comes with a hold (FY2025 average 66 days), a formal response through the original eSTAR, and a real chance of an NSE: a predicate that does not exist cannot support substantial equivalence. MedexRegAI runs the K-number, classification and recall checks when the predicate is first chosen, so these defects surface at task 5, not at FDA's day-60 interaction. This value is not added to the ROI.</div>
+  </div>
+  <h3>Expected rework per filing: Huber needle</h3>
+  <div class="tablewrap"><table class="tasks"><thead><tr><th>Rework source and FDA evidence</th><th class="num">How often</th><th class="num">Effort per event</th>
+    <th class="num">Expected cost, no AI</th><th class="num">+ General AI</th><th class="num">+ MedexRegAI</th><th class="num">Extra MedexRegAI gain</th><th>How MedexRegAI helps</th></tr></thead>
+    <tbody><tr><td><strong>eSTAR technical-screening hold (fix and replace the eSTAR)</strong><div class="small muted">7.20% of FY2025 510(k)s failed first technical screening (FDA MDUFA V report, Table 6.1)</div></td>
+    <td class="num">7.2%</td><td class="num">8 h</td>
+    <td class="num">$86</td><td class="num">$78</td><td class="num strong">$26</td>
+    <td class="num">$52</td>
+    <td class="small">eSTAR section plan and completeness check before upload; flags attachments missing for the template version in use.</td></tr><tr><td><strong>Additional Information (AI) request cycle</strong><div class="small muted">1.69 average review cycles, FY2025 cohort (Table 6.5); 63-68% first-cycle AI rate FY2018-22</div></td>
+    <td class="num">69%</td><td class="num">24 h</td>
+    <td class="num">$2,484</td><td class="num">$1,987</td><td class="num strong">$1,267</td>
+    <td class="num"><span class="muted small">already in task plan</span></td>
+    <td class="small">Precedent-based gap prediction before filing (target: 15% fewer AI cycles); deficiency extraction and precedent search when one arrives.</td></tr><tr><td><strong>Evidence and template updates during the project (eSTAR version, standard editions, new guidance, predicate recalls)</strong><div class="small muted">Happens on most multi-month projects. Examples in 2026: eSTAR v7.1 adds human-factors category prompts from 1 Aug 2026; ISO 10993-10/-23 split; standard transition periods</div></td>
+    <td class="num">most projects</td><td class="num">8 h</td>
+    <td class="num">$1,200</td><td class="num">$1,080</td><td class="num strong">$480</td>
+    <td class="num">$600</td>
+    <td class="small">Snapshot diff and monitoring: shows what changed in guidance, standards and predicate recalls since the evidence was assembled; free re-runs.</td></tr><tr><td><strong>Unsuccessful outcome and refile (NSE, or deleted after no response in 180 days)</strong><div class="small muted">NSE 4.23% + deleted 4.06% of accepted FY2025 510(k)s (Table 6.6); withdrawals (5.92%) excluded</div></td>
+    <td class="num">8.3%</td><td class="num">60 h + $28,653 fee</td>
+    <td class="num">$3,121</td><td class="num">$3,121</td><td class="num strong">$2,229</td>
+    <td class="num">$892</td>
+    <td class="small">Live predicate and evidence checks reduce the chance of an indefensible SE argument (target: 25% fewer failed outcomes).</td></tr></tbody><tfoot><tr><td colspan="6"><strong>Additional expected gain per filing, not in the earlier ROI</strong></td><td class="num strong">$1,544</td><td></td></tr></tfoot></table></div>
+  <h3>Expected rework per filing: infusion pump</h3>
+  <div class="tablewrap"><table class="tasks"><thead><tr><th>Rework source and FDA evidence</th><th class="num">How often</th><th class="num">Effort per event</th>
+    <th class="num">Expected cost, no AI</th><th class="num">+ General AI</th><th class="num">+ MedexRegAI</th><th class="num">Extra MedexRegAI gain</th><th>How MedexRegAI helps</th></tr></thead>
+    <tbody><tr><td><strong>eSTAR technical-screening hold (fix and replace the eSTAR)</strong><div class="small muted">7.20% of FY2025 510(k)s failed first technical screening (FDA MDUFA V report, Table 6.1)</div></td>
+    <td class="num">7.2%</td><td class="num">16 h</td>
+    <td class="num">$173</td><td class="num">$156</td><td class="num strong">$52</td>
+    <td class="num">$104</td>
+    <td class="small">eSTAR section plan and completeness check before upload; flags attachments missing for the template version in use.</td></tr><tr><td><strong>Additional Information (AI) request cycle</strong><div class="small muted">1.69 average review cycles, FY2025 cohort (Table 6.5); 63-68% first-cycle AI rate FY2018-22</div></td>
+    <td class="num">69%</td><td class="num">60 h</td>
+    <td class="num">$6,210</td><td class="num">$4,968</td><td class="num strong">$3,167</td>
+    <td class="num"><span class="muted small">already in task plan</span></td>
+    <td class="small">Precedent-based gap prediction before filing (target: 15% fewer AI cycles); deficiency extraction and precedent search when one arrives.</td></tr><tr><td><strong>Evidence and template updates during the project (eSTAR version, standard editions, new guidance, predicate recalls)</strong><div class="small muted">Happens on most multi-month projects. Examples in 2026: eSTAR v7.1 adds human-factors category prompts from 1 Aug 2026; ISO 10993-10/-23 split; standard transition periods</div></td>
+    <td class="num">most projects</td><td class="num">20 h</td>
+    <td class="num">$3,000</td><td class="num">$2,700</td><td class="num strong">$1,200</td>
+    <td class="num">$1,500</td>
+    <td class="small">Snapshot diff and monitoring: shows what changed in guidance, standards and predicate recalls since the evidence was assembled; free re-runs.</td></tr><tr><td><strong>Unsuccessful outcome and refile (NSE, or deleted after no response in 180 days)</strong><div class="small muted">NSE 4.23% + deleted 4.06% of accepted FY2025 510(k)s (Table 6.6); withdrawals (5.92%) excluded</div></td>
+    <td class="num">8.3%</td><td class="num">150 h + $28,653 fee</td>
+    <td class="num">$4,241</td><td class="num">$4,241</td><td class="num strong">$2,901</td>
+    <td class="num">$1,340</td>
+    <td class="small">Live predicate and evidence checks reduce the chance of an indefensible SE argument (target: 25% fewer failed outcomes).</td></tr></tbody><tfoot><tr><td colspan="6"><strong>Additional expected gain per filing, not in the earlier ROI</strong></td><td class="num strong">$2,944</td><td></td></tr></tfoot></table></div>
+  <p class="small muted">Expected cost = FDA frequency x effort per event x $150/h (plus the $28,653 FY2027 fee for a refile). The general-AI and MedexRegAI effects on effort and frequency are modelled targets, to be measured in the pilot. The AI-request row is already in the task plan, so it is not double-counted.</p>
+  <h3>eSTAR and filing requirements that drive rework</h3>
+  <div class="tablewrap"><table class="tasks"><thead><tr><th>Requirement (FDA)</th><th>Task in the plan</th><th>Rework risk</th><th>MedexRegAI support</th></tr></thead><tbody>
+  <tr><td><strong>eSTAR is mandatory for 510(k)s unless exempted; current non-IVD template is v7.1</strong></td><td class="small">eSTAR assembly</td><td class="small">A template-version mismatch or missing attachment means rework before upload</td><td class="small">Section plan built for the template version in use; evidence auto-matched to each section</td></tr><tr><td><strong>Upload only through the CDRH Portal; an eSTAR showing 'eSTAR INCOMPLETE' is not accepted</strong></td><td class="small">Portal upload</td><td class="small">Last-minute fixes under deadline</td><td class="small">Completeness check before upload; as-submitted manifest with file hashes</td></tr><tr><td><strong>Technical screening instead of RTA; a failed screen can be held up to 180 days, then withdrawn</strong></td><td class="small">Acceptance monitoring</td><td class="small">7.2% failed first screening in FY2025 (20.52% in FY2023, before eSTAR was required for 510(k)s)</td><td class="small">Pre-upload completeness and consistency checks</td></tr><tr><td><strong>Once acknowledged, the submission stays on its eSTAR version; AI/TS responses modify the original eSTAR (sub-type 'Additional Information')</strong></td><td class="small">AI response</td><td class="small">Responses rebuilt by hand on the original file; version confusion</td><td class="small">Response package per deficiency, linked to evidence and the as-submitted record</td></tr><tr><td><strong>AI hold: 180 calendar days to respond, no extensions; otherwise withdrawn and deleted, so a new 510(k) and a new fee</strong></td><td class="small">Review PM</td><td class="small">4.06% of accepted FY2025 510(k)s were deleted</td><td class="small">FDA-clock dashboard and deadline alerts</td></tr><tr><td><strong>From 1 Aug 2026 the eSTAR asks for a Human Factors Submission Category (final HF content guidance, 29 May 2026)</strong></td><td class="small">Evidence update</td><td class="small">New content for projects started under the old template; the passive sharps shield and power injection need an HF category decision</td><td class="small">Guidance-change monitoring; flags affected sections</td></tr><tr><td><strong>FDA targets: substantive interaction within 60 days; MDUFA decision within 90 FDA days (hold time excluded)</strong></td><td class="small">Client planning</td><td class="small">FY2025 average total time 141.24 days, of which 65.65 days were on the submitter's side</td><td class="small">Review-time distribution by product code for client quotes</td></tr></tbody></table></div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="callout"><div class="big">9.9x</div><p>Huber-needle ROI including the rework layer, up from 8.2x (base case, $900/project).</p></div>
+    <div class="callout"><div class="big">26.4x</div><p>Infusion-pump ROI including the rework layer, up from 23.1x.</p></div>
+  </div>
+</section>
+
+<section id="roi">
+  <h2>6. ROI calculator: try your own numbers</h2>
+  <p class="sub">The baseline is a consultant who already uses general AI, which is the honest comparison. Prices come from the MedexRegAI published pricing design (MRA-BIZ-001 r6). Credits can be re-billed to clients at your own rate.</p>
+  <div class="calc">
+    <div class="card">
+      <label for="rate">Your hourly rate ($)</label><input id="rate" type="number" min="50" step="5" value="150">
+      <label for="planSel">MedexRegAI plan</label><select id="planSel"><option value="practice">Practice plan (30 projects, $350 + $500/mo retainer)</option><option value="team" selected>Team plan (12 projects, $400 + $500/mo retainer)</option><option value="adhoc">Ad-hoc second project (no retainer)</option></select>
+      <label for="cap">Delivery hours you have per year</label><input id="cap" type="number" min="200" step="50" value="1500">
+      <label for="mix">Share of complex projects in your mix (%)</label><input id="mix" type="number" min="0" max="100" step="5" value="25">
+      <label style="display:flex;gap:8px;align-items:center"><input id="rw" type="checkbox" style="width:auto"> Include rework layer (section 5, targets)</label>
+      <label for="fee">Your fixed fee per Huber-type 510(k) ($)</label><input id="fee" type="number" min="0" step="500" value="26550">
+    </div>
+    <div>
+      <div class="out" id="out"></div>
+      <div class="note" style="margin-top:12px" id="cap-note"></div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <h2>7. Why a consultant should switch</h2>
+  <div class="grid2">
+    <div class="callout"><div class="big">55 h</div><p>freed on a routine Huber-needle 510(k) compared with using general AI alone, for one project fee. That is 31% of the remaining workload.</p></div>
+    <div class="callout"><div class="big">144.5 h</div><p>freed on a complex infusion-pump 510(k), worth $21,675 at $150/h, for the same project fee.</p></div>
+  </div>
+  <ol style="margin-top:18px;max-width:900px">
+    <li><strong>Defensible, not just fast.</strong> Every predicate, standard and recall comes with an FDA source record and a dated snapshot, so you can show the client and the reviewer where each claim came from.</li>
+    <li><strong>Catches what chat cannot.</strong> The audit above found two invalid predicates, a mismatched classification name and outdated biocompatibility standards in a single draft.</li>
+    <li><strong>Fits how you bill.</strong> Free seats, free client workspaces and per-project credits you can pass through to each client.</li>
+    <li><strong>More projects, same team.</strong> On fixed-fee work the saved hours become margin, or room for more clients (see the calculator).</li>
+    <li><strong>You stay in charge.</strong> MedexRegAI never files and never signs. It prepares the evidence; you make the judgement calls.</li>
+  </ol>
+</section>
+
+<section id="method">
+  <h2>8. Method, assumptions and limits</h2>
+  <div class="note">
+    <p><strong>Verified facts.</strong> Product codes, K-numbers, review times, recalls and MAUDE counts come from the openFDA device APIs (data last updated 12 Oct 2026, queried 22 Oct 2026). Predicate details come from the FDA-hosted 510(k) summaries K241353, K252355 and K230715. FY2027 user fees come from FDA's MDUFA fees page.</p>
+    <p><strong>Modelled estimates.</strong> Task hours are Projexlight estimates, not measured timesheets. The no-AI totals were checked against published consultant pricing: $33,900 for the Huber needle falls inside the $18k to $40k band reported for moderate-complexity 510(k)s, and $90,000 for the pump sits at the top of the "high complexity, $40k to $85k+" band. Published hourly rates run from $150 to $450+ (NIH SEED, OMC Medical), so $150/h is a conservative rate. The AI-request hours are an expected value: 65% probability, the midpoint of FDA's 63% to 68% historical first-cycle rate.</p>
+    <p><strong>MedexRegAI savings are design targets.</strong> MedexRegAI is pre-launch. The reductions used here follow the PRD targets (predicate research at least 60% less time, research library at least 60%, eSTAR checklist at least 50%, claim cross-check and AI response at least 40%, chronology at least 70%) and will be measured in the consultant pilot against the week-12 gate. Please treat them as targets to validate, not results.</p>
+    <p><strong>Rework layer (section 5):</strong> frequencies are FDA-reported (MDUFA V report, FY2025 cohort); effort per event and MedexRegAI effects are modelled targets. Headline ROI excludes it; section 5 and the calculator show it separately.</p><p><strong>Excluded entirely:</strong> faster time to market for the client, FDA user fees ($28,653 standard / $7,163 small business for FY2027) and test-lab costs, which are the same in every scenario.</p>
+    <p><strong>Not regulatory advice.</strong> The audit findings are for discussion with the submitter's regulatory team.</p>
+  </div>
+</section>
+
+<section id="sources"><h2>Sources</h2><ol class="sources"><li><a href="https://open.fda.gov/apis/device/" target="_blank" rel="noopener">openFDA device APIs (510k, classification, recall, event), data last updated 2026-10-12</a></li><li><a href="https://www.fda.gov/industry/fda-user-fee-programs/medical-device-user-fee-amendments-mdufa-fees" target="_blank" rel="noopener">FDA MDUFA fees FY2027 (page current as of 10/01/2026)</a></li><li><a href="https://www.accessdata.fda.gov/cdrh_docs/pdf24/K241353.pdf" target="_blank" rel="noopener">K241353 PowerLoc Max / SafeStep 510(k) summary</a></li><li><a href="https://www.accessdata.fda.gov/cdrh_docs/pdf25/K252355.pdf" target="_blank" rel="noopener">K252355 K-SHIELD Advantage 510(k) summary</a></li><li><a href="https://www.accessdata.fda.gov/cdrh_docs/pdf23/K230715.pdf" target="_blank" rel="noopener">K230715 Promisemed Safety Huber Needle 510(k) summary</a></li><li><a href="https://www.thefdalawblog.com/2023/07/mastering-responses-to-fda-510k-ai-letters-a-strategic-approach/" target="_blank" rel="noopener">FDA Law Blog: 63-68% of 510(k)s received a first-cycle AI request, FY2018-FY2022 (citing FDA MDUFA V Q2 FY2023 report)</a></li><li><a href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/medical-devices-sharps-injury-prevention-features-guidance-industry-and-fda-staff" target="_blank" rel="noopener">FDA guidance: Medical Devices with Sharps Injury Prevention Features (Aug 2005)</a></li><li><a href="https://www.hhs.gov/guidance/sites/default/files/hhs-guidance-documents/FDA/Infusion-Pumps-Total-Product-Life-Cycle-Guidance.pdf" target="_blank" rel="noopener">FDA guidance: Infusion Pumps Total Product Life Cycle</a></li><li><a href="https://www.std.pmda.go.jp/stdDB/Data_en/InfData/Infetc/kikaku_info_iso10993-10_ed4.pdf" target="_blank" rel="noopener">PMDA: ISO 10993-10 Ed.4 revision summary (irritation moved to ISO 10993-23)</a></li><li><a href="https://seed.nih.gov/sites/default/files/2024-12/Regulatory-and-Manufacturing-Consulting-for-Life-Sciences.pdf" target="_blank" rel="noopener">Consultant fee benchmarks: NIH SEED guide to regulatory consulting</a></li><li><a href="https://omcmedical.com/omc-medical-regulatory-consulting-hourly-rates-fee-schedule/" target="_blank" rel="noopener">Consultant hourly-rate benchmarks: OMC Medical fee schedule (Nov 2025)</a></li><li><a href="https://arxiv.org/pdf/2604.03173" target="_blank" rel="noopener">Citation reliability of deep-research agents (arXiv 2604.03173, preprint)</a></li><li><a href="https://www.fda.gov/media/194465/download?attachment" target="_blank" rel="noopener">FDA MDUFA V Performance Report, Q3 FY2026 (26 Aug 2026): 510(k) Tables 6.1, 6.5, 6.6</a></li><li><a href="https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program" target="_blank" rel="noopener">FDA eSTAR Program page (v7.1; technical screening; 180-day hold; CDRH Portal), current as of 09/21/2026</a></li><li><a href="https://www.fda.gov/medical-devices/premarket-notification-510k/510k-submission-process" target="_blank" rel="noopener">FDA 510(k) Submission Process (AI hold, 180 calendar days, no extensions)</a></li><li><a href="https://www.thefdalawblog.com/2026/06/fda-issues-final-guidance-for-content-of-human-factors-information-in-medical-device-submissions/" target="_blank" rel="noopener">FDA Law Blog: final guidance on Content of Human Factors Information (29 May 2026)</a></li><li><a href="https://blog.johner-institute.com/regulatory-affairs/recognized-consensus-standards-of-the-fda/" target="_blank" rel="noopener">Johner Institute: FDA recognized consensus standards and transition periods</a></li><li>MedexRegAI PRD and pricing: MRA-PRD-001, MRA-BIZ-001 r6 (internal)</li></ol></section>
+</div>
+<footer><div class="wrap">MedexRegAI · Projexlight · Consultant ROI worksheet · 22 October 2026 · Figures recalculate in section 6.</div></footer>
+
+<script>
+const H=[226,177,122],P=[600,471,326.5],PRICING={"practice":{"label":"Practice plan (30 projects, $350 + $500/mo retainer)","annual":16500,"projects":30},"team":{"label":"Team plan (12 projects, $400 + $500/mo retainer)","annual":10800,"projects":12},"adhoc":{"label":"Ad-hoc second project (no retainer)","annual":1500,"projects":1}},RWH=[6.3352,15.6652],RWF=[593.833425,593.8334250000003];
+const $=id=>document.getElementById(id);
+const usd=n=>(n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US");
+const f1=n=>n.toLocaleString("en-US",{maximumFractionDigits:1});
+function calc(){
+  const rate=+$("rate").value||0, pl=PRICING[$("planSel").value], cap=+$("cap").value||0, mix=Math.min(100,Math.max(0,+$("mix").value||0))/100, fee=+$("fee").value||0;
+  const cost=pl.annual/pl.projects;
+  const inc=$("rw").checked;
+  const sH=H[1]-H[2]+(inc?RWH[0]:0), sP=P[1]-P[2]+(inc?RWH[1]:0), fH=inc?RWF[0]:0, fP=inc?RWF[1]:0;
+  const roi=s=>((s*rate-cost)/cost);
+  const roiH=(sH*rate+fH-cost)/cost, roiP=(sP*rate+fP-cost)/cost;
+  const avgG=H[1]*(1-mix)+P[1]*mix, avgM=H[2]*(1-mix)+P[2]*mix;
+  const nG=cap/avgG, nM=cap/avgM;
+  const yr=pl.projects>1?pl.annual*Math.ceil(nM/pl.projects):Math.ceil(nM)*pl.annual;
+  const tiles=[
+    ["Cost per project", usd(cost), "plan price / projects in the pack"],
+    ["Huber: value saved", usd(sH*rate+fH), f1(sH)+" h vs general AI"+(inc?", incl. rework":"")],
+    ["Huber: ROI", roiH.toFixed(1)+"x", "net "+usd(sH*rate+fH-cost)+" per project"],
+    ["Infusion pump: value saved", usd(sP*rate+fP), f1(sP)+" h vs general AI"+(inc?", incl. rework":"")],
+    ["Infusion pump: ROI", roiP.toFixed(1)+"x", "net "+usd(sP*rate+fP-cost)+" per project"],
+    ["Break-even", f1(cost/rate)+" h", "hours saved to recover the cost"],
+    ["Fixed-fee margin, Huber", usd(fee-H[2]*rate), "vs "+usd(fee-H[1]*rate)+" with general AI"],
+  ];
+  $("out").innerHTML=tiles.map(([l,v,s],i)=>'<div class="kpi'+(i==2||i==4?' brand':'')+'"><div class="l">'+l+'</div><div class="v" style="font-size:24px">'+v+'</div><div class="l">'+s+'</div></div>').join("");
+  $("cap-note").innerHTML="<strong>Capacity view.</strong> With "+cap.toLocaleString()+" delivery hours and a "+Math.round(mix*100)+"% complex mix, you can deliver about <strong>"+nG.toFixed(1)+" projects a year with general AI</strong>, or <strong>"+nM.toFixed(1)+" with MedexRegAI</strong>. That is "+(nM-nG).toFixed(1)+" extra projects. At "+usd(rate)+"/h that capacity is worth about <strong>"+usd((nM-nG)*avgG*rate)+"</strong> a year, against "+usd(yr)+" a year for MedexRegAI ("+(pl.projects>1?Math.ceil(nM/pl.projects)+" x "+usd(pl.annual)+" plan":Math.ceil(nM)+" ad-hoc projects")+"). Net annual gain: <strong>"+usd((nM-nG)*avgG*rate-yr)+"</strong>.";
+}
+["rate","planSel","cap","mix","fee","rw"].forEach(id=>{$(id).addEventListener("input",calc);$(id).addEventListener("change",calc)});calc();
+const tip=$("tip");
+document.addEventListener("mousemove",e=>{const t=e.target.closest("[data-tip]");if(t){tip.textContent=t.dataset.tip;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+12,innerWidth-330)+"px";tip.style.top=(e.clientY+14)+"px"}else tip.style.opacity=0});
+</script>
+</body></html>
