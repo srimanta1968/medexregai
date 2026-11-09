@@ -13,7 +13,16 @@
     "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC5",
     "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1"
   ],
-  "errorCases": [],
+  "errorCases": [
+    {
+      "status": 500,
+      "code": "INTERNAL_ERROR",
+      "message": "Something went wrong",
+      "when": "unexpected server fault; the handler only reads startup configuration and has no request-dependent failure",
+      "reproducible": false,
+      "notReproducibleReason": "No request input reaches this handler, so no request can make it fail."
+    }
+  ],
   "testCases": [
     {
       "name": "Lists configured providers",
