@@ -1,0 +1,79 @@
+{
+  "name": "POST /api/auth/logout - sign out",
+  "description": "Ends the session the given refresh token belongs to (its whole rotation family) for the signed-in user; that refresh token stops working. Requires a bearer access token. Covers: a user can log out.",
+  "endpoint": "/api/auth/logout",
+  "method": "POST",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 9,
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "token is invalid",
+      "when": "refreshToken missing"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "User signs out",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+        "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+      ],
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "refreshToken": "{{cache:auth.register.response.data.refreshToken}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED",
+        "messageContains": "Missing bearer token"
+      },
+      "payload": {
+        "refreshToken": "{{cache:auth.register.response.data.refreshToken}}"
+      },
+      "headers": {}
+    },
+    {
+      "name": "400 - missing refresh token",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {},
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      }
+    }
+  ]
+}

@@ -1,32 +1,23 @@
 {
-  "generatedAt": "2026-11-09T22:48:26.621445Z",
-  "taskId": "9ac3f81d-a767-4043-82a3-9b8aacd47aa3",
+  "generatedAt": "2026-11-09T22:56:58.260600Z",
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
   "gaps": [
     {
-      "criterionId": "9ac3f81d-a767-4043-82a3-9b8aacd47aa3#AC1",
-      "criterion": "A consultant can sign up and create a firm workspace",
+      "criterionId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2",
+      "criterion": "A user can log in, log out and reset a forgotten password",
       "verdict": "partial",
-      "gap": "Schema and DataService support it: users + user_profiles + orgs + owner membership created in one transaction (DataService.transaction with tx.setOrg), verified against medexregai_db in a rolled-back run. No executable artifact yet: the sign-up endpoint and its api_definition belong to task bfeba90f (register/login).",
+      "gap": "Login, refresh, logout and reset request are covered by api_definitions with negative cases. Reset confirm's happy path needs the emailed token, which an automated run cannot read (MAIL_TRANSPORT=log), so it was verified only in the end-to-end check; its negative cases run automatically. Duplicate-email 409 on register is likewise documented and verified end to end, not a testCase.",
       "evidence": {
-        "apiDefinitions": [],
+        "apiDefinitions": [
+          "tests/api_definitions/auth/login-post.json",
+          "tests/api_definitions/auth/logout-post.json",
+          "tests/api_definitions/auth/refresh-post.json",
+          "tests/api_definitions/auth/password-reset-request-post.json",
+          "tests/api_definitions/auth/password-reset-confirm-post.json"
+        ],
         "scenarios": [],
         "files": [
-          "server/migrations/002_orgs_memberships_roles.sql",
-          "server/src/services/DataService.ts",
-          "server/tests/unit/db/migrate.test.ts"
-        ]
-      }
-    },
-    {
-      "criterionId": "9ac3f81d-a767-4043-82a3-9b8aacd47aa3#AC2",
-      "criterion": "A firm owner can invite a reviewer with a specific role by email",
-      "verdict": "partial",
-      "gap": "invites table (hashed token, expiry, role, one open invite per email per firm) and built-in reviewer role exist; an invite insert was verified in a rolled-back run. The invites endpoints and api_definitions belong to task 4db4f875 (Invites API).",
-      "evidence": {
-        "apiDefinitions": [],
-        "scenarios": [],
-        "files": [
-          "server/migrations/002_orgs_memberships_roles.sql"
+          "server/src/services/AuthService.ts"
         ]
       }
     }

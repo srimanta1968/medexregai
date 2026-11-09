@@ -1,0 +1,75 @@
+{
+  "name": "POST /api/auth/refresh - rotate tokens",
+  "description": "Exchanges a refresh token for a new access token and a new refresh token. Each refresh token works once; presenting an already-used one revokes the whole session family (stolen-token detection) and returns 401 INVALID_REFRESH_TOKEN, as do expired, revoked or unknown tokens. Covers: a user stays signed in between logins and can log out.",
+  "endpoint": "/api/auth/refresh",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 3,
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/login"
+  ],
+  "captureResponse": {
+    "auth.refresh.response.data.token": "data.token",
+    "auth.refresh.response.data.refreshToken": "data.refreshToken"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "token is invalid",
+      "when": "refreshToken missing or too short"
+    },
+    {
+      "status": 401,
+      "code": "INVALID_REFRESH_TOKEN",
+      "message": "Refresh token is invalid or expired",
+      "when": "unknown, expired, revoked or already-used token"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Refresh token rotates",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+        "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+      ],
+      "payload": {
+        "refreshToken": "{{cache:auth.login.response.data.refreshToken}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - unknown refresh token",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_REFRESH_TOKEN",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_REFRESH_TOKEN"
+      },
+      "payload": {
+        "refreshToken": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      }
+    },
+    {
+      "name": "400 - missing refresh token",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {}
+    }
+  ]
+}

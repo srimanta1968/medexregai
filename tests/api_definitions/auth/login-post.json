@@ -1,0 +1,90 @@
+{
+  "name": "POST /api/auth/login - sign in",
+  "description": "Signs in with email and password and returns a new access token (data.token) and refresh token for the user's firm. Wrong password and unknown email return the same 401 INVALID_CREDENTIALS so accounts cannot be probed. 403 NO_ACTIVE_MEMBERSHIP when the account belongs to no active firm. Covers: a user can log in.",
+  "endpoint": "/api/auth/login",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 2,
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "captureResponse": {
+    "auth.login.response.data.token": "data.token",
+    "auth.login.response.data.refreshToken": "data.refreshToken"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "email must be a valid email address",
+      "when": "email malformed or missing"
+    },
+    {
+      "status": 401,
+      "code": "INVALID_CREDENTIALS",
+      "message": "Email or password is incorrect",
+      "when": "wrong password or unknown email"
+    },
+    {
+      "status": 403,
+      "code": "NO_ACTIVE_MEMBERSHIP",
+      "message": "This account is not an active member of any firm",
+      "when": "no active firm membership (needs a deactivated membership, not reproducible by request alone)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "User signs in",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
+        "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+      ],
+      "payload": {
+        "email": "{{cache:auth.register.response.data.user.email}}",
+        "password": "{{static:Correct-Horse-Battery-9}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "role": "owner"
+        }
+      }
+    },
+    {
+      "name": "401 - wrong password",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_CREDENTIALS",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_CREDENTIALS",
+        "messageContains": "incorrect"
+      },
+      "payload": {
+        "email": "{{cache:auth.register.response.data.user.email}}",
+        "password": "{{static:wrong-password-123}}"
+      }
+    },
+    {
+      "name": "400 - malformed email",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "email": "{{static:nope}}",
+        "password": "{{static:Correct-Horse-Battery-9}}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "updatedAt": "2026-11-09T22:54:55",
+  "scope": "all",
+  "gaps": [
+    {
+      "file": "tests/api_definitions/auth/me-get.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/auth/password-reset-confirm-post.json",
+      "rules": [
+        "CODE-MATCH",
+        "MUST-14"
+      ],
+      "findingsCount": 2
+    },
+    {
+      "file": "tests/api_definitions/auth/register-post.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    }
+  ],
+  "missingDefinitions": [],
+  "captureSyncIssues": 0,
+  "summary": {
+    "withFindings": 3,
+    "findingsCount": 4
+  }
+}

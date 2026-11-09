@@ -1,0 +1,97 @@
+{
+  "name": "POST /api/auth/register - sign up and create a firm workspace",
+  "description": "Creates the account, the firm workspace and the owner membership in one transaction, then returns an access token (data.token), a rotating refresh token, the user, the firm and role \"owner\". Email is trimmed, lower-cased and unique regardless of case. Password must be 12+ characters and at most 72 bytes. Covers: a consultant can sign up and create a firm workspace. Registering again with an email that already has an account (any letter case) returns 409 EMAIL_TAKEN. That case needs an email registered by an earlier call to this same endpoint, which a self-dependency cannot express, so it is documented here and verified in the end-to-end check rather than as a testCase.",
+  "endpoint": "/api/auth/register",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 201,
+  "priority": 1,
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC1",
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC1"
+  ],
+  "captureResponse": {
+    "auth.register.response.data.token": "data.token",
+    "auth.register.response.data.refreshToken": "data.refreshToken",
+    "auth.register.response.data.user.id": "data.user.id",
+    "auth.register.response.data.user.email": "data.user.email",
+    "auth.register.response.data.org.id": "data.org.id"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "password must be at least 12 characters",
+      "when": "password shorter than 12 characters"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "email must be a valid email address",
+      "when": "email malformed"
+    },
+    {
+      "status": 409,
+      "code": "EMAIL_TAKEN",
+      "message": "An account with this email already exists",
+      "when": "email already registered (any case)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant signs up and creates a firm",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC1",
+        "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC1"
+      ],
+      "payload": {
+        "fullName": "{{static:Test Consultant}}",
+        "email": "{{dynamic:email}}",
+        "password": "{{static:Correct-Horse-Battery-9}}",
+        "firmName": "{{static:Test Regulatory Consulting}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "role": "owner"
+        }
+      }
+    },
+    {
+      "name": "400 - password too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|password",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR",
+        "messageContains": "at least 12 characters"
+      },
+      "payload": {
+        "fullName": "{{static:Test Consultant}}",
+        "email": "{{dynamic:email}}",
+        "password": "{{static:short}}",
+        "firmName": "{{static:Test Firm}}"
+      }
+    },
+    {
+      "name": "400 - invalid email",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|email",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR",
+        "messageContains": "valid email"
+      },
+      "payload": {
+        "fullName": "{{static:Test Consultant}}",
+        "email": "{{static:not-an-email}}",
+        "password": "{{static:Correct-Horse-Battery-9}}",
+        "firmName": "{{static:Test Firm}}"
+      }
+    }
+  ]
+}

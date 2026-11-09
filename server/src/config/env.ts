@@ -13,6 +13,13 @@ if (process.env.NODE_ENV !== 'test') {
  */
 export type LlmProviderKind = 'ollama' | 'openai_compatible' | 'anthropic';
 
+/**
+ * How outgoing email is delivered. "log" writes the message to the server log and is
+ * for local development only: it is refused when NODE_ENV=production. A real
+ * transport (SMTP / provider API) is added with the notifications feature (F10.6).
+ */
+export type MailTransport = 'log';
+
 export interface DatabaseSettings {
   host: string;
   port: number;
@@ -46,7 +53,10 @@ export interface AppConfig {
   port: number;
   appName: string;
   db: DatabaseSettings;
-  jwt: { secret: string; expiresIn: string };
+  jwt: { secret: string; expiresIn: string; refreshTtlDays: number };
+  /** Public URL of the web app, used to build links in emails (password reset). */
+  appBaseUrl: string;
+  mail: { transport: MailTransport; from: string };
   encryptionKey: string;
   bcryptRounds: number;
   corsOrigins: string[];
@@ -139,6 +149,17 @@ export function parseLogFormat(raw: string): string {
   return LOG_FORMATS.includes(raw) ? raw : 'combined';
 }
 
+/** Validate MAIL_TRANSPORT; the log transport must never be used in production. */
+export function parseMailTransport(raw: string, nodeEnv: string): MailTransport {
+  if (raw !== 'log') {
+    throw new Error(`MAIL_TRANSPORT must be "log" (the only transport so far), got "${raw}".`);
+  }
+  if (nodeEnv === 'production') {
+    throw new Error('MAIL_TRANSPORT=log only writes emails to the log and is not allowed in production.');
+  }
+  return raw;
+}
+
 /** Build the typed application config from an environment map. */
 export function loadConfig(env: Env): AppConfig {
   const jwtSecret = requireEnv(env, 'JWT_SECRET');
@@ -146,8 +167,10 @@ export function loadConfig(env: Env): AppConfig {
     throw new Error('JWT_SECRET must be at least 32 characters. Run scripts/setup-env.sh.');
   }
 
+  const nodeEnv = optionalEnv(env, 'NODE_ENV', 'development');
+
   return {
-    nodeEnv: optionalEnv(env, 'NODE_ENV', 'development'),
+    nodeEnv,
     port: parsePositiveInt(optionalEnv(env, 'PORT', '3000'), 'PORT'),
     appName: optionalEnv(env, 'APP_NAME', 'MedexRegAI'),
     db: {
@@ -163,6 +186,12 @@ export function loadConfig(env: Env): AppConfig {
     jwt: {
       secret: jwtSecret,
       expiresIn: optionalEnv(env, 'JWT_EXPIRES_IN', '15m'),
+      refreshTtlDays: parsePositiveInt(optionalEnv(env, 'REFRESH_TOKEN_TTL_DAYS', '30'), 'REFRESH_TOKEN_TTL_DAYS'),
+    },
+    appBaseUrl: optionalEnv(env, 'APP_BASE_URL', 'http://localhost:5173').replace(/\/+$/, ''),
+    mail: {
+      transport: parseMailTransport(optionalEnv(env, 'MAIL_TRANSPORT', 'log'), nodeEnv),
+      from: optionalEnv(env, 'MAIL_FROM', 'MedexRegAI <no-reply@localhost>'),
     },
     encryptionKey: parseEncryptionKey(requireEnv(env, 'ENCRYPTION_KEY')),
     bcryptRounds: parsePositiveInt(optionalEnv(env, 'BCRYPT_ROUNDS', '12'), 'BCRYPT_ROUNDS'),

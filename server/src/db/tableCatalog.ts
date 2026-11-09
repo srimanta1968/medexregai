@@ -17,6 +17,8 @@ export const TABLE_CATALOG = {
   user_profiles: 'platform',
   orgs: 'platform',
   roles: 'platform',
+  refresh_tokens: 'platform',
+  password_reset_tokens: 'platform',
   memberships: 'tenant',
   invites: 'tenant',
 } as const satisfies Record<string, TableScope>;

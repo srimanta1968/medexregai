@@ -2,7 +2,10 @@ import express, { Application, NextFunction, Request, Response } from 'express';
 import cors, { CorsOptions } from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { ZodError } from 'zod';
 import { AppConfig, config } from './config/env';
+import { authRouter } from './routes/auth';
+import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
   success: true;
@@ -11,7 +14,26 @@ export interface HealthResponse {
 
 export interface ErrorResponse {
   success: false;
-  error: { code: string; message: string };
+  error: { code: string; message: string; details?: unknown };
+}
+
+/** Map any thrown error to a status and a client-safe body (no internals for 500s). */
+export function toErrorResponse(err: unknown): { status: number; body: ErrorResponse } {
+  if (err instanceof AppError) {
+    return { status: err.status, body: { success: false, error: { code: err.code, message: err.message, details: err.details } } };
+  }
+  if (err instanceof ZodError) {
+    const details = err.issues.map((i) => ({ field: i.path.join('.'), message: i.message }));
+    return {
+      status: 400,
+      body: { success: false, error: { code: ErrorCodes.VALIDATION_ERROR, message: details[0]?.message || 'Invalid request', details } },
+    };
+  }
+  // express.json() rejects malformed bodies with a SyntaxError carrying status 400.
+  if (err instanceof SyntaxError && (err as { status?: number }).status === 400) {
+    return { status: 400, body: { success: false, error: { code: ErrorCodes.VALIDATION_ERROR, message: 'Request body is not valid JSON' } } };
+  }
+  return { status: 500, body: { success: false, error: { code: ErrorCodes.INTERNAL_ERROR, message: 'Internal Server Error' } } };
 }
 
 /** CORS that only answers for the configured origins (no wildcard with credentials). */
@@ -46,14 +68,19 @@ export function createApp(appConfig: AppConfig): Application {
     res.status(200).json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
   });
 
+  app.use('/api/auth', authRouter);
+
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
-    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
+    res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });
   });
 
   // Four-argument signature is how Express recognises an error handler.
   app.use((err: Error, _req: Request, res: Response<ErrorResponse>, _next: NextFunction): void => {
-    console.error(err.stack || err.message);
-    res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal Server Error' } });
+    const { status, body } = toErrorResponse(err);
+    if (status >= 500) {
+      console.error(err.stack || err.message);
+    }
+    res.status(status).json(body);
   });
 
   return app;

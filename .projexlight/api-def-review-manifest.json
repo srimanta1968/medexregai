@@ -8,5 +8,139 @@
       "GET",
       "/health"
     ]
+  },
+  "auth/login-post.json": {
+    "hash": "261bd5b57e4cbe1a8fade909496af865a0c7d784ec1b174e989aad26589187f5",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T22:54:29",
+    "route": [
+      "POST",
+      "/auth/login"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/login was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "auth/logout-post.json": {
+    "hash": "0136e0a0d2dc2ffbc8cf35f88a7bedeb699b27020735e82ed05ebda71bd0b90b",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-09T22:54:29",
+    "route": [
+      "POST",
+      "/auth/logout"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/logout was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      },
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/me-get.json": {
+    "hash": "91c5b13a09b10517fe3f22af6edaeff3a97fa2e720a9ce6a543f07ac37127a20",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T22:54:55",
+    "route": [
+      "GET",
+      "/auth/me"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/auth/me was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "auth/password-reset-confirm-post.json": {
+    "hash": "b67f4d773d7c07cb42e33bf3a0034f35c36e7d3530f5379a5a244e66c69b95f4",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-09T22:54:55",
+    "route": [
+      "POST",
+      "/auth/password-reset/confirm"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/password-reset/confirm was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      },
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/password-reset-request-post.json": {
+    "hash": "c9fbcdef5c1ac8011e123712f5ba8a7e443226b942ef70cc9c2a08f63e94caf0",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-09T22:54:29",
+    "route": [
+      "POST",
+      "/auth/password-reset/request"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/password-reset/request was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      },
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/refresh-post.json": {
+    "hash": "34db281fa4d342a0272223c2ba7b37abe072f4b0c59f81c88b4508176b415af4",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T22:54:29",
+    "route": [
+      "POST",
+      "/auth/refresh"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/refresh was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "auth/register-post.json": {
+    "hash": "b05d6a8dd8507e89813025afc82d63253b794b4da8ee7f2a63f311ac04b7909f",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T22:54:55",
+    "route": [
+      "POST",
+      "/auth/register"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/auth/register was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
   }
 }

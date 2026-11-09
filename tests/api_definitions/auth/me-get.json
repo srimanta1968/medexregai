@@ -1,0 +1,82 @@
+{
+  "name": "GET /api/auth/me - current user, firm and role",
+  "description": "Returns the signed-in user, the current firm and the user's role there. 401 UNAUTHORIZED without a valid token or when the membership is no longer active; 401 TOKEN_EXPIRED when the access token has expired. Covers: a signed-up consultant lands in their own firm workspace as owner.",
+  "endpoint": "/api/auth/me",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 4,
+  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC1",
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Invalid or expired token",
+      "when": "malformed or wrongly signed token"
+    },
+    {
+      "status": 401,
+      "code": "TOKEN_EXPIRED",
+      "message": "Access token has expired",
+      "when": "access token past its expiry (not reproducible within one run)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner sees their firm",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC1",
+        "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC1"
+      ],
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "role": "owner"
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED|missing",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED",
+        "messageContains": "Missing bearer token"
+      },
+      "headers": {}
+    },
+    {
+      "name": "401 - forged token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED|invalid",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED",
+        "messageContains": "Invalid or expired token"
+      },
+      "headers": {
+        "Authorization": "Bearer not-a-valid-token"
+      }
+    }
+  ]
+}
