@@ -1,0 +1,47 @@
+output "app_url" {
+  description = "Public URL of the web app and API."
+  value       = local.public_base_url
+}
+
+output "cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.web.id
+}
+
+output "web_bucket" {
+  description = "Upload the built client (client/dist) here."
+  value       = aws_s3_bucket.web.bucket
+}
+
+output "client_bucket" {
+  value = aws_s3_bucket.client.bucket
+}
+
+output "ecr_repositories" {
+  value = { for k, r in aws_ecr_repository.svc : k => r.repository_url }
+}
+
+output "ecs_cluster" {
+  value = aws_ecs_cluster.main.name
+}
+
+output "db_endpoint" {
+  value = aws_db_instance.main.address
+}
+
+output "db_master_secret_arn" {
+  description = "Secrets Manager secret with the RDS master credentials (rotated by RDS)."
+  value       = aws_db_instance.main.master_user_secret[0].secret_arn
+}
+
+output "app_secret_arn" {
+  description = "Add SSO client secrets and AI_API_KEY to this secret."
+  value       = aws_secretsmanager_secret.app.arn
+}
+
+output "redis_endpoint" {
+  value = aws_elasticache_replication_group.main.primary_endpoint_address
+}
+
+output "platform_kms_key_arn" {
+  value = aws_kms_key.platform.arn
+}

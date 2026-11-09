@@ -1,0 +1,4 @@
+# Copy to backend.hcl (git-ignored) and fill in. Create the bucket and table once per account.
+bucket         = "REPLACE-medexregai-terraform-state"
+region         = "us-east-1"
+dynamodb_table = "REPLACE-medexregai-terraform-locks"
