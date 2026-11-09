@@ -11,5 +11,7 @@ enumerate real errors; do not guess.
 - [ ] `GET /api/auth/me` — tests/api_definitions/auth/me-get.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 401/TOKEN_EXPIRED
 - [ ] `POST /api/auth/register` — tests/api_definitions/auth/register-post.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 409/EMAIL_TAKEN
 - [ ] `GET /health` — tests/api_definitions/health/health-get.json → missing: errorCases[] (MUST-43)
+- [ ] `POST /api/invites` — tests/api_definitions/invites/invites-post.json → missing: negative testCase for 2 errorCase(s) (MUST-64): 403/FORBIDDEN, 409/ALREADY_MEMBER
+- [ ] `POST /api/invites/:token/accept` — tests/api_definitions/invites/token-accept-post.json → missing: negative testCase for 2 errorCase(s) (MUST-64): 401/INVALID_CREDENTIALS, 409/ALREADY_MEMBER
 
 Call `projexlight_get_api_definition_rules` for the exact format.

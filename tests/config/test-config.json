@@ -24,7 +24,8 @@
       "portals": {
         "web": {
           "url": "http://localhost:5173",
-          "description": "Public website and app (Vite)"
+          "description": "Public website and app (Vite)",
+          "authRealm": "main"
         }
       }
     },
@@ -201,5 +202,22 @@
     "apiUrl": "${PROJEXLIGHT_API_URL}",
     "projectId": "${PROJEXLIGHT_PROJECT_ID}",
     "featureUpdateOnFix": true
+  },
+  "authRealms": {
+    "main": {
+      "loginUrl": "/login",
+      "emailField": "email",
+      "passwordField": "password",
+      "canSelfRegister": true,
+      "registerUrl": "/signup",
+      "selfRegisterPortal": "web",
+      "roles": [
+        "owner",
+        "admin",
+        "editor",
+        "reviewer",
+        "viewer"
+      ]
+    }
   }
 }
