@@ -49,6 +49,13 @@ export interface Tx {
    * is set, so a transaction can never hop from one tenant to another.
    */
   setOrg(orgId: string): Promise<void>;
+  /**
+   * Read a tenant row by a secret token before any org is known (invite links,
+   * password-reset links). The token hash is the credential and selects exactly one
+   * row, so the SQL must filter on `token_hash = $1`; anything else is refused.
+   * Use setOrg() with the row's org_id before touching other tenant data.
+   */
+  lookupByToken<T extends QueryResultRow>(table: CatalogTable, sql: string, params: unknown[]): Promise<T[]>;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -97,6 +104,14 @@ export class DataService {
           const checked = assertCatalogTable(table);
           if (tableScope(checked) === 'tenant' && !orgId) {
             throw new Error(`Table "${checked}" is tenant-scoped: an orgId is required.`);
+          }
+          const result = await client.query<T>(sql, params);
+          return result.rows;
+        },
+        lookupByToken: async <T extends QueryResultRow>(table: CatalogTable, sql: string, params: unknown[]) => {
+          assertCatalogTable(table);
+          if (!/\btoken_hash\s*=\s*\$1(?!\d)/.test(sql)) {
+            throw new Error('lookupByToken queries must filter on token_hash = $1');
           }
           const result = await client.query<T>(sql, params);
           return result.rows;

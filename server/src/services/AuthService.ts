@@ -44,7 +44,8 @@ export function firmSlug(firmName: string): string {
   return `${base || 'firm'}-${randomBytes(3).toString('hex')}`;
 }
 
-async function issueSession(tx: Tx, user: AuthUser, org: AuthOrg, role: string, familyId?: string): Promise<AuthSession> {
+/** Create a refresh token and access token for a user in a firm (shared with invite accept). */
+export async function issueSession(tx: Tx, user: AuthUser, org: AuthOrg, role: string, familyId?: string): Promise<AuthSession> {
   const refresh = newOpaqueToken();
   await tx.query(
     'refresh_tokens',

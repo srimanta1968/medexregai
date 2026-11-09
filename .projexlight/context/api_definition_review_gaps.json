@@ -1,16 +1,30 @@
 {
-  "updatedAt": "2026-11-09T22:57:57",
+  "updatedAt": "2026-11-09T23:03:01",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/auth/me-get.json",
+      "file": "tests/api_definitions/invites/invites-get.json",
       "rules": [
         "CODE-MATCH"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/auth/register-post.json",
+      "file": "tests/api_definitions/invites/invites-post.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/invites/token-accept-post.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/invites/token-get.json",
       "rules": [
         "CODE-MATCH"
       ],
@@ -20,7 +34,7 @@
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 2,
-    "findingsCount": 2
+    "withFindings": 4,
+    "findingsCount": 4
   }
 }

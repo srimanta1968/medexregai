@@ -1,18 +1,29 @@
 {
-  "generatedAt": "2026-11-09T22:59:16.369180Z",
-  "taskId": "90f64f47-93e6-4285-b08a-3bf09d3c64c7",
+  "generatedAt": "2026-11-09T23:03:29.656037Z",
+  "taskId": "43d61f06-f7d1-40d2-b3b5-8e09383bdb4c",
   "gaps": [
     {
-      "criterionId": "90f64f47-93e6-4285-b08a-3bf09d3c64c7#AC1",
-      "criterion": "An action not allowed for the user's role is blocked with 403",
+      "criterionId": "43d61f06-f7d1-40d2-b3b5-8e09383bdb4c#AC1",
+      "criterion": "A visitor can navigate home, product, how it works, security, pilot programme, about and FAQ pages from a shared header and footer on desktop and mobile",
       "verdict": "partial",
-      "gap": "requirePermission() is implemented (role read live from memberships, 403 FORBIDDEN) but no route uses it yet. The executable proof is the Invites API (task 4db4f875): POST /api/invites guarded by members:invite, with a 403 negative testCase for a reviewer token.",
+      "gap": "Desktop navigation covered by tests/features/website.feature; mobile (390px menu) verified only ad hoc, not in a committed artifact.",
+      "evidence": {
+        "apiDefinitions": [],
+        "scenarios": [
+          "bc0a5c66-abc6-46b1-a0d4-f358bc36e6c2"
+        ],
+        "files": []
+      }
+    },
+    {
+      "criterionId": "43d61f06-f7d1-40d2-b3b5-8e09383bdb4c#AC2",
+      "criterion": "Every page sets its own title and description metadata and meets WCAG 2.1 AA for headings, landmarks, contrast and keyboard focus",
+      "verdict": "partial",
+      "gap": "axe-core WCAG 2.1 AA: 0 violations on all routes at 1280px and 390px, verified ad hoc; not asserted by a committed runner.",
       "evidence": {
         "apiDefinitions": [],
         "scenarios": [],
-        "files": [
-          "server/src/middleware/authorize.ts"
-        ]
+        "files": []
       }
     }
   ]

@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { ZodError } from 'zod';
 import { AppConfig, config } from './config/env';
 import { authRouter } from './routes/auth';
+import { invitesRouter } from './routes/invites';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -69,6 +70,7 @@ export function createApp(appConfig: AppConfig): Application {
   });
 
   app.use(authRouter);
+  app.use(invitesRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

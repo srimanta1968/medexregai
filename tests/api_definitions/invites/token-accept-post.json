@@ -1,0 +1,105 @@
+{
+  "name": "POST /api/invites/:token/accept - accept an invitation",
+  "description": "Public: the token is the credential. A new person creates their account with fullName and password; someone who already has an account confirms with their password. They join the firm with the invited role and are signed in to it (access token in data.token). The link works once. Covers: a firm owner can invite a reviewer with a specific role by email (the reviewer joins with that role).",
+  "endpoint": "/api/invites/:token/accept",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 22,
+  "taskId": "4db4f875-3b3c-4b9f-abea-3a4076f7b895",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+    "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/invites",
+    "GET /api/invites/:token"
+  ],
+  "captureResponse": {
+    "invites.accept.response.data.token": "data.token",
+    "invites.accept.response.data.user.id": "data.user.id"
+  },
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "INVITE_NOT_FOUND",
+      "message": "This invitation is invalid, expired or has already been used",
+      "when": "unknown, expired, revoked or used token"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "password must be at least 12 characters",
+      "when": "password too short, or fullName missing for a new account"
+    },
+    {
+      "status": 401,
+      "code": "INVALID_CREDENTIALS",
+      "message": "Email or password is incorrect",
+      "when": "email already has an account and the password is wrong"
+    },
+    {
+      "status": 409,
+      "code": "ALREADY_MEMBER",
+      "message": "You are already a member of this firm",
+      "when": "the account is already an active member"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Reviewer accepts and joins the firm",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+        "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+      ],
+      "pathParams": {
+        "token": "{{cache:invites.create.response.data.inviteToken}}"
+      },
+      "payload": {
+        "fullName": "{{static:Test Reviewer}}",
+        "password": "{{static:Correct-Horse-Battery-9}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "role": "reviewer"
+        }
+      }
+    },
+    {
+      "name": "404 - unknown invitation",
+      "testType": "negative",
+      "coversErrorCase": "404|INVITE_NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "INVITE_NOT_FOUND"
+      },
+      "payload": {
+        "fullName": "{{static:Test Reviewer}}",
+        "password": "{{static:Correct-Horse-Battery-9}}"
+      },
+      "pathParams": {
+        "token": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      }
+    },
+    {
+      "name": "400 - password too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "fullName": "{{static:Test Reviewer}}",
+        "password": "{{static:short}}"
+      },
+      "pathParams": {
+        "token": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      }
+    }
+  ]
+}

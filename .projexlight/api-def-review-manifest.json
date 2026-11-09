@@ -32,5 +32,73 @@
         "message": "POST /api/auth/register was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
       }
     ]
+  },
+  "invites/invites-get.json": {
+    "hash": "c13cf3eb37543898859265ce7b28f1c09e85b53abf91ecb7524be71c7f3c066a",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T23:03:01",
+    "route": [
+      "GET",
+      "/invites"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/invites was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "invites/invites-post.json": {
+    "hash": "6b1927d67da9fe08560862efabe3f8cf65dec4b7cbf6093c062f7448fa47af63",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T23:03:01",
+    "route": [
+      "POST",
+      "/invites"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/invites was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "invites/token-accept-post.json": {
+    "hash": "5845358db134805f7a33cd595c373b144acc2873fdc65cb1ce00cacfdc228972",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T23:03:01",
+    "route": [
+      "POST",
+      "/invites/:p/accept"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/invites/:token/accept was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "invites/token-get.json": {
+    "hash": "9159bc8df5e7098be42c4418c721bfa70215078df9b82d91b454478181a3587c",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-09T23:03:01",
+    "route": [
+      "GET",
+      "/invites/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/invites/:token was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
   }
 }

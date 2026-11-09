@@ -1,0 +1,105 @@
+{
+  "name": "GET /api/invites - list open invitations",
+  "description": "Lists the firm's open invitations (not accepted, revoked or expired), newest first, with keyset pagination: limit 1-50 (default 20) and an opaque nextCursor. Requires members:invite, so owners and admins see it and other roles get 403 FORBIDDEN. Covers: an action not allowed for the user's role is blocked with 403 (reviewer token), and the owner can track who was invited.",
+  "endpoint": "/api/invites",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 23,
+  "taskId": "4db4f875-3b3c-4b9f-abea-3a4076f7b895",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC4",
+    "90f64f47-93e6-4285-b08a-3bf09d3c64c7#AC1",
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+    "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/invites",
+    "POST /api/invites/:token/accept"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "caller is editor, reviewer or viewer"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "cursor is invalid",
+      "when": "cursor not produced by this endpoint"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner lists open invitations",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+        "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+      ],
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "queryParams": {
+        "limit": "20"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "403 - reviewer may not manage invitations",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN",
+        "messageContains": "does not allow this action"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:invites.accept.response.data.token}}"
+      },
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC4",
+        "90f64f47-93e6-4285-b08a-3bf09d3c64c7#AC1"
+      ]
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED",
+        "messageContains": "Missing bearer token"
+      },
+      "headers": {}
+    },
+    {
+      "name": "400 - invalid cursor",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "queryParams": {
+        "cursor": "{{static:garbage}}"
+      }
+    }
+  ]
+}

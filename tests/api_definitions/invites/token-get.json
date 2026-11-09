@@ -1,0 +1,77 @@
+{
+  "name": "GET /api/invites/:token - preview an invitation",
+  "description": "Public: the token in the invite link is the credential. Returns the firm name, invited email, role, expiry and whether the email already has an account (so the page shows sign-in or create-account). Unknown, expired, revoked or used tokens return 404 INVITE_NOT_FOUND. Covers: the invited reviewer sees which firm and role they are invited to.",
+  "endpoint": "/api/invites/:token",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 21,
+  "taskId": "4db4f875-3b3c-4b9f-abea-3a4076f7b895",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+    "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/invites"
+  ],
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "INVITE_NOT_FOUND",
+      "message": "This invitation is invalid, expired or has already been used",
+      "when": "unknown, expired, revoked or used token"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "invitation link is invalid",
+      "when": "token shorter than 20 characters"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Invitee previews the invitation",
+      "coversCriterion": [
+        "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC2",
+        "4db4f875-3b3c-4b9f-abea-3a4076f7b895#AC1"
+      ],
+      "pathParams": {
+        "token": "{{cache:invites.create.response.data.inviteToken}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "role": "reviewer",
+          "accountExists": false
+        }
+      }
+    },
+    {
+      "name": "404 - unknown invitation",
+      "testType": "negative",
+      "coversErrorCase": "404|INVITE_NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "INVITE_NOT_FOUND"
+      },
+      "pathParams": {
+        "token": "{{static:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}"
+      }
+    },
+    {
+      "name": "400 - malformed invitation link",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "token": "{{static:short}}"
+      }
+    }
+  ]
+}
