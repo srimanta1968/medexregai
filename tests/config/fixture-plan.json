@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "generatedBy": "dev-mcp/fixture_planner",
+  "routeCount": 1,
+  "summary": {
+    "fixtures": 0,
+    "byTier": {},
+    "tierDowngradesAvailable": 0,
+    "justifiedSqlFixtures": 0
+  },
+  "entries": [],
+  "findings": []
+}

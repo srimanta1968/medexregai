@@ -5,10 +5,12 @@ import json, os, sys
 
 EPICS = []
 
-def epic(eid, title, desc, prio, ac, features):
+def epic(eid: str, title: str, desc: str, prio: str, ac: list, features: list) -> None:
+    """Register an epic with its acceptance criteria and features."""
     EPICS.append(dict(temp_id=eid, title=title, description=desc, priority=prio, acceptance_criteria=ac, features=features))
 
-def feat(fid, title, desc, prio, ac, scenarios, tasks):
+def feat(fid: str, title: str, desc: str, prio: str, ac: list, scenarios: list, tasks: list) -> dict:
+    """Build a feature record: criteria, scenario tuples and task tuples."""
     return dict(temp_id=fid, title=title, description=desc, priority=prio, acceptance_criteria=ac, scenarios=scenarios, tasks=tasks)
 
 # ---------------- E0 ----------------
@@ -414,10 +416,12 @@ epic("E8", "E8 Scale, performance and observability", "Phase 0 standards, then c
  ])
 
 # ---------------- Vertical-slice additions: frontend for backend-only features ----------------
-def _f(fid):
+def _f(fid: str) -> dict:
+    """Look up a feature by its temp id."""
     return next(f for e in EPICS for f in e["features"] if f["temp_id"] == fid)
 
-def add(fid, task, new_ac=None):
+def add(fid: str, task: tuple, new_ac: str = None) -> None:
+    """Insert a task before the feature's testing task, optionally adding a criterion."""
     f = _f(fid)
     if new_ac:
         f["acceptance_criteria"].append(new_ac)
@@ -435,16 +439,20 @@ add("F7.3", ("ui_component", "Citation chip and source viewer component", "Reusa
 add("F7.4", ("frontend", "Eval results report page (internal)", "Shows gold-set scores per model vs baseline.", [0]))
 
 # ---------------- UI 2.0 (docs/Prd/v2.0/ui2.0/index.html) gaps ----------------
-def ac(fid, text):
+def ac(fid: str, text: str) -> int:
+    """Append an acceptance criterion and return its index."""
     f = _f(fid); f["acceptance_criteria"].append(text); return len(f["acceptance_criteria"]) - 1
 
-def sc(fid, *s):
+def sc(fid: str, *s: str) -> None:
+    """Append a scenario tuple (title, type, given, when, then)."""
     _f(fid)["scenarios"].append(s)
 
-def tk(fid, t):
+def tk(fid: str, t: tuple) -> None:
+    """Add a task to a feature."""
     add(fid, t)
 
-def efeat(eid, f):
+def efeat(eid: str, f: dict) -> None:
+    """Attach an extra feature to an existing epic."""
     next(e for e in EPICS if e["temp_id"] == eid)["features"].append(f)
 
 # 4.1 Connect: options B (upload link) and C (forward email)
@@ -825,7 +833,8 @@ NFR_UI = (" Scale rules (E8): consume the feature's OpenAPI contract via typed c
           " lazy-loaded route, virtualised lists, live progress via SSE. WCAG 2.1 AA (NFR-13).")
 NFR_TEST = " Covers the full slice: API tests plus a Playwright e2e through the UI against the real API."
 
-def finalise():
+def finalise() -> None:
+    """Append the scale rules and UI 2.0 design reference to every task description."""
     for e in EPICS:
         for f in e["features"]:
             types = {t[0] for t in f["tasks"]}
@@ -845,7 +854,8 @@ finalise()
 
 PHASE = {"E9": "Phase 0-3 (internal admin)", "E10": "Phase 1 (billing Phase 3)", "E8": "Phase 0+ (cross-cutting)", "E0": "Phase 0", "E1": "Phase 0-1", "E7": "Phase 0-2", "E2": "Phase 1", "E3": "Phase 2", "E4": "Phase 3", "E5": "Phase 4", "E6": "Phase 5 (gated)"}
 
-def build():
+def build() -> tuple:
+    """Flatten the backlog into import rows; asserts every feature criterion has a task."""
     epics, features, scenarios, tasks = [], [], [], []
     for e in EPICS:
         epics.append(dict(temp_id=e["temp_id"], title=e["title"], description=e["description"], priority=e["priority"],

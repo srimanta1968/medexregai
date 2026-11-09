@@ -1,0 +1,14 @@
+{
+  "_readme": [
+    "Project-owned exceptions for the ProjexLight pre-commit security scan. Reviewed like code.",
+    "Prefer fixing a finding, or waiving one line with 'projexlight-ignore <RULE-ID>: <reason>'.",
+    "Each entry needs a path glob, the rule ids it exempts and a reason."
+  ],
+  "ignores": [
+    {
+      "path": "mcp-server/setup-all.sh",
+      "rules": ["SEC-TENANT-01"],
+      "reason": "ProjexLight tooling; the flagged queries read pg_database (the Postgres system catalog), which has no tenant column. No application data is queried."
+    }
+  ]
+}

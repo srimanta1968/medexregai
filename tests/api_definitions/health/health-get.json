@@ -1,0 +1,33 @@
+{
+  "name": "GET /health - API liveness probe",
+  "description": "Public liveness probe used by Docker health checks, load balancers and the ProjexLight test runner. Returns success:true with status 'ok' and an ISO timestamp. The API validates its environment at startup and refuses to start when a required secret or setting is missing or invalid (fail closed), so a 200 proves the running API has a complete, valid environment (feature criterion: Environment, secrets and local models are configured by script). It does not prove which tool wrote server/.env; scripts/setup-env.sh and scripts/pull-models.sh are covered by server/tests/unit/scripts. Requires no authentication and returns no tenant data. No error cases: the handler has no failure branch.",
+  "endpoint": "/health",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 1,
+  "taskId": "00743c43-ba9c-4161-9371-332021fa53a7",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "0271c2c1-894a-4270-90ba-63ab274e9b6a#AC2",
+    "00743c43-ba9c-4161-9371-332021fa53a7#AC1"
+  ],
+  "errorCases": [],
+  "testCases": [
+    {
+      "name": "API is up and reports ok",
+      "coversCriterion": [
+        "0271c2c1-894a-4270-90ba-63ab274e9b6a#AC2",
+        "00743c43-ba9c-4161-9371-332021fa53a7#AC1"
+      ],
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "ok"
+        }
+      }
+    }
+  ]
+}

@@ -1,10 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './styles/globals.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement: HTMLElement | null = document.getElementById('root');
+
+if (!rootElement) {
+  throw new Error('Root element #root not found in index.html');
+}
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 );

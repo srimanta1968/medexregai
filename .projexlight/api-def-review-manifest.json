@@ -1,0 +1,12 @@
+{
+  "health/health-get.json": {
+    "hash": "00650c1c00be7b8b80c5d9ac8cac4c0109fc2ee65212931074d70a2d4c5499f1",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-09T19:05:18",
+    "route": [
+      "GET",
+      "/health"
+    ]
+  }
+}

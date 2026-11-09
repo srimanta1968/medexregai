@@ -1,43 +1,186 @@
 import dotenv from 'dotenv';
-dotenv.config();
 
-export const config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-  appName: process.env.APP_NAME || 'MedexRegAI',
+// Tests supply a complete fake environment (tests/setup/test-env.ts); loading a
+// developer's server/.env there would make results depend on local settings.
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config();
+}
 
-  // Database
-  db: {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    name: process.env.DB_NAME || 'medexregai_db',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    ssl: process.env.DB_SSL === 'true',
-    poolMin: parseInt(process.env.DB_POOL_MIN || '2', 10),
-    poolMax: parseInt(process.env.DB_POOL_MAX || '10', 10),
-  },
+/**
+ * Which AI provider serves a route. Our own self-hosted models are the default
+ * (Ollama in dev/test, an OpenAI-compatible vLLM server in production); third-party
+ * providers are opt-in per route or per firm.
+ */
+export type LlmProviderKind = 'ollama' | 'openai_compatible' | 'anthropic';
 
-  // Security
-  jwt: {
-    secret: process.env.JWT_SECRET || 'your-secret-key',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  },
-  bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
+export interface DatabaseSettings {
+  host: string;
+  port: number;
+  name: string;
+  user: string;
+  password: string;
+  ssl: boolean;
+  poolMin: number;
+  poolMax: number;
+}
 
-  // CORS
-  corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+export interface StorageSettings {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  forcePathStyle: boolean;
+}
 
-  // Logging
-  logLevel: process.env.LOG_LEVEL || 'debug',
-  logFormat: process.env.LOG_FORMAT || 'dev',
+export interface LlmSettings {
+  provider: LlmProviderKind;
+  baseUrl: string;
+  generationModel: string;
+  embeddingModel: string;
+  requestTimeoutMs: number;
+}
 
-  // Rate limiting
-  rateLimit: {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
-    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
-  },
+export interface AppConfig {
+  nodeEnv: string;
+  port: number;
+  appName: string;
+  db: DatabaseSettings;
+  jwt: { secret: string; expiresIn: string };
+  encryptionKey: string;
+  bcryptRounds: number;
+  corsOrigins: string[];
+  redisUrl: string;
+  storage: StorageSettings;
+  llm: LlmSettings;
+  logLevel: string;
+  logFormat: string;
+  rateLimit: { windowMs: number; maxRequests: number };
+  bodyLimit: string;
+}
 
-  // Body parser
-  bodyLimit: process.env.BODY_PARSER_LIMIT || '10mb',
-};
+/** Origins the ProjexLight platform previews the app from, plus local dev servers. */
+export const DEFAULT_CORS_ORIGINS: readonly string[] = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://projexlight.com',
+  'https://dev.projexlight.com',
+];
+
+const LLM_PROVIDERS: readonly LlmProviderKind[] = ['ollama', 'openai_compatible', 'anthropic'];
+
+type Env = Record<string, string | undefined>;
+
+/**
+ * Read a required variable. Secrets and credentials have NO fallback: a missing
+ * value stops startup instead of silently running with a known default.
+ */
+export function requireEnv(env: Env, name: string): string {
+  const value = env[name];
+  if (value === undefined || value.trim() === '') {
+    throw new Error(
+      `Missing required environment variable ${name}. Run scripts/setup-env.sh to create server/.env.`
+    );
+  }
+  return value.trim();
+}
+
+/** Read an optional variable, using `fallback` when it is unset or blank. */
+export function optionalEnv(env: Env, name: string, fallback: string): string {
+  const value = env[name];
+  return value === undefined || value.trim() === '' ? fallback : value.trim();
+}
+
+/** Parse a positive integer, rejecting garbage rather than coercing it to NaN. */
+export function parsePositiveInt(raw: string, name: string): number {
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`Environment variable ${name} must be a positive integer, got "${raw}".`);
+  }
+  return n;
+}
+
+/** Merge the comma-separated CORS_ORIGIN list with the platform defaults, de-duplicated. */
+export function parseCorsOrigins(raw: string | undefined): string[] {
+  const extra = (raw || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter((o) => o.length > 0);
+  return Array.from(new Set([...DEFAULT_CORS_ORIGINS, ...extra]));
+}
+
+/** Validate the provider name so a typo fails at startup, not on the first AI call. */
+export function parseLlmProvider(raw: string): LlmProviderKind {
+  if ((LLM_PROVIDERS as readonly string[]).includes(raw)) {
+    return raw as LlmProviderKind;
+  }
+  throw new Error(`AI_PROVIDER must be one of ${LLM_PROVIDERS.join(', ')}, got "${raw}".`);
+}
+
+/**
+ * The encryption key protects stored OAuth tokens and firm API keys, so it must be
+ * a 32-byte key encoded as 64 hex characters (AES-256).
+ */
+export function parseEncryptionKey(raw: string): string {
+  if (!/^[0-9a-fA-F]{64}$/.test(raw)) {
+    throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes). Run scripts/setup-env.sh.');
+  }
+  return raw.toLowerCase();
+}
+
+/** Build the typed application config from an environment map. */
+export function loadConfig(env: Env): AppConfig {
+  const jwtSecret = requireEnv(env, 'JWT_SECRET');
+  if (jwtSecret.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters. Run scripts/setup-env.sh.');
+  }
+
+  return {
+    nodeEnv: optionalEnv(env, 'NODE_ENV', 'development'),
+    port: parsePositiveInt(optionalEnv(env, 'PORT', '3000'), 'PORT'),
+    appName: optionalEnv(env, 'APP_NAME', 'MedexRegAI'),
+    db: {
+      host: requireEnv(env, 'DB_HOST'),
+      port: parsePositiveInt(optionalEnv(env, 'DB_PORT', '5432'), 'DB_PORT'),
+      name: requireEnv(env, 'DB_NAME'),
+      user: requireEnv(env, 'DB_USER'),
+      password: requireEnv(env, 'DB_PASSWORD'),
+      ssl: optionalEnv(env, 'DB_SSL', 'false') === 'true',
+      poolMin: parsePositiveInt(optionalEnv(env, 'DB_POOL_MIN', '2'), 'DB_POOL_MIN'),
+      poolMax: parsePositiveInt(optionalEnv(env, 'DB_POOL_MAX', '10'), 'DB_POOL_MAX'),
+    },
+    jwt: {
+      secret: jwtSecret,
+      expiresIn: optionalEnv(env, 'JWT_EXPIRES_IN', '15m'),
+    },
+    encryptionKey: parseEncryptionKey(requireEnv(env, 'ENCRYPTION_KEY')),
+    bcryptRounds: parsePositiveInt(optionalEnv(env, 'BCRYPT_ROUNDS', '12'), 'BCRYPT_ROUNDS'),
+    corsOrigins: parseCorsOrigins(env.CORS_ORIGIN),
+    redisUrl: requireEnv(env, 'REDIS_URL'),
+    storage: {
+      endpoint: requireEnv(env, 'S3_ENDPOINT'),
+      region: optionalEnv(env, 'S3_REGION', 'us-east-1'),
+      bucket: requireEnv(env, 'S3_BUCKET'),
+      accessKeyId: requireEnv(env, 'S3_ACCESS_KEY_ID'),
+      secretAccessKey: requireEnv(env, 'S3_SECRET_ACCESS_KEY'),
+      forcePathStyle: optionalEnv(env, 'S3_FORCE_PATH_STYLE', 'true') === 'true',
+    },
+    llm: {
+      provider: parseLlmProvider(optionalEnv(env, 'AI_PROVIDER', 'ollama')),
+      baseUrl: requireEnv(env, 'AI_BASE_URL'),
+      generationModel: requireEnv(env, 'AI_GENERATION_MODEL'),
+      embeddingModel: requireEnv(env, 'AI_EMBEDDING_MODEL'),
+      requestTimeoutMs: parsePositiveInt(optionalEnv(env, 'AI_REQUEST_TIMEOUT_MS', '120000'), 'AI_REQUEST_TIMEOUT_MS'),
+    },
+    logLevel: optionalEnv(env, 'LOG_LEVEL', 'info'),
+    logFormat: optionalEnv(env, 'LOG_FORMAT', 'dev'),
+    rateLimit: {
+      windowMs: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_WINDOW_MS', '900000'), 'RATE_LIMIT_WINDOW_MS'),
+      maxRequests: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_MAX_REQUESTS', '300'), 'RATE_LIMIT_MAX_REQUESTS'),
+    },
+    bodyLimit: optionalEnv(env, 'BODY_PARSER_LIMIT', '1mb'),
+  };
+}
+
+/** Process-wide config, validated once at import. Startup fails fast on a bad .env. */
+export const config: AppConfig = loadConfig(process.env);

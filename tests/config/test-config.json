@@ -14,7 +14,7 @@
   },
   "environments": {
     "development": {
-      "baseUrl": "http://localhost:3000",
+      "baseUrl": "http://localhost:5173",
       "apiUrl": "http://localhost:3000",
       "description": "Local development - localhost URLs are auto-translated to host.docker.internal in Docker",
       "variables": {
