@@ -1,23 +1,17 @@
 {
-  "generatedAt": "2026-11-09T22:56:58.260600Z",
-  "taskId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9",
+  "generatedAt": "2026-11-09T22:59:16.369180Z",
+  "taskId": "90f64f47-93e6-4285-b08a-3bf09d3c64c7",
   "gaps": [
     {
-      "criterionId": "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2",
-      "criterion": "A user can log in, log out and reset a forgotten password",
+      "criterionId": "90f64f47-93e6-4285-b08a-3bf09d3c64c7#AC1",
+      "criterion": "An action not allowed for the user's role is blocked with 403",
       "verdict": "partial",
-      "gap": "Login, refresh, logout and reset request are covered by api_definitions with negative cases. Reset confirm's happy path needs the emailed token, which an automated run cannot read (MAIL_TRANSPORT=log), so it was verified only in the end-to-end check; its negative cases run automatically. Duplicate-email 409 on register is likewise documented and verified end to end, not a testCase.",
+      "gap": "requirePermission() is implemented (role read live from memberships, 403 FORBIDDEN) but no route uses it yet. The executable proof is the Invites API (task 4db4f875): POST /api/invites guarded by members:invite, with a 403 negative testCase for a reviewer token.",
       "evidence": {
-        "apiDefinitions": [
-          "tests/api_definitions/auth/login-post.json",
-          "tests/api_definitions/auth/logout-post.json",
-          "tests/api_definitions/auth/refresh-post.json",
-          "tests/api_definitions/auth/password-reset-request-post.json",
-          "tests/api_definitions/auth/password-reset-confirm-post.json"
-        ],
+        "apiDefinitions": [],
         "scenarios": [],
         "files": [
-          "server/src/services/AuthService.ts"
+          "server/src/middleware/authorize.ts"
         ]
       }
     }
