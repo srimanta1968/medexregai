@@ -5,7 +5,7 @@
 # Creates (or tops up) the gitignored env files from their committed templates:
 #   server/.env   <- server/.env.example
 #   client/.env   <- client/.env.example
-#   .env          <- MinIO root credentials for docker compose (kept in sync with server/.env)
+#   .env          <- credentials docker compose needs (kept in sync with server/.env)
 #
 # Rules:
 #   * A key that already has a real value is NEVER changed.
@@ -19,9 +19,9 @@
 #
 # Usage:  scripts/setup-env.sh [--db-password <pw>] [--rotate-jwt-secret]
 #   --rotate-jwt-secret  issue a new JWT_SECRET (signs everyone out). ENCRYPTION_KEY
-#                        and the MinIO secret are never rotated here: rotating them
-#                        would make stored tokens unreadable and lock out an existing
-#                        MinIO volume.
+#                        and the S3 storage secret are never rotated here: rotating them
+#                        would make stored tokens unreadable and lock the API out of
+#                        existing local object storage.
 # Exit:   0 ready, 1 a required setting is missing or invalid, 2 bad usage
 # =============================================================================
 set -euo pipefail
@@ -70,7 +70,7 @@ secret_for() {
   case "$1" in
     JWT_SECRET) hex_secret 48 ;;           # 96 chars
     ENCRYPTION_KEY) hex_secret 32 ;;       # 64 hex chars = AES-256 key
-    S3_SECRET_ACCESS_KEY) hex_secret 24 ;; # 48 chars (MinIO needs >= 8)
+    S3_SECRET_ACCESS_KEY) hex_secret 24 ;; # 48 chars
     *) hex_secret 32 ;;
   esac
 }
@@ -179,12 +179,19 @@ if [ -z "$(get_value "$SERVER_ENV" DB_PASSWORD)" ]; then
   fi
 fi
 
-# --- root .env: MinIO credentials for docker compose ---------------------------
+# --- root .env: credentials docker compose needs ---------------------------------
 touch "$ROOT_ENV"
 chmod 600 "$ROOT_ENV" 2>/dev/null || true
-set_value "$ROOT_ENV" MINIO_ROOT_USER "$(get_value "$SERVER_ENV" S3_ACCESS_KEY_ID)"
-set_value "$ROOT_ENV" MINIO_ROOT_PASSWORD "$(get_value "$SERVER_ENV" S3_SECRET_ACCESS_KEY)"
-log ".env MinIO root credentials match server/.env S3 keys"
+set_value "$ROOT_ENV" S3_ACCESS_KEY_ID "$(get_value "$SERVER_ENV" S3_ACCESS_KEY_ID)"
+set_value "$ROOT_ENV" S3_SECRET_ACCESS_KEY "$(get_value "$SERVER_ENV" S3_SECRET_ACCESS_KEY)"
+log ".env S3 storage credentials match server/.env"
+# The compose Postgres (port 5433) uses the same password as server/.env.
+if [ -n "$(get_value "$SERVER_ENV" DB_PASSWORD)" ]; then
+  set_value "$ROOT_ENV" POSTGRES_PASSWORD "$(get_value "$SERVER_ENV" DB_PASSWORD)"
+  set_value "$ROOT_ENV" POSTGRES_USER "$(get_value "$SERVER_ENV" DB_USER)"
+  set_value "$ROOT_ENV" S3_BUCKET "$(get_value "$SERVER_ENV" S3_BUCKET)"
+  log ".env Postgres credentials and bucket match server/.env"
+fi
 
 # --- client/.env (no secrets: only VITE_* values reach the browser) ------------
 merge_template "$CLIENT_EXAMPLE" "$CLIENT_ENV"

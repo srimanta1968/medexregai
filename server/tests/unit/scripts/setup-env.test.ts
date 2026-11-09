@@ -19,13 +19,17 @@ describe('scripts/setup-env.sh', () => {
     expect(() => loadConfig(env)).not.toThrow();
   });
 
-  it('keeps MinIO root credentials in step with the API storage keys', async () => {
+  it('keeps the docker compose credentials in step with server/.env', async () => {
     const box = makeSandbox();
     await runScript(box, 'scripts/setup-env.sh', ['--db-password', 'localpw']);
     const server = readEnv(join(box, 'server/.env'));
     const root = readEnv(join(box, '.env'));
-    expect(root.MINIO_ROOT_USER).toBe(server.S3_ACCESS_KEY_ID);
-    expect(root.MINIO_ROOT_PASSWORD).toBe(server.S3_SECRET_ACCESS_KEY);
+    expect(root.S3_ACCESS_KEY_ID).toBe(server.S3_ACCESS_KEY_ID);
+    expect(root.S3_SECRET_ACCESS_KEY).toBe(server.S3_SECRET_ACCESS_KEY);
+    // docker compose reads these for its Postgres and bucket
+    expect(root.POSTGRES_PASSWORD).toBe(server.DB_PASSWORD);
+    expect(root.POSTGRES_USER).toBe(server.DB_USER);
+    expect(root.S3_BUCKET).toBe(server.S3_BUCKET);
   });
 
   it('exits 1 and says why when DB_PASSWORD is not provided (fail closed)', async () => {
