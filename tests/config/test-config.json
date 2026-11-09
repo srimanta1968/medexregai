@@ -20,6 +20,12 @@
       "variables": {
         "_comment": "PER-ENVIRONMENT variables — override/extend the global ones for THIS env. Add values that differ per environment (seeded tenant_id/person_id/persona_id UUIDs from this env's DB). Example: \"tenant_id\": \"<dev-uuid>\".",
         "_example_tenant_id": "REPLACE_WITH_DEV_TENANT_UUID"
+      },
+      "portals": {
+        "web": {
+          "url": "http://localhost:5173",
+          "description": "Public website and app (Vite)"
+        }
       }
     },
     "staging": {
