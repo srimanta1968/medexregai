@@ -116,3 +116,6 @@ veeva/videos/
 veeva/screens/
 *.mp4
 *.vtt
+
+# Local object store (STORAGE_DRIVER=fs)
+server/.data/
