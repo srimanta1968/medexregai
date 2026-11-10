@@ -1,6 +1,7 @@
 import { dataService, Tx } from '../services/DataService';
 import { ObjectNotFoundError, ObjectStore, objectStore, sha256Hex } from '../storage/objectStore';
 import { DocLocation, DocprocClient, DocprocError, ParseResult } from './docproc';
+import { scanForPhi } from './phiScanner';
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -20,7 +21,7 @@ export const STALE_PARSE_MINUTES = 15;
 export const DISCARD_GRACE_MINUTES = 10;
 
 export type ProcessOutcome =
-  | { status: 'parsed'; locations: number; needsOcr: boolean; discarded: boolean }
+  | { status: 'parsed'; locations: number; needsOcr: boolean; phi: 'clean' | 'flagged'; discarded: boolean }
   | { status: 'failed' | 'unsupported'; reason: string; discarded: boolean }
   | { status: 'retry'; reason: string }
   | { status: 'skipped' };
@@ -110,17 +111,22 @@ async function storeLocations(tx: Tx, orgId: string, version: ClaimedVersion, lo
   }
 }
 
-async function recordParse(orgId: string, version: ClaimedVersion, result: ParseResult): Promise<void> {
+async function recordParse(orgId: string, version: ClaimedVersion, result: ParseResult): Promise<'clean' | 'flagged'> {
   const note = result.needsOcr ? 'Some pages have no text layer and were not read (OCR not installed)' : null;
+  // Scanned here, while we still hold the text, so a linked file is checked before its copy goes.
+  const phi = scanForPhi(result.locations);
   await dataService.transaction({ orgId }, async (tx) => {
     await storeLocations(tx, orgId, version, result.locations);
     await tx.query(
       'file_versions',
       `UPDATE file_versions
           SET parse_status = 'parsed', parser = $3, unit_count = $4, ocr_used = $5, parse_error = $6,
-              format = $7, mime_type = $8, parsed_at = now(), parse_started_at = NULL
+              format = $7, mime_type = $8, parsed_at = now(), parse_started_at = NULL,
+              -- A consultant's earlier decision (redacted / accepted) is kept on a re-parse.
+              phi_status = CASE WHEN phi_status IN ('redacted', 'accepted') THEN phi_status ELSE $9 END,
+              phi_findings = $10::jsonb
         WHERE id = $1 AND org_id = $2`,
-      [version.id, orgId, result.parser, result.unitCount, result.ocrUsed, note, result.format, result.mimeType],
+      [version.id, orgId, result.parser, result.unitCount, result.ocrUsed, note, result.format, result.mimeType, phi.status, JSON.stringify(phi.findings)],
     );
     // A newer version becomes the file's current one; an older one parsed late never takes over.
     await tx.query(
@@ -132,6 +138,7 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
       [version.file_id, orgId, version.id, version.version_no],
     );
   });
+  return phi.status;
 }
 
 /**
@@ -203,9 +210,9 @@ export async function processVersion(orgId: string, versionId: string, deps: Ing
     return fail('failed', 'The parser received different bytes than were recorded');
   }
 
-  await recordParse(orgId, version, result);
+  const phi = await recordParse(orgId, version, result);
   const discarded = DISCARDS_COPY(version.source) ? await discardCopy(orgId, version.id, store) : false;
-  return { status: 'parsed', locations: result.locations.length, needsOcr: result.needsOcr, discarded };
+  return { status: 'parsed', locations: result.locations.length, needsOcr: result.needsOcr, phi, discarded };
 }
 
 export interface SweepReport {
