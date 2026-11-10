@@ -1,0 +1,42 @@
+{
+  "name": "@medexregai/fda-data",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MedexRegAI FDA data service: the public openFDA corpus in its own database, served over a versioned API (ADR-017).",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev:worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "worker": "node dist/worker.js",
+    "db:migrate": "ts-node --transpile-only src/db/migrate.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "lint": "eslint src",
+    "dev:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/index.ts",
+    "db:migrate:local": "node scripts/with-dev-db.js ts-node --transpile-only src/db/migrate.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.0",
+    "helmet": "^7.1.0",
+    "pg": "^8.13.1",
+    "stream-json": "^1.9.1",
+    "yauzl": "^3.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.11.10",
+    "@types/stream-json": "^1.7.8",
+    "@types/yauzl": "^2.10.3",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "ts-node": "^10.9.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.18.2"
+  }
+}

@@ -122,6 +122,59 @@ services:
     restart: unless-stopped
     networks: [app_network]
 
+  fda-postgres:
+    # FDA corpus database (ADR-017): its own instance, never shared with customer data.
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: ${FDA_POSTGRES_USER:-fda}
+      POSTGRES_PASSWORD: ${FDA_POSTGRES_PASSWORD:?run scripts/setup-env.sh to create .env}
+      POSTGRES_DB: fda_db
+    ports:
+      - "${FDA_POSTGRES_HOST_PORT:-5434}:5432"
+    volumes:
+      - fda_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d fda_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [fda_network]
+
+  fda-api:
+    # fda-data service API (/v1). Reachable by the main app over fda_network only.
+    build: ./services/fda-data
+    command: ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
+    environment:
+      PORT: 4100
+      FDA_DATABASE_URL: postgres://${FDA_POSTGRES_USER:-fda}:${FDA_POSTGRES_PASSWORD}@fda-postgres:5432/fda_db
+      OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
+    ports:
+      - "${FDA_API_HOST_PORT:-4100}:4100"
+    depends_on:
+      fda-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4100/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [fda_network, app_network]
+
+  fda-worker:
+    # Daily openFDA sync and bulk loads; writes only to fda-postgres.
+    build: ./services/fda-data
+    command: ["node", "dist/worker.js"]
+    environment:
+      FDA_DATABASE_URL: postgres://${FDA_POSTGRES_USER:-fda}:${FDA_POSTGRES_PASSWORD}@fda-postgres:5432/fda_db
+      OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
+    depends_on:
+      fda-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [fda_network]
+
   # ProjexLight MCP Server - Code Review Agent & Schema Sync (opt-in profile).
   # Image pulled from Docker Hub: https://hub.docker.com/r/projexlight/projex-dev-mcp
   mcp-server:
@@ -162,7 +215,10 @@ volumes:
   redis_data:
   s3_data:
   ollama_data:
+  fda_postgres_data:
 
 networks:
   app_network:
+    driver: bridge
+  fda_network:
     driver: bridge
