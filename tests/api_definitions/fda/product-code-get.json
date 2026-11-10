@@ -1,0 +1,107 @@
+{
+  "name": "GET /api/fda/product-codes/:code - classification of a product code",
+  "description": "Returns device class and regulation number for a three-letter FDA product code (case-insensitive) from our copy of the FDA classification database, with device name, specialty, review panel, submission type, implant and life-sustaining flags, how many 510(k)s our copy holds for the code and the latest decision date, a link to the FDA classification record and the as-of dates. Covers: a product code returns device class and regulation number. Needs the FDA copy loaded (npm run fda:bulk -- classification 510k recall; npm run fda:sync -- event_counts); test values are real FDA records: K031698 (Roche, cleared 2003-08-20), product code FRN (infusion pump, class 2, 21 CFR 880.5725), K251636 (FRN, named in recall Z-1368-2026).",
+  "endpoint": "/api/fda/product-codes/:code",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 75,
+  "taskId": "6ad8fef4-9145-46dc-9126-f56586869bc8",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "f0f9f188-a539-4d36-a0e9-d3f9d7628df4#AC2",
+    "6ad8fef4-9145-46dc-9126-f56586869bc8#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "malformed code",
+      "when": "code does not match the FDA format"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "not in our copy of the FDA data",
+      "when": "well-formed code that the FDA copy does not hold"
+    }
+  ],
+  "responseFields": [
+    "productCode",
+    "deviceName",
+    "deviceClass",
+    "regulationNumber",
+    "medicalSpecialty",
+    "reviewPanel",
+    "submissionTypeId",
+    "implant",
+    "lifeSustainSupport",
+    "definition",
+    "clearances",
+    "fdaUrl",
+    "dataAsOf",
+    "clearancesAsOf"
+  ],
+  "testCases": [
+    {
+      "name": "Member looks up FRN",
+      "pathParams": {
+        "code": "{{static:FRN}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": {
+        "code": "{{static:FRN}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "400 - malformed code",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "code": "{{static:ZZ9}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "404 - not in the FDA copy",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "code": "{{static:ZZZ}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    }
+  ]
+}

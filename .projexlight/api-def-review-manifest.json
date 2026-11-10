@@ -45,5 +45,56 @@
       "PATCH",
       "/projects/:p"
     ]
+  },
+  "fda/510k-get.json": {
+    "hash": "db0eeed456671b8404377ab74ac24c16cc49ff0b8b91885bba6880df8445bc0b",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:15",
+    "route": [
+      "GET",
+      "/fda/510k/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/fda/510k/:kNumber was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "fda/flags-get.json": {
+    "hash": "c4733249a52ad0d666cad825c910f6ba8b9ad55296eb368f9dcf46429d7ef99d",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:15",
+    "route": [
+      "GET",
+      "/fda/flags/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/fda/flags/:kNumber was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "fda/product-code-get.json": {
+    "hash": "3c019b7201ecd3d0766c399c64f1c34788877578a9d471d973e7c66d9ea58bbf",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:15",
+    "route": [
+      "GET",
+      "/fda/product-codes/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/fda/product-codes/:code was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
   }
 }

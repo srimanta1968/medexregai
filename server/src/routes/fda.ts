@@ -1,4 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import { z } from 'zod';
+import { fdaLookupService } from '../fda/FdaLookupService';
 import { DATASETS } from '../fda/FdaSyncService';
 import { authenticate } from '../middleware/authenticate';
 import { dataService } from '../services/DataService';
@@ -73,3 +75,35 @@ fdaRouter.get('/api/fda/meta', authenticate, (_req: Request, res: Response, next
     res.status(200).json({ success: true, data: { dataAsOf: loaded.length ? loaded.sort()[0] : null, datasets } });
   })().catch(next);
 });
+
+/** K-numbers as the FDA issues them: K + 6 digits, or DEN + 6 digits for De Novo. */
+const kNumber = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^(K|DEN)\d{6}$/, 'kNumber must be K or DEN followed by 6 digits, e.g. K031698');
+const productCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{3}$/, 'productCode must be three letters, e.g. FRN');
+
+const lookup =
+  (fn: (req: Request) => Promise<unknown>) =>
+  (req: Request, res: Response, next: NextFunction): void => {
+    fn(req)
+      .then((data) => {
+        res.set('Cache-Control', 'private, max-age=300');
+        res.status(200).json({ success: true, data });
+      })
+      .catch(next);
+  };
+
+/** Verify a K-number against our copy of the FDA 510(k) database. */
+fdaRouter.get('/api/fda/510k/:kNumber', authenticate, lookup((req) => fdaLookupService.verify510k(kNumber.parse(req.params.kNumber))));
+
+/** Device class and regulation number for a product code. */
+fdaRouter.get('/api/fda/product-codes/:code', authenticate, lookup((req) => fdaLookupService.productCode(productCode.parse(req.params.code))));
+
+/** Recall and MAUDE flags for a K-number. */
+fdaRouter.get('/api/fda/flags/:kNumber', authenticate, lookup((req) => fdaLookupService.flags(kNumber.parse(req.params.kNumber))));

@@ -1,9 +1,23 @@
 {
-  "updatedAt": "2026-11-10T03:48:05",
+  "updatedAt": "2026-11-10T05:18:19",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/app/navigation-get.json",
+      "file": "tests/api_definitions/fda/510k-get.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/fda/flags-get.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/fda/product-code-get.json",
       "rules": [
         "CODE-MATCH"
       ],
@@ -13,7 +27,7 @@
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 1,
-    "findingsCount": 1
+    "withFindings": 3,
+    "findingsCount": 3
   }
 }

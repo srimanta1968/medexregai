@@ -1,0 +1,102 @@
+{
+  "name": "GET /api/fda/flags/:kNumber - recall and MAUDE flags",
+  "description": "Recall and adverse-event flags for a K-number. recalls: every FDA device recall whose record names this K-number (total, open = status 'Open, Classified', up to 20 most recent with status, dates, firm, reason and FDA link). maude: adverse-event report counts, which FDA publishes per product code not per K-number (scope 'product_code'); tracked=false with null counts when our copy does not track that code, so absence is never shown as zero events. Each block has its own as-of date. Covers: recall and MAUDE flags are returned for a K-number. Needs the FDA copy loaded (npm run fda:bulk -- classification 510k recall; npm run fda:sync -- event_counts); test values are real FDA records: K031698 (Roche, cleared 2003-08-20), product code FRN (infusion pump, class 2, 21 CFR 880.5725), K251636 (FRN, named in recall Z-1368-2026).",
+  "endpoint": "/api/fda/flags/:kNumber",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 75,
+  "taskId": "6ad8fef4-9145-46dc-9126-f56586869bc8",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "f0f9f188-a539-4d36-a0e9-d3f9d7628df4#AC3",
+    "6ad8fef4-9145-46dc-9126-f56586869bc8#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "malformed kNumber",
+      "when": "kNumber does not match the FDA format"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "not in our copy of the FDA data",
+      "when": "well-formed kNumber that the FDA copy does not hold"
+    }
+  ],
+  "responseFields": [
+    "kNumber",
+    "productCode",
+    "recalls",
+    "maude"
+  ],
+  "testCases": [
+    {
+      "name": "Member looks up K251636",
+      "pathParams": {
+        "kNumber": "{{static:K251636}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": {
+        "kNumber": "{{static:K251636}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "400 - malformed kNumber",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "kNumber": "{{static:K12}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "404 - not in the FDA copy",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "kNumber": "{{static:K000000}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "maude.scope": [
+      "product_code"
+    ]
+  }
+}

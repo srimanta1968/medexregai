@@ -1,0 +1,109 @@
+{
+  "name": "GET /api/fda/510k/:kNumber - verify a K-number",
+  "description": "Verifies a K-number (K + 6 digits, or DEN + 6 digits for De Novo; case-insensitive) against our copy of the FDA 510(k) database and returns applicant, device name, product code, device class, regulation number, decision code/description/date, clearance type, Summary vs Statement, a link to the FDA's public record and the 510(k) data-as-of date. Covers: a K-number can be verified against the FDA copy. Needs the FDA copy loaded (npm run fda:bulk -- classification 510k recall; npm run fda:sync -- event_counts); test values are real FDA records: K031698 (Roche, cleared 2003-08-20), product code FRN (infusion pump, class 2, 21 CFR 880.5725), K251636 (FRN, named in recall Z-1368-2026).",
+  "endpoint": "/api/fda/510k/:kNumber",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 75,
+  "taskId": "6ad8fef4-9145-46dc-9126-f56586869bc8",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "f0f9f188-a539-4d36-a0e9-d3f9d7628df4#AC1",
+    "6ad8fef4-9145-46dc-9126-f56586869bc8#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "malformed kNumber",
+      "when": "kNumber does not match the FDA format"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "not in our copy of the FDA data",
+      "when": "well-formed kNumber that the FDA copy does not hold"
+    }
+  ],
+  "responseFields": [
+    "kNumber",
+    "verified",
+    "applicant",
+    "deviceName",
+    "productCode",
+    "deviceClass",
+    "regulationNumber",
+    "decisionCode",
+    "decisionDescription",
+    "decisionDate",
+    "dateReceived",
+    "clearanceType",
+    "statementOrSummary",
+    "thirdPartyReview",
+    "fdaUrl",
+    "dataAsOf"
+  ],
+  "testCases": [
+    {
+      "name": "Member looks up K031698",
+      "pathParams": {
+        "kNumber": "{{static:K031698}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": {
+        "kNumber": "{{static:K031698}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "400 - malformed kNumber",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "kNumber": "{{static:12345}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "404 - not in the FDA copy",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "kNumber": "{{static:K000000}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    }
+  ]
+}
