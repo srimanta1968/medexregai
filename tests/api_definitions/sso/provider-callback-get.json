@@ -1,6 +1,6 @@
 {
   "name": "GET /api/auth/sso/:provider/callback - provider redirect target",
-  "description": "Public, called by the provider. Checks state against the signed cookie, exchanges the code with the PKCE verifier, verifies the ID token (signature via JWKS, issuer, audience, expiry, nonce) and resolves the account: a linked identity (provider + subject) first, else an existing active account whose email the provider verified (Google email_verified, Microsoft xms_edov). SSO never creates accounts. Always answers 302: to /sso/complete#code=<one-time code> on success, or /login?sso_error=<cancelled|state_mismatch|provider_error|email_unverified|no_account>. Covers: a user can sign in with Google or Microsoft SSO.",
+  "description": "Public, called by the provider. Checks state against the signed cookie, exchanges the code with the PKCE verifier, verifies the ID token (signature via JWKS, issuer, audience, expiry, nonce) and resolves the account: a linked identity (provider + subject) first, else an existing active account whose email the provider verified (Google email_verified, Microsoft xms_edov). A verified email with no account goes to /signup/sso#code=<one-time sign-up code> to create a firm workspace. Always answers 302: /sso/complete#code=... (signed in), /signup/sso#code=... (new person), or /login?sso_error=<cancelled|state_mismatch|provider_error|email_unverified|no_account (inactive account)>. Covers: a user can sign in with Google or Microsoft SSO.",
   "endpoint": "/api/auth/sso/:provider/callback",
   "method": "GET",
   "requiresAuth": false,

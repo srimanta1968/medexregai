@@ -12,7 +12,7 @@ export const SSO_ERROR_MESSAGES: Record<string, string> = {
   state_mismatch: 'That sign-in attempt expired. Please try again.',
   provider_error: 'We could not complete sign-in with that provider. Please try again.',
   email_unverified: 'Your provider did not confirm your email address, so we could not sign you in.',
-  no_account: 'There is no MedexRegAI account for that email yet. Create a firm workspace or ask your firm owner for an invitation.',
+  no_account: 'This account is not active. Ask your firm owner for help.',
   no_membership: 'This account is not an active member of any firm.',
 };
 

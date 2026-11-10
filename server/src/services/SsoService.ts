@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { createRemoteJWKSet, JWTPayload, jwtVerify } from 'jose';
 import { config, SsoProviderId, SsoProviderSettings } from '../config/env';
 import { AppError, ErrorCodes } from '../utils/AppError';
-import { AuthSession, issueSession, primaryMembership } from './AuthService';
+import { AuthSession, createFirmOwner, issueSession, primaryMembership } from './AuthService';
 import { dataService } from './DataService';
 import { hashToken, newOpaqueToken } from './TokenService';
 
@@ -41,6 +41,7 @@ interface PendingLogin {
 export const SSO_COOKIE = 'medexregai_sso';
 const PENDING_TTL_SECONDS = 600;
 const HANDOFF_TTL_SECONDS = 120;
+const SIGNUP_TTL_MINUTES = 15;
 const DISCOVERY_TTL_MS = 60 * 60 * 1000;
 const HTTP_TIMEOUT_MS = 10_000;
 
@@ -89,6 +90,16 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
     throw new SsoError('provider_error', `Identity provider returned ${response.status} for ${new URL(url).pathname}`);
   }
   return (await response.json()) as T;
+}
+
+const SIGNUP_EXPIRED = 'This sign-up link has expired. Please sign in with Google or Microsoft again.';
+
+/** A provider-verified identity with no account yet. */
+interface PendingSignup {
+  provider: SsoProviderId;
+  subject: string;
+  email: string;
+  fullName: string | null;
 }
 
 export class SsoService {
@@ -155,7 +166,7 @@ export class SsoService {
    * (signature, issuer, audience, expiry, nonce), resolve the account and return a
    * one-time handoff code for the web app.
    */
-  async callback(id: string, query: Record<string, unknown>, cookie: string | undefined): Promise<string> {
+  async callback(id: string, query: Record<string, unknown>, cookie: string | undefined): Promise<{ kind: 'signin' | 'signup'; code: string }> {
     const provider = this.provider(id);
     if (typeof query.error === 'string') {
       throw new SsoError('cancelled', `Provider returned error ${query.error}`);
@@ -184,8 +195,11 @@ export class SsoService {
       throw new SsoError('provider_error', 'Token response has no id_token');
     }
     const claims = await this.verifyIdToken(provider, doc, tokens.id_token, pending.nonce);
-    const userId = await this.resolveUser(provider.id, claims);
-    return this.createHandoff(userId);
+    const resolved = await this.resolveUser(provider.id, claims);
+    if ('userId' in resolved) {
+      return { kind: 'signin', code: await this.createHandoff(resolved.userId) };
+    }
+    return { kind: 'signup', code: await this.createSignup(resolved) };
   }
 
   private async verifyIdToken(provider: SsoProviderSettings, doc: Discovery, idToken: string, nonce: string): Promise<JWTPayload> {
@@ -217,7 +231,7 @@ export class SsoService {
    * xms_edov optional claim (domain-verified email; enable it on the app
    * registration). SSO signs people IN; it never creates accounts or firms.
    */
-  private async resolveUser(provider: SsoProviderId, claims: JWTPayload): Promise<string> {
+  private async resolveUser(provider: SsoProviderId, claims: JWTPayload): Promise<{ userId: string } | PendingSignup> {
     const subject = typeof claims.sub === 'string' ? claims.sub : '';
     const rawEmail = typeof claims.email === 'string' ? claims.email : '';
     const email = rawEmail.trim().toLowerCase();
@@ -231,7 +245,7 @@ export class SsoService {
         [provider, subject]
       );
       if (linked[0]) {
-        return linked[0].user_id;
+        return { userId: linked[0].user_id };
       }
       const verified = provider === 'google' ? claims.email_verified === true : claims.xms_edov === true || claims.xms_edov === '1';
       if (!email || !verified) {
@@ -240,7 +254,11 @@ export class SsoService {
       const users = await tx.query<{ user_id: string; status: string }>('user_profiles', 'SELECT user_id, status FROM user_profiles WHERE email = $1', [
         email,
       ]);
-      if (!users[0] || users[0].status !== 'active') {
+      if (!users[0]) {
+        // New person whose email the provider vouched for: offer to create a firm workspace.
+        return { provider, subject, email, fullName: typeof claims.name === 'string' ? claims.name.slice(0, 200) : null };
+      }
+      if (users[0].status !== 'active') {
         throw new SsoError('no_account', 'No active MedexRegAI account for this email');
       }
       await tx.query(
@@ -249,7 +267,68 @@ export class SsoService {
          ON CONFLICT (user_id, provider) DO UPDATE SET subject = EXCLUDED.subject, email = EXCLUDED.email, last_used_at = now()`,
         [users[0].user_id, provider, subject, email]
       );
-      return users[0].user_id;
+      return { userId: users[0].user_id };
+    });
+  }
+
+  private async createSignup(p: PendingSignup): Promise<string> {
+    const code = newOpaqueToken();
+    await dataService.query(
+      {},
+      'sso_signups',
+      `INSERT INTO sso_signups (token_hash, provider, subject, email, full_name, expires_at)
+       VALUES ($1, $2, $3, $4, $5, now() + make_interval(mins => $6))`,
+      [code.hash, p.provider, p.subject, p.email, p.fullName, SIGNUP_TTL_MINUTES]
+    );
+    return code.token;
+  }
+
+  /** What the sign-up page shows: the provider-verified email and name. Does not use up the code. */
+  async previewSignup(code: string): Promise<{ provider: string; email: string; fullName: string | null }> {
+    const rows = await dataService.transaction({}, (tx) =>
+      tx.lookupByToken<{ provider: string; email: string; full_name: string | null }>(
+        'sso_signups',
+        'SELECT provider, email, full_name FROM sso_signups WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()',
+        [hashToken(code)]
+      )
+    );
+    if (!rows[0]) {
+      throw new AppError(401, ErrorCodes.INVALID_SSO_CODE, SIGNUP_EXPIRED);
+    }
+    return { provider: rows[0].provider, email: rows[0].email, fullName: rows[0].full_name };
+  }
+
+  /**
+   * Create the account (no password: it signs in through the provider), link the
+   * identity, create the firm with this person as owner and sign them in. The code
+   * is consumed in the same transaction, so it works once.
+   */
+  async completeSignup(code: string, input: { fullName: string; firmName: string }): Promise<AuthSession> {
+    return dataService.transaction({}, async (tx) => {
+      const rows = await tx.lookupByToken<{ provider: string; subject: string; email: string }>(
+        'sso_signups',
+        `UPDATE sso_signups SET used_at = now()
+          WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()
+          RETURNING provider, subject, email`,
+        [hashToken(code)]
+      );
+      const signup = rows[0];
+      if (!signup) {
+        throw new AppError(401, ErrorCodes.INVALID_SSO_CODE, SIGNUP_EXPIRED);
+      }
+      const { userId, ...session } = await createFirmOwner(tx, {
+        fullName: input.fullName,
+        email: signup.email,
+        passwordHash: null,
+        firmName: input.firmName,
+        emailVerified: true,
+      });
+      await tx.query(
+        'user_identities',
+        'INSERT INTO user_identities (user_id, provider, subject, email, last_used_at) VALUES ($1, $2, $3, $4, now())',
+        [userId, signup.provider, signup.subject, signup.email]
+      );
+      return session;
     });
   }
 

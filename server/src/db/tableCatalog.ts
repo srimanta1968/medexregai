@@ -21,6 +21,7 @@ export const TABLE_CATALOG = {
   password_reset_tokens: 'platform',
   user_identities: 'platform',
   sso_handoffs: 'platform',
+  sso_signups: 'platform',
   pilot_requests: 'platform',
   memberships: 'tenant',
   invites: 'tenant',

@@ -2,6 +2,7 @@ import { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { AuthCard, Field, FormMessage, SubmitButton, TextLink } from '../../components/auth/AuthUi';
+import { SsoButtons } from '../../components/auth/SsoButtons';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { formValue, useSubmit } from './useForm';
 
@@ -34,7 +35,8 @@ export default function SignUpPage(): JSX.Element {
         </>
       }
     >
-      <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      <SsoButtons />
+      <form className="mt-5 space-y-5" onSubmit={onSubmit} noValidate>
         {error && !error.details && <FormMessage tone="error">{error.message}</FormMessage>}
         <Field name="fullName" label="Your full name" autoComplete="name" required error={fieldError('fullName')} />
         <Field name="email" label="Work email" type="email" autoComplete="email" required error={fieldError('email')} />

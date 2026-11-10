@@ -62,8 +62,9 @@ ssoRouter.get(
     const pending = readCookie(req, SSO_COOKIE);
     res.clearCookie(SSO_COOKIE, { path: '/api/auth/sso' });
     try {
-      const code = await ssoService.callback(req.params.provider, req.query as Record<string, unknown>, pending);
-      res.redirect(302, `${config.appBaseUrl}/sso/complete#code=${encodeURIComponent(code)}`);
+      const result = await ssoService.callback(req.params.provider, req.query as Record<string, unknown>, pending);
+      const page = result.kind === 'signin' ? 'sso/complete' : 'signup/sso';
+      res.redirect(302, `${config.appBaseUrl}/${page}#code=${encodeURIComponent(result.code)}`);
     } catch (err) {
       if (!(err instanceof SsoError)) {
         throw err;
@@ -80,5 +81,29 @@ ssoRouter.post(
   handle(async (req, res) => {
     const { code } = exchangeSchema.parse(req.body);
     res.status(200).json({ success: true, data: await ssoService.exchange(code) });
+  })
+);
+
+const signupCode = z.object({ code: z.string({ required_error: 'code is required' }).min(20, 'code is invalid').max(200, 'code is invalid') });
+const signupComplete = signupCode.extend({
+  fullName: z.string({ required_error: 'fullName is required' }).trim().min(1, 'fullName is required').max(200),
+  firmName: z.string({ required_error: 'firmName is required' }).trim().min(1, 'firmName is required').max(200),
+});
+
+/** Public: details for the "create your firm workspace" page after a provider sign-in. */
+ssoRouter.post(
+  '/api/auth/sso/signup/preview',
+  handle(async (req, res) => {
+    const { code } = signupCode.parse(req.body);
+    res.status(200).json({ success: true, data: await ssoService.previewSignup(code) });
+  })
+);
+
+/** Public: create the account and firm for a provider-verified person (the code is the credential). */
+ssoRouter.post(
+  '/api/auth/sso/signup',
+  handle(async (req, res) => {
+    const { code, fullName, firmName } = signupComplete.parse(req.body);
+    res.status(201).json({ success: true, data: await ssoService.completeSignup(code, { fullName, firmName }) });
   })
 );

@@ -89,42 +89,59 @@ export async function primaryMembership(tx: Tx, userId: string): Promise<Members
   return rows[0];
 }
 
+/**
+ * Create an account, its firm workspace and the owner membership inside `tx`, and
+ * sign the person in. passwordHash is null for accounts that only sign in through
+ * Google/Microsoft (password login then always fails for them).
+ */
+export async function createFirmOwner(
+  tx: Tx,
+  input: { fullName: string; email: string; passwordHash: string | null; firmName: string; emailVerified: boolean }
+): Promise<AuthSession & { userId: string }> {
+  await tx.query('users', 'SAVEPOINT create_firm_owner');
+  let userId: string;
+  try {
+    const [user] = await tx.query<{ id: string }>('users', 'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id', [
+      input.email,
+      input.passwordHash,
+    ]);
+    userId = user.id;
+    await tx.query(
+      'user_profiles',
+      'INSERT INTO user_profiles (user_id, email, full_name, email_verified_at) VALUES ($1, $2, $3, CASE WHEN $4 THEN now() END)',
+      [user.id, input.email, input.fullName, input.emailVerified]
+    );
+  } catch (err) {
+    await tx.query('users', 'ROLLBACK TO SAVEPOINT create_firm_owner');
+    if ((err as { constraint?: string }).constraint === 'user_profiles_email_uq') {
+      throw new AppError(409, ErrorCodes.EMAIL_TAKEN, 'An account with this email already exists');
+    }
+    throw err;
+  }
+  const [org] = await tx.query<AuthOrg>('orgs', 'INSERT INTO orgs (name, slug, created_by) VALUES ($1, $2, $3) RETURNING id, name, slug', [
+    input.firmName,
+    firmSlug(input.firmName),
+    userId,
+  ]);
+  await tx.setOrg(org.id);
+  await tx.query(
+    'memberships',
+    `INSERT INTO memberships (org_id, user_id, role_id)
+     SELECT $1, $2, id FROM roles WHERE key = 'owner' AND org_id IS NULL`,
+    [org.id, userId]
+  );
+  const session = await issueSession(tx, { id: userId, email: input.email, fullName: input.fullName }, org, 'owner');
+  return { ...session, userId };
+}
+
 export class AuthService {
   /** Create the account, the firm workspace and the owner membership, atomically. */
   async register(input: { fullName: string; email: string; password: string; firmName: string }): Promise<AuthSession> {
     const passwordHash = await bcrypt.hash(input.password, config.bcryptRounds);
-    try {
-      return await dataService.transaction({}, async (tx) => {
-        const [user] = await tx.query<{ id: string }>(
-          'users',
-          'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id',
-          [input.email, passwordHash]
-        );
-        await tx.query('user_profiles', 'INSERT INTO user_profiles (user_id, email, full_name) VALUES ($1, $2, $3)', [
-          user.id,
-          input.email,
-          input.fullName,
-        ]);
-        const [org] = await tx.query<AuthOrg>(
-          'orgs',
-          'INSERT INTO orgs (name, slug, created_by) VALUES ($1, $2, $3) RETURNING id, name, slug',
-          [input.firmName, firmSlug(input.firmName), user.id]
-        );
-        await tx.setOrg(org.id);
-        await tx.query(
-          'memberships',
-          `INSERT INTO memberships (org_id, user_id, role_id)
-           SELECT $1, $2, id FROM roles WHERE key = 'owner' AND org_id IS NULL`,
-          [org.id, user.id]
-        );
-        return issueSession(tx, { id: user.id, email: input.email, fullName: input.fullName }, org, 'owner');
-      });
-    } catch (err) {
-      if ((err as { constraint?: string }).constraint === 'user_profiles_email_uq') {
-        throw new AppError(409, ErrorCodes.EMAIL_TAKEN, 'An account with this email already exists');
-      }
-      throw err;
-    }
+    const { userId: _userId, ...session } = await dataService.transaction({}, (tx) =>
+      createFirmOwner(tx, { fullName: input.fullName, email: input.email, passwordHash, firmName: input.firmName, emailVerified: false })
+    );
+    return session;
   }
 
   async login(input: { email: string; password: string }): Promise<AuthSession> {

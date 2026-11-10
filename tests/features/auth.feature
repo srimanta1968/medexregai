@@ -55,7 +55,7 @@ Feature: F0.1 Accounts, firms and invitations
 
   @scenario_type:UI @ui_test @portal:web
   @scenario_id:eee48cd2-24d7-4912-884d-baf92fedd35e
-  Scenario: SSO sign-in without an account explains what to do
+  Scenario: SSO sign-in for an inactive account explains what to do
     Given I navigate to "/login?sso_error=no_account"
-    Then I should see "There is no MedexRegAI account for that email yet."
+    Then I should see "This account is not active. Ask your firm owner for help."
     And I should see "Welcome back to your firm workspace."
