@@ -1,0 +1,96 @@
+{
+  "requiresAuth": true,
+  "taskId": "2fd4277b-fd52-48f0-970f-3dc09c43653e",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/files/:fileId - one file with its version history",
+  "description": "Every version of a file, newest first: SHA-256, size, detected format, parse status, parser, unit count, number of source locations and retrieval chunks, PHI status with masked findings, raw-data or drawing profile, and when a linked copy was discarded (hash, text and locations are kept). Viewing is audited (file.viewed). Covers: files are parsed with page, sheet, cell or slide locations; re-uploading keeps the old version; fetched copies are deleted with hashes kept; drawing title blocks and raw-data profiles.",
+  "endpoint": "/api/files/:fileId",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 92,
+  "coversCriterion": [
+    "25aed8eb-2a0c-411e-947c-1963ebf27356#AC1",
+    "25aed8eb-2a0c-411e-947c-1963ebf27356#AC2",
+    "25aed8eb-2a0c-411e-947c-1963ebf27356#AC4",
+    "25aed8eb-2a0c-411e-947c-1963ebf27356#AC5",
+    "2fd4277b-fd52-48f0-970f-3dc09c43653e#AC1",
+    "2fd4277b-fd52-48f0-970f-3dc09c43653e#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/projects/:projectId/files"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "File not found",
+      "when": "no file with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "fileId must be a valid id",
+      "when": "fileId is not a UUID"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner opens a file's versions",
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "404 - unknown file",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "fileId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "400 - fileId is not a UUID",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "fileId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      }
+    }
+  ]
+}

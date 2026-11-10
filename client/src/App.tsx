@@ -24,6 +24,7 @@ const SsoSignupPage = lazy(() => import('./pages/auth/SsoSignupPage'));
 const SsoCompletePage = lazy(() => import('./pages/auth/SsoCompletePage'));
 const ClientsPage = lazy(() => import('./pages/app/ClientsPage'));
 const ProjectPage = lazy(() => import('./pages/app/ProjectPage'));
+const ProjectFilesPage = lazy(() => import('./pages/app/ProjectFilesPage'));
 const AiSettingsPage = lazy(() => import('./pages/app/AiSettingsPage'));
 const FdaLookupPage = lazy(() => import('./pages/app/FdaLookupPage'));
 const FdaSourcesPage = lazy(() => import('./pages/app/FdaSourcesPage'));
@@ -72,6 +73,7 @@ export default function App(): JSX.Element {
             <Route path="/app" element={<WorkspacePage />} />
             <Route path="/app/clients" element={<ClientsPage />} />
             <Route path="/app/projects/:projectId" element={<ProjectPage />} />
+            <Route path="/app/projects/:projectId/files" element={<ProjectFilesPage />} />
             <Route path="/app/projects/:projectId/:section" element={<ComingSoonPage />} />
             <Route path="/app/settings/ai" element={<AiSettingsPage />} />
             <Route path="/app/fda-lookup" element={<FdaLookupPage />} />

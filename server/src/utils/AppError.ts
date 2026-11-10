@@ -8,7 +8,7 @@ export class AppError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
-    public readonly details?: unknown
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = 'AppError';
@@ -49,4 +49,7 @@ export const ErrorCodes = {
   PROVIDER_URL_NOT_ALLOWED: 'PROVIDER_URL_NOT_ALLOWED',
   PROVIDER_NOT_TESTED: 'PROVIDER_NOT_TESTED',
   EVALUATION_REQUIRED: 'EVALUATION_REQUIRED',
+  PHI_NOT_FLAGGED: 'PHI_NOT_FLAGGED',
+  UPLOADS_DISABLED: 'UPLOADS_DISABLED',
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
 } as const;

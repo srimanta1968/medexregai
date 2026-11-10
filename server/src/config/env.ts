@@ -117,6 +117,12 @@ export interface AppConfig {
     /** Above docproc's own parse limit so its PARSE_TIMEOUT answer arrives first. */
     timeoutMs: number;
   };
+  /**
+   * Development-only file upload through the API (POST /api/projects/:id/files).
+   * Production uploads go straight to object storage via presigned URLs (F8.2), so
+   * DEV_UPLOADS=true is refused when NODE_ENV=production.
+   */
+  devUploads: { enabled: boolean; maxBytes: number };
 }
 
 /** Origins the ProjexLight platform previews the app from, plus local dev servers. */
@@ -215,6 +221,15 @@ export const LOG_FORMATS: readonly string[] = ['combined', 'common', 'dev', 'sho
  */
 export function parseLogFormat(raw: string): string {
   return LOG_FORMATS.includes(raw) ? raw : 'combined';
+}
+
+/** DEV_UPLOADS: the development-only upload route; refused in production. */
+export function parseDevUploads(env: Env, nodeEnv: string): AppConfig['devUploads'] {
+  const enabled = optionalEnv(env, 'DEV_UPLOADS', 'false').toLowerCase() === 'true';
+  if (enabled && nodeEnv === 'production') {
+    throw new Error('DEV_UPLOADS=true is for local development only and is refused when NODE_ENV=production (uploads use presigned URLs, F8.2).');
+  }
+  return { enabled, maxBytes: parsePositiveInt(optionalEnv(env, 'DEV_UPLOAD_MAX_BYTES', String(50 * 1024 * 1024)), 'DEV_UPLOAD_MAX_BYTES') };
 }
 
 /** Validate MAIL_TRANSPORT; the log transport must never be used in production. */
@@ -373,6 +388,7 @@ export function loadConfig(env: Env): AppConfig {
       notifyEmail: optionalEnv(env, 'PILOT_NOTIFY_EMAIL', '') || null,
     },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
+    devUploads: parseDevUploads(env, nodeEnv),
     docproc: {
       serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
       serviceKey: optionalEnv(env, 'DOCPROC_API_KEY', '') || undefined,

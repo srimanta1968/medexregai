@@ -1,0 +1,143 @@
+{
+  "requiresAuth": true,
+  "taskId": "04388695-1d59-470f-ac78-4051bdc7970f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "PATCH /api/file-versions/:versionId/phi - answer a likely-PHI warning",
+  "description": "The consultant's answer to a PHI warning on a flagged file version: \"redacted\" (identifiers removed, usually by uploading a redacted version) or \"accepted\" (keep it). Only a flagged or already answered version has a warning to answer; others get 409 PHI_NOT_FLAGGED. The answer survives a re-parse and is audited (file.phi_decision). The happy path answers the complaint log uploaded earlier, which is flagged for a labelled patient name and date of birth once docproc has parsed it. Covers: uploads and fetched files are scanned for likely PHI with a warning and redaction prompt.",
+  "endpoint": "/api/file-versions/:versionId/phi",
+  "method": "PATCH",
+  "expectedStatus": 200,
+  "priority": 93,
+  "coversCriterion": [
+    "25aed8eb-2a0c-411e-947c-1963ebf27356#AC6",
+    "04388695-1d59-470f-ac78-4051bdc7970f#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/projects/:projectId/files"
+  ],
+  "fieldEnums": {
+    "decision": [
+      "redacted",
+      "accepted"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Your role (reviewer) does not allow this action",
+      "when": "caller lacks projects:write"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "File version not found",
+      "when": "no version with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "decision must be redacted or accepted",
+      "when": "unknown decision"
+    },
+    {
+      "status": 409,
+      "code": "PHI_NOT_FLAGGED",
+      "message": "This file version has no PHI warning to answer",
+      "when": "the version is clean or not yet scanned",
+      "reproducible": false,
+      "reason": "Needs a second, clean parsed file in the same run; verified by hand 2026-11-10 against a parsed DOCX."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner accepts the PHI warning on the complaint log",
+      "pathParams": {
+        "versionId": "{{cache:files.upload.response.data.latest.id}}"
+      },
+      "payload": {
+        "decision": "accepted"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "400 - unknown decision",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "versionId": "{{cache:files.upload.response.data.latest.id}}"
+      },
+      "payload": {
+        "decision": "ignore"
+      }
+    },
+    {
+      "name": "404 - unknown version",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "versionId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "decision": "accepted"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "pathParams": {
+        "versionId": "{{cache:files.upload.response.data.latest.id}}"
+      },
+      "payload": {
+        "decision": "accepted"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot change project files",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "pathParams": {
+        "versionId": "{{cache:files.upload.response.data.latest.id}}"
+      },
+      "payload": {
+        "decision": "accepted"
+      }
+    }
+  ]
+}

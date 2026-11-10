@@ -19,13 +19,18 @@ export class ApiError extends Error {
 export interface ApiRequest {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
+  /** Send these bytes as-is (a file) instead of a JSON body. */
+  rawBody?: Blob;
+  headers?: Record<string, string>;
   token?: string;
 }
 
 /** Call the API (same origin; Vite proxies /api to the server in development). */
-export async function apiRequest<T>(path: string, { method = 'GET', body, token }: ApiRequest = {}): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined) {
+export async function apiRequest<T>(path: string, { method = 'GET', body, rawBody, headers: extra, token }: ApiRequest = {}): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json', ...extra };
+  if (rawBody !== undefined) {
+    headers['Content-Type'] = rawBody.type || 'application/octet-stream';
+  } else if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
   }
   if (token) {
@@ -33,7 +38,7 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, token 
   }
   let response: Response;
   try {
-    response = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    response = await fetch(path, { method, headers, body: rawBody ?? (body === undefined ? undefined : JSON.stringify(body)) });
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', 'Cannot reach MedexRegAI. Check your connection and try again.');
   }
