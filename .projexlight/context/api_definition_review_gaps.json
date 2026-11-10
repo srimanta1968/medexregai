@@ -1,0 +1,19 @@
+{
+  "updatedAt": "2026-11-10T00:09:01",
+  "scope": "all",
+  "gaps": [
+    {
+      "file": "tests/api_definitions/pilot-requests/pilot-requests-post.json",
+      "rules": [
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    }
+  ],
+  "missingDefinitions": [],
+  "captureSyncIssues": 0,
+  "summary": {
+    "withFindings": 1,
+    "findingsCount": 1
+  }
+}

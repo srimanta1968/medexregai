@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import { AppConfig, config } from './config/env';
 import { authRouter } from './routes/auth';
 import { invitesRouter } from './routes/invites';
+import { pilotRequestsRouter } from './routes/pilotRequests';
 import { ssoRouter } from './routes/sso';
 import { AppError, ErrorCodes } from './utils/AppError';
 
@@ -56,6 +57,8 @@ export function buildCorsOptions(allowedOrigins: string[]): CorsOptions {
 /** Build the Express app without binding a port, so tests can mount it directly. */
 export function createApp(appConfig: AppConfig): Application {
   const app = express();
+  // Client IP for rate limiting comes from X-Forwarded-For only through trusted hops.
+  app.set('trust proxy', appConfig.trustProxy);
 
   app.use(helmet());
   app.use(cors(buildCorsOptions(appConfig.corsOrigins)));
@@ -73,6 +76,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(authRouter);
   app.use(invitesRouter);
   app.use(ssoRouter);
+  app.use(pilotRequestsRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

@@ -28,5 +28,22 @@
       "POST",
       "/invites/:p/accept"
     ]
+  },
+  "pilot-requests/pilot-requests-post.json": {
+    "hash": "03867a3771b05af87fab3c8bc56c896a5a9d04969d5d6ab959cf5254baec4d10",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T00:08:58",
+    "route": [
+      "POST",
+      "/pilot-requests"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/pilot-requests was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
   }
 }

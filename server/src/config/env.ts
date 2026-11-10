@@ -80,6 +80,14 @@ export interface AppConfig {
   logLevel: string;
   logFormat: string;
   rateLimit: { windowMs: number; maxRequests: number };
+  /** Express "trust proxy" setting: how many proxy hops to trust for the client IP. */
+  trustProxy: string | number;
+  pilot: {
+    /** Pilot requests accepted per hashed IP per hour. */
+    perIpPerHour: number;
+    /** Optional: who gets an email when a pilot request arrives. */
+    notifyEmail: string | null;
+  };
   bodyLimit: string;
 }
 
@@ -204,6 +212,22 @@ export function parseSsoProviders(env: Env): SsoProviderSettings[] {
   return enabled;
 }
 
+/**
+ * TRUST_PROXY: a hop count ("2" behind CloudFront + ALB) or an Express preset/list
+ * ("loopback" for the local Vite proxy). Never "true": that trusts any client's
+ * X-Forwarded-For and would let a visitor pick their own IP for rate limiting.
+ */
+export function parseTrustProxy(raw: string): string | number {
+  const value = raw.trim();
+  if (/^\d+$/.test(value)) {
+    return Number(value);
+  }
+  if (value === 'true' || value === '') {
+    throw new Error('TRUST_PROXY must be a hop count or a preset such as "loopback", never "true".');
+  }
+  return value;
+}
+
 /** Build the typed application config from an environment map. */
 export function loadConfig(env: Env): AppConfig {
   const jwtSecret = requireEnv(env, 'JWT_SECRET');
@@ -264,6 +288,11 @@ export function loadConfig(env: Env): AppConfig {
       maxRequests: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_MAX_REQUESTS', '300'), 'RATE_LIMIT_MAX_REQUESTS'),
     },
     bodyLimit: optionalEnv(env, 'BODY_PARSER_LIMIT', '1mb'),
+    trustProxy: parseTrustProxy(optionalEnv(env, 'TRUST_PROXY', 'loopback')),
+    pilot: {
+      perIpPerHour: parsePositiveInt(optionalEnv(env, 'PILOT_REQUESTS_PER_IP_PER_HOUR', '5'), 'PILOT_REQUESTS_PER_IP_PER_HOUR'),
+      notifyEmail: optionalEnv(env, 'PILOT_NOTIFY_EMAIL', '') || null,
+    },
   };
 }
 

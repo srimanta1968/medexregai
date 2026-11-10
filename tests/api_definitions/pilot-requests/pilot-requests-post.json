@@ -1,0 +1,167 @@
+{
+  "name": "POST /api/pilot-requests - request a pilot from the website",
+  "description": "Public website form. Stores a pilot request (name, work email, firm, optional role, message) for operators to follow up, and returns ONLY the new id, so no visitor data is ever echoed or shown to anyone else. The client IP is never stored: an HMAC of it is kept for the per-IP limit (PILOT_REQUESTS_PER_IP_PER_HOUR, default 5). Edge cases: work email is lower-cased; message needs 10+ characters; a filled honeypot field (website) is refused with REQUEST_REJECTED; over the hourly limit answers 429 RATE_LIMITED with Retry-After: 3600. Covers: a visitor can submit a pilot request and invalid or abusive requests are rejected.",
+  "endpoint": "/api/pilot-requests",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 201,
+  "priority": 40,
+  "taskId": "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC3",
+    "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC5",
+    "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC2",
+    "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC4",
+    "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC1"
+  ],
+  "captureResponse": {
+    "pilotRequests.create.response.data.id": "data.id"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "is required",
+      "when": "name, workEmail, firmName or message missing"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "workEmail must be a valid email address",
+      "when": "workEmail malformed"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "message must be at least 10 characters",
+      "when": "message shorter than 10 characters"
+    },
+    {
+      "status": 400,
+      "code": "REQUEST_REJECTED",
+      "message": "This request could not be accepted.",
+      "when": "honeypot field website is filled"
+    },
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "message": "Too many requests",
+      "when": "more than PILOT_REQUESTS_PER_IP_PER_HOUR requests from one IP within an hour",
+      "reproducible": false,
+      "notReproducibleReason": "Test suites submit from one IP and run many times an hour, so test environments raise the limit; asserting the 429 would lock the happy path out. Verified by hand with PILOT_REQUESTS_PER_IP_PER_HOUR=3 (4th request: 429, Retry-After: 3600)."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Visitor submits a pilot request",
+      "capturesResponse": true,
+      "coversCriterion": [
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC3",
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC5",
+        "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC2"
+      ],
+      "payload": {
+        "name": "{{dynamic:fullname}}",
+        "workEmail": "{{dynamic:email}}",
+        "firmName": "{{static:Reyes Regulatory}}",
+        "role": "{{static:RA lead}}",
+        "message": "{{static:Two 510(k)s are coming up this quarter and we would like to try the pilot.}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "400 - required fields missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|missing",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR",
+        "messageContains": "is required"
+      },
+      "payload": {
+        "name": "{{dynamic:fullname}}"
+      },
+      "coversCriterion": [
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC4",
+        "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC1"
+      ]
+    },
+    {
+      "name": "400 - malformed work email",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|email",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR",
+        "messageContains": "workEmail must be a valid email address"
+      },
+      "payload": {
+        "name": "{{dynamic:fullname}}",
+        "workEmail": "{{static:not-an-email}}",
+        "firmName": "{{static:Reyes Regulatory}}",
+        "role": "{{static:RA lead}}",
+        "message": "{{static:Two 510(k)s are coming up this quarter and we would like to try the pilot.}}"
+      },
+      "coversCriterion": [
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC4",
+        "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC1"
+      ]
+    },
+    {
+      "name": "400 - message too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|message",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR",
+        "messageContains": "message must be at least 10 characters"
+      },
+      "payload": {
+        "name": "{{dynamic:fullname}}",
+        "workEmail": "{{dynamic:email}}",
+        "firmName": "{{static:Reyes Regulatory}}",
+        "role": "{{static:RA lead}}",
+        "message": "{{static:hi}}"
+      },
+      "coversCriterion": [
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC4",
+        "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC1"
+      ]
+    },
+    {
+      "name": "400 - honeypot filled",
+      "testType": "negative",
+      "coversErrorCase": "400|REQUEST_REJECTED",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "REQUEST_REJECTED",
+        "messageContains": "could not be accepted"
+      },
+      "payload": {
+        "name": "{{dynamic:fullname}}",
+        "workEmail": "{{dynamic:email}}",
+        "firmName": "{{static:Reyes Regulatory}}",
+        "role": "{{static:RA lead}}",
+        "message": "{{static:Two 510(k)s are coming up this quarter and we would like to try the pilot.}}",
+        "website": "{{static:http://spam.example}}"
+      },
+      "coversCriterion": [
+        "37cc3f14-4a07-459d-bfb6-a9e02bb2c9a2#AC4",
+        "ee9978ec-fbc0-4c9a-96aa-aaf2f7cb3ff0#AC1"
+      ]
+    }
+  ],
+  "fieldEnums": {
+    "status": [
+      "new",
+      "contacted",
+      "qualified",
+      "closed"
+    ]
+  }
+}

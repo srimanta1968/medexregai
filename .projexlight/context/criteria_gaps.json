@@ -1,20 +1,17 @@
 {
-  "generatedAt": "2026-11-09T23:57:54.331687Z",
-  "taskId": "7db6c624-28bd-4b9b-8269-5b88a414eac1",
+  "generatedAt": "2026-11-10T00:04:30.276630Z",
+  "taskId": "6be141c0-8222-4879-9d4f-236e9f550dc1",
   "gaps": [
     {
-      "criterionId": "7db6c624-28bd-4b9b-8269-5b88a414eac1#AC1",
-      "criterion": "Terraform provisions dev, staging and production on AWS in one US region",
+      "criterionId": "6be141c0-8222-4879-9d4f-236e9f550dc1#AC1",
+      "criterion": "CI runs lint and tests on every push",
       "verdict": "partial",
-      "gap": "Terraform for all three environments is written and passes terraform validate and fmt, but has not been planned or applied against an AWS account (needs the user's account, state bucket and approval to create billable resources). App still needs IAM-role S3 credentials and container images before services can start.",
+      "gap": "Workflow committed and every step passes locally (lint 0 warnings, tsc, 63 jest tests, vitest, contract checks, terraform validate), but the repository has no git remote, so it has not run on GitHub yet.",
       "evidence": {
         "apiDefinitions": [],
         "scenarios": [],
         "files": [
-          "infra/terraform/modules/platform/main.tf",
-          "infra/terraform/envs/dev/main.tf",
-          "infra/terraform/envs/staging/main.tf",
-          "infra/terraform/envs/production/main.tf"
+          ".github/workflows/ci.yml"
         ]
       }
     }

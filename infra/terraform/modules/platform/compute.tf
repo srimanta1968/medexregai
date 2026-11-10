@@ -259,6 +259,7 @@ locals {
     { name = "S3_BUCKET", value = aws_s3_bucket.client.bucket },
     { name = "S3_FORCE_PATH_STYLE", value = "false" },
     { name = "LOG_FORMAT", value = "json" },
+    { name = "TRUST_PROXY", value = "2" }, # CloudFront + ALB
   ]
 
   db_secret = aws_db_instance.main.master_user_secret[0].secret_arn
