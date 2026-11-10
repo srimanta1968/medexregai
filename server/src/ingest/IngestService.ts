@@ -1,6 +1,7 @@
 import { dataService, Tx } from '../services/DataService';
 import { ObjectNotFoundError, ObjectStore, objectStore, sha256Hex } from '../storage/objectStore';
 import { DocLocation, DocprocClient, DocprocError, ParseResult } from './docproc';
+import { chunkLocations, ChunkInput } from './chunker';
 import { scanForPhi } from './phiScanner';
 
 /**
@@ -35,6 +36,7 @@ interface ClaimedVersion {
   id: string;
   file_id: string;
   workspace_id: string;
+  project_id: string;
   version_no: number;
   sha256: string;
   storage_key: string | null;
@@ -54,7 +56,7 @@ async function claim(orgId: string, versionId: string): Promise<ClaimedVersion |
         SET parse_status = 'parsing', parse_started_at = now(), parse_attempts = v.parse_attempts + 1, parse_error = NULL
        FROM files f
       WHERE v.id = $1 AND v.org_id = $2 AND v.parse_status = 'queued' AND f.id = v.file_id AND f.org_id = v.org_id
-      RETURNING v.id, v.file_id, v.workspace_id, v.version_no, v.sha256, v.storage_key, v.parse_attempts, f.source, f.name`,
+      RETURNING v.id, v.file_id, v.workspace_id, f.project_id, v.version_no, v.sha256, v.storage_key, v.parse_attempts, f.source, f.name`,
     [versionId, orgId],
   );
   return rows[0] ?? null;
@@ -82,17 +84,21 @@ async function requeue(orgId: string, versionId: string, reason: string): Promis
 
 const LOCATION_BATCH = 500;
 
-async function storeLocations(tx: Tx, orgId: string, version: ClaimedVersion, locations: DocLocation[]): Promise<void> {
+/** Store a version's locations, replacing earlier ones; returns them with their new ids for chunking. */
+async function storeLocations(tx: Tx, orgId: string, version: ClaimedVersion, locations: DocLocation[]): Promise<ChunkInput[]> {
   // Replace, so a repeated parse never duplicates passages (chunks cascade with their locations).
+  await tx.query('chunks', 'DELETE FROM chunks WHERE file_version_id = $1 AND org_id = $2', [version.id, orgId]);
   await tx.query('source_locations', 'DELETE FROM source_locations WHERE file_version_id = $1 AND org_id = $2', [version.id, orgId]);
+  const stored: ChunkInput[] = [];
   for (let i = 0; i < locations.length; i += LOCATION_BATCH) {
     const batch = locations.slice(i, i + LOCATION_BATCH);
-    await tx.query(
+    const rows = await tx.query<{ id: string; ordinal: number }>(
       'source_locations',
       `INSERT INTO source_locations (org_id, workspace_id, file_version_id, ordinal, kind, page, sheet, cell_range, slide, section_path, bbox, text)
        SELECT $1, $2, $3, l.ordinal, l.kind, l.page, l.sheet, l.cell_range, l.slide, l.section_path, l.bbox::real[], l.text
          FROM unnest($4::int[], $5::text[], $6::int[], $7::text[], $8::text[], $9::int[], $10::text[], $11::text[], $12::text[])
-           AS l(ordinal, kind, page, sheet, cell_range, slide, section_path, bbox, text)`,
+           AS l(ordinal, kind, page, sheet, cell_range, slide, section_path, bbox, text)
+       RETURNING id, ordinal`,
       [
         orgId,
         version.workspace_id,
@@ -108,7 +114,52 @@ async function storeLocations(tx: Tx, orgId: string, version: ClaimedVersion, lo
         batch.map((l) => l.text),
       ],
     );
+    const byOrdinal = new Map(batch.map((l) => [l.ordinal, l]));
+    for (const row of rows) {
+      const l = byOrdinal.get(row.ordinal)!;
+      stored.push({
+        id: row.id,
+        ordinal: l.ordinal,
+        kind: l.kind,
+        page: l.page ?? null,
+        sheet: l.sheet ?? null,
+        slide: l.slide ?? null,
+        sectionPath: l.sectionPath ?? null,
+        text: l.text,
+      });
+    }
   }
+  return stored;
+}
+
+const CHUNK_BATCH = 500;
+
+/** Chunk the stored locations (embeddings are filled in later by the embedding step). */
+async function storeChunks(tx: Tx, orgId: string, version: ClaimedVersion, stored: ChunkInput[]): Promise<number> {
+  const chunks = chunkLocations(stored);
+  for (let i = 0; i < chunks.length; i += CHUNK_BATCH) {
+    const batch = chunks.slice(i, i + CHUNK_BATCH);
+    await tx.query(
+      'chunks',
+      `INSERT INTO chunks (org_id, workspace_id, project_id, file_version_id, ordinal, start_location_id, end_location_id, section_path, text, token_count)
+       SELECT $1, $2, $3, $4, c.ordinal, c.start_id, c.end_id, c.section_path, c.text, c.tokens
+         FROM unnest($5::int[], $6::uuid[], $7::uuid[], $8::text[], $9::text[], $10::int[])
+           AS c(ordinal, start_id, end_id, section_path, text, tokens)`,
+      [
+        orgId,
+        version.workspace_id,
+        version.project_id,
+        version.id,
+        batch.map((c) => c.ordinal),
+        batch.map((c) => c.startLocationId),
+        batch.map((c) => c.endLocationId),
+        batch.map((c) => c.sectionPath),
+        batch.map((c) => c.text),
+        batch.map((c) => c.tokenCount),
+      ],
+    );
+  }
+  return chunks.length;
 }
 
 async function recordParse(orgId: string, version: ClaimedVersion, result: ParseResult): Promise<'clean' | 'flagged'> {
@@ -116,7 +167,8 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
   // Scanned here, while we still hold the text, so a linked file is checked before its copy goes.
   const phi = scanForPhi(result.locations);
   await dataService.transaction({ orgId }, async (tx) => {
-    await storeLocations(tx, orgId, version, result.locations);
+    const stored = await storeLocations(tx, orgId, version, result.locations);
+    await storeChunks(tx, orgId, version, stored);
     await tx.query(
       'file_versions',
       `UPDATE file_versions
