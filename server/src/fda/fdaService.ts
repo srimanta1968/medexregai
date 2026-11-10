@@ -56,7 +56,7 @@ export async function fda<T>(call: (c: FdaClient) => Promise<T>): Promise<T> {
  */
 export async function pushTrackedProductCodes(): Promise<{ tracked: number; added: number } | null> {
   if (!config.fda.serviceKey) return null;
-  const rows = await dataService.query<{ product_code: string }>({}, 'fda_tracked_product_codes', 'SELECT product_code FROM fda_tracked_product_codes', []);
+  const rows = await dataService.query<{ product_code: string }>({}, 'device_product_codes', 'SELECT product_code FROM device_product_codes', []);
   const codes = rows.map((r) => r.product_code).filter((c) => /^[A-Z]{3}$/.test(c));
   return fda((c) => c.putTrackedProductCodes(codes));
 }
