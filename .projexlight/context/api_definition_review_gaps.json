@@ -1,47 +1,55 @@
 {
-  "updatedAt": "2026-11-10T05:18:56",
+  "updatedAt": "2026-11-10T18:10:14",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/auth/logout-post.json",
+      "file": "tests/api_definitions/ai-settings/ai-provider-delete.json",
       "rules": [
-        "MUST-14"
+        "CODE-MATCH"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/auth/password-reset-confirm-post.json",
+      "file": "tests/api_definitions/ai-settings/ai-provider-patch.json",
       "rules": [
-        "MUST-14",
-        "MUST-34"
+        "CODE-MATCH"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/ai-settings/ai-provider-test-post.json",
+      "rules": [
+        "CODE-MATCH",
+        "MUST-14"
       ],
       "findingsCount": 2
     },
     {
-      "file": "tests/api_definitions/auth/password-reset-request-post.json",
+      "file": "tests/api_definitions/ai-settings/ai-providers-post.json",
       "rules": [
-        "MUST-14"
+        "CODE-MATCH",
+        "MUST-80"
+      ],
+      "findingsCount": 2
+    },
+    {
+      "file": "tests/api_definitions/ai-settings/ai-usage-get.json",
+      "rules": [
+        "CODE-MATCH"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/sso/exchange-post.json",
+      "file": "tests/api_definitions/ai-settings/ai-usage-patch.json",
       "rules": [
-        "MUST-14"
+        "CODE-MATCH"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/sso/signup-post.json",
+      "file": "tests/api_definitions/ai-settings/settings-ai-get.json",
       "rules": [
-        "MUST-14"
-      ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/sso/signup-preview-post.json",
-      "rules": [
-        "MUST-14"
+        "CODE-MATCH"
       ],
       "findingsCount": 1
     }
@@ -49,7 +57,7 @@
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 6,
-    "findingsCount": 7
+    "withFindings": 7,
+    "findingsCount": 9
   }
 }

@@ -1,0 +1,89 @@
+{
+  "requiresAuth": true,
+  "taskId": "a64d6c55-1858-4ba2-9e3d-d1ac6de8df92",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/settings/ai - what the firm's AI calls use",
+  "description": "For owners and admins (firm:manage): registry version, the platform default (provider, generation and embedding model) and, per AI route (triage, classify, extract, contradiction, draft, request_wording), the provider and model that answer it today (firm provider or platform) plus the firm's providers (never their keys). Covers: with no configuration all generation and embedding use our self-hosted models; each AI route is mapped to a provider and model in a versioned registry; an admin can see the active model and provider.",
+  "endpoint": "/api/settings/ai",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 80,
+  "coversCriterion": [
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC1",
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC3",
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC4"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "responseFields": [
+    "registryVersion",
+    "platform",
+    "routes",
+    "providers"
+  ],
+  "fieldEnums": {
+    "route": [
+      "triage",
+      "classify",
+      "extract",
+      "contradiction",
+      "draft",
+      "request_wording"
+    ],
+    "source": [
+      "platform",
+      "firm"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Missing permission firm:manage",
+      "when": "caller is a reviewer"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner reads AI settings (platform defaults)",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot manage AI settings",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      }
+    }
+  ]
+}

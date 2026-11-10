@@ -1,0 +1,190 @@
+{
+  "requiresAuth": true,
+  "taskId": "a64d6c55-1858-4ba2-9e3d-d1ac6de8df92",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/settings/ai-providers - add a firm AI provider (bring your own model)",
+  "description": "Owners and admins add an OpenAI-compatible or Claude API provider with their own API key. The URL must be https and resolve only to public addresses (SSRF guard); the key is stored encrypted (AES-256-GCM, bound to firm and row) and never returned - only its last four characters (keyHint). New providers are untested and serve no route until they pass a connection test. Covers: a firm admin can bring its own model by adding a provider API key, stored encrypted, used only for that firm and never shown again.",
+  "endpoint": "/api/settings/ai-providers",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 81,
+  "coversCriterion": [
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC5",
+    "a64d6c55-1858-4ba2-9e3d-d1ac6de8df92#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "captureResponse": {
+    "aiProviders.create.response.data.id": "data.id",
+    "aiProviders.create.response.data.name": "data.name"
+  },
+  "fieldEnums": {
+    "kind": [
+      "openai_compatible",
+      "anthropic"
+    ],
+    "testStatus": [
+      "untested",
+      "passed",
+      "failed"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Missing permission firm:manage",
+      "when": "caller is a reviewer"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "apiKey is required",
+      "when": "a required field is missing or invalid"
+    },
+    {
+      "status": 400,
+      "code": "PROVIDER_URL_NOT_ALLOWED",
+      "message": "Only https:// URLs are allowed.",
+      "when": "URL is not https or resolves to a private/reserved address"
+    },
+    {
+      "status": 409,
+      "code": "DUPLICATE_NAME",
+      "message": "An AI provider with this name already exists",
+      "when": "same name in the firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner adds a provider; the key is not returned",
+      "capturesResponse": true,
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "testStatus": "untested",
+          "enabledRoutes": []
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot manage AI settings",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      }
+    },
+    {
+      "name": "400 - apiKey missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}"
+      }
+    },
+    {
+      "name": "400 - plain http URL refused",
+      "testType": "negative",
+      "coversErrorCase": "400|PROVIDER_URL_NOT_ALLOWED",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "PROVIDER_URL_NOT_ALLOWED"
+      },
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:http://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      }
+    },
+    {
+      "name": "400 - private address refused",
+      "testType": "negative",
+      "coversErrorCase": "400|PROVIDER_URL_NOT_ALLOWED",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "PROVIDER_URL_NOT_ALLOWED"
+      },
+      "payload": {
+        "name": "{{dynamic:company}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://169.254.169.254}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      }
+    },
+    {
+      "name": "409 - duplicate provider name",
+      "testType": "negative",
+      "coversErrorCase": "409|DUPLICATE_NAME",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "DUPLICATE_NAME"
+      },
+      "payload": {
+        "name": "{{cache:aiProviders.create.response.data.name}}",
+        "kind": "{{static:openai_compatible}}",
+        "baseUrl": "{{static:https://example.com/v1}}",
+        "generationModel": "{{static:firm-model}}",
+        "apiKey": "{{var:byo_provider_test_key}}"
+      }
+    }
+  ]
+}

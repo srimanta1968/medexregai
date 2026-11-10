@@ -1,0 +1,89 @@
+{
+  "requiresAuth": true,
+  "taskId": "a64d6c55-1858-4ba2-9e3d-d1ac6de8df92",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/settings/ai-usage - AI cost and tokens per project",
+  "description": "For owners and admins: per project (newest first, cursor paging) AI calls, failed calls, input/output tokens, cost in USD (self-hosted models are $0; firm endpoints without a price count as unpriced), the cost and token estimates and open 2x alerts. Covers: AI cost and tokens are metered per project and an alert fires at 2x the estimate.",
+  "endpoint": "/api/settings/ai-usage",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 84,
+  "coversCriterion": [
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC6"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Missing permission firm:manage",
+      "when": "caller is a reviewer"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Number must be less than or equal to 50",
+      "when": "limit out of range"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner reads AI usage per project",
+      "queryParams": {
+        "limit": "10"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot manage AI settings",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      }
+    },
+    {
+      "name": "400 - limit out of range",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "queryParams": {
+        "limit": "500"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    }
+  ]
+}

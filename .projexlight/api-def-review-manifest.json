@@ -405,5 +405,134 @@
         "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
       }
     ]
+  },
+  "ai-settings/ai-provider-delete.json": {
+    "hash": "e8f77a5c1db5b903acae6232d813d9d7f0d6e7ef0991d6aa3bb36d385f793aa5",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "DELETE",
+      "/settings/ai-providers/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "DELETE /api/settings/ai-providers/:providerId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "ai-settings/ai-provider-patch.json": {
+    "hash": "df0421c6aa1fe3f2efe73911a6b28d6ee764a7490042de3ca8a1865bba41ddcd",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "PATCH",
+      "/settings/ai-providers/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "PATCH /api/settings/ai-providers/:providerId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "ai-settings/ai-provider-test-post.json": {
+    "hash": "461e08fe9ac79d5e4ba83cfc55bf9294fbbeebae6ad7ba22ba7323cc37f70325",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "POST",
+      "/settings/ai-providers/:p/test"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/settings/ai-providers/:providerId/test was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      },
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "ai-settings/ai-providers-post.json": {
+    "hash": "22497ffdbdcac461ce6b23df841f0fa7c46f6242073495b5b54462ba25c29ec7",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "POST",
+      "/settings/ai-providers"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "POST /api/settings/ai-providers was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      },
+      {
+        "rule": "MUST-80",
+        "severity": "high",
+        "message": "'testCases[0].payload.apiKey' (payload) is a credential field carrying '{{dynamic:password}}'. A generated or literal value can only ever be rejected, so the endpoint answers 401 and the test asserts nothing about it. Use {{var:<name>}} and put the real value in environments[<env>].variables (never the global block \u2014 that reaches staging and production too)."
+      }
+    ]
+  },
+  "ai-settings/ai-usage-get.json": {
+    "hash": "d500c3572a819933d97a0c299bca99ad361b6a3a82e8c9d6a4ff407fc4523d47",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "GET",
+      "/settings/ai-usage"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/settings/ai-usage was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "ai-settings/ai-usage-patch.json": {
+    "hash": "2a97b0fab3153ac59c2952f8108ee5365af9e68419d5b9455a8fcb27f9eda0aa",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "PATCH",
+      "/settings/ai-usage/:p"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "PATCH /api/settings/ai-usage/:projectId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
+  },
+  "ai-settings/settings-ai-get.json": {
+    "hash": "f16aa7beb59747d6db8298ccd23a833934e561ee2c15f6ff671894636cb0f1c7",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T18:10:11",
+    "route": [
+      "GET",
+      "/settings/ai"
+    ],
+    "findings": [
+      {
+        "rule": "CODE-MATCH",
+        "severity": "low",
+        "message": "GET /api/settings/ai was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+      }
+    ]
   }
 }

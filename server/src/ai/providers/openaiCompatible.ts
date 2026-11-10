@@ -1,4 +1,5 @@
-import { aiErrors, fromFetchError, fromHttpStatus } from '../errors';
+import { ErrorCodes } from '../../utils/AppError';
+import { AiError, aiErrors, fromFetchError, fromHttpStatus } from '../errors';
 import { EmbedResult, EmbeddingProvider, GenerateRequest, GenerateResult, LlmProvider, ProviderHealth, endpointOf } from '../types';
 
 /**
@@ -71,7 +72,7 @@ export class OpenAiCompatibleProvider implements LlmProvider, EmbeddingProvider 
         ...(req.maxTokens ? { max_tokens: req.maxTokens } : {}),
         ...(req.json ? { response_format: { type: 'json_object' } } : {}),
       },
-      model
+      model,
     );
     const choice = r.choices?.[0];
     if (typeof choice?.message?.content !== 'string') throw aiErrors.badResponse(this.kind, 'no message content');
@@ -91,7 +92,7 @@ export class OpenAiCompatibleProvider implements LlmProvider, EmbeddingProvider 
       'POST',
       '/embeddings',
       { model, input: texts },
-      model
+      model,
     );
     if (!Array.isArray(r.data) || r.data.length !== texts.length) throw aiErrors.badResponse(this.kind, 'embedding count mismatch');
     const vectors = [...r.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
@@ -109,7 +110,16 @@ export class OpenAiCompatibleProvider implements LlmProvider, EmbeddingProvider 
     const started = Date.now();
     const endpoint = endpointOf(this.base);
     try {
-      const r = await this.call<{ data?: { id: string }[] }>('GET', '/models', undefined, '', Math.min(this.opts.timeoutMs, 5000));
+      let r: { data?: { id: string }[] };
+      try {
+        r = await this.call<{ data?: { id: string }[] }>('GET', '/models', undefined, '', Math.min(this.opts.timeoutMs, 5000));
+      } catch (err) {
+        // A 404 on /v1/models means the URL is not an OpenAI-compatible API at all, not a missing model.
+        if (err instanceof AiError && err.code === ErrorCodes.AI_MODEL_NOT_FOUND) {
+          throw aiErrors.badResponse(this.kind, `no OpenAI-compatible API at ${endpointOf(this.base)}/v1 (GET /v1/models returned 404)`);
+        }
+        throw err;
+      }
       const served = (r.data ?? []).map((m) => m.id);
       const statuses = models.map((name) => ({ name, available: served.includes(name) }));
       return { provider: this.kind, endpoint, ok: statuses.every((s) => s.available), models: statuses, latencyMs: Date.now() - started };
