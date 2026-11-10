@@ -10,6 +10,8 @@ const config: UserConfig = {
     strictPort: true,
     // Listen on all interfaces so the ProjexLight Test MCP container can reach the UI.
     host: true,
+    // Containers reach us as host.docker.internal; Vite rejects unknown Host headers with 403.
+    allowedHosts: ['host.docker.internal'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
