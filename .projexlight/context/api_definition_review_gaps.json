@@ -1,63 +1,70 @@
 {
-  "updatedAt": "2026-11-10T18:10:14",
+  "updatedAt": "2026-11-10T18:11:17",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/ai-settings/ai-provider-delete.json",
+      "file": "tests/api_definitions/auth/logout-post.json",
       "rules": [
-        "CODE-MATCH"
-      ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/ai-settings/ai-provider-patch.json",
-      "rules": [
-        "CODE-MATCH"
-      ],
-      "findingsCount": 1
-    },
-    {
-      "file": "tests/api_definitions/ai-settings/ai-provider-test-post.json",
-      "rules": [
-        "CODE-MATCH",
         "MUST-14"
       ],
-      "findingsCount": 2
+      "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/ai-settings/ai-providers-post.json",
+      "file": "tests/api_definitions/auth/password-reset-confirm-post.json",
       "rules": [
-        "CODE-MATCH",
-        "MUST-80"
+        "MUST-14",
+        "MUST-34"
       ],
       "findingsCount": 2
     },
     {
-      "file": "tests/api_definitions/ai-settings/ai-usage-get.json",
+      "file": "tests/api_definitions/auth/password-reset-request-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/ai-settings/ai-usage-patch.json",
+      "file": "tests/api_definitions/sso/exchange-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/ai-settings/settings-ai-get.json",
+      "file": "tests/api_definitions/sso/signup-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/sso/signup-preview-post.json",
+      "rules": [
+        "MUST-14"
       ],
       "findingsCount": 1
     }
   ],
-  "missingDefinitions": [],
-  "captureSyncIssues": 0,
+  "missingDefinitions": [
+    "GET /ready",
+    "GET /v1/510k",
+    "GET /v1/510k/{kNumber}",
+    "GET /v1/admin/sync-runs",
+    "GET /v1/admin/syncs/{id}",
+    "GET /v1/event-counts/{code}",
+    "GET /v1/flags/{kNumber}",
+    "GET /v1/meta",
+    "GET /v1/openapi.json",
+    "GET /v1/product-codes/{code}",
+    "GET /v1/recalls",
+    "GET /v1/udi/{di}",
+    "POST /v1/admin/syncs",
+    "PUT /v1/tracked-product-codes"
+  ],
+  "captureSyncIssues": 1,
   "summary": {
-    "withFindings": 7,
-    "findingsCount": 9
+    "withFindings": 6,
+    "findingsCount": 7
   }
 }

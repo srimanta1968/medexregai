@@ -80,11 +80,11 @@
       "expectedStatus": 204
     },
     {
-      "name": "404 - already deleted",
+      "name": "404 - unknown provider",
       "testType": "negative",
       "coversErrorCase": "404|NOT_FOUND",
       "pathParams": {
-        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+        "providerId": "{{static:00000000-0000-4000-8000-000000000000}}"
       },
       "expectedStatus": 404,
       "expectedError": {

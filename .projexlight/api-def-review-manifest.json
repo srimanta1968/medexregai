@@ -40,30 +40,30 @@
     ]
   },
   "fda/510k-get.json": {
-    "hash": "db0eeed456671b8404377ab74ac24c16cc49ff0b8b91885bba6880df8445bc0b",
+    "hash": "82eefe0469a4ecf35cf4a30392e4ce0bac83aaf6db1ba60f13ef44499a0579da",
     "status": "clean",
     "findingsCount": 0,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "GET",
       "/fda/510k/:p"
     ]
   },
   "fda/flags-get.json": {
-    "hash": "c4733249a52ad0d666cad825c910f6ba8b9ad55296eb368f9dcf46429d7ef99d",
+    "hash": "0ad46a42f1b988d8931124c1107f3899e917e17aeabeea6131fec99f099d44e1",
     "status": "clean",
     "findingsCount": 0,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "GET",
       "/fda/flags/:p"
     ]
   },
   "fda/product-code-get.json": {
-    "hash": "3c019b7201ecd3d0766c399c64f1c34788877578a9d471d973e7c66d9ea58bbf",
+    "hash": "dbf42e41da91f867c50ebd98bb27b56bc9bb0a70600e12fbe4f5a0b752392f8a",
     "status": "clean",
     "findingsCount": 0,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:15",
     "route": [
       "GET",
       "/fda/product-codes/:p"
@@ -93,7 +93,7 @@
     "hash": "0136e0a0d2dc2ffbc8cf35f88a7bedeb699b27020735e82ed05ebda71bd0b90b",
     "status": "findings",
     "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "POST",
       "/auth/logout"
@@ -120,7 +120,7 @@
     "hash": "d808ba2dbeaffcea6ef053d1d0102fc5bf3c3923d99fc26a9c90ac1ca39919b3",
     "status": "findings",
     "findingsCount": 2,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "POST",
       "/auth/password-reset/confirm"
@@ -142,7 +142,7 @@
     "hash": "c9fbcdef5c1ac8011e123712f5ba8a7e443226b942ef70cc9c2a08f63e94caf0",
     "status": "findings",
     "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "POST",
       "/auth/password-reset/request"
@@ -226,10 +226,10 @@
     ]
   },
   "fda/meta-get.json": {
-    "hash": "87866ec7b6295ff6a1b357d93ffb5969db6910cf59a797a94e38b8b50807f832",
+    "hash": "a8728f54d3559a06d78a2cd738ba25d04fe3137c81c7b5d0cc372d83d0832f5c",
     "status": "clean",
     "findingsCount": 0,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:15",
     "route": [
       "GET",
       "/fda/meta"
@@ -329,7 +329,7 @@
     "hash": "a27361c10c7390ac98b409eac23c8f27c1ff00fa9bb0db90569a1e46ad630e43",
     "status": "findings",
     "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:15",
     "route": [
       "POST",
       "/auth/sso/exchange"
@@ -376,7 +376,7 @@
     "hash": "5c65bda72d78fbcae0c2c84255c468bca9b11c67b160edc0a58caece3f5b40dd",
     "status": "findings",
     "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:15",
     "route": [
       "POST",
       "/auth/sso/signup"
@@ -393,7 +393,7 @@
     "hash": "f4850ce315f09a832eed818df9832df46d192db0d1721b7bae619de970c1cd88",
     "status": "findings",
     "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:54",
+    "verifiedAt": "2026-11-10T18:11:15",
     "route": [
       "POST",
       "/auth/sso/signup/preview"
@@ -408,131 +408,82 @@
   },
   "ai-settings/ai-provider-delete.json": {
     "hash": "e8f77a5c1db5b903acae6232d813d9d7f0d6e7ef0991d6aa3bb36d385f793aa5",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "DELETE",
       "/settings/ai-providers/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "DELETE /api/settings/ai-providers/:providerId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "ai-settings/ai-provider-patch.json": {
     "hash": "df0421c6aa1fe3f2efe73911a6b28d6ee764a7490042de3ca8a1865bba41ddcd",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "PATCH",
       "/settings/ai-providers/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "PATCH /api/settings/ai-providers/:providerId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "ai-settings/ai-provider-test-post.json": {
-    "hash": "461e08fe9ac79d5e4ba83cfc55bf9294fbbeebae6ad7ba22ba7323cc37f70325",
-    "status": "findings",
-    "findingsCount": 2,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "hash": "a5e59a360951d934d1a61d75a5e3587071a8a366911f43426ae9d0cbc93b289d",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "POST",
       "/settings/ai-providers/:p/test"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/settings/ai-providers/:providerId/test was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      },
-      {
-        "rule": "MUST-14",
-        "severity": "medium",
-        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
-      }
     ]
   },
   "ai-settings/ai-providers-post.json": {
-    "hash": "22497ffdbdcac461ce6b23df841f0fa7c46f6242073495b5b54462ba25c29ec7",
-    "status": "findings",
-    "findingsCount": 2,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "hash": "43a07c52e836d0e1375d0c5c09c8d9db94fa44861b42e672cc1f9e37fc4355d3",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "POST",
       "/settings/ai-providers"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/settings/ai-providers was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      },
-      {
-        "rule": "MUST-80",
-        "severity": "high",
-        "message": "'testCases[0].payload.apiKey' (payload) is a credential field carrying '{{dynamic:password}}'. A generated or literal value can only ever be rejected, so the endpoint answers 401 and the test asserts nothing about it. Use {{var:<name>}} and put the real value in environments[<env>].variables (never the global block \u2014 that reaches staging and production too)."
-      }
     ]
   },
   "ai-settings/ai-usage-get.json": {
     "hash": "d500c3572a819933d97a0c299bca99ad361b6a3a82e8c9d6a4ff407fc4523d47",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "GET",
       "/settings/ai-usage"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/settings/ai-usage was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "ai-settings/ai-usage-patch.json": {
     "hash": "2a97b0fab3153ac59c2952f8108ee5365af9e68419d5b9455a8fcb27f9eda0aa",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "PATCH",
       "/settings/ai-usage/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "PATCH /api/settings/ai-usage/:projectId was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "ai-settings/settings-ai-get.json": {
     "hash": "f16aa7beb59747d6db8298ccd23a833934e561ee2c15f6ff671894636cb0f1c7",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T18:10:11",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:14",
     "route": [
       "GET",
       "/settings/ai"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/settings/ai was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
+    ]
+  },
+  "fda/status-get.json": {
+    "hash": "6d9306dad24568e2e1d34f1c4339c83e97d4cd222b607408189c5ef9b5ba55d2",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T18:11:15",
+    "route": [
+      "GET",
+      "/fda/status"
     ]
   }
 }
