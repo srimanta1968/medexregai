@@ -27,6 +27,7 @@ export const TABLE_CATALOG = {
   client_workspaces: 'tenant',
   devices: 'tenant',
   projects: 'tenant',
+  audit_events: 'tenant',
 } as const satisfies Record<string, TableScope>;
 
 export type CatalogTable = keyof typeof TABLE_CATALOG;
