@@ -1,8 +1,9 @@
 import { createApp } from './app';
 import { config } from './config';
 import { closePools } from './db/pool';
+import { v1ReadRouter } from './v1/routes';
 
-const app = createApp();
+const app = createApp([v1ReadRouter]);
 const server = app.listen(config.port, () => {
   console.info(`[fda-data] API listening on port ${config.port}`);
 });

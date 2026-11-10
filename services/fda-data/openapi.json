@@ -1,0 +1,1416 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MedexRegAI fda-data API",
+    "version": "1.0.0",
+    "description": "Public FDA device data (openFDA 510(k), classification, recall, GUDID, MAUDE counts) held in its own database. Service-to-service only: send X-Api-Key. Responses carry a weak ETag; send If-None-Match to get 304."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4100"
+    }
+  ],
+  "security": [
+    {
+      "ApiKey": []
+    }
+  ],
+  "paths": {
+    "/v1/meta": {
+      "get": {
+        "operationId": "getMeta",
+        "summary": "Data freshness per dataset",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/510k/{kNumber}": {
+      "get": {
+        "operationId": "getClearance",
+        "summary": "Verify a K or DEN number",
+        "parameters": [
+          {
+            "name": "kNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(K|DEN)\\d{6}$"
+            },
+            "example": "K031698"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Clearance"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/510k": {
+      "get": {
+        "operationId": "search510k",
+        "summary": "Search 510(k)s, newest decision first (at least one filter)",
+        "parameters": [
+          {
+            "name": "productCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "applicant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100,
+              "description": "Device-name substring"
+            }
+          },
+          {
+            "name": "decidedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "decidedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "nextCursor"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ClearanceSummary"
+                          }
+                        },
+                        "nextCursor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product-codes/{code}": {
+      "get": {
+        "operationId": "getProductCode",
+        "summary": "Device class and regulation number of a product code",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            },
+            "example": "FRN"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProductCode"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/flags/{kNumber}": {
+      "get": {
+        "operationId": "getFlags",
+        "summary": "Recall and MAUDE flags for a K-number",
+        "parameters": [
+          {
+            "name": "kNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(K|DEN)\\d{6}$"
+            },
+            "example": "K251636"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Flags"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/recalls": {
+      "get": {
+        "operationId": "listRecalls",
+        "summary": "Recalls by K-number or product code, most recent first",
+        "parameters": [
+          {
+            "name": "kNumber",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(K|DEN)\\d{6}$"
+            }
+          },
+          {
+            "name": "productCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "nextCursor"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Recall"
+                          }
+                        },
+                        "nextCursor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/udi/{di}": {
+      "get": {
+        "operationId": "getUdi",
+        "summary": "A GUDID device by primary UDI-DI",
+        "parameters": [
+          {
+            "name": "di",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9+$/.-]{6,23}$"
+            },
+            "example": "00643169007222"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UdiDevice"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/event-counts/{code}": {
+      "get": {
+        "operationId": "getEventCounts",
+        "summary": "MAUDE report counts per day (range up to 3,660 days)",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            },
+            "example": "FRN"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/EventCounts"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "const": false
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {}
+            }
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "dataAsOf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dataset": {
+                  "enum": [
+                    "classification",
+                    "510k",
+                    "recall",
+                    "udi",
+                    "event_counts"
+                  ]
+                },
+                "sourceLastUpdated": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "lastSyncedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "lastRunStatus": {
+                  "enum": [
+                    "running",
+                    "succeeded",
+                    "failed",
+                    null
+                  ]
+                },
+                "records": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Clearance": {
+        "type": "object",
+        "properties": {
+          "kNumber": {
+            "type": "string"
+          },
+          "verified": {
+            "const": true
+          },
+          "applicant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviceName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviceClass": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "regulationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionDescription": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "dateReceived": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "clearanceType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statementOrSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "thirdPartyReview": {
+            "type": "boolean"
+          },
+          "fdaUrl": {
+            "type": "string"
+          },
+          "dataAsOf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ClearanceSummary": {
+        "type": "object",
+        "properties": {
+          "kNumber": {
+            "type": "string"
+          },
+          "applicant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviceName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "decisionDescription": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clearanceType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statementOrSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ProductCode": {
+        "type": "object",
+        "properties": {
+          "productCode": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviceClass": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "regulationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "medicalSpecialty": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "medicalSpecialtyDescription": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewPanel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submissionTypeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "implant": {
+            "type": "boolean"
+          },
+          "lifeSustainSupport": {
+            "type": "boolean"
+          },
+          "definition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clearances": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "latestDecisionDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              }
+            }
+          },
+          "fdaUrl": {
+            "type": "string"
+          },
+          "dataAsOf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "clearancesAsOf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "Recall": {
+        "type": "object",
+        "properties": {
+          "productResNumber": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recallStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dateInitiated": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "datePosted": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "dateTerminated": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "recallingFirm": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonForRecall": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fdaUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Flags": {
+        "type": "object",
+        "properties": {
+          "kNumber": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recalls": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "open": {
+                "type": "integer"
+              },
+              "shown": {
+                "type": "integer"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "dataAsOf": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              }
+            }
+          },
+          "maude": {
+            "type": "object",
+            "properties": {
+              "scope": {
+                "const": "product_code"
+              },
+              "tracked": {
+                "type": "boolean"
+              },
+              "reportsLast12Months": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "reportsInCopy": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "firstReportDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "lastReportDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "note": {
+                "type": "string"
+              },
+              "dataAsOf": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              }
+            }
+          }
+        }
+      },
+      "UdiDevice": {
+        "type": "object",
+        "properties": {
+          "primaryDi": {
+            "type": "string"
+          },
+          "brandName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionOrModelNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "companyName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "premarketSubmissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commercialDistributionStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publicVersionDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "EventCounts": {
+        "type": "object",
+        "properties": {
+          "productCode": {
+            "type": "string"
+          },
+          "tracked": {
+            "type": "boolean"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "reports": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
