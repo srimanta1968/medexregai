@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { requireScope } from '../auth/apiClients';
@@ -27,13 +28,29 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dates must be YYYY-MM-D
 const limit = z.coerce.number().int().min(1).max(100).default(25);
 const cursor = z.string().max(400).optional();
 
+/** Weak ETag over the exact response body. */
+const etagOf = (body: string): string => `W/"${Buffer.byteLength(body).toString(16)}-${createHash('sha1').update(body).digest('base64url')}"`;
+
+/**
+ * Send { success, data } with an ETag, answering 304 when If-None-Match matches.
+ * Done here rather than by Express's freshness check, which refuses 304 whenever the
+ * request says Cache-Control: no-cache, as Node's fetch does on every conditional GET.
+ * An origin server may still validate in that case; only intermediaries may not reuse.
+ */
 const read =
   (fn: (req: Request) => Promise<unknown>) =>
   (req: Request, res: Response, next: NextFunction): void => {
     fn(req)
       .then((data) => {
-        res.set('Cache-Control', 'private, max-age=300');
-        res.status(200).json({ success: true, data });
+        const body = JSON.stringify({ success: true, data });
+        const etag = etagOf(body);
+        res.set({ 'Cache-Control': 'private, max-age=300', ETag: etag });
+        const inm = req.header('if-none-match');
+        if (inm && inm.split(',').some((t) => t.trim() === etag || t.trim() === '*')) {
+          res.status(304).end();
+          return;
+        }
+        res.status(200).type('application/json').send(body);
       })
       .catch(next);
   };
