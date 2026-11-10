@@ -12,6 +12,7 @@ const SecurityPage = lazy(() => import('./pages/SecurityPage'));
 const PilotPage = lazy(() => import('./pages/PilotPage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const SignUpPage = lazy(() => import('./pages/auth/SignUpPage'));
@@ -43,6 +44,7 @@ export default function App(): JSX.Element {
             <Route path="/pilot" element={<PilotPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

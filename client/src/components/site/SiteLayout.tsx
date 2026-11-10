@@ -111,6 +111,11 @@ export default function SiteLayout(): JSX.Element {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link to="/contact" className="text-slate-600 hover:text-brand-700">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </nav>
           <div>

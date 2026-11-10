@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import PilotRequestForm from '../components/site/PilotRequestForm';
 import { CheckList, PageHero, Section } from '../components/site/SiteBlocks';
 import { PILOT_FIRM_PROVIDES, PILOT_FIRM_RECEIVES, PILOT_STEPS, PILOT_STATUS } from '../content/site';
 import { usePageMeta } from '../hooks/usePageMeta';
@@ -55,28 +55,19 @@ export default function PilotPage(): JSX.Element {
       </Section>
 
       <Section id="request" title="Request a pilot">
-        <div className="max-w-2xl rounded-xl border border-brand-100 bg-brand-50 p-6">
-          {CONTACT_EMAIL ? (
-            <>
-              <p className="text-slate-700">
-                Tell us about your firm and the 510(k)s you have coming up, and we will arrange a short call.
-              </p>
-              <a
-                href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('MedexRegAI pilot request')}`}
-                className="mt-5 inline-block rounded-md bg-brand-600 px-6 py-3 font-semibold text-white hover:bg-brand-700"
-              >
-                Email us about a pilot
+        <div className="max-w-3xl rounded-xl border border-brand-100 bg-brand-50 p-6">
+          <p className="mb-6 text-slate-700">
+            Tell us about your firm and the 510(k)s you have coming up, and we will arrange a short call.
+          </p>
+          <PilotRequestForm />
+          {CONTACT_EMAIL && (
+            <p className="mt-6 text-sm text-slate-600">
+              Prefer email? Write to{' '}
+              <a className="font-semibold text-brand-700 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
+                {CONTACT_EMAIL}
               </a>
-            </>
-          ) : (
-            <>
-              <p className="text-slate-700">
-                Create your firm workspace to register interest. We will contact you to arrange the pilot.
-              </p>
-              <Link to="/signup" className="mt-5 inline-block rounded-md bg-brand-600 px-6 py-3 font-semibold text-white hover:bg-brand-700">
-                Create your firm workspace
-              </Link>
-            </>
+              .
+            </p>
           )}
         </div>
       </Section>

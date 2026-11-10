@@ -74,3 +74,25 @@ Feature: F0.5 Public marketing website
     Then I should see "Page not found"
     When I click "Back to home"
     Then I should see "Turn client files into eSTAR-ready 510(k) sections"
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:5d16c89c-c41b-4b42-b549-2c2cc4ace040
+  Scenario: Visitor requests a pilot and sees a confirmation
+    Given I navigate to "/pilot"
+    When I fill "name" with "${random_name}"
+    And I fill "workEmail" with "${random_email}"
+    And I fill "firmName" with "${random_name}"
+    And I fill "role" with "RA lead"
+    And I fill "message" with "Two 510(k)s are coming up this quarter and we would like to try the pilot."
+    And I click "Send pilot request"
+    Then I should see "Thank you, your pilot request has been received."
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:6e82f592-dba0-40e7-a01b-5fa011fec2a3
+  Scenario: Pilot request form explains what is missing
+    Given I navigate to "/contact"
+    When I fill "workEmail" with "not-an-email"
+    And I click "Send pilot request"
+    Then I should see "Please enter your name."
+    And I should see "Please enter a valid email address."
+    And I should see "Please tell us a little more (at least 10 characters)."
