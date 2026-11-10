@@ -1,0 +1,100 @@
+{
+  "name": "GET /api/projects/:projectId/activity - recent activity for a submission",
+  "description": "Recent activity of one submission from the firm's hash-chained audit log, newest first by chain position (keyset: limit 1-50, opaque nextCursor). Each item: seq, action (project.created, project.viewed, project.updated, draft.accepted, ...), targetType, actor {id, name}, metadata, createdAt. Needs projects:read. Unknown or other-firm project: 404. Covers: a user can see recent activity for a submission; views and changes are recorded with user, time and target.",
+  "endpoint": "/api/projects/:projectId/activity",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 61,
+  "taskId": "64a82451-50dd-43dd-b7ab-c4eab4128468",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "becac156-9aac-43e9-bfad-d124358b0bfc#AC3",
+    "becac156-9aac-43e9-bfad-d124358b0bfc#AC1",
+    "64a82451-50dd-43dd-b7ab-c4eab4128468#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "project does not exist or belongs to another firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "cursor is invalid",
+      "when": "bad cursor, limit or project id"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner reads the activity of a submission",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "limit": "20"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - invalid cursor",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "cursor": "{{static:garbage}}"
+      }
+    }
+  ]
+}

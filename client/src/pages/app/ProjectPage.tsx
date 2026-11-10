@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import ActivityPanel from '../../components/app/ActivityPanel';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
@@ -86,6 +87,9 @@ export default function ProjectPage(): JSX.Element {
               <dd className="font-medium text-slate-900">{project.targetDate ?? 'Not set'}</dd>
             </div>
           </dl>
+          <div className="mt-8">
+            <ActivityPanel projectId={project.id} />
+          </div>
         </>
       )}
     </section>

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { audit, fromData, fromParam } from '../middleware/audit';
 import { Permission, requirePermission } from '../middleware/authorize';
+import { projectActivity } from '../services/AuditService';
 import { workspaceService } from '../services/WorkspaceService';
 
 type Handler = (req: Request, res: Response) => Promise<void>;
@@ -187,5 +188,15 @@ workspaceRouter.patch(
   handle(async (req, res) => {
     const projectId = id('projectId').parse(req.params.projectId);
     res.status(200).json({ success: true, data: await workspaceService.updateProject(ctx(req), projectId, projectUpdate.parse(req.body)) });
+  })
+);
+
+/** Recent activity for a submission, newest first (from the hash-chained audit log). */
+workspaceRouter.get(
+  '/api/projects/:projectId/activity',
+  ...guard('projects:read'),
+  handle(async (req, res) => {
+    const projectId = id('projectId').parse(req.params.projectId);
+    res.status(200).json({ success: true, data: await projectActivity(ctx(req), projectId, listQuery.parse(req.query)) });
   })
 );
