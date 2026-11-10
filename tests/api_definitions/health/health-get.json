@@ -13,7 +13,16 @@
     "0271c2c1-894a-4270-90ba-63ab274e9b6a#AC2",
     "00743c43-ba9c-4161-9371-332021fa53a7#AC1"
   ],
-  "errorCases": [],
+  "errorCases": [
+    {
+      "status": 500,
+      "code": "INTERNAL_ERROR",
+      "message": "Something went wrong",
+      "when": "unexpected server fault; the handler returns static status and reads no input",
+      "reproducible": false,
+      "notReproducibleReason": "No request input reaches this handler."
+    }
+  ],
   "testCases": [
     {
       "name": "API is up and reports ok",
