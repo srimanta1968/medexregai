@@ -51,6 +51,8 @@ export interface LlmSettings {
   apiKey?: string;
   /** Where embeddings run when the generator has none (anthropic): our Ollama. */
   embeddingBaseUrl: string;
+  /** Per-route model for this environment (AI_ROUTE_MODELS=route=model,...); unset routes use generationModel. */
+  routeModels: Partial<Record<string, string>>;
 }
 
 export type SsoProviderId = 'google' | 'microsoft';
@@ -156,6 +158,23 @@ export function parseCorsOrigins(raw: string | undefined): string[] {
     .map((o) => o.trim().replace(/\/+$/, ''))
     .filter((o) => o.length > 0);
   return Array.from(new Set([...DEFAULT_CORS_ORIGINS, ...extra]));
+}
+
+const AI_ROUTE_NAMES = ['triage', 'classify', 'extract', 'contradiction', 'draft', 'request_wording'];
+
+/** AI_ROUTE_MODELS="draft=qwen2.5:14b-instruct,classify=qwen2.5:7b-instruct". Unknown routes fail at startup. */
+export function parseRouteModels(raw: string): Partial<Record<string, string>> {
+  const out: Partial<Record<string, string>> = {};
+  for (const pair of raw.split(',').map((p) => p.trim()).filter(Boolean)) {
+    const i = pair.indexOf('=');
+    const route = i > 0 ? pair.slice(0, i).trim() : '';
+    const model = i > 0 ? pair.slice(i + 1).trim() : '';
+    if (!AI_ROUTE_NAMES.includes(route) || !model) {
+      throw new Error(`AI_ROUTE_MODELS entry "${pair}" must be route=model with route one of ${AI_ROUTE_NAMES.join(', ')}.`);
+    }
+    out[route] = model;
+  }
+  return out;
 }
 
 /** Validate the provider name so a typo fails at startup, not on the first AI call. */
@@ -323,6 +342,7 @@ export function loadConfig(env: Env): AppConfig {
       requestTimeoutMs: parsePositiveInt(optionalEnv(env, 'AI_REQUEST_TIMEOUT_MS', '120000'), 'AI_REQUEST_TIMEOUT_MS'),
       apiKey: optionalEnv(env, 'AI_API_KEY', '') || undefined,
       embeddingBaseUrl: optionalEnv(env, 'AI_EMBEDDING_BASE_URL', 'http://localhost:11434'),
+      routeModels: parseRouteModels(optionalEnv(env, 'AI_ROUTE_MODELS', '')),
     },
     logLevel: optionalEnv(env, 'LOG_LEVEL', 'info'),
     logFormat: parseLogFormat(optionalEnv(env, 'LOG_FORMAT', 'dev')),
