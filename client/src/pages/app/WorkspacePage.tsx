@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { Field, FormMessage, SubmitButton } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -123,11 +123,18 @@ export default function WorkspacePage(): JSX.Element {
           Sign out
         </button>
       </div>
+      <Link
+        to="/app/clients"
+        className="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300"
+      >
+        <span className="text-lg font-semibold text-brand-700">Clients and projects</span>
+        <span className="mt-1 block text-sm text-slate-600">Switch client, add devices and start 510(k) submissions.</span>
+      </Link>
       {CAN_INVITE.has(session.role) ? (
         <TeamPanel />
       ) : (
         <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-          Your projects will appear here. Ask a firm owner or admin to invite more people.
+          Ask a firm owner or admin to invite more people.
         </p>
       )}
     </section>

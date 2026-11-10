@@ -20,6 +20,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const InviteAcceptPage = lazy(() => import('./pages/auth/InviteAcceptPage'));
 const SsoCompletePage = lazy(() => import('./pages/auth/SsoCompletePage'));
+const ClientsPage = lazy(() => import('./pages/app/ClientsPage'));
+const ProjectPage = lazy(() => import('./pages/app/ProjectPage'));
 const WorkspacePage = lazy(() => import('./pages/app/WorkspacePage'));
 
 function PageLoading(): JSX.Element {
@@ -56,6 +58,22 @@ export default function App(): JSX.Element {
               element={
                 <RequireAuth>
                   <WorkspacePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/clients"
+              element={
+                <RequireAuth>
+                  <ClientsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/projects/:projectId"
+              element={
+                <RequireAuth>
+                  <ProjectPage />
                 </RequireAuth>
               }
             />
