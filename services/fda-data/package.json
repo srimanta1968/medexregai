@@ -19,7 +19,9 @@
     "fda:bulk": "ts-node --transpile-only src/sync/bulkCli.ts",
     "fda:sync:local": "node scripts/with-dev-db.js ts-node --transpile-only src/sync/cli.ts",
     "fda:bulk:local": "node scripts/with-dev-db.js ts-node --transpile-only src/sync/bulkCli.ts",
-    "dev:worker:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/worker.ts"
+    "dev:worker:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/worker.ts",
+    "clients": "ts-node --transpile-only src/auth/cli.ts",
+    "clients:local": "node scripts/with-dev-db.js ts-node --transpile-only src/auth/cli.ts"
   },
   "dependencies": {
     "dotenv": "^16.3.1",
