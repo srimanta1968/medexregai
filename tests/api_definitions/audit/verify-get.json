@@ -1,0 +1,74 @@
+{
+  "name": "GET /api/audit/verify - check the firm audit log is intact",
+  "description": "Recomputes every hash in the caller's firm audit chain (database function audit_verify_chain) and reports intact, number of events, and the first broken link (missing seq, previous-hash mismatch or altered content) if any. Owners and admins only (members:manage). The chain is built by a database trigger and UPDATE/DELETE/TRUNCATE are refused, so intact is the expected answer. Covers: audit records are hash-chained and cannot be updated or deleted; actions are recorded (the owner's registration flow creates events).",
+  "endpoint": "/api/audit/verify",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 62,
+  "taskId": "65f86c08-e619-4735-83fa-e0dd204a3e07",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "becac156-9aac-43e9-bfad-d124358b0bfc#AC2",
+    "becac156-9aac-43e9-bfad-d124358b0bfc#AC1",
+    "65f86c08-e619-4735-83fa-e0dd204a3e07#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "caller lacks members:manage (editor, reviewer, viewer)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner verifies an intact chain",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "intact": true,
+          "brokenAtSeq": null
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot verify",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      }
+    }
+  ]
+}

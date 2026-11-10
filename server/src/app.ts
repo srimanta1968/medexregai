@@ -9,6 +9,7 @@ import { invitesRouter } from './routes/invites';
 import { pilotRequestsRouter } from './routes/pilotRequests';
 import { workspaceRouter } from './routes/workspace';
 import { appShellRouter } from './routes/appShell';
+import { auditRouter } from './routes/audit';
 import { ssoRouter } from './routes/sso';
 import { AppError, ErrorCodes } from './utils/AppError';
 
@@ -81,6 +82,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(pilotRequestsRouter);
   app.use(workspaceRouter);
   app.use(appShellRouter);
+  app.use(auditRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

@@ -93,4 +93,28 @@ export async function projectActivity(
   };
 }
 
+/** Integrity of the firm's audit chain: recomputes every hash in order. */
+export async function verifyFirmChain(ctx: { orgId: string; userId: string }): Promise<{
+  intact: boolean;
+  events: number;
+  brokenAtSeq: number | null;
+  reason: string | null;
+  checkedAt: string;
+}> {
+  const [count] = await dataService.query<{ n: string }>(ctx, 'audit_events', 'SELECT count(*) AS n FROM audit_events WHERE org_id = $1', [ctx.orgId]);
+  const broken = await dataService.query<{ broken_seq: string; reason: string }>(
+    ctx,
+    'audit_events',
+    'SELECT broken_seq, reason FROM audit_verify_chain($1)',
+    [ctx.orgId]
+  );
+  return {
+    intact: broken.length === 0,
+    events: Number(count.n),
+    brokenAtSeq: broken[0] ? Number(broken[0].broken_seq) : null,
+    reason: broken[0]?.reason ?? null,
+    checkedAt: new Date().toISOString(),
+  };
+}
+
 export const auditService = new AuditService();
