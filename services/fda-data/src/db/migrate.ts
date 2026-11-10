@@ -32,7 +32,8 @@ export async function runMigrations(): Promise<string[]> {
     const { rows } = await client.query<{ version: number; name: string; checksum: string }>('SELECT version, name, checksum FROM schema_migrations');
     const byVersion = new Map(files.map((f) => [f.version, f]));
     const bad = rows.filter((r) => byVersion.get(r.version)?.checksum !== r.checksum);
-    if (bad.length) throw new Error(`Applied migrations edited or missing: ${bad.map((b) => `${b.version}_${b.name}`).join(', ')}. Write a new migration instead.`);
+    if (bad.length)
+      throw new Error(`Applied migrations edited or missing: ${bad.map((b) => `${b.version}_${b.name}`).join(', ')}. Write a new migration instead.`);
     const done = new Set(rows.map((r) => r.version));
     const applied: string[] = [];
     for (const m of files.filter((f) => !done.has(f.version))) {

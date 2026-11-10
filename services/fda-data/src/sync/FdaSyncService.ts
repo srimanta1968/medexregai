@@ -27,11 +27,18 @@ export interface SyncResult {
   windowFrom: string | null;
   windowTo: string | null;
   sourceLastUpdated: string | null;
+  /** fda_sync_runs.id of this run (absent when skipped). */
+  runId?: number;
   error?: string;
 }
 
 export class FdaSyncService {
-  constructor(private readonly client = new OpenFdaClient({ apiKey: config.openFda.apiKey ?? undefined, maxPerMinute: config.openFda.maxPerMinute })) {}
+  constructor(
+    private readonly client = new OpenFdaClient({
+      apiKey: config.openFda.apiKey ?? undefined,
+      maxPerMinute: config.openFda.maxPerMinute,
+    }),
+  ) {}
 
   /** Start date of the next delta: last successful window end minus the overlap. */
   async deltaStart(dataset: FdaDataset): Promise<string> {
@@ -51,7 +58,15 @@ export class FdaSyncService {
     try {
       const { rows } = await client.query<{ ok: boolean }>('SELECT pg_try_advisory_lock(hashtext($1)) AS ok', [`fda-sync:${dataset}`]);
       if (!rows[0].ok) {
-        return { dataset, status: 'skipped', upserted: 0, windowFrom: null, windowTo: null, sourceLastUpdated: null, error: 'another sync is running' };
+        return {
+          dataset,
+          status: 'skipped',
+          upserted: 0,
+          windowFrom: null,
+          windowTo: null,
+          sourceLastUpdated: null,
+          error: 'another sync is running',
+        };
       }
       try {
         return await this.runLocked(dataset, opts);
@@ -100,11 +115,28 @@ export class FdaSyncService {
         upserted,
         lastUpdated,
       ]);
-      return { dataset, status: 'succeeded', upserted, windowFrom, windowTo, sourceLastUpdated: lastUpdated };
+      return {
+        dataset,
+        status: 'succeeded',
+        upserted,
+        windowFrom,
+        windowTo,
+        sourceLastUpdated: lastUpdated,
+        runId: Number(run.id),
+      };
     } catch (err) {
       const message = (err as Error).message.slice(0, 1000);
       await q(`UPDATE fda_sync_runs SET status = 'failed', finished_at = now(), records_upserted = $2, error = $3 WHERE id = $1`, [run.id, upserted, message]);
-      return { dataset, status: 'failed', upserted, windowFrom, windowTo, sourceLastUpdated: lastUpdated, error: message };
+      return {
+        dataset,
+        status: 'failed',
+        upserted,
+        windowFrom,
+        windowTo,
+        sourceLastUpdated: lastUpdated,
+        runId: Number(run.id),
+        error: message,
+      };
     }
   }
 

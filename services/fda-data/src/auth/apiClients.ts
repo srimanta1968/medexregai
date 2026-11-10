@@ -42,7 +42,7 @@ async function findClient(keyHash: string): Promise<ApiClient | null> {
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.client;
   const [row] = await q<{ id: string; name: string; scopes: Scope[]; rate_per_minute: number }>(
     'SELECT id, name, scopes, rate_per_minute FROM api_clients WHERE key_hash = $1 AND revoked_at IS NULL',
-    [keyHash]
+    [keyHash],
   );
   const client = row ? { id: row.id, name: row.name, scopes: row.scopes, ratePerMinute: row.rate_per_minute } : null;
   cache.set(keyHash, { client, at: Date.now() });
@@ -94,7 +94,7 @@ export async function createClient(name: string, scopes: Scope[], ratePerMinute 
   const { key, prefix } = newKey();
   const [row] = await q<{ id: string }>(
     'INSERT INTO api_clients (name, key_prefix, key_hash, scopes, rate_per_minute) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-    [name, prefix, hashKey(key), scopes, ratePerMinute]
+    [name, prefix, hashKey(key), scopes, ratePerMinute],
   );
   return { key, client: { id: row.id, name, scopes, ratePerMinute } };
 }

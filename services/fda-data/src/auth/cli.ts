@@ -21,10 +21,12 @@ async function main(): Promise<void> {
     console.info(key);
   } else if (cmd === 'list') {
     const rows = await q<{ name: string; key_prefix: string; scopes: string[]; last_used_at: Date | null; revoked_at: Date | null }>(
-      'SELECT name, key_prefix, scopes, last_used_at, revoked_at FROM api_clients ORDER BY created_at'
+      'SELECT name, key_prefix, scopes, last_used_at, revoked_at FROM api_clients ORDER BY created_at',
     );
     for (const c of rows) {
-      console.info(`${c.name}  fdk_${c.key_prefix}_…  ${c.scopes.join(',')}  ${c.revoked_at ? 'REVOKED' : 'active'}  last used ${c.last_used_at?.toISOString() ?? 'never'}`);
+      console.info(
+        `${c.name}  fdk_${c.key_prefix}_…  ${c.scopes.join(',')}  ${c.revoked_at ? 'REVOKED' : 'active'}  last used ${c.last_used_at?.toISOString() ?? 'never'}`,
+      );
     }
   } else if (cmd === 'revoke' && name) {
     console.info((await revokeClient(name)) ? `Revoked "${name}".` : `No active client named "${name}".`);
