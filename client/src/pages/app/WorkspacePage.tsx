@@ -119,6 +119,10 @@ export default function WorkspacePage(): JSX.Element {
         <span className="text-lg font-semibold text-brand-700">Clients and projects</span>
         <span className="mt-1 block text-sm text-slate-600">Switch client, add devices and start 510(k) submissions.</span>
       </Link>
+      <Link to="/app/fda-sources" className="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300">
+        <span className="text-lg font-semibold text-brand-700">FDA data sources</span>
+        <span className="mt-1 block text-sm text-slate-600">Where our FDA data comes from and how current it is.</span>
+      </Link>
       {CAN_INVITE.has(session.role) ? (
         <TeamPanel />
       ) : (

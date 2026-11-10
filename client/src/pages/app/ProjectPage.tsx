@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import ActivityPanel from '../../components/app/ActivityPanel';
+import FdaDataAsOf from '../../components/app/FdaDataAsOf';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
@@ -61,7 +62,10 @@ export default function ProjectPage(): JSX.Element {
             </Link>{' '}
             › <span aria-current="page">{project.name}</span>
           </nav>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">{project.name}</h1>
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
+            <FdaDataAsOf />
+          </div>
           <dl className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 text-sm shadow-sm sm:grid-cols-2">
             <div>
               <dt className="text-slate-500">Submission type</dt>

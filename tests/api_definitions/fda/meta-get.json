@@ -1,0 +1,64 @@
+{
+  "name": "GET /api/fda/meta - FDA data freshness",
+  "description": "For every signed-in member: per dataset (classification, 510k, recall, udi, event_counts) openFDA's own last_updated date (sourceLastUpdated), the last successful sync time, the latest run status and record count (exact when small, planner estimate when large). dataAsOf is the OLDEST source date across loaded datasets, so the UI never overstates freshness; null until data is loaded. Covers: the UI shows the data-as-of date of the FDA data; a scheduled job loads the datasets.",
+  "endpoint": "/api/fda/meta",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 70,
+  "taskId": "10e8c11e-85f6-4903-bdad-b381cb37999f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "0ba457df-13a5-4147-befe-1fad40b8324f#AC3",
+    "0ba457df-13a5-4147-befe-1fad40b8324f#AC1",
+    "10e8c11e-85f6-4903-bdad-b381cb37999f#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "fieldEnums": {
+    "dataset": [
+      "classification",
+      "510k",
+      "recall",
+      "udi",
+      "event_counts"
+    ],
+    "lastRunStatus": [
+      "running",
+      "succeeded",
+      "failed"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Member reads FDA data freshness",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
