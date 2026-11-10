@@ -106,6 +106,8 @@ export interface AppConfig {
     /** Optional: who gets an email when a pilot request arrives. */
     notifyEmail: string | null;
   };
+  /** Operator alerts (e.g. a project's AI usage passing 2x its estimate). */
+  ops: { alertEmail: string | null };
   bodyLimit: string;
 }
 
@@ -348,6 +350,7 @@ export function loadConfig(env: Env): AppConfig {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'PILOT_REQUESTS_PER_IP_PER_HOUR', '5'), 'PILOT_REQUESTS_PER_IP_PER_HOUR'),
       notifyEmail: optionalEnv(env, 'PILOT_NOTIFY_EMAIL', '') || null,
     },
+    ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
   };
 }
 
