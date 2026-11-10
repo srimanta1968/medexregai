@@ -16,6 +16,7 @@ const next = await fda.search510k({ productCode: 'FRN', cursor: page.nextCursor!
 
 | Method | Route | Scope |
 |---|---|---|
+| `ready()` | `GET /ready` (never cached) | none |
 | `meta()` | `GET /v1/meta` | fda:read |
 | `getClearance(k)` | `GET /v1/510k/{k}` | fda:read |
 | `search510k(params)` | `GET /v1/510k` | fda:read |

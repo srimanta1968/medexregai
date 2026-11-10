@@ -79,6 +79,16 @@ export class FdaClient {
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
+  /** True when the service and its database answer (GET /ready). Never cached, never retried, never throws. */
+  async ready(): Promise<boolean> {
+    try {
+      const res = await this.fetchImpl(`${this.base}/ready`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 3000)) });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   // --- /v1 reads (scope fda:read) -----------------------------------------------
 
   meta(): Promise<Meta> {

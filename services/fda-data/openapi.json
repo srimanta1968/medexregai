@@ -738,6 +738,111 @@
         }
       }
     },
+    "/v1/tracked-product-codes": {
+      "put": {
+        "operationId": "putTrackedProductCodes",
+        "summary": "Replace this client's product codes whose MAUDE counts are followed (scope fda:track)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "productCodes"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "productCodes": {
+                    "type": "array",
+                    "maxItems": 5000,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z]{3}$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tracked": {
+                          "type": "integer"
+                        },
+                        "added": {
+                          "type": "integer"
+                        },
+                        "syncQueued": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/event-counts/{code}": {
       "get": {
         "operationId": "getEventCounts",

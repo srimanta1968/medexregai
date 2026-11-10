@@ -137,6 +137,10 @@ export interface RecallParams {
 }
 
 export interface TrackedCodesResult {
+  /** Codes this client now tracks. */
   tracked: number;
+  /** Codes no client tracked before. */
   added: number;
+  /** A MAUDE count sync was queued for the new codes. */
+  syncQueued: boolean;
 }

@@ -188,6 +188,25 @@ export const openapi = {
         },
       },
     },
+    '/v1/tracked-product-codes': {
+      put: {
+        operationId: 'putTrackedProductCodes',
+        summary: "Replace this client's product codes whose MAUDE counts are followed (scope fda:track)",
+        requestBody: {
+          required: true,
+          ...json({
+            type: 'object',
+            required: ['productCodes'],
+            additionalProperties: false,
+            properties: { productCodes: { type: 'array', maxItems: 5000, items: { type: 'string', pattern: CODE } } },
+          }),
+        },
+        responses: {
+          '200': { description: 'OK', ...json(ok({ type: 'object', properties: { tracked: int, added: int, syncQueued: bool } })) },
+          ...errors,
+        },
+      },
+    },
     '/v1/event-counts/{code}': {
       get: {
         operationId: 'getEventCounts',

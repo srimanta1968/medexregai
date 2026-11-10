@@ -142,7 +142,7 @@ export class FdaSyncService {
 
   /** MAUDE counts are kept for product codes pushed by clients (PUT /v1/tracked-product-codes) plus FDA_EVENT_PRODUCT_CODES. */
   private async eventProductCodes(): Promise<string[]> {
-    const rows = await q<{ product_code: string }>('SELECT product_code FROM tracked_product_codes', []);
+    const rows = await q<{ product_code: string }>('SELECT DISTINCT product_code FROM tracked_product_codes', []);
     const codes = new Set([...rows.map((r) => r.product_code), ...config.openFda.extraEventProductCodes]);
     return [...codes].filter((c) => /^[A-Z]{3}$/.test(c)).sort();
   }

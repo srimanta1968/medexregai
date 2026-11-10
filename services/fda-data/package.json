@@ -22,7 +22,8 @@
     "dev:worker:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/worker.ts",
     "clients": "ts-node --transpile-only src/auth/cli.ts",
     "clients:local": "node scripts/with-dev-db.js ts-node --transpile-only src/auth/cli.ts",
-    "openapi": "ts-node --transpile-only src/v1/openapi.ts"
+    "openapi": "ts-node --transpile-only src/v1/openapi.ts",
+    "dev:app-key": "node scripts/with-dev-db.js ts-node --transpile-only scripts/dev-app-key.ts"
   },
   "dependencies": {
     "dotenv": "^16.3.1",

@@ -3,8 +3,9 @@ import { config } from './config';
 import { closePools } from './db/pool';
 import { v1AdminRouter } from './v1/admin';
 import { v1ReadRouter } from './v1/routes';
+import { v1TrackingRouter } from './v1/tracking';
 
-const app = createApp([v1ReadRouter, v1AdminRouter]);
+const app = createApp([v1ReadRouter, v1AdminRouter, v1TrackingRouter]);
 const server = app.listen(config.port, () => {
   console.info(`[fda-data] API listening on port ${config.port}`);
 });
