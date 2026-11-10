@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
+import AppLayout from './components/app/AppLayout';
 import SiteLayout from './components/site/SiteLayout';
 import HomePage from './pages/HomePage';
 
@@ -22,6 +23,7 @@ const InviteAcceptPage = lazy(() => import('./pages/auth/InviteAcceptPage'));
 const SsoCompletePage = lazy(() => import('./pages/auth/SsoCompletePage'));
 const ClientsPage = lazy(() => import('./pages/app/ClientsPage'));
 const ProjectPage = lazy(() => import('./pages/app/ProjectPage'));
+const ComingSoonPage = lazy(() => import('./pages/app/ComingSoonPage'));
 const WorkspacePage = lazy(() => import('./pages/app/WorkspacePage'));
 
 function PageLoading(): JSX.Element {
@@ -53,31 +55,20 @@ export default function App(): JSX.Element {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/invite/:token" element={<InviteAcceptPage />} />
             <Route path="/sso/complete" element={<SsoCompletePage />} />
-            <Route
-              path="/app"
-              element={
-                <RequireAuth>
-                  <WorkspacePage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/app/clients"
-              element={
-                <RequireAuth>
-                  <ClientsPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/app/projects/:projectId"
-              element={
-                <RequireAuth>
-                  <ProjectPage />
-                </RequireAuth>
-              }
-            />
             <Route path="*" element={<NotFoundPage />} />
+          </Route>
+          <Route
+            element={
+              <RequireAuth>
+                <AppLayout />
+              </RequireAuth>
+            }
+          >
+            <Route path="/app" element={<WorkspacePage />} />
+            <Route path="/app/clients" element={<ClientsPage />} />
+            <Route path="/app/projects/:projectId" element={<ProjectPage />} />
+            <Route path="/app/projects/:projectId/:section" element={<ComingSoonPage />} />
+            <Route path="/app/soon/:key" element={<ComingSoonPage />} />
           </Route>
         </Routes>
       </Suspense>

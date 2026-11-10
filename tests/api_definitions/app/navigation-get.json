@@ -1,0 +1,66 @@
+{
+  "name": "GET /api/app/navigation - menu for the signed-in user",
+  "description": "Returns the app menu enabled for the current phase feature flags (APP_PHASE 1-5 turns on that phase and earlier; FEATURE_FLAGS_ON / FEATURE_FLAGS_OFF enable or hide single items) and allowed for the caller's role (e.g. Users and roles needs members:invite, Usage and Billing need billing:manage). Each item has key, label, description, phase, scope (firm|project) and built (false = enabled screen not built yet, the UI shows a coming-soon page). Covers: navigation shows only items enabled for the current phase feature flags.",
+  "endpoint": "/api/app/navigation",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 60,
+  "taskId": "40544b49-4a87-475e-a9e9-146cf525a4b1",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC1",
+    "40544b49-4a87-475e-a9e9-146cf525a4b1#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "fieldEnums": {
+    "scope": [
+      "firm",
+      "project"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner gets the phase menu",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "Reviewer gets a role-filtered menu",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

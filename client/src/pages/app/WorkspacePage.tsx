@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { Field, FormMessage, SubmitButton } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -57,7 +57,12 @@ function TeamPanel(): JSX.Element {
           <label htmlFor="inviteRole" className="block text-sm font-medium text-slate-800">
             Role
           </label>
-          <select id="inviteRole" name="inviteRole" defaultValue="reviewer" className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 capitalize">
+          <select
+            id="inviteRole"
+            name="inviteRole"
+            defaultValue="reviewer"
+            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 capitalize"
+          >
             {INVITABLE_ROLES.map((r) => (
               <option key={r} value={r} className="capitalize">
                 {r}
@@ -95,16 +100,10 @@ function TeamPanel(): JSX.Element {
 
 export default function WorkspacePage(): JSX.Element {
   usePageMeta({ title: 'Workspace', description: 'Your MedexRegAI firm workspace.' });
-  const { session, logout } = useAuth();
-  const navigate = useNavigate();
+  const { session } = useAuth();
   if (!session) {
     return <></>;
   }
-
-  const onSignOut = async (): Promise<void> => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
 
   return (
     <section className="mx-auto w-full max-w-4xl flex-1 space-y-8 px-4 py-12 sm:px-6">
@@ -115,27 +114,15 @@ export default function WorkspacePage(): JSX.Element {
             Signed in as {session.user.fullName} ({session.user.email}) · <span className="capitalize">{session.role}</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onSignOut}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-        >
-          Sign out
-        </button>
       </div>
-      <Link
-        to="/app/clients"
-        className="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300"
-      >
+      <Link to="/app/clients" className="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300">
         <span className="text-lg font-semibold text-brand-700">Clients and projects</span>
         <span className="mt-1 block text-sm text-slate-600">Switch client, add devices and start 510(k) submissions.</span>
       </Link>
       {CAN_INVITE.has(session.role) ? (
         <TeamPanel />
       ) : (
-        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-          Ask a firm owner or admin to invite more people.
-        </p>
+        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Ask a firm owner or admin to invite more people.</p>
       )}
     </section>
   );

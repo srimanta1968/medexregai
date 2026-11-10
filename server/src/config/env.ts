@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { NAV_KEYS } from './navigation';
 
 // Tests supply a complete fake environment (tests/setup/test-env.ts); loading a
 // developer's server/.env there would make results depend on local settings.
@@ -82,6 +83,8 @@ export interface AppConfig {
   rateLimit: { windowMs: number; maxRequests: number };
   /** Express "trust proxy" setting: how many proxy hops to trust for the client IP. */
   trustProxy: string | number;
+  /** Which menu items the app shows (UI 2.0 phases), see config/navigation.ts. */
+  features: { phase: number; on: string[]; off: string[] };
   pilot: {
     /** Pilot requests accepted per hashed IP per hour. */
     perIpPerHour: number;
@@ -228,6 +231,30 @@ export function parseTrustProxy(raw: string): string | number {
   return value;
 }
 
+/**
+ * APP_PHASE (1-5, default 1) turns on every menu item of that phase and earlier.
+ * FEATURE_FLAGS_ON / FEATURE_FLAGS_OFF are comma lists of item keys to enable early
+ * or hide (e.g. FEATURE_FLAGS_ON=time). Unknown keys fail startup so a typo is caught.
+ */
+export function parseFeatureFlags(env: Env): { phase: number; on: string[]; off: string[] } {
+  const phase = parsePositiveInt(optionalEnv(env, 'APP_PHASE', '1'), 'APP_PHASE');
+  if (phase > 5) {
+    throw new Error('APP_PHASE must be between 1 and 5.');
+  }
+  const list = (name: string): string[] => {
+    const keys = optionalEnv(env, name, '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    const unknown = keys.filter((k) => !NAV_KEYS.includes(k));
+    if (unknown.length) {
+      throw new Error(`${name} has unknown menu item(s): ${unknown.join(', ')}. Known: ${NAV_KEYS.join(', ')}.`);
+    }
+    return keys;
+  };
+  return { phase, on: list('FEATURE_FLAGS_ON'), off: list('FEATURE_FLAGS_OFF') };
+}
+
 /** Build the typed application config from an environment map. */
 export function loadConfig(env: Env): AppConfig {
   const jwtSecret = requireEnv(env, 'JWT_SECRET');
@@ -288,6 +315,7 @@ export function loadConfig(env: Env): AppConfig {
       maxRequests: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_MAX_REQUESTS', '300'), 'RATE_LIMIT_MAX_REQUESTS'),
     },
     bodyLimit: optionalEnv(env, 'BODY_PARSER_LIMIT', '1mb'),
+    features: parseFeatureFlags(env),
     trustProxy: parseTrustProxy(optionalEnv(env, 'TRUST_PROXY', 'loopback')),
     pilot: {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'PILOT_REQUESTS_PER_IP_PER_HOUR', '5'), 'PILOT_REQUESTS_PER_IP_PER_HOUR'),

@@ -49,3 +49,25 @@ Feature: F0.2 Clients, devices and submissions
     Then I should see "No devices for Harbor Surgical yet."
     When I select "Northbay Devices" from "clientSwitcher"
     Then I should see "No devices for Northbay Devices yet."
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:2c3ea81f-b68f-4d12-88a8-62c517a5e550
+  Scenario: Navigation shows the phase 1 project screens
+    Given I navigate to "/signup"
+    When I fill "fullName" with "${random_name}"
+    And I fill "email" with "${random_email}"
+    And I fill "password" with "${default:password}"
+    And I fill "firmName" with "${random_name}"
+    And I click "Create workspace"
+    And I click "Clients and projects"
+    And I fill "clientName" with "Northbay Devices"
+    And I click "Add client"
+    And I fill "deviceName" with "IS-200 infusion set"
+    And I click "Add device"
+    And I fill "projectName" with "IS-200 Traditional 510(k)"
+    And I click "Start submission"
+    And I click "IS-200 Traditional 510(k)"
+    Then I should see "Traditional 510(k)"
+    When I click "Problems"
+    Then I should see "Missing items and contradictions."
+    And I should see "This screen is being built for phase 1."
