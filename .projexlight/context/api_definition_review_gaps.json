@@ -1,25 +1,47 @@
 {
-  "updatedAt": "2026-11-10T05:18:19",
+  "updatedAt": "2026-11-10T05:18:56",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/fda/510k-get.json",
+      "file": "tests/api_definitions/auth/logout-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/fda/flags-get.json",
+      "file": "tests/api_definitions/auth/password-reset-confirm-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14",
+        "MUST-34"
+      ],
+      "findingsCount": 2
+    },
+    {
+      "file": "tests/api_definitions/auth/password-reset-request-post.json",
+      "rules": [
+        "MUST-14"
       ],
       "findingsCount": 1
     },
     {
-      "file": "tests/api_definitions/fda/product-code-get.json",
+      "file": "tests/api_definitions/sso/exchange-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/sso/signup-post.json",
+      "rules": [
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/sso/signup-preview-post.json",
+      "rules": [
+        "MUST-14"
       ],
       "findingsCount": 1
     }
@@ -27,7 +49,7 @@
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 3,
-    "findingsCount": 3
+    "withFindings": 6,
+    "findingsCount": 7
   }
 }

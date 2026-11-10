@@ -1,19 +1,12 @@
 {
   "app/navigation-get.json": {
     "hash": "b45e849c19c86e79242a3cf5605eb38acc14142cb868efe27fd2ca24d3573f41",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T03:48:02",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
     "route": [
       "GET",
       "/app/navigation"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/app/navigation was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "clients/client-patch.json": {
@@ -48,52 +41,368 @@
   },
   "fda/510k-get.json": {
     "hash": "db0eeed456671b8404377ab74ac24c16cc49ff0b8b91885bba6880df8445bc0b",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:15",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
     "route": [
       "GET",
       "/fda/510k/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/fda/510k/:kNumber was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "fda/flags-get.json": {
     "hash": "c4733249a52ad0d666cad825c910f6ba8b9ad55296eb368f9dcf46429d7ef99d",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:15",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
     "route": [
       "GET",
       "/fda/flags/:p"
-    ],
-    "findings": [
-      {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/fda/flags/:kNumber was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
-      }
     ]
   },
   "fda/product-code-get.json": {
     "hash": "3c019b7201ecd3d0766c399c64f1c34788877578a9d471d973e7c66d9ea58bbf",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T05:18:15",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
     "route": [
       "GET",
       "/fda/product-codes/:p"
+    ]
+  },
+  "audit/verify-get.json": {
+    "hash": "1b4251d7ef28612f2da90457ee0174087e9f4b09fea90fa03e9e426df371fac5",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/audit/verify"
+    ]
+  },
+  "auth/login-post.json": {
+    "hash": "6a33c2becbfcd7bdd3203baca632470e9f19a79ed75f1e901a3e1a6a88afa4ec",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/login"
+    ]
+  },
+  "auth/logout-post.json": {
+    "hash": "0136e0a0d2dc2ffbc8cf35f88a7bedeb699b27020735e82ed05ebda71bd0b90b",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/logout"
     ],
     "findings": [
       {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "GET /api/fda/product-codes/:code was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/me-get.json": {
+    "hash": "8254b7a6e773ff9944d787641f6c90134e4db32dc89801a24adb455d167edc29",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/auth/me"
+    ]
+  },
+  "auth/password-reset-confirm-post.json": {
+    "hash": "d808ba2dbeaffcea6ef053d1d0102fc5bf3c3923d99fc26a9c90ac1ca39919b3",
+    "status": "findings",
+    "findingsCount": 2,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/password-reset/confirm"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      },
+      {
+        "rule": "MUST-34",
+        "severity": "medium",
+        "message": "testability is manual/skip \u2014 new definitions must ship testability:auto (manual is decided after execution)."
+      }
+    ]
+  },
+  "auth/password-reset-request-post.json": {
+    "hash": "c9fbcdef5c1ac8011e123712f5ba8a7e443226b942ef70cc9c2a08f63e94caf0",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/password-reset/request"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/refresh-post.json": {
+    "hash": "34db281fa4d342a0272223c2ba7b37abe072f4b0c59f81c88b4508176b415af4",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/refresh"
+    ]
+  },
+  "auth/register-post.json": {
+    "hash": "57b919e70f887a398126e77ebe794b370fdb1977286c7a456f7d5e04ac6dd5a4",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/register"
+    ]
+  },
+  "clients/clients-get.json": {
+    "hash": "54e711fcb949300ed6affc1275762215c356b2ec6f8656da542d2663a5215ffe",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/clients"
+    ]
+  },
+  "clients/clients-post.json": {
+    "hash": "746720a2d089da33abe9679bf77823c663b5deca0c63bbaab2eb0121d44b2228",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/clients"
+    ]
+  },
+  "devices/client-devices-get.json": {
+    "hash": "74439c2e8f0455f06d5906fe27ed19a1bf852e3c70c4d83d4d24701e8d442279",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/clients/:p/devices"
+    ]
+  },
+  "devices/client-devices-post.json": {
+    "hash": "ff78e1103d1fb8300eb4acd7ee8ab34cebef5e4bcb296caa93156c7f1a91d71c",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/clients/:p/devices"
+    ]
+  },
+  "devices/device-patch.json": {
+    "hash": "cff82f1e259bece433be0a26b51b2ab322278b80acd1f593d7a2a39a602e4c6b",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "PATCH",
+      "/devices/:p"
+    ]
+  },
+  "fda/meta-get.json": {
+    "hash": "87866ec7b6295ff6a1b357d93ffb5969db6910cf59a797a94e38b8b50807f832",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/fda/meta"
+    ]
+  },
+  "health/health-get.json": {
+    "hash": "bfe8e8bf9fda67489056c5839230a028fb9b88c338a8270866ecad8491425ace",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/health"
+    ]
+  },
+  "invites/invites-get.json": {
+    "hash": "c13cf3eb37543898859265ce7b28f1c09e85b53abf91ecb7524be71c7f3c066a",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/invites"
+    ]
+  },
+  "invites/invites-post.json": {
+    "hash": "8f40ff4fb44c3d7346855475f9f2ae52847093d8ca1c8fc157b873d496e45020",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/invites"
+    ]
+  },
+  "invites/token-accept-post.json": {
+    "hash": "32dc2b14f2a5280a81bb28f6c157664af5c52d639d1efe435b9072ee88d6c472",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/invites/:p/accept"
+    ]
+  },
+  "invites/token-get.json": {
+    "hash": "9159bc8df5e7098be42c4418c721bfa70215078df9b82d91b454478181a3587c",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/invites/:p"
+    ]
+  },
+  "pilot-requests/pilot-requests-post.json": {
+    "hash": "03867a3771b05af87fab3c8bc56c896a5a9d04969d5d6ab959cf5254baec4d10",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/pilot-requests"
+    ]
+  },
+  "projects/device-projects-post.json": {
+    "hash": "bd054d319166927d7a85c441fc33cfe9c0231998dc943a8e008e8ee42a00fc32",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/devices/:p/projects"
+    ]
+  },
+  "projects/project-activity-get.json": {
+    "hash": "fa922fe4e7bdf9fe8098a7b4a6cdea08f97f556c5924f17cbe1112dad476612e",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/projects/:p/activity"
+    ]
+  },
+  "projects/project-get.json": {
+    "hash": "4fc779eea8518e38e5bef8d3d37fdc454733f6f41d14b95a0b9b2aa44455a490",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/projects/:p"
+    ]
+  },
+  "sso/exchange-post.json": {
+    "hash": "a27361c10c7390ac98b409eac23c8f27c1ff00fa9bb0db90569a1e46ad630e43",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/sso/exchange"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "sso/provider-callback-get.json": {
+    "hash": "878520219094ca0d03eecd56bb152586527c9c77c795f1f9e77437c74ec43f4f",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/auth/sso/:p/callback"
+    ]
+  },
+  "sso/provider-start-get.json": {
+    "hash": "821b1a282b721e7e44bda5aa3eb465df26452871145b36557c47dd811a3dea89",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/auth/sso/:p/start"
+    ]
+  },
+  "sso/providers-get.json": {
+    "hash": "6677b8e26ac6700f86bfd5b48a4d038e25f5dbe30fe9159cbb9cf95ef08fe880",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "GET",
+      "/auth/sso/providers"
+    ]
+  },
+  "sso/signup-post.json": {
+    "hash": "5c65bda72d78fbcae0c2c84255c468bca9b11c67b160edc0a58caece3f5b40dd",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/sso/signup"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "sso/signup-preview-post.json": {
+    "hash": "f4850ce315f09a832eed818df9832df46d192db0d1721b7bae619de970c1cd88",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T05:18:54",
+    "route": [
+      "POST",
+      "/auth/sso/signup/preview"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
       }
     ]
   }
