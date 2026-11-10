@@ -1,6 +1,6 @@
 {
   "name": "GET /api/fda/meta - FDA data freshness",
-  "description": "For every signed-in member: per dataset (classification, 510k, recall, udi, event_counts) openFDA's own last_updated date (sourceLastUpdated), the last successful sync time, the latest run status and record count (exact when small, planner estimate when large). dataAsOf is the OLDEST source date across loaded datasets, so the UI never overstates freshness; null until data is loaded. Covers: the UI shows the data-as-of date of the FDA data; a scheduled job loads the datasets.",
+  "description": "For every signed-in member: per dataset (classification, 510k, recall, udi, event_counts) openFDA's own last_updated date (sourceLastUpdated), the last successful sync time, the latest run status and record count (exact when small, planner estimate when large). dataAsOf is the OLDEST source date across loaded datasets, so the UI never overstates freshness; null until data is loaded. Covers: the UI shows the data-as-of date of the FDA data; a scheduled job loads the datasets. Since the F1.5 cutover (ADR-017) the app answers from the fda-data service through @medexregai/fda-sdk; the local run needs that service up (cd services/fda-data && npm run dev:local).",
   "endpoint": "/api/fda/meta",
   "method": "GET",
   "requiresAuth": true,
@@ -12,7 +12,10 @@
   "coversCriterion": [
     "0ba457df-13a5-4147-befe-1fad40b8324f#AC3",
     "0ba457df-13a5-4147-befe-1fad40b8324f#AC1",
-    "10e8c11e-85f6-4903-bdad-b381cb37999f#AC1"
+    "10e8c11e-85f6-4903-bdad-b381cb37999f#AC1",
+    "71234d6f-eb3d-4960-a9ba-83854ac79e3d#AC2",
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC1",
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC4"
   ],
   "dependsOn": [
     "POST /api/auth/register"
@@ -40,6 +43,14 @@
       "code": "UNAUTHORIZED",
       "message": "Missing bearer token",
       "when": "no Authorization header"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service is down or rejects the app key (and the answer is not cached)",
+      "reproducible": false,
+      "reason": "Needs the fda-data service stopped during the run; verified by hand on 2026-11-10 (meta, flags and 510(k) returned 503 FDA_UNAVAILABLE)."
     }
   ],
   "testCases": [

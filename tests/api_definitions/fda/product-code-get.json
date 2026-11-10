@@ -1,6 +1,6 @@
 {
   "name": "GET /api/fda/product-codes/:code - classification of a product code",
-  "description": "Returns device class and regulation number for a three-letter FDA product code (case-insensitive) from our copy of the FDA classification database, with device name, specialty, review panel, submission type, implant and life-sustaining flags, how many 510(k)s our copy holds for the code and the latest decision date, a link to the FDA classification record and the as-of dates. Covers: a product code returns device class and regulation number. Needs the FDA copy loaded (npm run fda:bulk -- classification 510k recall; npm run fda:sync -- event_counts); test values are real FDA records: K031698 (Roche, cleared 2003-08-20), product code FRN (infusion pump, class 2, 21 CFR 880.5725), K251636 (FRN, named in recall Z-1368-2026).",
+  "description": "Returns device class and regulation number for a three-letter FDA product code (case-insensitive) from our copy of the FDA classification database, with device name, specialty, review panel, submission type, implant and life-sustaining flags, how many 510(k)s our copy holds for the code and the latest decision date, a link to the FDA classification record and the as-of dates. Covers: a product code returns device class and regulation number. Needs the FDA copy loaded (npm run fda:bulk -- classification 510k recall; npm run fda:sync -- event_counts); test values are real FDA records: K031698 (Roche, cleared 2003-08-20), product code FRN (infusion pump, class 2, 21 CFR 880.5725), K251636 (FRN, named in recall Z-1368-2026). Since the F1.5 cutover (ADR-017) the app answers from the fda-data service through @medexregai/fda-sdk; the local run needs that service up (cd services/fda-data && npm run dev:local).",
   "endpoint": "/api/fda/product-codes/:code",
   "method": "GET",
   "requiresAuth": true,
@@ -11,7 +11,10 @@
   "testability": "auto",
   "coversCriterion": [
     "f0f9f188-a539-4d36-a0e9-d3f9d7628df4#AC2",
-    "6ad8fef4-9145-46dc-9126-f56586869bc8#AC2"
+    "6ad8fef4-9145-46dc-9126-f56586869bc8#AC2",
+    "71234d6f-eb3d-4960-a9ba-83854ac79e3d#AC2",
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC1",
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC4"
   ],
   "dependsOn": [
     "POST /api/auth/register"
@@ -37,6 +40,14 @@
       "code": "NOT_FOUND",
       "message": "not in our copy of the FDA data",
       "when": "well-formed code that the FDA copy does not hold"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service is down or rejects the app key (and the answer is not cached)",
+      "reproducible": false,
+      "reason": "Needs the fda-data service stopped during the run; verified by hand on 2026-11-10 (meta, flags and 510(k) returned 503 FDA_UNAVAILABLE)."
     }
   ],
   "responseFields": [

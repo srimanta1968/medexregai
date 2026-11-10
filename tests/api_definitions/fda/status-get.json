@@ -1,0 +1,56 @@
+{
+  "name": "GET /api/fda/status - FDA data service availability",
+  "description": "For every signed-in member: whether the fda-data service and its database answer right now (checked live through the service /ready route, never cached), the FDA data-as-of date when it does, and the check latency. Always 200: an outage is reported as available=false, never as an error. Covers: an FDA service outage returns a clear retryable error to the user instead of a server error; the fda-data service and its database are deployed independently of the main app (its readiness is visible from the app). Since the F1.5 cutover (ADR-017) the app answers from the fda-data service through @medexregai/fda-sdk; the local run needs that service up (cd services/fda-data && npm run dev:local).",
+  "endpoint": "/api/fda/status",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 70,
+  "taskId": "511bc2d7-7558-4841-b3d2-da1eb8c1a3d2",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC2",
+    "9345c6d0-26d2-459f-bbab-a157e823da97#AC4",
+    "71234d6f-eb3d-4960-a9ba-83854ac79e3d#AC5",
+    "511bc2d7-7558-4841-b3d2-da1eb8c1a3d2#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "responseFields": [
+    "available",
+    "dataAsOf",
+    "latencyMs"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Member checks FDA data service availability",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

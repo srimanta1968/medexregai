@@ -4,6 +4,7 @@ import { authenticate, requireAuth } from '../middleware/authenticate';
 import { audit, fromData, fromParam } from '../middleware/audit';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { projectActivity } from '../services/AuditService';
+import { schedulePushTrackedProductCodes } from '../fda/fdaService';
 import { workspaceService } from '../services/WorkspaceService';
 
 type Handler = (req: Request, res: Response) => Promise<void>;
@@ -124,7 +125,9 @@ workspaceRouter.post(
   audit('device.created', { targetType: 'device', targetId: fromData('id'), workspaceId: fromParam('clientId') }),
   handle(async (req, res) => {
     const clientId = id('clientId').parse(req.params.clientId);
-    res.status(201).json({ success: true, data: await workspaceService.createDevice(ctx(req), clientId, deviceCreate.parse(req.body)) });
+    const device = await workspaceService.createDevice(ctx(req), clientId, deviceCreate.parse(req.body));
+    if (device.productCode) schedulePushTrackedProductCodes();
+    res.status(201).json({ success: true, data: device });
   })
 );
 workspaceRouter.patch(
@@ -138,7 +141,10 @@ workspaceRouter.patch(
   }),
   handle(async (req, res) => {
     const deviceId = id('deviceId').parse(req.params.deviceId);
-    res.status(200).json({ success: true, data: await workspaceService.updateDevice(ctx(req), deviceId, deviceUpdate.parse(req.body)) });
+    const input = deviceUpdate.parse(req.body);
+    const device = await workspaceService.updateDevice(ctx(req), deviceId, input);
+    if (Object.prototype.hasOwnProperty.call(input, 'productCode')) schedulePushTrackedProductCodes();
+    res.status(200).json({ success: true, data: device });
   })
 );
 
