@@ -29,6 +29,7 @@ export const TABLE_CATALOG = {
   fda_udi: 'platform',
   fda_event_counts: 'platform',
   fda_sync_runs: 'platform',
+  fda_tracked_product_codes: 'platform',
   memberships: 'tenant',
   invites: 'tenant',
   client_workspaces: 'tenant',

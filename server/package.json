@@ -9,7 +9,10 @@
     "test": "jest",
     "lint": "eslint src tests",
     "db:migrate": "ts-node --transpile-only src/db/migrate.ts",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "worker": "node dist/worker.js",
+    "dev:worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
+    "fda:sync": "ts-node --transpile-only src/fda/cli.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -83,6 +83,17 @@ export interface AppConfig {
   rateLimit: { windowMs: number; maxRequests: number };
   /** Express "trust proxy" setting: how many proxy hops to trust for the client IP. */
   trustProxy: string | number;
+  /** openFDA sync (E1). */
+  fda: {
+    apiKey: string | undefined;
+    maxPerMinute: number;
+    /** First delta reads this many days back (full history comes from the bulk loader). */
+    initialLookbackDays: number;
+    /** Extra product codes whose MAUDE counts are kept besides those on firms' devices. */
+    eventProductCodes: string[];
+    /** UTC hour of the daily sync in the worker. */
+    syncHourUtc: number;
+  };
   /** Which menu items the app shows (UI 2.0 phases), see config/navigation.ts. */
   features: { phase: number; on: string[]; off: string[] };
   pilot: {
@@ -316,6 +327,16 @@ export function loadConfig(env: Env): AppConfig {
     },
     bodyLimit: optionalEnv(env, 'BODY_PARSER_LIMIT', '1mb'),
     features: parseFeatureFlags(env),
+    fda: {
+      apiKey: optionalEnv(env, 'OPENFDA_API_KEY', '') || undefined,
+      maxPerMinute: Math.min(parsePositiveInt(optionalEnv(env, 'OPENFDA_MAX_PER_MINUTE', '240'), 'OPENFDA_MAX_PER_MINUTE'), 240),
+      initialLookbackDays: parsePositiveInt(optionalEnv(env, 'FDA_INITIAL_LOOKBACK_DAYS', '90'), 'FDA_INITIAL_LOOKBACK_DAYS'),
+      eventProductCodes: optionalEnv(env, 'FDA_EVENT_PRODUCT_CODES', '')
+        .split(',')
+        .map((c) => c.trim().toUpperCase())
+        .filter(Boolean),
+      syncHourUtc: Math.min(Number(optionalEnv(env, 'FDA_SYNC_HOUR_UTC', '3')) || 0, 23),
+    },
     trustProxy: parseTrustProxy(optionalEnv(env, 'TRUST_PROXY', 'loopback')),
     pilot: {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'PILOT_REQUESTS_PER_IP_PER_HOUR', '5'), 'PILOT_REQUESTS_PER_IP_PER_HOUR'),
