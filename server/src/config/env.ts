@@ -108,6 +108,15 @@ export interface AppConfig {
   /** Operator alerts (e.g. a project's AI usage passing 2x its estimate). */
   ops: { alertEmail: string | null };
   bodyLimit: string;
+  /** Document parsing sidecar (services/docproc, F7.2): runs in the no-egress sandbox. */
+  docproc: {
+    /** e.g. http://localhost:4200 (dev) or http://docproc.<env>.internal:4200 (AWS). */
+    serviceUrl: string;
+    /** Shared secret sent as X-Docproc-Key. Empty: ingest jobs fail with DOCPROC_UNAVAILABLE. */
+    serviceKey: string | undefined;
+    /** Above docproc's own parse limit so its PARSE_TIMEOUT answer arrives first. */
+    timeoutMs: number;
+  };
 }
 
 /** Origins the ProjexLight platform previews the app from, plus local dev servers. */
@@ -129,9 +138,7 @@ type Env = Record<string, string | undefined>;
 export function requireEnv(env: Env, name: string): string {
   const value = env[name];
   if (value === undefined || value.trim() === '') {
-    throw new Error(
-      `Missing required environment variable ${name}. Run scripts/setup-env.sh to create server/.env.`
-    );
+    throw new Error(`Missing required environment variable ${name}. Run scripts/setup-env.sh to create server/.env.`);
   }
   return value.trim();
 }
@@ -165,7 +172,10 @@ const AI_ROUTE_NAMES = ['triage', 'classify', 'extract', 'contradiction', 'draft
 /** AI_ROUTE_MODELS="draft=qwen2.5:14b-instruct,classify=qwen2.5:7b-instruct". Unknown routes fail at startup. */
 export function parseRouteModels(raw: string): Partial<Record<string, string>> {
   const out: Partial<Record<string, string>> = {};
-  for (const pair of raw.split(',').map((p) => p.trim()).filter(Boolean)) {
+  for (const pair of raw
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)) {
     const i = pair.indexOf('=');
     const route = i > 0 ? pair.slice(0, i).trim() : '';
     const model = i > 0 ? pair.slice(i + 1).trim() : '';
@@ -363,6 +373,11 @@ export function loadConfig(env: Env): AppConfig {
       notifyEmail: optionalEnv(env, 'PILOT_NOTIFY_EMAIL', '') || null,
     },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
+    docproc: {
+      serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
+      serviceKey: optionalEnv(env, 'DOCPROC_API_KEY', '') || undefined,
+      timeoutMs: parsePositiveInt(optionalEnv(env, 'DOCPROC_TIMEOUT_MS', '150000'), 'DOCPROC_TIMEOUT_MS'),
+    },
   };
 }
 
