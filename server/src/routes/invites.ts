@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authenticate, requireAuth } from '../middleware/authenticate';
+import { audit } from '../middleware/audit';
 import { requirePermission } from '../middleware/authorize';
+import { auditService } from '../services/AuditService';
 import { INVITABLE_ROLES, inviteService } from '../services/InviteService';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
@@ -42,6 +44,11 @@ invitesRouter.post(
   '/api/invites',
   authenticate,
   requirePermission('members:invite'),
+  audit('member.invited', {
+    targetType: 'invite',
+    targetId: (_req, data) => (data?.invite as { id?: string } | undefined)?.id,
+    metadata: (req) => ({ role: req.body?.role }),
+  }),
   handle(async (req, res) => {
     const { orgId, userId } = requireAuth(req);
     const input = createInviteSchema.parse(req.body);
@@ -79,6 +86,16 @@ invitesRouter.post(
   handle(async (req, res) => {
     const token = tokenParam.parse(req.params.token);
     const input = acceptSchema.parse(req.body);
-    res.status(200).json({ success: true, data: await inviteService.accept(token, input) });
+    const session = await inviteService.accept(token, input);
+    // Public route (no req.auth yet): record the join explicitly in the new member's firm.
+    await auditService.record({
+      orgId: session.org.id,
+      actorUserId: session.user.id,
+      action: 'member.joined',
+      targetType: 'user',
+      targetId: session.user.id,
+      metadata: { role: session.role },
+    });
+    res.status(200).json({ success: true, data: session });
   })
 );

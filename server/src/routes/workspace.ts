@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authenticate, requireAuth } from '../middleware/authenticate';
+import { audit, fromData, fromParam } from '../middleware/audit';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { workspaceService } from '../services/WorkspaceService';
 
@@ -48,11 +49,20 @@ const deviceCreate = z.object({
   deviceClass: deviceClass.optional(),
 });
 const deviceUpdate = z
-  .object({ name: name.optional(), modelNames: modelNames.optional(), udiDi: udiDi.optional(), productCode: productCode.optional(), deviceClass: deviceClass.optional() })
+  .object({
+    name: name.optional(),
+    modelNames: modelNames.optional(),
+    udiDi: udiDi.optional(),
+    productCode: productCode.optional(),
+    deviceClass: deviceClass.optional(),
+  })
   .refine((v) => Object.keys(v).length > 0, 'Nothing to update');
 
 const submissionType = z.enum(['traditional', 'special', 'abbreviated']);
-const targetDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'targetDate must be YYYY-MM-DD').nullable();
+const targetDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'targetDate must be YYYY-MM-DD')
+  .nullable();
 const projectCreate = z.object({ name, submissionType: submissionType.default('traditional'), targetDate: targetDate.optional() });
 const projectUpdate = z
   .object({ name: name.optional(), status: z.enum(['active', 'submitted', 'cleared', 'archived']).optional(), targetDate: targetDate.optional() })
@@ -78,6 +88,7 @@ workspaceRouter.get(
 workspaceRouter.post(
   '/api/clients',
   ...guard('projects:write'),
+  audit('client.created', { targetType: 'client', targetId: fromData('id'), workspaceId: fromData('id') }),
   handle(async (req, res) => {
     res.status(201).json({ success: true, data: await workspaceService.createClient(ctx(req), clientCreate.parse(req.body)) });
   })
@@ -85,6 +96,12 @@ workspaceRouter.post(
 workspaceRouter.patch(
   '/api/clients/:clientId',
   ...guard('projects:write'),
+  audit('client.updated', {
+    targetType: 'client',
+    targetId: fromParam('clientId'),
+    workspaceId: fromParam('clientId'),
+    metadata: (req) => ({ fields: Object.keys(req.body ?? {}) }),
+  }),
   handle(async (req, res) => {
     const clientId = id('clientId').parse(req.params.clientId);
     res.status(200).json({ success: true, data: await workspaceService.updateClient(ctx(req), clientId, clientUpdate.parse(req.body)) });
@@ -103,6 +120,7 @@ workspaceRouter.get(
 workspaceRouter.post(
   '/api/clients/:clientId/devices',
   ...guard('projects:write'),
+  audit('device.created', { targetType: 'device', targetId: fromData('id'), workspaceId: fromParam('clientId') }),
   handle(async (req, res) => {
     const clientId = id('clientId').parse(req.params.clientId);
     res.status(201).json({ success: true, data: await workspaceService.createDevice(ctx(req), clientId, deviceCreate.parse(req.body)) });
@@ -111,6 +129,12 @@ workspaceRouter.post(
 workspaceRouter.patch(
   '/api/devices/:deviceId',
   ...guard('projects:write'),
+  audit('device.updated', {
+    targetType: 'device',
+    targetId: fromParam('deviceId'),
+    workspaceId: fromData('clientId'),
+    metadata: (req) => ({ fields: Object.keys(req.body ?? {}) }),
+  }),
   handle(async (req, res) => {
     const deviceId = id('deviceId').parse(req.params.deviceId);
     res.status(200).json({ success: true, data: await workspaceService.updateDevice(ctx(req), deviceId, deviceUpdate.parse(req.body)) });
@@ -130,6 +154,7 @@ workspaceRouter.get(
 workspaceRouter.post(
   '/api/devices/:deviceId/projects',
   ...guard('projects:write'),
+  audit('project.created', { targetType: 'project', targetId: fromData('id'), projectId: fromData('id'), workspaceId: fromData('clientId') }),
   handle(async (req, res) => {
     const deviceId = id('deviceId').parse(req.params.deviceId);
     res.status(201).json({ success: true, data: await workspaceService.createProject(ctx(req), deviceId, projectCreate.parse(req.body)) });
@@ -138,6 +163,12 @@ workspaceRouter.post(
 workspaceRouter.get(
   '/api/projects/:projectId',
   ...guard('projects:read'),
+  audit('project.viewed', {
+    targetType: 'project',
+    targetId: fromParam('projectId'),
+    projectId: fromParam('projectId'),
+    workspaceId: fromData('clientId'),
+  }),
   handle(async (req, res) => {
     const projectId = id('projectId').parse(req.params.projectId);
     res.status(200).json({ success: true, data: await workspaceService.getProject(ctx(req), projectId) });
@@ -146,6 +177,13 @@ workspaceRouter.get(
 workspaceRouter.patch(
   '/api/projects/:projectId',
   ...guard('projects:write'),
+  audit('project.updated', {
+    targetType: 'project',
+    targetId: fromParam('projectId'),
+    projectId: fromParam('projectId'),
+    workspaceId: fromData('clientId'),
+    metadata: (req) => ({ fields: Object.keys(req.body ?? {}) }),
+  }),
   handle(async (req, res) => {
     const projectId = id('projectId').parse(req.params.projectId);
     res.status(200).json({ success: true, data: await workspaceService.updateProject(ctx(req), projectId, projectUpdate.parse(req.body)) });
