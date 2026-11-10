@@ -14,7 +14,12 @@
     "typecheck": "tsc --noEmit -p .",
     "lint": "eslint src",
     "dev:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/index.ts",
-    "db:migrate:local": "node scripts/with-dev-db.js ts-node --transpile-only src/db/migrate.ts"
+    "db:migrate:local": "node scripts/with-dev-db.js ts-node --transpile-only src/db/migrate.ts",
+    "fda:sync": "ts-node --transpile-only src/sync/cli.ts",
+    "fda:bulk": "ts-node --transpile-only src/sync/bulkCli.ts",
+    "fda:sync:local": "node scripts/with-dev-db.js ts-node --transpile-only src/sync/cli.ts",
+    "fda:bulk:local": "node scripts/with-dev-db.js ts-node --transpile-only src/sync/bulkCli.ts",
+    "dev:worker:local": "node scripts/with-dev-db.js ts-node-dev --respawn --transpile-only src/worker.ts"
   },
   "dependencies": {
     "dotenv": "^16.3.1",

@@ -20,8 +20,14 @@ export function readPool(): Pool {
   return read;
 }
 
-export async function q<T extends QueryResultRow>(sql: string, params: unknown[] = [], pool: Pool = readPool()): Promise<T[]> {
+/** Query the primary (worker, admin, writes). */
+export async function q<T extends QueryResultRow>(sql: string, params: unknown[] = [], pool: Pool = primaryPool()): Promise<T[]> {
   return (await pool.query<T>(sql, params)).rows;
+}
+
+/** Query the read pool (replica when configured): every /v1 read. */
+export async function qRead<T extends QueryResultRow>(sql: string, params: unknown[] = []): Promise<T[]> {
+  return (await readPool().query<T>(sql, params)).rows;
 }
 
 export async function closePools(): Promise<void> {
