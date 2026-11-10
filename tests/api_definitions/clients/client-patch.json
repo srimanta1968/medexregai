@@ -1,0 +1,165 @@
+{
+  "name": "PATCH /api/clients/:clientId - rename or archive a client",
+  "description": "Updates name and/or status (active|archived) of a client in the caller's firm. Needs projects:write. Unknown or other-firm ids answer 404.",
+  "endpoint": "/api/clients/:clientId",
+  "method": "PATCH",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 52,
+  "taskId": "a9fee73a-bb05-4de6-b28d-10dd328567a9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC2",
+    "a9fee73a-bb05-4de6-b28d-10dd328567a9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (reviewer, viewer)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Client not found",
+      "when": "client does not exist or belongs to another firm (same answer, so other firms' ids are not disclosed)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Nothing to update",
+      "when": "empty body"
+    },
+    {
+      "status": 409,
+      "code": "DUPLICATE_NAME",
+      "message": "A client with this name already exists",
+      "when": "rename collides with another client",
+      "reproducible": false,
+      "notReproducibleReason": "Needs a second client with a known name in the same run; covered on POST /api/clients."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner archives a client",
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      },
+      "payload": {
+        "status": "archived"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "archived"
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      },
+      "payload": {
+        "status": "active"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot write",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      },
+      "payload": {
+        "status": "active"
+      }
+    },
+    {
+      "name": "404 - unknown client",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "clientId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "status": "active"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|id",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "clientId": "{{static:not-a-uuid}}"
+      },
+      "payload": {
+        "status": "active"
+      }
+    },
+    {
+      "name": "400 - nothing to update",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR|empty",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      },
+      "payload": {}
+    }
+  ],
+  "fieldEnums": {
+    "status": [
+      "active",
+      "archived"
+    ]
+  }
+}

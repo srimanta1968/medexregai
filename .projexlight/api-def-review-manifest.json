@@ -31,19 +31,291 @@
   },
   "pilot-requests/pilot-requests-post.json": {
     "hash": "03867a3771b05af87fab3c8bc56c896a5a9d04969d5d6ab959cf5254baec4d10",
-    "status": "findings",
-    "findingsCount": 1,
-    "verifiedAt": "2026-11-10T00:08:58",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
     "route": [
       "POST",
       "/pilot-requests"
+    ]
+  },
+  "auth/login-post.json": {
+    "hash": "6a33c2becbfcd7bdd3203baca632470e9f19a79ed75f1e901a3e1a6a88afa4ec",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/login"
+    ]
+  },
+  "auth/logout-post.json": {
+    "hash": "0136e0a0d2dc2ffbc8cf35f88a7bedeb699b27020735e82ed05ebda71bd0b90b",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/logout"
     ],
     "findings": [
       {
-        "rule": "CODE-MATCH",
-        "severity": "low",
-        "message": "POST /api/pilot-requests was not found in the best-effort route scan \u2014 verify the path/method against the handler (the scanner may not cover this registration style)."
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
       }
+    ]
+  },
+  "auth/me-get.json": {
+    "hash": "8254b7a6e773ff9944d787641f6c90134e4db32dc89801a24adb455d167edc29",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/auth/me"
+    ]
+  },
+  "auth/password-reset-confirm-post.json": {
+    "hash": "b67f4d773d7c07cb42e33bf3a0034f35c36e7d3530f5379a5a244e66c69b95f4",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/password-reset/confirm"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/password-reset-request-post.json": {
+    "hash": "c9fbcdef5c1ac8011e123712f5ba8a7e443226b942ef70cc9c2a08f63e94caf0",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/password-reset/request"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "auth/refresh-post.json": {
+    "hash": "34db281fa4d342a0272223c2ba7b37abe072f4b0c59f81c88b4508176b415af4",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/refresh"
+    ]
+  },
+  "clients/client-patch.json": {
+    "hash": "ddea7b1453795d38b8f3b9f149080f0115e6562e78fdaa1b9e0f7edbba6b7c1a",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "PATCH",
+      "/clients/:p"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-39",
+        "severity": "low",
+        "message": "fieldEnums missing for enum-backed field(s): status. Add a root-level 'fieldEnums' mapping each to its COMPLETE list of valid values (read from the DB schema/validator) so QA docs show what each field accepts."
+      }
+    ]
+  },
+  "clients/clients-get.json": {
+    "hash": "54e711fcb949300ed6affc1275762215c356b2ec6f8656da542d2663a5215ffe",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/clients"
+    ]
+  },
+  "clients/clients-post.json": {
+    "hash": "746720a2d089da33abe9679bf77823c663b5deca0c63bbaab2eb0121d44b2228",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/clients"
+    ]
+  },
+  "devices/client-devices-get.json": {
+    "hash": "74439c2e8f0455f06d5906fe27ed19a1bf852e3c70c4d83d4d24701e8d442279",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/clients/:p/devices"
+    ]
+  },
+  "devices/client-devices-post.json": {
+    "hash": "ff78e1103d1fb8300eb4acd7ee8ab34cebef5e4bcb296caa93156c7f1a91d71c",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/clients/:p/devices"
+    ]
+  },
+  "devices/device-patch.json": {
+    "hash": "cff82f1e259bece433be0a26b51b2ab322278b80acd1f593d7a2a39a602e4c6b",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "PATCH",
+      "/devices/:p"
+    ]
+  },
+  "health/health-get.json": {
+    "hash": "bfe8e8bf9fda67489056c5839230a028fb9b88c338a8270866ecad8491425ace",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/health"
+    ]
+  },
+  "invites/invites-get.json": {
+    "hash": "c13cf3eb37543898859265ce7b28f1c09e85b53abf91ecb7524be71c7f3c066a",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/invites"
+    ]
+  },
+  "invites/token-get.json": {
+    "hash": "9159bc8df5e7098be42c4418c721bfa70215078df9b82d91b454478181a3587c",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/invites/:p"
+    ]
+  },
+  "projects/client-projects-get.json": {
+    "hash": "3ec02471b463816baeb8ed0b21301c5d7d3a96ec181f409c14d38c59a057a59b",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/clients/:p/projects"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-39",
+        "severity": "low",
+        "message": "fieldEnums missing for enum-backed field(s): status. Add a root-level 'fieldEnums' mapping each to its COMPLETE list of valid values (read from the DB schema/validator) so QA docs show what each field accepts."
+      }
+    ]
+  },
+  "projects/device-projects-post.json": {
+    "hash": "bd054d319166927d7a85c441fc33cfe9c0231998dc943a8e008e8ee42a00fc32",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/devices/:p/projects"
+    ]
+  },
+  "projects/project-get.json": {
+    "hash": "4fc779eea8518e38e5bef8d3d37fdc454733f6f41d14b95a0b9b2aa44455a490",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/projects/:p"
+    ]
+  },
+  "projects/project-patch.json": {
+    "hash": "014ef3d88aff84705c8cbd5241135b64744b11141d39c9e214460326ba0c6e48",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "PATCH",
+      "/projects/:p"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-39",
+        "severity": "low",
+        "message": "fieldEnums missing for enum-backed field(s): status. Add a root-level 'fieldEnums' mapping each to its COMPLETE list of valid values (read from the DB schema/validator) so QA docs show what each field accepts."
+      }
+    ]
+  },
+  "sso/exchange-post.json": {
+    "hash": "a27361c10c7390ac98b409eac23c8f27c1ff00fa9bb0db90569a1e46ad630e43",
+    "status": "findings",
+    "findingsCount": 1,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "POST",
+      "/auth/sso/exchange"
+    ],
+    "findings": [
+      {
+        "rule": "MUST-14",
+        "severity": "medium",
+        "message": "POST endpoint has no captureResponse \u2014 capture created ids so dependents can {{cache:...}} them."
+      }
+    ]
+  },
+  "sso/provider-callback-get.json": {
+    "hash": "45a9fd6b8422970e7d9b90d01a24c420ddd9cb5e9581f5a2e8678206bf6227fd",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/auth/sso/:p/callback"
+    ]
+  },
+  "sso/provider-start-get.json": {
+    "hash": "821b1a282b721e7e44bda5aa3eb465df26452871145b36557c47dd811a3dea89",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/auth/sso/:p/start"
+    ]
+  },
+  "sso/providers-get.json": {
+    "hash": "6677b8e26ac6700f86bfd5b48a4d038e25f5dbe30fe9159cbb9cf95ef08fe880",
+    "status": "clean",
+    "findingsCount": 0,
+    "verifiedAt": "2026-11-10T03:30:32",
+    "route": [
+      "GET",
+      "/auth/sso/providers"
     ]
   }
 }

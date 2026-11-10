@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-11-10T03:26:55.951231Z",
+  "taskId": "38baed81-c89a-42e1-959b-1484a73b05ce",
+  "gaps": [
+    {
+      "criterionId": "38baed81-c89a-42e1-959b-1484a73b05ce#AC1",
+      "criterion": "A user can switch and create client, device and submission records",
+      "verdict": "partial",
+      "gap": "Schema only; the create/list API and the switcher UI follow in the next F0.2 tasks.",
+      "evidence": {
+        "apiDefinitions": [],
+        "scenarios": [],
+        "files": [
+          "server/migrations/006_clients_devices_projects.sql"
+        ]
+      }
+    }
+  ]
+}

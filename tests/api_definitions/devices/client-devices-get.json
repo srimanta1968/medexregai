@@ -1,0 +1,94 @@
+{
+  "name": "GET /api/clients/:clientId/devices - list a client's devices",
+  "description": "Devices of one client, newest first, keyset-paginated. Needs projects:read. Unknown or other-firm client: 404.",
+  "endpoint": "/api/clients/:clientId/devices",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 54,
+  "taskId": "a9fee73a-bb05-4de6-b28d-10dd328567a9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC2",
+    "a9fee73a-bb05-4de6-b28d-10dd328567a9#AC1",
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Client not found",
+      "when": "client does not exist or belongs to another firm (same answer, so other firms' ids are not disclosed)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner lists devices",
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "clientId": "{{cache:clients.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown client",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "clientId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "clientId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}

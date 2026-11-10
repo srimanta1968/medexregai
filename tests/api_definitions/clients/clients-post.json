@@ -1,0 +1,119 @@
+{
+  "name": "POST /api/clients - create a client workspace",
+  "description": "Creates a client (the manufacturer a consultancy works for) in the caller's firm. Needs projects:write (owner, admin, editor). Names are unique per firm, case-insensitive. Covers: a user can create client, device and submission records.",
+  "endpoint": "/api/clients",
+  "method": "POST",
+  "requiresAuth": true,
+  "expectedStatus": 201,
+  "priority": 50,
+  "taskId": "a9fee73a-bb05-4de6-b28d-10dd328567a9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC2",
+    "a9fee73a-bb05-4de6-b28d-10dd328567a9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "clients.create.response.data.id": "data.id",
+    "clients.create.response.data.name": "data.name"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (reviewer, viewer)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "name is required",
+      "when": "name missing or blank"
+    },
+    {
+      "status": 409,
+      "code": "DUPLICATE_NAME",
+      "message": "A client with this name already exists",
+      "when": "same name (any case) already used in the firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner creates a client",
+      "capturesResponse": true,
+      "payload": {
+        "name": "{{dynamic:company}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "active"
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {
+        "name": "{{dynamic:company}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot write",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "payload": {
+        "name": "{{dynamic:company}}"
+      }
+    },
+    {
+      "name": "400 - name missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {}
+    },
+    {
+      "name": "409 - duplicate client name",
+      "testType": "negative",
+      "coversErrorCase": "409|DUPLICATE_NAME",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "DUPLICATE_NAME"
+      },
+      "payload": {
+        "name": "{{cache:clients.create.response.data.name}}"
+      }
+    }
+  ]
+}

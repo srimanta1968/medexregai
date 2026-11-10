@@ -1,11 +1,53 @@
 {
-  "updatedAt": "2026-11-10T00:09:01",
+  "updatedAt": "2026-11-10T03:30:34",
   "scope": "all",
   "gaps": [
     {
-      "file": "tests/api_definitions/pilot-requests/pilot-requests-post.json",
+      "file": "tests/api_definitions/auth/logout-post.json",
       "rules": [
-        "CODE-MATCH"
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/auth/password-reset-confirm-post.json",
+      "rules": [
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/auth/password-reset-request-post.json",
+      "rules": [
+        "MUST-14"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/clients/client-patch.json",
+      "rules": [
+        "MUST-39"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/projects/client-projects-get.json",
+      "rules": [
+        "MUST-39"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/projects/project-patch.json",
+      "rules": [
+        "MUST-39"
+      ],
+      "findingsCount": 1
+    },
+    {
+      "file": "tests/api_definitions/sso/exchange-post.json",
+      "rules": [
+        "MUST-14"
       ],
       "findingsCount": 1
     }
@@ -13,7 +55,7 @@
   "missingDefinitions": [],
   "captureSyncIssues": 0,
   "summary": {
-    "withFindings": 1,
-    "findingsCount": 1
+    "withFindings": 7,
+    "findingsCount": 7
   }
 }

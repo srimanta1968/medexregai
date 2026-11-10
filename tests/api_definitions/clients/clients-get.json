@@ -1,0 +1,71 @@
+{
+  "name": "GET /api/clients - list client workspaces",
+  "description": "Lists the firm's clients newest first with keyset pagination (limit 1-50, opaque nextCursor) and an optional status filter (active|archived). Needs projects:read, so every role can read. Never returns other firms' clients. Covers: a user can switch between client records.",
+  "endpoint": "/api/clients",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 51,
+  "taskId": "a9fee73a-bb05-4de6-b28d-10dd328567a9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "aace117c-ee0f-45ab-8e35-83da03f3824f#AC2",
+    "a9fee73a-bb05-4de6-b28d-10dd328567a9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "cursor is invalid",
+      "when": "cursor not produced by this endpoint, or bad status/limit"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner lists clients",
+      "queryParams": {
+        "limit": "20"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    },
+    {
+      "name": "400 - invalid cursor",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "queryParams": {
+        "cursor": "{{static:garbage}}"
+      }
+    }
+  ]
+}
