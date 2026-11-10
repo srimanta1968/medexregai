@@ -47,6 +47,10 @@ export interface LlmSettings {
   generationModel: string;
   embeddingModel: string;
   requestTimeoutMs: number;
+  /** Bearer key for openai_compatible (vLLM --api-key) or anthropic. Optional for Ollama. */
+  apiKey?: string;
+  /** Where embeddings run when the generator has none (anthropic): our Ollama. */
+  embeddingBaseUrl: string;
 }
 
 export type SsoProviderId = 'google' | 'microsoft';
@@ -318,6 +322,8 @@ export function loadConfig(env: Env): AppConfig {
       generationModel: requireEnv(env, 'AI_GENERATION_MODEL'),
       embeddingModel: requireEnv(env, 'AI_EMBEDDING_MODEL'),
       requestTimeoutMs: parsePositiveInt(optionalEnv(env, 'AI_REQUEST_TIMEOUT_MS', '120000'), 'AI_REQUEST_TIMEOUT_MS'),
+      apiKey: optionalEnv(env, 'AI_API_KEY', '') || undefined,
+      embeddingBaseUrl: optionalEnv(env, 'AI_EMBEDDING_BASE_URL', 'http://localhost:11434'),
     },
     logLevel: optionalEnv(env, 'LOG_LEVEL', 'info'),
     logFormat: parseLogFormat(optionalEnv(env, 'LOG_FORMAT', 'dev')),
