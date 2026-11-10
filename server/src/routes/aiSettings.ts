@@ -107,6 +107,31 @@ aiSettingsRouter.get(
   }),
 );
 
+/**
+ * Live health of the platform models (generation and embedding): reachable and the
+ * configured models present. Never spends generation tokens; always 200.
+ */
+aiSettingsRouter.get(
+  '/api/settings/ai/health',
+  guard,
+  handle(async (_req, res) => {
+    const platform = platformProviders();
+    const generation = [...new Set([platform.llm.defaultModel, ...Object.values(config.llm.routeModels).filter((m): m is string => !!m)])];
+    const embedding = platform.embeddings.embeddingModel;
+    const separate = (platform.embeddings as unknown) !== (platform.llm as unknown);
+    // With Claude as generator, embeddings run on our Ollama: check each where it lives.
+    const health = await platform.llm.health(separate ? generation : [...generation, embedding]);
+    if (separate && 'health' in platform.embeddings) {
+      const e = await (platform.embeddings as unknown as { health(m: string[]): Promise<typeof health> }).health([embedding]);
+      health.models.push(...e.models);
+      health.ok = health.ok && e.ok;
+      health.error = health.error ?? e.error;
+    }
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: { checkedAt: new Date().toISOString(), platform: health } });
+  }),
+);
+
 /** Add a firm provider. The key is encrypted at rest and never returned; it must pass a test before use. */
 aiSettingsRouter.post(
   '/api/settings/ai-providers',

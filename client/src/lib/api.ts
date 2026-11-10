@@ -4,7 +4,7 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
-    public readonly details?: { field: string; message: string }[]
+    public readonly details?: { field: string; message: string }[],
   ) {
     super(message);
     this.name = 'ApiError';
@@ -37,10 +37,10 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, token 
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', 'Cannot reach MedexRegAI. Check your connection and try again.');
   }
+  // 204 No Content (e.g. DELETE) has no body to parse.
+  if (response.status === 204) return undefined as T;
   const payload = (await response.json().catch(() => null)) as
-    | { success: true; data: T }
-    | { success: false; error: { code: string; message: string; details?: { field: string; message: string }[] } }
-    | null;
+    { success: true; data: T } | { success: false; error: { code: string; message: string; details?: { field: string; message: string }[] } } | null;
   if (!response.ok || !payload || payload.success === false) {
     const error = payload && payload.success === false ? payload.error : undefined;
     throw new ApiError(response.status, error?.code ?? 'INTERNAL_ERROR', error?.message ?? 'Something went wrong. Please try again.', error?.details);
