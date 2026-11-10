@@ -1,27 +1,20 @@
 {
-  "generatedAt": "2026-11-09T23:25:34.544574Z",
-  "taskId": "31a5d242-1313-4c20-9379-672f8cf35c5d",
+  "generatedAt": "2026-11-09T23:57:54.331687Z",
+  "taskId": "7db6c624-28bd-4b9b-8269-5b88a414eac1",
   "gaps": [
     {
-      "criterionId": "31a5d242-1313-4c20-9379-672f8cf35c5d#AC1",
-      "criterion": "A user can sign in with Google or Microsoft SSO",
+      "criterionId": "7db6c624-28bd-4b9b-8269-5b88a414eac1#AC1",
+      "criterion": "Terraform provisions dev, staging and production on AWS in one US region",
       "verdict": "partial",
-      "gap": "Full flow verified only against a local OIDC mock (PKCE, RS256 ID token, state, nonce, linking, one-time exchange). Not yet run against real Google/Microsoft: no OAuth client credentials configured (SSO_GOOGLE_CLIENT_ID/SECRET, SSO_MICROSOFT_*). Committed artifacts cover providers listing, disabled-provider 404, exchange negatives and the no-account UI message.",
+      "gap": "Terraform for all three environments is written and passes terraform validate and fmt, but has not been planned or applied against an AWS account (needs the user's account, state bucket and approval to create billable resources). App still needs IAM-role S3 credentials and container images before services can start.",
       "evidence": {
-        "apiDefinitions": [
-          "tests/api_definitions/sso/providers-get.json",
-          "tests/api_definitions/sso/provider-start-get.json",
-          "tests/api_definitions/sso/provider-callback-get.json",
-          "tests/api_definitions/sso/exchange-post.json"
-        ],
-        "scenarios": [
-          "eee48cd2-24d7-4912-884d-baf92fedd35e"
-        ],
+        "apiDefinitions": [],
+        "scenarios": [],
         "files": [
-          "server/src/services/SsoService.ts",
-          "server/src/routes/sso.ts",
-          "client/src/components/auth/SsoButtons.tsx",
-          "client/src/pages/auth/SsoCompletePage.tsx"
+          "infra/terraform/modules/platform/main.tf",
+          "infra/terraform/envs/dev/main.tf",
+          "infra/terraform/envs/staging/main.tf",
+          "infra/terraform/envs/production/main.tf"
         ]
       }
     }

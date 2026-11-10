@@ -16,7 +16,7 @@ export class MailService {
   async send(message: MailMessage): Promise<void> {
     try {
       if (config.mail.transport === 'log') {
-        console.log(
+        console.info(
           ['----- email (MAIL_TRANSPORT=log) -----', `From: ${config.mail.from}`, `To: ${message.to}`, `Subject: ${message.subject}`, '', message.text, '----- end email -----'].join('\n')
         );
       }

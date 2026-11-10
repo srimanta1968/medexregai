@@ -140,7 +140,7 @@ export async function runMigrations(dir: string = MIGRATIONS_DIR): Promise<Migra
 if (require.main === module) {
   runMigrations()
     .then((applied) => {
-      console.log(
+      console.info(
         applied.length
           ? `Applied ${applied.length} migration(s): ${applied.map((m) => `${m.version}_${m.name}`).join(', ')}`
           : 'Database is up to date.'

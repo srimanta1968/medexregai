@@ -8,7 +8,9 @@
     "dev:api": "npm run dev --prefix server",
     "dev:web": "npm run dev --prefix client",
     "test": "npm test --prefix server",
-    "build": "npm run build --prefix server && npm run build --prefix client"
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client",
+    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client"
   },
   "devDependencies": {
     "concurrently": "9.1.2"

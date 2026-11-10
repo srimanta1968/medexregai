@@ -1,0 +1,148 @@
+name: CI
+
+# Lint, type-check, test and build on every push and pull request.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server (lint, types, tests, migrations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: server
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: medexregai_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d medexregai_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # CI-only values; nothing here is a real secret.
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: medexregai_ci
+      DB_USER: ci
+      DB_PASSWORD: ci-only-password
+      JWT_SECRET: ci-jwt-secret-at-least-thirty-two-characters
+      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      REDIS_URL: redis://localhost:6379
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: ci
+      S3_ACCESS_KEY_ID: ci
+      S3_SECRET_ACCESS_KEY: ci
+      AI_BASE_URL: http://localhost:11434
+      AI_GENERATION_MODEL: ci
+      AI_EMBEDDING_MODEL: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run lint -- --max-warnings 0
+      - run: npm run typecheck
+      - run: npm test -- --ci
+      - name: Migrations apply to an empty database
+        run: npm run db:migrate
+      - name: Migrations are idempotent
+        run: npm run db:migrate
+      - run: npm run build
+
+  client:
+    name: Client (lint, types, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run lint -- --max-warnings 0
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  contracts:
+    name: Test artifacts (api_definitions, feature files)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: api_definitions are valid JSON with required fields
+        run: |
+          python3 - <<'PY'
+          import glob, json, sys
+          bad = []
+          for f in glob.glob('tests/api_definitions/**/*.json', recursive=True):
+              try:
+                  d = json.load(open(f, encoding='utf-8'))
+              except Exception as e:
+                  bad.append(f'{f}: invalid JSON ({e})'); continue
+              if not isinstance(d, dict) or 'endpoint' not in d:
+                  continue
+              for k in ('method', 'taskId', 'testCases', 'errorCases', 'coversCriterion'):
+                  if k not in d:
+                      bad.append(f'{f}: missing {k}')
+          print('\n'.join(bad) or 'all api_definitions OK')
+          sys.exit(1 if bad else 0)
+          PY
+      - name: Every UI scenario carries its ProjexLight tags
+        run: |
+          python3 - <<'PY'
+          import glob, sys
+          bad = []
+          for f in glob.glob('tests/features/*.feature'):
+              lines = open(f, encoding='utf-8').read().splitlines()
+              if not any('@feature_id:' in l for l in lines):
+                  bad.append(f'{f}: no @feature_id')
+              for i, line in enumerate(lines):
+                  if line.strip().startswith(('Scenario:', 'Scenario Outline:')):
+                      tags, j = [], i - 1
+                      while j >= 0 and lines[j].strip().startswith('@'):
+                          tags.append(lines[j]); j -= 1
+                      if not any('@scenario_id:' in t for t in tags):
+                          bad.append(f'{f}:{i + 1}: scenario has no @scenario_id')
+          print('\n'.join(bad) or 'all feature files OK')
+          sys.exit(1 if bad else 0)
+          PY
+
+  terraform:
+    name: Terraform (fmt, validate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform fmt -check -recursive infra/terraform
+      - name: Validate each environment
+        run: |
+          for env in dev staging production; do
+            terraform -chdir=infra/terraform/envs/$env init -backend=false -input=false
+            terraform -chdir=infra/terraform/envs/$env validate
+          done

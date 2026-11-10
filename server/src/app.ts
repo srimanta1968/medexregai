@@ -94,7 +94,7 @@ const app = createApp(config);
 
 if (require.main === module) {
   app.listen(config.port, (): void => {
-    console.log(`${config.appName} API listening on port ${config.port}`);
+    console.info(`${config.appName} API listening on port ${config.port}`);
   });
 }
 

@@ -7,13 +7,6 @@ returns: {status, code, message, when}). These feed **api_library.description**
 and the **LLM test-data generator**. Fix EVERY file below — read each handler to
 enumerate real errors; do not guess.
 
-- [ ] `POST /api/auth/login` — tests/api_definitions/auth/login-post.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 403/NO_ACTIVE_MEMBERSHIP
-- [ ] `GET /api/auth/me` — tests/api_definitions/auth/me-get.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 401/TOKEN_EXPIRED
-- [ ] `POST /api/auth/register` — tests/api_definitions/auth/register-post.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 409/EMAIL_TAKEN
 - [ ] `GET /health` — tests/api_definitions/health/health-get.json → missing: errorCases[] (MUST-43)
-- [ ] `POST /api/invites` — tests/api_definitions/invites/invites-post.json → missing: negative testCase for 2 errorCase(s) (MUST-64): 403/FORBIDDEN, 409/ALREADY_MEMBER
-- [ ] `POST /api/invites/:token/accept` — tests/api_definitions/invites/token-accept-post.json → missing: negative testCase for 2 errorCase(s) (MUST-64): 401/INVALID_CREDENTIALS, 409/ALREADY_MEMBER
-- [ ] `POST /api/auth/sso/exchange` — tests/api_definitions/sso/exchange-post.json → missing: negative testCase for 1 errorCase(s) (MUST-64): 403/NO_ACTIVE_MEMBERSHIP
-- [ ] `GET /api/auth/sso/providers` — tests/api_definitions/sso/providers-get.json → missing: errorCases[] (MUST-43)
 
 Call `projexlight_get_api_definition_rules` for the exact format.
