@@ -41,3 +41,15 @@ After the first apply:
 - The API still requires static `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`; on AWS it must use the task role instead.
 - The worker entrypoint (`dist/worker.js`), Dockerfiles and the docproc image arrive with the CI/CD and worker tasks.
 - CloudFront talks to the ALB over HTTP inside AWS; add an ALB certificate and switch the origin to HTTPS before production traffic.
+
+## fda-data service (ADR-017)
+
+`modules/platform/fda_data.tf` adds the FDA data service with its **own** RDS
+PostgreSQL instance (`fda_db`, optional read replica via `fda_db_read_replica`),
+ECS services `fda-api` and `fda-worker`, its own secret and execution role, and a
+private DNS name `fda-api.<env>.internal:4100` reachable only from the app's api
+and worker tasks. App tasks get `FDA_SERVICE_URL`; after the first deploy an
+operator creates the app's key inside fda-data
+(`npm run clients -- create medexregai-app fda:read fda:track`) and stores it as
+`FDA_SERVICE_KEY` in the app secret. Push the image built from `services/fda-data`
+to the `fda_ecr_repository` output. Plan only until an AWS account is approved.

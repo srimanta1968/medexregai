@@ -13,6 +13,8 @@ export interface Config {
   /** Optional read replica for /v1 reads; falls back to the primary. */
   readDatabaseUrl: string | null;
   poolMax: number;
+  /** Verified TLS to Postgres (RDS enforces it with rds.force_ssl). */
+  dbSsl: boolean;
   openFda: {
     apiKey: string | null;
     maxPerMinute: number;
@@ -37,23 +39,35 @@ function int(name: string, fallback: number, min: number, max: number): number {
   return n;
 }
 
-/** FDA_DATABASE_URL, or the same built from FDA_DB_HOST / _PORT / _USER / _PASSWORD / _NAME. */
-function databaseUrl(): string {
-  if (process.env.FDA_DATABASE_URL) return process.env.FDA_DATABASE_URL;
-  if (!process.env.FDA_DB_HOST) required('FDA_DATABASE_URL');
+/** postgres:// URL for a host from FDA_DB_USER / _PASSWORD / _PORT / _NAME. */
+function urlFor(host: string): string {
   const user = encodeURIComponent(required('FDA_DB_USER'));
   const password = encodeURIComponent(required('FDA_DB_PASSWORD'));
   const port = int('FDA_DB_PORT', 5432, 1, 65535);
   const name = encodeURIComponent(process.env.FDA_DB_NAME || 'fda_db');
-  return `postgres://${user}:${password}@${process.env.FDA_DB_HOST}:${port}/${name}`;
+  return `postgres://${user}:${password}@${host}:${port}/${name}`;
+}
+
+/** FDA_DATABASE_URL, or the same built from FDA_DB_HOST and its parts. */
+function databaseUrl(): string {
+  if (process.env.FDA_DATABASE_URL) return process.env.FDA_DATABASE_URL;
+  if (!process.env.FDA_DB_HOST) required('FDA_DATABASE_URL');
+  return urlFor(process.env.FDA_DB_HOST as string);
+}
+
+/** FDA_READ_DATABASE_URL, or a replica host FDA_READ_DB_HOST with the same credentials; null = use the primary. */
+function readDatabaseUrl(): string | null {
+  if (process.env.FDA_READ_DATABASE_URL) return process.env.FDA_READ_DATABASE_URL;
+  return process.env.FDA_READ_DB_HOST ? urlFor(process.env.FDA_READ_DB_HOST) : null;
 }
 
 export function loadConfig(): Config {
   return {
     port: int('PORT', 4100, 1, 65535),
     databaseUrl: databaseUrl(),
-    readDatabaseUrl: process.env.FDA_READ_DATABASE_URL || null,
+    readDatabaseUrl: readDatabaseUrl(),
     poolMax: int('FDA_DB_POOL_MAX', 10, 1, 200),
+    dbSsl: process.env.FDA_DB_SSL === 'true',
     openFda: {
       apiKey: process.env.OPENFDA_API_KEY || null,
       // openFDA's documented limit is 240 requests per minute.

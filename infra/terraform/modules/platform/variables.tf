@@ -133,3 +133,44 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+# --- fda-data service (ADR-017) ---------------------------------------------------------
+
+variable "fda_db_instance_class" {
+  description = "RDS class for the FDA corpus database (read-mostly, ~15 GB+)."
+  type        = string
+  default     = "db.t4g.medium"
+}
+
+variable "fda_db_allocated_storage_gb" {
+  type    = number
+  default = 100
+}
+
+variable "fda_db_backup_retention_days" {
+  description = "Public data, rebuildable from openFDA: shorter than customer data."
+  type        = number
+  default     = 3
+}
+
+variable "fda_db_read_replica" {
+  description = "Add a read replica for fda-data /v1 reads."
+  type        = bool
+  default     = false
+}
+
+variable "fda_api_desired_count" {
+  type    = number
+  default = 1
+}
+
+variable "fda_api_max_count" {
+  type    = number
+  default = 3
+}
+
+variable "fda_worker_count" {
+  description = "Worker tasks; one is enough (per-dataset advisory locks make more safe)."
+  type        = number
+  default     = 1
+}

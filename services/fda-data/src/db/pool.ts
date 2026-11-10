@@ -10,13 +10,25 @@ let primary: Pool | null = null;
 let read: Pool | null = null;
 
 export function primaryPool(): Pool {
-  if (!primary) primary = new Pool({ connectionString: config.databaseUrl, max: config.poolMax, application_name: 'fda-data' });
+  if (!primary)
+    primary = new Pool({
+      connectionString: config.databaseUrl,
+      max: config.poolMax,
+      application_name: 'fda-data',
+      ssl: config.dbSsl ? { rejectUnauthorized: true } : false,
+    });
   return primary;
 }
 
 export function readPool(): Pool {
   if (!config.readDatabaseUrl) return primaryPool();
-  if (!read) read = new Pool({ connectionString: config.readDatabaseUrl, max: config.poolMax, application_name: 'fda-data-read' });
+  if (!read)
+    read = new Pool({
+      connectionString: config.readDatabaseUrl,
+      max: config.poolMax,
+      application_name: 'fda-data-read',
+      ssl: config.dbSsl ? { rejectUnauthorized: true } : false,
+    });
   return read;
 }
 

@@ -45,3 +45,21 @@ output "redis_endpoint" {
 output "platform_kms_key_arn" {
   value = aws_kms_key.platform.arn
 }
+
+output "fda_db_endpoint" {
+  value = aws_db_instance.fda.address
+}
+
+output "fda_db_master_secret_arn" {
+  description = "RDS master credentials of the FDA corpus database."
+  value       = aws_db_instance.fda.master_user_secret[0].secret_arn
+}
+
+output "fda_service_url" {
+  description = "Internal URL of fda-data /v1 (set as FDA_SERVICE_URL on app tasks)."
+  value       = "http://fda-api.${aws_service_discovery_private_dns_namespace.internal.name}:4100"
+}
+
+output "fda_ecr_repository" {
+  value = aws_ecr_repository.fda.repository_url
+}

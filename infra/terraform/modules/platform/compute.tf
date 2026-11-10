@@ -47,8 +47,8 @@ resource "aws_secretsmanager_secret" "app" {
   kms_key_id = aws_kms_key.platform.arn
 }
 
-# JWT and field-encryption keys are generated once; SSO client secrets and the
-# Claude API key are added to this secret by an operator (keys left empty here).
+# JWT and field-encryption keys are generated once; SSO client secrets, the
+# Claude API key and the fda-data service key are added by an operator (empty here).
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
@@ -57,6 +57,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     SSO_GOOGLE_CLIENT_SECRET    = ""
     SSO_MICROSOFT_CLIENT_SECRET = ""
     AI_API_KEY                  = ""
+    FDA_SERVICE_KEY             = ""
   })
   lifecycle {
     ignore_changes = [secret_string]
@@ -260,6 +261,7 @@ locals {
     { name = "S3_FORCE_PATH_STYLE", value = "false" },
     { name = "LOG_FORMAT", value = "json" },
     { name = "TRUST_PROXY", value = "2" }, # CloudFront + ALB
+    { name = "FDA_SERVICE_URL", value = "http://fda-api.${aws_service_discovery_private_dns_namespace.internal.name}:4100" },
   ]
 
   db_secret = aws_db_instance.main.master_user_secret[0].secret_arn

@@ -10,6 +10,9 @@ RUN npx tsc -p . && npm prune --omit=dev
 FROM node:20.18.1-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+# Amazon RDS CA bundle so FDA_DB_SSL=true can verify the database certificate.
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/rds-global-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/rds-global-bundle.pem
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
