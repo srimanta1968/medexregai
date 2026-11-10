@@ -18,6 +18,7 @@ from openpyxl.utils import get_column_letter
 from ..config import Settings
 from ..errors import FileUnreadable
 from .common import Collector, section_path
+from .profile import SheetProfiler, raw_data_profile
 
 _HEADING = re.compile(r'^(?:heading|überschrift|titre|título)\s*(\d)$', re.IGNORECASE)
 NO_HEADING = '(before first heading)'
@@ -100,6 +101,7 @@ def parse_xlsx(data: bytes, settings: Settings) -> dict[str, Any]:
     except Exception as exc:
         raise FileUnreadable(f'The Excel file could not be read: {type(exc).__name__}') from exc
     out = Collector(settings.max_location_chars)
+    profilers: list[SheetProfiler] = []
     try:
         sheets = wb.worksheets[: settings.max_units]
         if len(wb.worksheets) > settings.max_units:
@@ -111,6 +113,8 @@ def parse_xlsx(data: bytes, settings: Settings) -> dict[str, Any]:
             header: Optional[list[str]] = None
             rows = 0
             uncalculated = 0
+            profiler = SheetProfiler(title)
+            profilers.append(profiler)
             pairs = zip_longest(ws.iter_rows(min_row=1, min_col=1, values_only=True), ws_f.iter_rows(min_row=1, min_col=1, values_only=True), fillvalue=())
             for r, (row, row_f) in enumerate(pairs, start=1):
                 values = [_value(v) for v in row]
@@ -126,6 +130,9 @@ def parse_xlsx(data: bytes, settings: Settings) -> dict[str, Any]:
                 if rows > settings.max_rows_per_sheet:
                     out.warn(f'Sheet "{title}": only the first {settings.max_rows_per_sheet} rows were read')
                     break
+                # Typed values (numbers, dates) for the profile; formulas without a saved value count as empty.
+                typed = list(row) + [None] * (len(values) - len(row))
+                profiler.add_row(r, typed, [get_column_letter(i + 1) for i in range(len(typed))])
                 first, last = filled[0], filled[-1]
                 cell_range = f'{get_column_letter(first + 1)}{r}:{get_column_letter(last + 1)}{r}'
                 if header is None:
@@ -143,7 +150,13 @@ def parse_xlsx(data: bytes, settings: Settings) -> dict[str, Any]:
     finally:
         wb.close()
         wb_formulas.close()
-    return {'parser': 'openpyxl', 'unit_count': len(wb.worksheets), 'locations': out.locations, 'warnings': out.warnings}
+    return {
+        'parser': 'openpyxl',
+        'unit_count': len(wb.worksheets),
+        'locations': out.locations,
+        'warnings': out.warnings,
+        'profile': raw_data_profile(profilers),
+    }
 
 
 # ---------------------------------------------------------------- PPTX

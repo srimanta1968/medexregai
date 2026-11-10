@@ -42,6 +42,29 @@ export interface ParseResult {
   needsOcr: boolean;
   locations: DocLocation[];
   warnings: string[];
+  /** Raw-data column profile (XLSX/CSV) or drawing title block (PDF), when found. */
+  profile?: RawDataProfile | DrawingProfile;
+}
+
+export interface RawDataColumn {
+  column: string;
+  name: string;
+  unit: string | null;
+  type: 'number' | 'date' | 'text' | 'empty';
+  nonEmpty: number;
+  min?: number;
+  max?: number;
+  mean?: number;
+}
+
+export interface RawDataProfile {
+  kind: 'raw_data';
+  sheets: { sheet: string; headerRow: number; rowCount: number; columns: RawDataColumn[] }[];
+}
+
+export interface DrawingProfile {
+  kind: 'drawing';
+  titleBlock: { partNumber?: string; drawingNumber?: string; revision?: string; title?: string; material?: string; page: number };
 }
 
 /** Codes docproc returns, plus DOCPROC_UNAVAILABLE when it cannot be reached. */

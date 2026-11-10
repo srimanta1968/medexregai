@@ -176,9 +176,21 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
               format = $7, mime_type = $8, parsed_at = now(), parse_started_at = NULL,
               -- A consultant's earlier decision (redacted / accepted) is kept on a re-parse.
               phi_status = CASE WHEN phi_status IN ('redacted', 'accepted') THEN phi_status ELSE $9 END,
-              phi_findings = $10::jsonb
+              phi_findings = $10::jsonb, profile = $11::jsonb
         WHERE id = $1 AND org_id = $2`,
-      [version.id, orgId, result.parser, result.unitCount, result.ocrUsed, note, result.format, result.mimeType, phi.status, JSON.stringify(phi.findings)],
+      [
+        version.id,
+        orgId,
+        result.parser,
+        result.unitCount,
+        result.ocrUsed,
+        note,
+        result.format,
+        result.mimeType,
+        phi.status,
+        JSON.stringify(phi.findings),
+        result.profile ? JSON.stringify(result.profile) : null,
+      ],
     );
     // A newer version becomes the file's current one; an older one parsed late never takes over.
     await tx.query(

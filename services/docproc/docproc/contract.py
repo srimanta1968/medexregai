@@ -16,7 +16,7 @@ The service is stateless and never fetches anything: no URLs in, no network out.
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -71,6 +71,10 @@ class ParseResult(_Model):
     needs_ocr: bool = Field(default=False, description='Pages without a text layer that were not OCRed (OCR engine not installed)')
     locations: list[Location]
     warnings: list[str] = Field(default_factory=list)
+    profile: Optional[dict[str, Any]] = Field(
+        default=None,
+        description='raw_data: per-sheet columns, units, types and ranges; drawing: title-block fields (partNumber, drawingNumber, revision, title)',
+    )
 
 
 class ErrorBody(_Model):

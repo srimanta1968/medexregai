@@ -95,6 +95,45 @@ def _pdf_with_text(pages: list[str]) -> bytes:
     return bytes(out)
 
 
+def _pdf_positioned(width: int, height: int, items: list[tuple[int, int, int, str]]) -> bytes:
+    """One page; each item is (x, y, font size, text) in points, origin bottom-left."""
+    ops = ' '.join(f'BT /F1 {size} Tf {x} {y} Td ({t.replace("(", "[").replace(")", "]")}) Tj ET' for x, y, size, t in items).encode()
+    objects = [
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {width} {height}] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>'.encode(),
+        b'<< /Length %d >>\nstream\n' % len(ops) + ops + b'\nendstream',
+        b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    ]
+    out = bytearray(b'%PDF-1.4\n')
+    offsets = []
+    for n, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += b'%d 0 obj\n' % n + body + b'\nendobj\n'
+    xref = len(out)
+    out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objects) + 1)
+    out += b''.join(b'%010d 00000 n \n' % o for o in offsets)
+    out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(objects) + 1, xref)
+    return bytes(out)
+
+
+def drawing(path: Path) -> None:
+    """An 11x17 drawing sheet (1224 x 792 pt) with a title block in the bottom-right corner."""
+    (path / 'hub-drawing.pdf').write_bytes(
+        _pdf_positioned(1224, 792, [
+            (80, 700, 14, 'NOTES: 1. BREAK ALL SHARP EDGES. 2. SEE PART NO DC-100-HUB-WRONG IN BOM ONLY.'),
+            (80, 660, 12, 'DIMENSIONS IN MM. TOLERANCES PER ISO 2768-m.'),
+            (820, 200, 10, 'FICTIONAL MEDICAL LTD'),
+            (820, 180, 10, 'TITLE: CATHETER HUB, LUER'),
+            (820, 160, 10, 'PART NO: DC-100-HUB'),
+            (1020, 160, 10, 'REV: C'),
+            (820, 140, 10, 'DWG NO: D-10042'),
+            (820, 120, 10, 'MATERIAL: POLYCARBONATE, MEDICAL GRADE'),
+            (1020, 120, 10, 'SHEET 1 OF 1'),
+        ])
+    )
+
+
 def pdfs(path: Path) -> None:
     (path / 'test-protocol.pdf').write_bytes(
         _pdf_with_text(['Protocol TP-001: tensile test of the DC-100 shaft-to-hub bond (fixture).', 'Acceptance criterion: peak force of at least 15 N.'])
@@ -124,6 +163,6 @@ def other(path: Path) -> None:
 if __name__ == '__main__':
     out = Path(sys.argv[1] if len(sys.argv) > 1 else 'ingest-fixtures')
     out.mkdir(parents=True, exist_ok=True)
-    for build in (docx, xlsx, pptx, pdfs, other):
+    for build in (docx, xlsx, pptx, pdfs, drawing, other):
         build(out)
     print('\n'.join(sorted(p.name for p in out.iterdir())))

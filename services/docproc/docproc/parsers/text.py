@@ -12,6 +12,7 @@ from openpyxl.utils import get_column_letter
 from ..config import Settings
 from ..errors import FileUnreadable
 from .common import Collector
+from .profile import SheetProfiler, raw_data_profile
 
 
 def _decode(data: bytes) -> str:
@@ -33,6 +34,7 @@ def parse_csv(data: bytes, file_name: str, settings: Settings) -> dict[str, Any]
     out = Collector(settings.max_location_chars)
     header: list[str] | None = None
     rows = 0
+    profiler = SheetProfiler(sheet)
     for r, row in enumerate(csv.reader(io.StringIO(text), dialect), start=1):
         values = [' '.join(v.split()) for v in row]
         filled = [i for i, v in enumerate(values) if v]
@@ -42,6 +44,7 @@ def parse_csv(data: bytes, file_name: str, settings: Settings) -> dict[str, Any]
         if rows > settings.max_rows_per_sheet:
             out.warn(f'Only the first {settings.max_rows_per_sheet} rows were read')
             break
+        profiler.add_row(r, values, [get_column_letter(i + 1) for i in range(len(values))])
         first, last = filled[0], filled[-1]
         cell_range = f'{get_column_letter(first + 1)}{r}:{get_column_letter(last + 1)}{r}'
         if header is None:
@@ -50,4 +53,4 @@ def parse_csv(data: bytes, file_name: str, settings: Settings) -> dict[str, Any]
         else:
             line = ' | '.join(f'{header[i]}: {values[i]}' if i < len(header) and header[i] else values[i] for i in filled)
         out.add('cell', line, sheet=sheet, cellRange=cell_range)
-    return {'parser': 'csv', 'unit_count': 1, 'locations': out.locations, 'warnings': out.warnings}
+    return {'parser': 'csv', 'unit_count': 1, 'locations': out.locations, 'warnings': out.warnings, 'profile': raw_data_profile([profiler])}
