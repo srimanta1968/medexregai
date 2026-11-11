@@ -1,0 +1,98 @@
+{
+  "requiresAuth": true,
+  "taskId": "734d0cc8-7d90-41e5-b5dd-88eb2409f31b",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/requests/:requestId - one client request",
+  "description": "Projects:read. The request with its message, items (each requested or received, with when and how many files), email delivery status and the latest upload link's state (active, expiry, withdrawn, files received of the limit). The link itself is never returned again after it is issued. Covers: each requested item shows its status until received; a link can expire or be revoked.",
+  "endpoint": "/api/requests/:requestId",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 103,
+  "coversCriterion": [
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC6",
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/requests"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Request not found",
+      "when": "no request with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "requestId must be a valid id",
+      "when": "requestId is not a uuid"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner opens a request",
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "draft"
+        }
+      }
+    },
+    {
+      "name": "400 - request id not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "requestId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown request",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "requestId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      }
+    }
+  ]
+}

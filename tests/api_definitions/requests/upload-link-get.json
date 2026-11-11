@@ -1,0 +1,97 @@
+{
+  "requiresAuth": false,
+  "taskId": "2dfbf561-a083-4c55-a824-35e5c9ab3ba7",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "GET /api/u/:token - what the client is asked for (no login)",
+  "description": "Public: the link token is the credential (looked up by its SHA-256). Returns the firm's name, the request title and approved message, the items with their status, the link's expiry, files still allowed, the size limit and accepted types. Nothing else about the firm or project is exposed. 404 for an unknown token; 410 UPLOAD_LINK_INACTIVE when the link expired or was withdrawn (the message names the firm to ask for a new one). Covers: a client can upload via an expiring link on a phone without logging in; a link can expire or be revoked.",
+  "endpoint": "/api/u/:token",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 106,
+  "coversCriterion": [
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC2",
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC3",
+    "2dfbf561-a083-4c55-a824-35e5c9ab3ba7#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/requests",
+    "POST /api/requests/:requestId/approve"
+  ],
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "This upload link is not valid.",
+      "when": "no link with this token"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "This upload link is not valid",
+      "when": "the token is not a link token"
+    },
+    {
+      "status": 410,
+      "code": "UPLOAD_LINK_INACTIVE",
+      "message": "This upload link has been withdrawn. Please ask the firm for a new one.",
+      "when": "the link expired or was withdrawn"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "The client opens the link",
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "404 - unknown token",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "token": "{{static:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}}"
+      }
+    },
+    {
+      "name": "400 - malformed token",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "token": "{{static:short}}"
+      }
+    },
+    {
+      "name": "410 - withdrawn link",
+      "testType": "negative",
+      "coversErrorCase": "410|UPLOAD_LINK_INACTIVE",
+      "expectedStatus": 410,
+      "expectedError": {
+        "code": "UPLOAD_LINK_INACTIVE"
+      },
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "dependsOn": [
+        "POST /api/requests/:requestId/link/revoke"
+      ],
+      "notes": "Runs after the revoke definition (priority 109)."
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "requiresAuth": false,
+  "taskId": "2dfbf561-a083-4c55-a824-35e5c9ab3ba7",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "POST /api/u/:token/files - the client uploads a file (no login)",
+  "description": "Public: the link token is the credential. One file per call: the page sends the raw bytes with X-File-Name; scripts send JSON {fileName, contentBase64}. Optional ?item=<itemId> marks that item received. The file must be an accepted type whose first bytes match its extension (PDF, Word, Excel, PowerPoint, CSV or text, JPEG, PNG, TIFF), within the size limit and the link's file limit; it is malware-scanned (clamd) before anything is stored (infected: 422; scanner required but down: 503). It becomes a version of the project's files (source request) and is read and indexed like any other file. Audited without an actor (client_request.file_received). Covers: a client can upload via an expiring link without logging in; an uploaded file lands in the project and its checks run; each requested item shows its status until received.",
+  "endpoint": "/api/u/:token/files",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 107,
+  "coversCriterion": [
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC2",
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC4",
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC6",
+    "2dfbf561-a083-4c55-a824-35e5c9ab3ba7#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/requests",
+    "POST /api/requests/:requestId/approve"
+  ],
+  "errorCases": [
+    {
+      "status": 415,
+      "code": "UNSUPPORTED_FILE_TYPE",
+      "message": "This type of file cannot be uploaded.",
+      "when": "an extension that is not accepted, or contents that do not match it"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "That item is not part of this request",
+      "when": "an item from another request, a missing file name or an empty file"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "This upload link is not valid.",
+      "when": "no link with this token"
+    },
+    {
+      "status": 410,
+      "code": "UPLOAD_LINK_INACTIVE",
+      "message": "This upload link has expired.",
+      "when": "the link expired or was withdrawn"
+    },
+    {
+      "status": 413,
+      "code": "FILE_TOO_LARGE",
+      "message": "Files up to 100 MB can be uploaded",
+      "when": "the file is over the size limit"
+    },
+    {
+      "status": 409,
+      "code": "UPLOAD_LIMIT_REACHED",
+      "message": "This link has reached its limit of 50 files.",
+      "when": "the link's file limit is used up"
+    },
+    {
+      "status": 422,
+      "code": "FILE_INFECTED",
+      "message": "This file was refused: the malware scan found a threat in it.",
+      "when": "the scanner finds a threat"
+    },
+    {
+      "status": 503,
+      "code": "SCAN_UNAVAILABLE",
+      "message": "Uploads are paused because the malware scanner is unavailable.",
+      "when": "a scan is required and clamd is missing or down"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "The client uploads the requested drawing against its item",
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "queryParams": {
+        "item": "{{cache:requests.create.response.data.items.0.id}}"
+      },
+      "payload": {
+        "fileName": "{{static:hub-drawing.pdf}}",
+        "contentBase64": "{{static:JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAxMjI0IDc5Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggNTUzID4+CnN0cmVhbQpCVCAvRjEgMTQgVGYgODAgNzAwIFRkIChOT1RFUzogMS4gQlJFQUsgQUxMIFNIQVJQIEVER0VTLiAyLiBTRUUgUEFSVCBOTyBEQy0xMDAtSFVCLVdST05HIElOIEJPTSBPTkxZLikgVGogRVQgQlQgL0YxIDEyIFRmIDgwIDY2MCBUZCAoRElNRU5TSU9OUyBJTiBNTS4gVE9MRVJBTkNFUyBQRVIgSVNPIDI3NjgtbS4pIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMjAwIFRkIChGSUNUSU9OQUwgTUVESUNBTCBMVEQpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTgwIFRkIChUSVRMRTogQ0FUSEVURVIgSFVCLCBMVUVSKSBUaiBFVCBCVCAvRjEgMTAgVGYgODIwIDE2MCBUZCAoUEFSVCBOTzogREMtMTAwLUhVQikgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTYwIFRkIChSRVY6IEMpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTQwIFRkIChEV0cgTk86IEQtMTAwNDIpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTIwIFRkIChNQVRFUklBTDogUE9MWUNBUkJPTkFURSwgTUVESUNBTCBHUkFERSkgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTIwIFRkIChTSEVFVCAxIE9GIDEpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MiAwMDAwMCBuIAowMDAwMDAwODQ2IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKOTE2CiUlRU9GCg==}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "received": true
+        }
+      },
+      "capturesResponse": true
+    },
+    {
+      "name": "415 - an executable renamed to .pdf",
+      "testType": "negative",
+      "coversErrorCase": "415|UNSUPPORTED_FILE_TYPE",
+      "expectedStatus": 415,
+      "expectedError": {
+        "code": "UNSUPPORTED_FILE_TYPE"
+      },
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "payload": {
+        "fileName": "{{static:report.pdf}}",
+        "contentBase64": "{{static:TVqQAAMAAAAEAAAA}}"
+      }
+    },
+    {
+      "name": "400 - item from another request",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "queryParams": {
+        "item": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "fileName": "{{static:hub-drawing.pdf}}",
+        "contentBase64": "{{static:JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAxMjI0IDc5Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggNTUzID4+CnN0cmVhbQpCVCAvRjEgMTQgVGYgODAgNzAwIFRkIChOT1RFUzogMS4gQlJFQUsgQUxMIFNIQVJQIEVER0VTLiAyLiBTRUUgUEFSVCBOTyBEQy0xMDAtSFVCLVdST05HIElOIEJPTSBPTkxZLikgVGogRVQgQlQgL0YxIDEyIFRmIDgwIDY2MCBUZCAoRElNRU5TSU9OUyBJTiBNTS4gVE9MRVJBTkNFUyBQRVIgSVNPIDI3NjgtbS4pIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMjAwIFRkIChGSUNUSU9OQUwgTUVESUNBTCBMVEQpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTgwIFRkIChUSVRMRTogQ0FUSEVURVIgSFVCLCBMVUVSKSBUaiBFVCBCVCAvRjEgMTAgVGYgODIwIDE2MCBUZCAoUEFSVCBOTzogREMtMTAwLUhVQikgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTYwIFRkIChSRVY6IEMpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTQwIFRkIChEV0cgTk86IEQtMTAwNDIpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTIwIFRkIChNQVRFUklBTDogUE9MWUNBUkJPTkFURSwgTUVESUNBTCBHUkFERSkgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTIwIFRkIChTSEVFVCAxIE9GIDEpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MiAwMDAwMCBuIAowMDAwMDAwODQ2IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKOTE2CiUlRU9GCg==}}"
+      }
+    },
+    {
+      "name": "404 - unknown token",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "token": "{{static:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}}"
+      },
+      "payload": {
+        "fileName": "{{static:hub-drawing.pdf}}",
+        "contentBase64": "{{static:JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAxMjI0IDc5Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggNTUzID4+CnN0cmVhbQpCVCAvRjEgMTQgVGYgODAgNzAwIFRkIChOT1RFUzogMS4gQlJFQUsgQUxMIFNIQVJQIEVER0VTLiAyLiBTRUUgUEFSVCBOTyBEQy0xMDAtSFVCLVdST05HIElOIEJPTSBPTkxZLikgVGogRVQgQlQgL0YxIDEyIFRmIDgwIDY2MCBUZCAoRElNRU5TSU9OUyBJTiBNTS4gVE9MRVJBTkNFUyBQRVIgSVNPIDI3NjgtbS4pIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMjAwIFRkIChGSUNUSU9OQUwgTUVESUNBTCBMVEQpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTgwIFRkIChUSVRMRTogQ0FUSEVURVIgSFVCLCBMVUVSKSBUaiBFVCBCVCAvRjEgMTAgVGYgODIwIDE2MCBUZCAoUEFSVCBOTzogREMtMTAwLUhVQikgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTYwIFRkIChSRVY6IEMpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTQwIFRkIChEV0cgTk86IEQtMTAwNDIpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTIwIFRkIChNQVRFUklBTDogUE9MWUNBUkJPTkFURSwgTUVESUNBTCBHUkFERSkgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTIwIFRkIChTSEVFVCAxIE9GIDEpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MiAwMDAwMCBuIAowMDAwMDAwODQ2IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKOTE2CiUlRU9GCg==}}"
+      }
+    },
+    {
+      "name": "410 - withdrawn link",
+      "testType": "negative",
+      "coversErrorCase": "410|UPLOAD_LINK_INACTIVE",
+      "expectedStatus": 410,
+      "expectedError": {
+        "code": "UPLOAD_LINK_INACTIVE"
+      },
+      "pathParams": {
+        "token": "{{cache:requests.approve.response.data.link.token}}"
+      },
+      "payload": {
+        "fileName": "{{static:hub-drawing.pdf}}",
+        "contentBase64": "{{static:JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAxMjI0IDc5Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggNTUzID4+CnN0cmVhbQpCVCAvRjEgMTQgVGYgODAgNzAwIFRkIChOT1RFUzogMS4gQlJFQUsgQUxMIFNIQVJQIEVER0VTLiAyLiBTRUUgUEFSVCBOTyBEQy0xMDAtSFVCLVdST05HIElOIEJPTSBPTkxZLikgVGogRVQgQlQgL0YxIDEyIFRmIDgwIDY2MCBUZCAoRElNRU5TSU9OUyBJTiBNTS4gVE9MRVJBTkNFUyBQRVIgSVNPIDI3NjgtbS4pIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMjAwIFRkIChGSUNUSU9OQUwgTUVESUNBTCBMVEQpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTgwIFRkIChUSVRMRTogQ0FUSEVURVIgSFVCLCBMVUVSKSBUaiBFVCBCVCAvRjEgMTAgVGYgODIwIDE2MCBUZCAoUEFSVCBOTzogREMtMTAwLUhVQikgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTYwIFRkIChSRVY6IEMpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTQwIFRkIChEV0cgTk86IEQtMTAwNDIpIFRqIEVUIEJUIC9GMSAxMCBUZiA4MjAgMTIwIFRkIChNQVRFUklBTDogUE9MWUNBUkJPTkFURSwgTUVESUNBTCBHUkFERSkgVGogRVQgQlQgL0YxIDEwIFRmIDEwMjAgMTIwIFRkIChTSEVFVCAxIE9GIDEpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MiAwMDAwMCBuIAowMDAwMDAwODQ2IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKOTE2CiUlRU9GCg==}}"
+      },
+      "dependsOn": [
+        "POST /api/requests/:requestId/link/revoke"
+      ],
+      "notes": "Runs after the revoke definition (priority 109)."
+    }
+  ],
+  "manualErrorCases": {
+    "413|FILE_TOO_LARGE": "needs a body over 100 MB",
+    "409|UPLOAD_LIMIT_REACHED": "needs 50 uploads on one link",
+    "422|FILE_INFECTED": "needs clamd; verified against a stand-in clamd",
+    "503|SCAN_UNAVAILABLE": "needs MALWARE_SCAN_REQUIRED=true; verified against a stopped scanner"
+  },
+  "captureResponse": {
+    "requests.upload.response.data.fileName": "data.fileName",
+    "requests.upload.response.data.itemId": "data.itemId"
+  }
+}

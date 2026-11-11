@@ -14,6 +14,7 @@ import { fdaRouter } from './routes/fda';
 import { aiSettingsRouter } from './routes/aiSettings';
 import { filesRouter } from './routes/files';
 import { citationsRouter } from './routes/citations';
+import { requestsRouter } from './routes/requests';
 import { searchRouter } from './routes/search';
 import { ssoRouter } from './routes/sso';
 import { AppError, ErrorCodes } from './utils/AppError';
@@ -70,6 +71,8 @@ export function createApp(appConfig: AppConfig): Application {
 
   app.use(helmet());
   app.use(cors(buildCorsOptions(appConfig.corsOrigins)));
+  // Upload-link tokens are credentials: never write them to access logs (F2.4).
+  morgan.token('url', (req: Request) => (req.originalUrl || req.url).replace(/\/u\/[^/?#]+/, '/u/[token]'));
   app.use(morgan(appConfig.logFormat));
   app.use(express.json({ limit: appConfig.bodyLimit }));
   app.use(express.urlencoded({ extended: true, limit: appConfig.bodyLimit }));
@@ -93,6 +96,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(filesRouter);
   app.use(citationsRouter);
   app.use(searchRouter);
+  app.use(requestsRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

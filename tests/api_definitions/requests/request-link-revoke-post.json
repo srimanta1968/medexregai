@@ -1,0 +1,104 @@
+{
+  "requiresAuth": true,
+  "taskId": "2dfbf561-a083-4c55-a824-35e5c9ab3ba7",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/requests/:requestId/link/revoke - withdraw the upload link",
+  "description": "Projects:write. The active link stops working at once (the client sees 410 with the firm to ask). 409 REQUEST_NOT_OPEN when there is no active link. Audited (client_request.link_revoked). Covers: a link can expire or be revoked.",
+  "endpoint": "/api/requests/:requestId/link/revoke",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 109,
+  "coversCriterion": [
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC3",
+    "2dfbf561-a083-4c55-a824-35e5c9ab3ba7#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/requests",
+    "POST /api/requests/:requestId/approve"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Request not found",
+      "when": "no request with this id in the firm"
+    },
+    {
+      "status": 409,
+      "code": "REQUEST_NOT_OPEN",
+      "message": "This request has no active link to revoke.",
+      "when": "no active link"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner withdraws the link",
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      },
+      "capturesResponse": true
+    },
+    {
+      "name": "409 - no active link left",
+      "testType": "negative",
+      "coversErrorCase": "409|REQUEST_NOT_OPEN",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "REQUEST_NOT_OPEN"
+      },
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "404 - unknown request",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "requestId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {}
+    }
+  ],
+  "captureResponse": {
+    "requests.revoke.response.data.id": "data.id"
+  }
+}
