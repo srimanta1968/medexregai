@@ -65,7 +65,8 @@
           "passed": false
         }
       },
-      "capturesResponse": true
+      "capturesResponse": true,
+      "payload": {}
     },
     {
       "name": "401 - missing bearer token",
@@ -78,7 +79,8 @@
       },
       "pathParams": {
         "providerId": "{{cache:aiProviders.create.response.data.id}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "403 - reviewer cannot manage AI settings",
@@ -94,7 +96,8 @@
       },
       "pathParams": {
         "providerId": "{{cache:aiProviders.create.response.data.id}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "404 - unknown provider",
@@ -106,7 +109,8 @@
       "expectedStatus": 404,
       "expectedError": {
         "code": "NOT_FOUND"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "400 - provider id not a uuid",
@@ -118,7 +122,8 @@
       "expectedStatus": 400,
       "expectedError": {
         "code": "VALIDATION_ERROR"
-      }
+      },
+      "payload": {}
     }
   ],
   "captureResponse": {

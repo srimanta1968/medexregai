@@ -14,7 +14,9 @@
     "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
   ],
   "dependsOn": [
-    "POST /api/auth/register"
+    "POST /api/auth/register",
+    "POST /api/auth/login",
+    "POST /api/auth/refresh"
   ],
   "errorCases": [
     {
@@ -38,10 +40,10 @@
         "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
       ],
       "headers": {
-        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+        "Authorization": "Bearer {{cache:auth.refresh.response.data.token}}"
       },
       "payload": {
-        "refreshToken": "{{cache:auth.register.response.data.refreshToken}}"
+        "refreshToken": "{{cache:auth.refresh.response.data.refreshToken}}"
       },
       "expectedStatus": 200,
       "expectedResponse": {
@@ -58,7 +60,7 @@
         "messageContains": "Missing bearer token"
       },
       "payload": {
-        "refreshToken": "{{cache:auth.register.response.data.refreshToken}}"
+        "refreshToken": "{{cache:auth.refresh.response.data.refreshToken}}"
       },
       "headers": {}
     },
@@ -72,8 +74,9 @@
       },
       "payload": {},
       "headers": {
-        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+        "Authorization": "Bearer {{cache:auth.refresh.response.data.token}}"
       }
     }
-  ]
+  ],
+  "notes": "Uses the tokens POST /api/auth/refresh issues: the runner may satisfy POST /api/auth/register from its own auth bootstrap without capturing that response's token/refreshToken, so register-captured tokens can be missing here."
 }

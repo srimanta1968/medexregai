@@ -72,7 +72,7 @@
         "aace117c-ee0f-45ab-8e35-83da03f3824f#AC3"
       ],
       "payload": {
-        "udiDi": "{{dynamic:numeric14}}",
+        "udiDi": "{{dynamic:number}}",
         "modelNames": [
           "{{static:IP-300}}"
         ]

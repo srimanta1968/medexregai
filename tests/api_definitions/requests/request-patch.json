@@ -52,7 +52,7 @@
     {
       "name": "Owner edits the draft message",
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@editable}}"
       },
       "payload": {
         "message": "{{static:Please upload the two documents below.}}"
@@ -74,7 +74,7 @@
         "code": "VALIDATION_ERROR"
       },
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@editable}}"
       },
       "payload": {}
     },
@@ -122,11 +122,12 @@
       },
       "headers": {},
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@editable}}"
       },
       "payload": {
         "message": "{{static:x}}"
       }
     }
-  ]
+  ],
+  "notes": "Edits its own @editable request. Every POST (approve included) runs before PATCH definitions, and the Dev MCP can approve a labelled request by mistake (an on-demand labelled producer whose own @label input is unresolved falls back to the last captured request), so this test does not share a record with any other definition."
 }

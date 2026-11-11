@@ -134,5 +134,6 @@
   ],
   "captureResponse": {
     "requests.draftMessage.response.data.model": "data.model"
-  }
+  },
+  "timeoutMs": 120000
 }

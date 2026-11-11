@@ -46,7 +46,7 @@
     {
       "name": "The client opens the link",
       "pathParams": {
-        "token": "{{cache:requests.approve.response.data.link.token}}"
+        "token": "{{cache:requests.approve.response.data.link.token@open}}"
       },
       "expectedStatus": 200,
       "expectedResponse": {
@@ -93,5 +93,6 @@
       ],
       "notes": "Runs after the revoke definition (priority 109)."
     }
-  ]
+  ],
+  "notes": "The happy path opens the @open request's link, which nothing reissues or revokes; the 410 case uses the canonical link, which POST .../link and .../link/revoke have withdrawn by the time GETs run."
 }

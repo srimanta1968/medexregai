@@ -156,6 +156,26 @@
         "name": "{{dynamic:productname}}",
         "submissionType": "{{static:pma}}"
       }
+    },
+    {
+      "name": "Owner starts a second project that the deletion test removes",
+      "pathParams": {
+        "deviceId": "{{cache:devices.create.response.data.id}}"
+      },
+      "payload": {
+        "name": "{{dynamic:productname}}",
+        "submissionType": "special",
+        "targetDate": "{{dynamic:futuredate+90d}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "submissionType": "special",
+          "status": "active"
+        }
+      },
+      "captureAs": "toDelete"
     }
   ]
 }

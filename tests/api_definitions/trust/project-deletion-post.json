@@ -56,6 +56,27 @@
   ],
   "testCases": [
     {
+      "name": "Owner deletes the project, confirming its name",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id@toDelete}}"
+      },
+      "payload": {
+        "confirmName": "{{cache:projects.create.response.data.name@toDelete}}"
+      },
+      "expectedStatus": 202,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "removing_files"
+        }
+      },
+      "capturesResponse": true,
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4"
+      ],
+      "notes": "Deletes its own project (@toDelete): the runner runs POSTs before the GET/PATCH definitions that read the canonical project."
+    },
+    {
       "name": "422 - the typed name does not match",
       "testType": "negative",
       "coversErrorCase": "422|CONFIRMATION_MISMATCH",
@@ -132,26 +153,6 @@
       "payload": {
         "confirmName": "{{cache:projects.create.response.data.name}}"
       }
-    },
-    {
-      "name": "Owner deletes the project, confirming its name",
-      "pathParams": {
-        "projectId": "{{cache:projects.create.response.data.id}}"
-      },
-      "payload": {
-        "confirmName": "{{cache:projects.create.response.data.name}}"
-      },
-      "expectedStatus": 202,
-      "expectedResponse": {
-        "success": true,
-        "data": {
-          "status": "removing_files"
-        }
-      },
-      "capturesResponse": true,
-      "coversCriterion": [
-        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4"
-      ]
     }
   ],
   "captureResponse": {

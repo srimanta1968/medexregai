@@ -2,7 +2,7 @@
   "requiresAuth": true,
   "taskId": "8b7a4760-34e9-418a-bcca-19b18721546f",
   "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
-  "testability": "auto",
+  "testability": "manual",
   "headers": {
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
@@ -87,7 +87,8 @@
           "status": "queued"
         }
       },
-      "capturesResponse": true
+      "capturesResponse": true,
+      "payload": {}
     },
     {
       "name": "409 - an evaluation is already queued (repeat of the request above)",
@@ -100,7 +101,8 @@
       "expectedError": {
         "code": "EVALUATION_RUNNING"
       },
-      "notes": "Reachable only after the happy path queued a run, so it shares the happy path's precondition (a provider that passed its connection test)."
+      "notes": "Reachable only after the happy path queued a run, so it shares the happy path's precondition (a provider that passed its connection test).",
+      "payload": {}
     },
     {
       "name": "409 - provider has not passed its connection test",
@@ -112,7 +114,8 @@
       },
       "pathParams": {
         "providerId": "{{cache:aiProviders.create.response.data.id}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "404 - unknown provider",
@@ -124,7 +127,8 @@
       },
       "pathParams": {
         "providerId": "{{static:00000000-0000-4000-8000-000000000000}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "400 - provider id not a uuid",
@@ -136,7 +140,8 @@
       },
       "pathParams": {
         "providerId": "{{static:not-a-uuid}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "401 - missing bearer token",
@@ -149,7 +154,8 @@
       "headers": {},
       "pathParams": {
         "providerId": "{{cache:aiProviders.create.response.data.id}}"
-      }
+      },
+      "payload": {}
     },
     {
       "name": "403 - reviewer cannot manage AI settings",
@@ -165,7 +171,9 @@
       },
       "pathParams": {
         "providerId": "{{cache:aiProviders.create.response.data.id}}"
-      }
+      },
+      "payload": {}
     }
-  ]
+  ],
+  "manualReason": "The happy path needs a firm provider that passed a real connection test; automated runs only have the placeholder provider at https://example.com/v1 (its connection test is expected to fail), and the URL guard refuses local model servers. Executed 2026-11-11: answered 409 PROVIDER_NOT_TESTED as designed. Verify by hand with a working OpenAI-compatible endpoint."
 }
