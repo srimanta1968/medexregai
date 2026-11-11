@@ -1,0 +1,51 @@
+{
+  "name": "GET /api/estar-sections - FDA eSTAR sections",
+  "description": "The eSTAR sections files are sorted into (AC1), as listed in Table 1 of FDA guidance \"Electronic Submission Template for Medical Device 510(k) Submissions\" (2023-10-02): id, FDA title and description, whether the section takes client evidence and whether it applies to Special 510(k)s only, with edition and source. Needs projects:read. Captures the id of Performance Testing (FDA ordinal 19, list index 18) for the assignment definition.",
+  "endpoint": "/api/estar-sections",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 93,
+  "taskId": "0401ddb6-557e-4083-add7-b68a19dca5ab",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "estarSections.list.response.data.18.id": "data.18.id"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant reads the eSTAR sections",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ]
+}

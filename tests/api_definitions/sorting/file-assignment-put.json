@@ -1,0 +1,188 @@
+{
+  "name": "PUT /api/files/:fileId/assignment - consultant files a file in a section",
+  "description": "A consultant can re-assign a file and the correction is learned (AC2): sets the file's section (or null: not evidence for any section) as the consultant's decision, confidence 1, keeping the sorter's earlier choice as corrected_from. The sorter never overrides it and files similar ones the same way for this firm only. Only sections that take evidence and apply to the submission type are accepted. Upsert: 200. Needs projects:write.",
+  "endpoint": "/api/files/:fileId/assignment",
+  "method": "PUT",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 96,
+  "taskId": "0401ddb6-557e-4083-add7-b68a19dca5ab",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC2",
+    "0401ddb6-557e-4083-add7-b68a19dca5ab#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/files",
+    "GET /api/estar-sections"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "fieldEnums": {
+    "sectionId": [
+      "cover_letter",
+      "presubmission_correspondence",
+      "consensus_standards",
+      "device_description",
+      "indications_for_use",
+      "predicates_se",
+      "design_risk_special",
+      "labeling",
+      "reprocessing",
+      "sterility",
+      "shelf_life",
+      "biocompatibility",
+      "software",
+      "cybersecurity",
+      "emc_safety",
+      "performance_testing",
+      "references",
+      "administrative",
+      "ai_response"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (reviewer, viewer)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "not an eSTAR section that takes evidence",
+      "when": "unknown section, one that takes no client evidence, Special-only section on another submission type, or sectionId missing"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "File not found",
+      "when": "no such active file, or it belongs to another firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant files the complaint log under Performance Testing",
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {
+        "sectionId": "{{cache:estarSections.list.response.data.18.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "assignment": {
+            "source": "consultant",
+            "sectionId": "performance_testing"
+          }
+        }
+      }
+    },
+    {
+      "name": "Consultant marks the file as not evidence for any section",
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {
+        "sectionId": null
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {
+        "sectionId": "{{static:labeling}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot re-file",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {
+        "sectionId": "{{static:labeling}}"
+      }
+    },
+    {
+      "name": "400 - section that takes no evidence",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {
+        "sectionId": "{{static:submission_type}}"
+      }
+    },
+    {
+      "name": "400 - sectionId missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "fileId": "{{cache:files.upload.response.data.id}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "404 - unknown file",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "fileId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "sectionId": "{{static:labeling}}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "name": "GET /api/projects/:projectId/sorted-files - files with their eSTAR section",
+  "description": "Files are auto-sorted into eSTAR sections with a confidence score (AC1); each file carries the reason for its section, shown on hover (AC5), its source (rules, embedding, llm, consultant) and needsReview when the sorter was unsure. Filter with ?section=<id> or ?section=none for unsorted files; keyset-paginated. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/sorted-files",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 94,
+  "taskId": "0401ddb6-557e-4083-add7-b68a19dca5ab",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC1",
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC5",
+    "0401ddb6-557e-4083-add7-b68a19dca5ab#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/files"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "fieldEnums": {
+    "source": [
+      "rules",
+      "embedding",
+      "llm",
+      "consultant"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "section must be an eSTAR section id",
+      "when": "malformed id, section or limit"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project, or it belongs to another firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant lists the sorted folder",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "limit": "{{static:20}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "Consultant lists unsorted files",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "section": "{{static:none}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - malformed section filter",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "section": "{{static:Sterility!}}"
+      }
+    }
+  ]
+}
