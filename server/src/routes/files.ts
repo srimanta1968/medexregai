@@ -82,6 +82,29 @@ filesRouter.get(
   }),
 );
 
+const passageQuery = z.object({
+  from: z.coerce.number({ invalid_type_error: 'from must be a passage number' }).int().min(0, 'from must be 0 or more'),
+  to: z.coerce.number({ invalid_type_error: 'to must be a passage number' }).int().min(0).optional(),
+});
+
+/** The passages a citation [C:<versionId>#from-to] points at, with context, for the source viewer. */
+filesRouter.get(
+  '/api/file-versions/:versionId/passages',
+  guard('projects:read'),
+  audit('file.passage_viewed', { targetType: 'file_version', targetId: fromParam('versionId'), projectId: fromData('projectId') }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const versionId = parse(uuid('versionId'), req.params.versionId);
+    const q = parse(passageQuery, req.query);
+    const to = q.to ?? q.from;
+    if (to < q.from || to - q.from >= 50) {
+      throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'to must be from..from+49', [{ field: 'to', message: 'must be from..from+49' }]);
+    }
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: await fileService.passages(orgId, versionId, q.from, to) });
+  }),
+);
+
 filesRouter.patch(
   '/api/file-versions/:versionId/phi',
   guard('projects:write'),

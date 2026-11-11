@@ -127,6 +127,21 @@ export function cleanFileName(raw: string): string {
   return name;
 }
 
+export interface PassageView {
+  fileId: string;
+  projectId: string;
+  fileName: string;
+  versionId: string;
+  versionNo: number;
+  format: string;
+  /** False when a newer version of the file has been read since. */
+  current: boolean;
+  currentVersionNo: number | null;
+  copyKept: boolean;
+  /** The cited passages (cited=true) with one passage of context before and after. */
+  passages: { ordinal: number; kind: string; cited: boolean; where: string; sectionPath: string | null; text: string }[];
+}
+
 export interface RecordInput {
   orgId: string;
   userId: string;
@@ -328,6 +343,76 @@ export class FileService {
         phiFindings: v.phi_findings,
         profile: v.profile,
         discardedAt: v.discarded_at ? v.discarded_at.toISOString() : null,
+      })),
+    };
+  }
+
+  /**
+   * Cited passages of one file version, for the source viewer behind a citation chip
+   * (F7.3): passages from..to plus one passage of context on each side, where each sits,
+   * and whether this version is still the file's current one.
+   */
+  async passages(orgId: string, versionId: string, from: number, to: number): Promise<PassageView> {
+    const [v] = await dataService.query<{
+      file_id: string;
+      project_id: string;
+      name: string;
+      version_no: number;
+      current_version_id: string | null;
+      current_no: number | null;
+      format: string;
+      copy_kept: boolean;
+    }>(
+      { orgId },
+      'file_versions',
+      `SELECT f.id AS file_id, f.project_id, f.name, v.version_no, f.current_version_id,
+              (SELECT version_no FROM file_versions c WHERE c.id = f.current_version_id) AS current_no, v.format, v.storage_key IS NOT NULL AS copy_kept
+         FROM file_versions v JOIN files f ON f.id = v.file_id AND f.org_id = v.org_id
+        WHERE v.id = $1 AND v.org_id = $2 AND f.status = 'active'`,
+      [versionId, orgId],
+    );
+    if (!v) throw new AppError(404, ErrorCodes.NOT_FOUND, 'File version not found');
+    const rows = await dataService.query<{
+      ordinal: number;
+      kind: string;
+      page: number | null;
+      sheet: string | null;
+      cell_range: string | null;
+      slide: number | null;
+      section_path: string | null;
+      text: string;
+    }>(
+      { orgId },
+      'source_locations',
+      `SELECT ordinal, kind, page, sheet, cell_range, slide, section_path, text FROM source_locations
+        WHERE file_version_id = $1 AND org_id = $2 AND ordinal BETWEEN $3 AND $4 ORDER BY ordinal`,
+      [versionId, orgId, Math.max(0, from - 1), to + 1],
+    );
+    if (!rows.some((r) => r.ordinal >= from && r.ordinal <= to)) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Passage not found in this file version');
+    return {
+      fileId: v.file_id,
+      projectId: v.project_id,
+      fileName: v.name,
+      versionId,
+      versionNo: v.version_no,
+      format: v.format,
+      current: v.current_version_id === versionId,
+      currentVersionNo: v.current_no,
+      copyKept: v.copy_kept,
+      passages: rows.map((r) => ({
+        ordinal: r.ordinal,
+        kind: r.kind,
+        cited: r.ordinal >= from && r.ordinal <= to,
+        where:
+          r.sheet && r.cell_range
+            ? `sheet ${r.sheet}, ${r.cell_range}`
+            : r.slide
+              ? `slide ${r.slide}`
+              : r.page
+                ? `page ${r.page}`
+                : (r.section_path ?? 'document'),
+        sectionPath: r.section_path,
+        text: r.text,
       })),
     };
   }

@@ -1,0 +1,66 @@
+{
+  "requiresAuth": true,
+  "taskId": "12ec0cd8-6527-4cf0-9399-45d5ddcc4638",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/file-versions/:versionId/passages - the passages a citation points at",
+  "description": "Behind every citation chip: for [C:<versionId>#<from>-<to>] returns passages from..to (at most 50, marked cited=true) with one passage of context on each side, each with where it sits (page, sheet and cell range, slide or heading path), plus the file name, version number and whether this version is still the file's current one (current=false with currentVersionNo shows a superseded citation). Viewing is audited (file.passage_viewed). The happy path opens the first passage of the complaint log uploaded earlier; it needs docproc running so the file has been read. Covers: a query returns ranked passages with source locations (the source a hit opens); a citation to a superseded file version is flagged with a warning.",
+  "endpoint": "/api/file-versions/:versionId/passages",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 97,
+  "coversCriterion": [
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC1",
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC4",
+    "12ec0cd8-6527-4cf0-9399-45d5ddcc4638#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/projects/:projectId/files"
+  ],
+  "errorCases": [
+    { "status": 401, "code": "UNAUTHORIZED", "message": "Missing bearer token", "when": "no Authorization header" },
+    { "status": 404, "code": "NOT_FOUND", "message": "File version not found", "when": "no version with this id in the firm, or no passage in the range" },
+    { "status": 400, "code": "VALIDATION_ERROR", "message": "to must be from..from+49", "when": "missing from, to before from, or a range over 50 passages" }
+  ],
+  "testCases": [
+    {
+      "name": "Owner opens the first passage of a file",
+      "pathParams": { "versionId": "{{cache:files.upload.response.data.latest.id}}" },
+      "queryParams": { "from": "0" },
+      "expectedStatus": 200,
+      "expectedResponse": { "success": true }
+    },
+    {
+      "name": "400 - to before from",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": { "versionId": "{{cache:files.upload.response.data.latest.id}}" },
+      "queryParams": { "from": "2", "to": "1" },
+      "expectedStatus": 400,
+      "expectedError": { "code": "VALIDATION_ERROR" }
+    },
+    {
+      "name": "404 - unknown version",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": { "versionId": "{{static:00000000-0000-4000-8000-000000000000}}" },
+      "queryParams": { "from": "0" },
+      "expectedStatus": 404,
+      "expectedError": { "code": "NOT_FOUND" }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": { "versionId": "{{cache:files.upload.response.data.latest.id}}" },
+      "queryParams": { "from": "0" },
+      "expectedStatus": 401,
+      "expectedError": { "code": "UNAUTHORIZED" }
+    }
+  ]
+}

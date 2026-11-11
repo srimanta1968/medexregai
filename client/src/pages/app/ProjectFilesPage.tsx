@@ -1,6 +1,7 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { CitationChip } from '../../components/app/Citations';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
@@ -13,6 +14,7 @@ import {
   PHI_TYPE_LABELS,
   ParseStatus,
   PhiStatus,
+  SearchResult,
   unitLabel,
   VersionDetail,
 } from '../../lib/filesApi';
@@ -141,6 +143,71 @@ function VersionRow({
       {v.phiStatus === 'flagged' && <PhiPrompt version={v} onDecide={onDecide} busy={busy} />}
       <Profile version={v} />
     </li>
+  );
+}
+
+/** Search the submission's passages (F7.3); each hit opens its source through a citation chip. */
+function SearchPanel({ search }: { search: (q: string) => Promise<SearchResult> }): JSX.Element {
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const onSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    const q = String(new FormData(e.currentTarget).get('searchQuery') ?? '').trim();
+    if (q.length < 2) {
+      setError('Type at least 2 characters.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(await search(q));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Search failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className={`${card} mt-6`} aria-labelledby="search-title">
+      <h2 id="search-title" className="text-lg font-semibold text-slate-900">
+        Search this submission
+      </h2>
+      <form onSubmit={(e) => void onSubmit(e)} className="mt-3 flex flex-wrap gap-2" role="search">
+        <label htmlFor="searchQuery" className="sr-only">
+          Search this submission
+        </label>
+        <input
+          id="searchQuery"
+          name="searchQuery"
+          type="search"
+          placeholder="e.g. tensile force acceptance criterion"
+          className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+        />
+        <button type="submit" className={button} disabled={busy}>
+          {busy ? 'Searching…' : 'Search'}
+        </button>
+      </form>
+      <div aria-live="polite" className="mt-3">
+        {error && <FormMessage tone="error">{error}</FormMessage>}
+        {result && result.notice && <p className="text-xs text-slate-500">{result.notice}.</p>}
+        {result && result.items.length === 0 && <p className="mt-2 text-sm text-slate-600">No passage matches “{result.query}”.</p>}
+        {result && result.items.length > 0 && (
+          <ol aria-label="Search results" className="mt-2 space-y-3">
+            {result.items.map((h) => (
+              <li key={h.chunkId} className="rounded-xl border border-slate-100 p-3">
+                <p className="text-xs font-medium text-slate-500">
+                  {h.fileName} · version {h.versionNo} · {h.where}
+                  {!h.current && ' · older version'}
+                </p>
+                <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-slate-800">{h.text}</p>
+                <CitationChip marker={h.citation} label={`Open ${h.where}`} />
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -347,6 +414,7 @@ export default function ProjectFilesPage(): JSX.Element {
           </button>
         )}
       </div>
+      {files && files.length > 0 && <SearchPanel search={(q) => api.search(projectId, q)} />}
     </section>
   );
 }

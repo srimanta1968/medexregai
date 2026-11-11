@@ -105,6 +105,54 @@ export function unitLabel(format: string, count: number | null): string | null {
   return word ? `${count} ${word}${count === 1 ? '' : 's'}` : null;
 }
 
+export interface SearchLocation {
+  ordinal: number;
+  kind: string;
+  page: number | null;
+  sheet: string | null;
+  cellRange: string | null;
+  slide: number | null;
+  sectionPath: string | null;
+}
+
+export interface SearchHit {
+  chunkId: string;
+  fileId: string;
+  fileName: string;
+  fileVersionId: string;
+  versionNo: number;
+  current: boolean;
+  text: string;
+  sectionPath: string | null;
+  start: SearchLocation;
+  end: SearchLocation;
+  where: string;
+  citation: string;
+  score: number;
+  matchedBy: ('text' | 'vector')[];
+}
+
+export interface SearchResult {
+  query: string;
+  mode: 'hybrid' | 'text';
+  reranked: boolean;
+  notice: string | null;
+  items: SearchHit[];
+}
+
+export interface PassageView {
+  fileId: string;
+  projectId: string;
+  fileName: string;
+  versionId: string;
+  versionNo: number;
+  format: string;
+  current: boolean;
+  currentVersionNo: number | null;
+  copyKept: boolean;
+  passages: { ordinal: number; kind: string; cited: boolean; where: string; sectionPath: string | null; text: string }[];
+}
+
 export function filesApi(request: Request) {
   const id = encodeURIComponent;
   return {
@@ -118,6 +166,8 @@ export function filesApi(request: Request) {
         rawBody: file,
         headers: { 'X-File-Name': encodeURIComponent(file.name) },
       }),
+    search: (projectId: string, q: string) => request<SearchResult>(`/api/projects/${id(projectId)}/search?q=${id(q)}&limit=10`),
+    passages: (versionId: string, from: number, to: number) => request<PassageView>(`/api/file-versions/${id(versionId)}/passages?from=${from}&to=${to}`),
     decidePhi: (versionId: string, decision: 'redacted' | 'accepted') =>
       request<{ id: string; phiStatus: PhiStatus }>(`/api/file-versions/${id(versionId)}/phi`, { method: 'PATCH', body: { decision } }),
   };
