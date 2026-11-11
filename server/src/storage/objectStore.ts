@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { mkdir, readFile, rm, writeFile } from 'fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { dirname, join, resolve, sep } from 'path';
 
 /**
@@ -15,6 +15,8 @@ export interface ObjectStore {
   get(key: string): Promise<Buffer>;
   /** Idempotent: deleting a missing object succeeds. */
   delete(key: string): Promise<void>;
+  /** Delete every object under `prefix` (which must end with "/"). Idempotent. Returns how many were removed. */
+  deletePrefix(prefix: string): Promise<number>;
 }
 
 export class ObjectNotFoundError extends Error {
@@ -30,6 +32,11 @@ const KEY_RE = /^(?!.*\.\.)[a-z0-9][a-z0-9/_.-]{0,511}$/;
 export function assertObjectKey(key: string): string {
   if (!KEY_RE.test(key)) throw new Error(`Invalid object key: ${JSON.stringify(key)}`);
   return key;
+}
+
+/** The prefix every version of one file is stored under (per-project deletion removes it whole). */
+export function fileObjectPrefix(orgId: string, fileId: string): string {
+  return assertObjectKey(`orgs/${orgId}/files/${fileId}/`.toLowerCase());
 }
 
 /** The key a file version is stored under. Prefixed by firm so per-tenant policies (F8.1) can apply. */
@@ -71,6 +78,20 @@ export class FsObjectStore implements ObjectStore {
 
   async delete(key: string): Promise<void> {
     await rm(this.path(key), { force: true });
+  }
+
+  async deletePrefix(prefix: string): Promise<number> {
+    if (!prefix.endsWith('/')) throw new Error(`A prefix must end with "/": ${prefix}`);
+    const dir = this.path(prefix.slice(0, -1));
+    let count = 0;
+    try {
+      count = (await readdir(dir, { recursive: true, withFileTypes: true })).filter((e) => e.isFile()).length;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return 0;
+      throw err;
+    }
+    await rm(dir, { recursive: true, force: true });
+    return count;
   }
 }
 

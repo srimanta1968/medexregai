@@ -4,6 +4,7 @@ import { pushTrackedProductCodes } from './fda/fdaService';
 import { processQueued, sweep } from './ingest/IngestService';
 import { embedPendingAll } from './retrieval/embeddings';
 import { closePool } from './services/DataService';
+import { trustService } from './trust/TrustService';
 
 /**
  * Background worker (ECS service "worker", Terraform runs `node dist/worker.js`).
@@ -17,12 +18,16 @@ import { closePool } from './services/DataService';
  *
  * F7.4: runs queued evaluations of firms' own models (one at a time; each makes
  * about 50 model calls) and closes runs that lost their worker.
+ *
+ * F2.5: finishes project deletions (removes stored file objects, issues the
+ * certificate). The API starts this right after a deletion; this pass retries.
  */
 
 const PUSH_EVERY_MS = 6 * 60 * 60 * 1000;
 const INGEST_EVERY_MS = 10 * 1000;
 const SWEEP_EVERY_MS = 10 * 60 * 1000;
 const EVAL_EVERY_MS = 30 * 1000;
+const DELETION_EVERY_MS = 60 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
 let evalRunning = false;
@@ -37,6 +42,21 @@ async function evalPass(): Promise<void> {
     console.error(`[worker] evaluation pass failed: ${(err as Error).message}`);
   } finally {
     evalRunning = false;
+  }
+}
+
+let deletionRunning = false;
+
+async function deletionPass(): Promise<void> {
+  if (deletionRunning) return;
+  deletionRunning = true;
+  try {
+    const r = await trustService.processPending();
+    if (r.completed || r.pending) console.info(`[worker] project deletions: ${JSON.stringify(r)}`);
+  } catch (err) {
+    console.error(`[worker] project deletion pass failed: ${(err as Error).message}`);
+  } finally {
+    deletionRunning = false;
   }
 }
 
@@ -118,6 +138,8 @@ if (require.main === module) {
     }, INGEST_EVERY_MS),
   );
   timers.push(setInterval(() => void evalPass(), EVAL_EVERY_MS));
+  void deletionPass();
+  timers.push(setInterval(() => void deletionPass(), DELETION_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {

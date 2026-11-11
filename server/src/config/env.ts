@@ -133,6 +133,13 @@ export interface AppConfig {
    * scanner configured there, uploads are refused rather than stored unscanned.
    */
   malwareScan: { host?: string; port: number; timeoutMs: number; required: boolean };
+  /**
+   * Trust pack (F2.5). deletionDays is the committed per-project deletion period
+   * (NFR-14). backupRetentionDays must match the database backup retention in
+   * Terraform (production: db_backup_retention_days), because deleted rows stay in
+   * encrypted backups until those expire, and the packs and certificates say so.
+   */
+  trust: { releaseVersion: string; hostingRegion: string; deletionDays: number; backupRetentionDays: number };
 }
 
 /** Origins the ProjexLight platform previews the app from, plus local dev servers. */
@@ -422,6 +429,12 @@ export function loadConfig(env: Env): AppConfig {
       maxFilesPerLink: parsePositiveInt(optionalEnv(env, 'CLIENT_UPLOAD_MAX_FILES', '50'), 'CLIENT_UPLOAD_MAX_FILES'),
     },
     malwareScan: parseMalwareScan(env, nodeEnv),
+    trust: {
+      releaseVersion: optionalEnv(env, 'RELEASE_VERSION', 'development build'),
+      hostingRegion: optionalEnv(env, 'HOSTING_REGION', 'us-east-1'),
+      deletionDays: 30,
+      backupRetentionDays: parsePositiveInt(optionalEnv(env, 'BACKUP_RETENTION_DAYS', '35'), 'BACKUP_RETENTION_DAYS'),
+    },
     docproc: {
       serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
       serviceKey: optionalEnv(env, 'DOCPROC_API_KEY', '') || undefined,

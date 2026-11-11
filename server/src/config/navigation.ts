@@ -26,7 +26,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
   { key: 'files', label: 'Files', description: 'Sorted folder by eSTAR section, versions, unreadable files', phase: 1, scope: 'project', built: true },
   { key: 'problems', label: 'Problems', description: 'Missing items and contradictions', phase: 1, scope: 'project', built: false },
   { key: 'requests', label: 'Client requests', description: 'Drafted requests; status until received', phase: 1, scope: 'project', built: true },
-  { key: 'trust-pack', label: 'Trust pack', description: 'Validation and data-handling packs, scopes, deletion', phase: 1, scope: 'firm', built: false },
+  { key: 'trust-pack', label: 'Trust pack', description: 'Validation and data-handling packs, scopes, deletion', phase: 1, scope: 'firm', built: true },
   { key: 'review', label: 'Review', description: 'Section board, Word export and re-import, open items', phase: 2, scope: 'project', built: false },
   { key: 'changes', label: 'Changes', description: 'What a new client revision affects', phase: 2, scope: 'project', built: false },
   {

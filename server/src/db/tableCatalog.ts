@@ -44,6 +44,8 @@ export const TABLE_CATALOG = {
   client_requests: 'tenant',
   client_request_items: 'tenant',
   upload_links: 'tenant',
+  project_deletions: 'tenant',
+  project_deletion_objects: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
