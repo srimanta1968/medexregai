@@ -1,3 +1,4 @@
+import { documentGenerate } from '../ai/guard/documentCall';
 import { config } from '../config/env';
 import { processVersion } from '../ingest/IngestService';
 import { fileService } from '../ingest/FileService';
@@ -132,7 +133,71 @@ async function replaceItems(tx: Tx, orgId: string, requestId: string, items: Ite
   }
 }
 
+export interface DraftedMessage {
+  /** The suggested message. It is NOT saved: the consultant edits it and saves the draft. */
+  message: string;
+  model: string;
+  provider: string;
+  source: 'platform' | 'firm';
+  attempts: number;
+}
+
 export class RequestService {
+  /**
+   * Suggest the client-facing message for a draft request from its items (F2.4 AC5,
+   * route request_wording). Item labels and details go to the model as fenced data
+   * blocks, like document text, and the answer passes the route's output checks (plain
+   * prose up to 1,500 characters, no links or addresses). Nothing is saved or sent:
+   * the consultant edits the text, saves the draft and approves it.
+   */
+  async draftMessage(orgId: string, requestId: string): Promise<DraftedMessage> {
+    const [r] = await dataService.query<{
+      status: RequestStatus;
+      title: string;
+      recipient_name: string | null;
+      project_id: string;
+      project: string;
+      client: string;
+      firm: string;
+    }>(
+      { orgId },
+      'client_requests',
+      `SELECT r.status, r.title, r.recipient_name, r.project_id, p.name AS project, w.name AS client, o.name AS firm
+         FROM client_requests r
+         JOIN projects p ON p.id = r.project_id AND p.org_id = r.org_id
+         JOIN client_workspaces w ON w.id = p.workspace_id AND w.org_id = p.org_id
+         JOIN orgs o ON o.id = r.org_id
+        WHERE r.id = $1 AND r.org_id = $2`,
+      [requestId, orgId],
+    );
+    if (!r) throw notFound();
+    if (r.status !== 'draft') throw new AppError(409, ErrorCodes.REQUEST_NOT_DRAFT, 'The message can only be drafted while the request is a draft.');
+    const items = await dataService.query<{ id: string; position: number; label: string; detail: string }>(
+      { orgId },
+      'client_request_items',
+      'SELECT id, position, label, detail FROM client_request_items WHERE request_id = $1 AND org_id = $2 ORDER BY position',
+      [requestId, orgId],
+    );
+    if (!items.length) throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'Add at least one item before drafting the message');
+    const gap = [
+      `the ${items.length} item${items.length === 1 ? '' : 's'} listed in the data blocks, for the submission "${r.project}"`,
+      `(request: "${r.title}"). The message is from ${r.firm} to ${r.recipient_name ? r.recipient_name : 'the client'} at ${r.client}.`,
+      'Name each item plainly. Do not invent deadlines, standards, values or reasons the items do not state.',
+    ].join(' ');
+    const result = await documentGenerate({ orgId, projectId: r.project_id }, 'request_wording', {
+      task: { gap },
+      blocks: items.map((i) => ({
+        ref: `item:${i.id}`,
+        source: 'Requested item',
+        where: `Item ${i.position}`,
+        text: i.detail ? `${i.label}. ${i.detail}` : i.label,
+      })),
+    });
+    // Block markers ([B1] or (B1)) mean nothing to the client: drop them.
+    const message = result.value.text.replace(/[ \t]*[[(]B\d{1,3}[\])]/g, '').trim();
+    return { message, model: result.call.model, provider: result.call.provider, source: result.call.source, attempts: result.attempts };
+  }
+
   async create(orgId: string, userId: string, projectId: string, input: RequestInput): Promise<RequestDetail> {
     const id = await dataService.transaction({ orgId, userId }, async (tx) => {
       const [project] = await tx.query<{ id: string }>('projects', 'SELECT id FROM projects WHERE id = $1 AND org_id = $2', [projectId, orgId]);

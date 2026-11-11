@@ -165,6 +165,25 @@ function RequestPanel({ request, onChanged }: { request: RequestDetail; onChange
           Message (edit before approving)
           <textarea name="draftMessage" rows={4} className={input} value={message} onChange={(e) => setMessage(e.target.value)} />
         </label>
+      ) : null}
+      {request.status === 'draft' ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={button}
+            disabled={busy}
+            onClick={() =>
+              void act(async () => {
+                const d = await api.draftMessage(request.id);
+                setMessage(d.message);
+                return { text: `Message drafted by ${d.model}. Read and edit it, then save the draft. Nothing is sent until you approve.` };
+              })
+            }
+          >
+            {busy ? 'Working…' : 'Draft the message with AI'}
+          </button>
+          <span className="text-xs text-slate-500">Uses the items above. Takes up to a minute.</span>
+        </div>
       ) : (
         <p className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-800">{request.message || 'No message.'}</p>
       )}

@@ -14,6 +14,7 @@ import { pageSize } from '../utils/pagination';
  *   GET    /api/projects/:projectId/requests     the project's requests, newest first
  *   GET    /api/requests/:requestId              one request with items and link state
  *   PATCH  /api/requests/:requestId              edit a draft
+ *   POST   /api/requests/:requestId/draft-message  AI suggestion for the client message (not saved)
  *   POST   /api/requests/:requestId/approve      approve: link issued (shown once), email sent
  *   POST   /api/requests/:requestId/link         a new link for an open request
  *   POST   /api/requests/:requestId/link/revoke  the link stops working
@@ -119,6 +120,18 @@ requestsRouter.patch(
     const { orgId, userId } = requireAuth(req);
     const requestId = parse(uuid('requestId'), req.params.requestId);
     res.status(200).json({ success: true, data: await requestService.update(orgId, userId, requestId, parse(requestUpdate, req.body)) });
+  }),
+);
+
+requestsRouter.post(
+  '/api/requests/:requestId/draft-message',
+  guard('projects:write'),
+  audit('client_request.message_drafted', { targetType: 'client_request', targetId: fromParam('requestId') }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const requestId = parse(uuid('requestId'), req.params.requestId);
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: await requestService.draftMessage(orgId, requestId) });
   }),
 );
 

@@ -68,6 +68,14 @@ export function requestsApi(request: Request) {
     create: (projectId: string, body: RequestInput) => request<RequestDetail>(`/api/projects/${id(projectId)}/requests`, { method: 'POST', body }),
     detail: (requestId: string) => request<RequestDetail>(`/api/requests/${id(requestId)}`),
     update: (requestId: string, body: Partial<RequestInput>) => request<RequestDetail>(`/api/requests/${id(requestId)}`, { method: 'PATCH', body }),
+    /** AI suggestion for the client message; not saved until the consultant saves the draft. */
+    draftMessage: (requestId: string) =>
+      request<{ message: string; model: string; provider: string; source: 'platform' | 'firm'; attempts: number }>(
+        `/api/requests/${id(requestId)}/draft-message`,
+        {
+          method: 'POST',
+        },
+      ),
     approve: (requestId: string, expiresInDays: number) =>
       request<IssuedLink>(`/api/requests/${id(requestId)}/approve`, { method: 'POST', body: { expiresInDays } }),
     reissue: (requestId: string, expiresInDays: number) =>

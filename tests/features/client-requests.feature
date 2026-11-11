@@ -50,3 +50,14 @@ Feature: F2.4 Client requests and no-login upload
     When I click "Withdraw link"
     Then I should see "Link withdrawn. The client can no longer upload with it."
     And I should see "Upload link: withdrawn"
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:c8cb946f-af2c-4d80-871c-3902f35c6bc2
+  Scenario: The tool drafts the client message and the consultant edits and saves it before approval
+    When I click "Draft the message with AI"
+    Then I should see "Message drafted by"
+    And I should see "Nothing is sent until you approve."
+    When I fill "draftMessage" with "Hello Ana, please upload the hub drawing for the DC-100 submission. Thank you."
+    And I click "Save draft"
+    Then I should see "Draft saved."
+    And I should see "Draft, not sent"

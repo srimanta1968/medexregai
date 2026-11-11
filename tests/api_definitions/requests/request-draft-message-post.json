@@ -1,0 +1,122 @@
+{
+  "requiresAuth": true,
+  "taskId": "7580b2f3-95c3-484f-9047-f4783e815f92",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/requests/:requestId/draft-message - AI suggestion for the client message",
+  "description": "Projects:write, draft requests only. The platform model (route request_wording) drafts the client-facing message from the request's items, which reach the model as fenced data blocks; the answer must pass the route's output checks (plain prose up to 1,500 characters, no links or addresses), with one retry, else 502 AI_OUTPUT_REJECTED. The suggestion is returned, NOT saved: the consultant edits it, saves the draft (PATCH) and approves. Needs a running model (local Ollama in development; about 25 s on qwen2.5:3b-instruct). Audited (client_request.message_drafted). Covers: the tool drafts the request text and nothing is sent until the consultant edits and approves it.",
+  "endpoint": "/api/requests/:requestId/draft-message",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 104,
+  "coversCriterion": [
+    "9f681fa2-274c-4df2-a91f-d57dee368de1#AC5",
+    "7580b2f3-95c3-484f-9047-f4783e815f92#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/requests"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Your role (reviewer) does not allow this action",
+      "when": "the member cannot edit projects (e.g. a reviewer)"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Request not found",
+      "when": "no request with this id in the firm"
+    },
+    {
+      "status": 409,
+      "code": "REQUEST_NOT_DRAFT",
+      "message": "The message can only be drafted while the request is a draft.",
+      "when": "the request has been approved"
+    },
+    {
+      "status": 502,
+      "code": "AI_OUTPUT_REJECTED",
+      "message": "The AI output did not pass the safety checks and was discarded",
+      "when": "the model answer failed the output checks twice"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Draft the message for a draft request",
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      },
+      "coversCriterion": [
+        "9f681fa2-274c-4df2-a91f-d57dee368de1#AC5"
+      ],
+      "capturesResponse": true
+    },
+    {
+      "name": "404 - unknown request",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "requestId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "403 - a reviewer cannot draft",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id}}"
+      },
+      "payload": {}
+    }
+  ],
+  "captureResponse": {
+    "requests.draftMessage.response.data.model": "data.model"
+  }
+}
