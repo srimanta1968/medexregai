@@ -1,0 +1,146 @@
+{
+  "requiresAuth": true,
+  "taskId": "f95359c7-abcc-4c4c-b0e1-d26dc8c96067",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC5",
+    "f95359c7-abcc-4c4c-b0e1-d26dc8c96067#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/inbound-email"
+  ],
+  "name": "PATCH /api/projects/:projectId/inbound-email - set the allowed senders",
+  "description": "Projects:write. Body { allowedSenders: [...] } (at most 50): an address (qa@lab.com) or a domain (@client.com), lower-cased and de-duplicated. The firm's own members are always allowed. 404 when the address is off. Audited (inbound_address.senders_updated). Covers: a per-project forwarding email address accepts attachments into the project within 2 minutes.",
+  "endpoint": "/api/projects/:projectId/inbound-email",
+  "method": "PATCH",
+  "expectedStatus": 200,
+  "priority": 122,
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Your role (reviewer) does not allow this action",
+      "when": "the member cannot edit projects (e.g. a reviewer)"
+    },
+    {
+      "status": 409,
+      "code": "INBOUND_EMAIL_NOT_CONFIGURED",
+      "message": "Forwarding addresses are not set up on this server (INBOUND_EMAIL_DOMAIN is empty)",
+      "when": "the server has no INBOUND_EMAIL_DOMAIN"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Not an email address or @domain: not an address",
+      "when": "an entry is neither an address nor @domain"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "This project has no forwarding address; turn it on first",
+      "when": "no active address (or unknown project)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Allow the client's domain and a test lab",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "allowedSenders": [
+          "{{static:@northbay.example}}",
+          "{{static:qa@lab.example}}"
+        ]
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "configured": true
+        }
+      }
+    },
+    {
+      "name": "400 - not an address or domain",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "allowedSenders": [
+          "{{static:not an address}}"
+        ]
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "allowedSenders": []
+      }
+    },
+    {
+      "name": "403 - a reviewer cannot change senders",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "allowedSenders": []
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "allowedSenders": []
+      }
+    }
+  ]
+}

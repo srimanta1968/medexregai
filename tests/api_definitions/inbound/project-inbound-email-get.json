@@ -1,0 +1,80 @@
+{
+  "requiresAuth": true,
+  "taskId": "f95359c7-abcc-4c4c-b0e1-d26dc8c96067",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC5",
+    "f95359c7-abcc-4c4c-b0e1-d26dc8c96067#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/inbound-email"
+  ],
+  "name": "GET /api/projects/:projectId/inbound-email - the project's forwarding address",
+  "description": "Projects:read. configured (the server has a receiving domain), the domain, and the active address with its allowed senders, or null when it is off. Covers: a per-project forwarding email address accepts attachments into the project within 2 minutes.",
+  "endpoint": "/api/projects/:projectId/inbound-email",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 121,
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no project with this id in the firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Read the address",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "configured": true
+        }
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    }
+  ]
+}
