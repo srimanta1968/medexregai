@@ -22,6 +22,14 @@ export interface RouteUse {
   model: string;
   firmProviderId: string | null;
   firmModelNeedsEvaluation: boolean;
+  /** Prompt-injection defence for the route (F7.5). */
+  guard: {
+    documentInput: boolean;
+    dataBlocks: boolean;
+    tools: string[];
+    outputCheck: string;
+    last30Days: { checked: number; rejected: number; flaggedInputs: number };
+  };
 }
 
 export interface FirmProvider {
@@ -42,6 +50,7 @@ export interface FirmProvider {
 
 export interface AiSettings {
   registryVersion: string;
+  outputSchemaVersion: string;
   platform: { provider: string; generationModel: string; embeddingModel: string };
   routes: RouteUse[];
   providers: FirmProvider[];

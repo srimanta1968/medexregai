@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { firmProviderStore } from '../ai/FirmProviderStore';
+import { OUTPUT_CHECKS, OUTPUT_SCHEMA_VERSION } from '../ai/guard/outputSchemas';
 import { buildProviders, platformProviders } from '../ai/providers';
 import { AI_ROUTES, AiRoute, REGISTRY, REGISTRY_VERSION, resolveRoute } from '../ai/registry';
 import { config } from '../config/env';
@@ -81,6 +82,17 @@ aiSettingsRouter.get(
   handle(async (req, res) => {
     const c = ctx(req);
     const platform = platformProviders();
+    // Guard outcomes over the last 30 days (F7.5): outputs discarded by the output check, per route.
+    const guardRows = await dataService.query<{ route: string; checked: number; rejected: number; flagged_inputs: number }>(
+      { orgId: c.orgId },
+      'ai_calls',
+      `SELECT route, count(*) FILTER (WHERE output_check IS NOT NULL)::int AS checked,
+              count(*) FILTER (WHERE output_check = 'rejected')::int AS rejected,
+              count(*) FILTER (WHERE input_signals > 0)::int AS flagged_inputs
+         FROM ai_calls WHERE org_id = $1 AND created_at > now() - interval '30 days' GROUP BY route`,
+      [c.orgId],
+    );
+    const guardBy = new Map(guardRows.map((g) => [g.route, g]));
     const routes = [];
     for (const r of AI_ROUTES) {
       const resolved = await resolveRoute(c.orgId, r);
@@ -93,12 +105,24 @@ aiSettingsRouter.get(
         model: resolved.model,
         firmProviderId: resolved.firmProviderId,
         firmModelNeedsEvaluation: REGISTRY[r].firmNeedsEval,
+        guard: {
+          documentInput: REGISTRY[r].documentInput,
+          dataBlocks: true,
+          tools: [...REGISTRY[r].tools],
+          outputCheck: OUTPUT_CHECKS[r],
+          last30Days: {
+            checked: guardBy.get(r)?.checked ?? 0,
+            rejected: guardBy.get(r)?.rejected ?? 0,
+            flaggedInputs: guardBy.get(r)?.flagged_inputs ?? 0,
+          },
+        },
       });
     }
     res.status(200).json({
       success: true,
       data: {
         registryVersion: REGISTRY_VERSION,
+        outputSchemaVersion: OUTPUT_SCHEMA_VERSION,
         platform: { provider: platform.llm.kind, generationModel: platform.llm.defaultModel, embeddingModel: platform.embeddings.embeddingModel },
         routes,
         providers: await firmProviderStore.list(c.orgId),

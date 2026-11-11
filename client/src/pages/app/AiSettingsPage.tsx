@@ -99,6 +99,45 @@ function RoutesTable({ settings }: { settings: AiSettings }): JSX.Element {
   );
 }
 
+/** How client files are kept from steering the AI (F7.5, NFR-16). */
+function GuardPanel({ settings }: { settings: AiSettings }): JSX.Element {
+  const total = settings.routes.reduce((t, r) => ({ checked: t.checked + r.guard.last30Days.checked, rejected: t.rejected + r.guard.last30Days.rejected }), {
+    checked: 0,
+    rejected: 0,
+  });
+  return (
+    <section className={`${card} mt-6`} aria-labelledby="guard-title">
+      <h2 id="guard-title" className="text-lg font-semibold text-slate-900">
+        Client files cannot instruct the AI
+      </h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Text from client files reaches a model only as marked document content, never as instructions. No step can use tools, so nothing a file says can send,
+        change or open anything. Every answer is checked against the step&rsquo;s expected format and the passages it was given; an answer that fails is
+        discarded. Checks {settings.outputSchemaVersion}.
+      </p>
+      <p className="mt-2 text-sm text-slate-700">
+        Last 30 days: {total.checked} answer{total.checked === 1 ? '' : 's'} checked, {total.rejected} discarded.
+      </p>
+      <ul className="mt-4 divide-y divide-slate-100 text-sm">
+        {settings.routes.map((r) => (
+          <li key={r.route} className="py-2">
+            <p className="font-medium text-slate-900">{ROUTE_LABELS[r.route]}</p>
+            <p className="text-slate-600">
+              Tools: {r.guard.tools.length ? r.guard.tools.join(', ') : 'none'} · Checked: {r.guard.outputCheck}
+            </p>
+            {r.guard.last30Days.checked > 0 && (
+              <p className="text-xs text-slate-500">
+                {r.guard.last30Days.checked} checked, {r.guard.last30Days.rejected} discarded, {r.guard.last30Days.flaggedInputs} with instruction-like text in
+                the files
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ProviderCard({ p, onChanged }: { p: FirmProvider; onChanged: () => void }): JSX.Element {
   const { authedRequest } = useAuth();
   const api = useMemo(() => aiSettingsApi(authedRequest), [authedRequest]);
@@ -425,6 +464,7 @@ export default function AiSettingsPage(): JSX.Element {
       {error && <FormMessage tone="error">{error}</FormMessage>}
       <HealthCard health={health} onCheck={check} checking={checking} />
       {settings && <RoutesTable settings={settings} />}
+      {settings && <GuardPanel settings={settings} />}
       <section className={card} aria-labelledby="byo-title">
         <h2 id="byo-title" className="text-lg font-semibold text-slate-900">
           Your own AI provider
