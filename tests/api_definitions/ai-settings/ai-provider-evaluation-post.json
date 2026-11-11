@@ -90,6 +90,19 @@
       "capturesResponse": true
     },
     {
+      "name": "409 - an evaluation is already queued (repeat of the request above)",
+      "testType": "negative",
+      "coversErrorCase": "409|EVALUATION_RUNNING",
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      },
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "EVALUATION_RUNNING"
+      },
+      "notes": "Reachable only after the happy path queued a run, so it shares the happy path's precondition (a provider that passed its connection test)."
+    },
+    {
       "name": "409 - provider has not passed its connection test",
       "testType": "negative",
       "coversErrorCase": "409|PROVIDER_NOT_TESTED",
