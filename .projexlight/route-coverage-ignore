@@ -1,0 +1,5 @@
+# Source folders whose routes are INTERNAL to MedexRegAI (MUST-01 coverage).
+# The API runner calls the main app only; these services are reached through it.
+# One folder per line, each with a reason after '#'.
+services/fda-data/   # internal: the app reaches it via @medexregai/fda-sdk; covered by tests/api_definitions/fda/* (/api/fda/*), ADR-017
+services/docproc/    # internal: sandboxed parser, called only by the ingest worker and fda-worker (F7.2 sandbox, ADR-013)

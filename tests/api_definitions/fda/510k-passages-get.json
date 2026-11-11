@@ -1,0 +1,145 @@
+{
+  "name": "GET /api/fda/510k/:kNumber/passages - passages of a 510(k)'s public summary",
+  "description": "Returns the passages of a K-number's public 510(k) summary in document order: page, text and a stable ref ('K262392#4') that F7.3 cites as [R:<ref>], plus summaryStatus (fetched | no_summary | queued | fetching | failed; null when the FDA data service has not looked at it), indexStatus (indexed | pending | indexing | needs_ocr | failed), the reason, the FDA's own PDF URL, page and passage counts. passages is empty until the summary is fetched and indexed; paged with limit (1-200, default 50) and offset. Edge cases: a K-number the FDA lists with a 510(k) statement answers 200 with summaryStatus no_summary and that reason (no summary on file); a K-number our copy does not hold is 404; a malformed one is 400. Covers: a 510(k) summary PDF is fetched once, cached, parsed and embedded; a K-number with no summary PDF is marked 'no summary on file'. Test values are real FDA records: K262392 (product code DQY, summary fetched and indexed by fda-worker: 9 pages, 13 passages) and K092075 (DQY, filed with a statement). The app answers through @medexregai/fda-sdk from the fda-data service (cd services/fda-data && npm run dev:local) and needs DQY tracked so fda-worker has fetched K262392.",
+  "endpoint": "/api/fda/510k/:kNumber/passages",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 76,
+  "taskId": "69595760-7b4d-4bdc-aaf9-a096b5ff5d5b",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "92e036a2-291f-4be7-a4dc-20cb99879a8f#AC1",
+    "92e036a2-291f-4be7-a4dc-20cb99879a8f#AC2",
+    "69595760-7b4d-4bdc-aaf9-a096b5ff5d5b#AC1",
+    "69595760-7b4d-4bdc-aaf9-a096b5ff5d5b#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "kNumber must be K or DEN followed by 6 digits, e.g. K031698",
+      "when": "kNumber does not match the FDA format, or limit/offset out of range"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "K000000 is not in our copy of the FDA 510(k) database",
+      "when": "well-formed kNumber that the FDA copy does not hold"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service is down or rejects the app key",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the fda-data service stopped during the run; same proxy path as GET /api/fda/510k/:kNumber, verified by hand."
+    }
+  ],
+  "responseFields": [
+    "kNumber",
+    "summaryStatus",
+    "indexStatus",
+    "reason",
+    "sourceUrl",
+    "pageCount",
+    "passageCount",
+    "indexedAt",
+    "embeddingModel",
+    "passages",
+    "nextOffset"
+  ],
+  "testCases": [
+    {
+      "name": "Member reads the indexed summary of K262392",
+      "coversCriterion": [
+        "92e036a2-291f-4be7-a4dc-20cb99879a8f#AC1",
+        "69595760-7b4d-4bdc-aaf9-a096b5ff5d5b#AC1"
+      ],
+      "pathParams": {
+        "kNumber": "{{static:K262392}}"
+      },
+      "queryParams": {
+        "limit": "{{static:5}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "kNumber": "K262392",
+          "summaryStatus": "fetched",
+          "indexStatus": "indexed"
+        }
+      }
+    },
+    {
+      "name": "A K-number filed with a statement has no summary on file",
+      "coversCriterion": [
+        "92e036a2-291f-4be7-a4dc-20cb99879a8f#AC2",
+        "69595760-7b4d-4bdc-aaf9-a096b5ff5d5b#AC2"
+      ],
+      "pathParams": {
+        "kNumber": "{{static:K092075}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "kNumber": "K092075",
+          "summaryStatus": "no_summary",
+          "passageCount": 0
+        }
+      }
+    },
+    {
+      "name": "400 - malformed K-number",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "kNumber": "{{static:12345}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "404 - K-number not in the FDA copy",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "kNumber": "{{static:K000000}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": {
+        "kNumber": "{{static:K262392}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

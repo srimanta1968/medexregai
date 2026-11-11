@@ -6,10 +6,6 @@
   "headers": {
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
-  "captureResponse": {
-    "aiProviders.evaluation.response.data.id": "data.id",
-    "aiProviders.evaluation.response.data.status": "data.status"
-  },
   "name": "POST /api/settings/ai-providers/:providerId/evaluation - queue an evaluation of the firm's own model",
   "description": "For owners and admins (firm:manage). Queues an evaluation of a firm's own model (BYO) against the gold sets: classification, contradictions, drafting, prompt injection (version detection is listed but not run until E2). It goes through the same prompts, data blocks, output checks and citation gate as real work. Returns 202 with the queued run; the worker runs it (about 50 model calls, metered to the firm as eval:<route>) and records scores against the thresholds (classification 90%, contradiction precision 70%, drafting acceptance 70%, injection resistance 100%). Passing sets the provider's evalStatus to passed, which is what allows it to serve drafting; failing removes drafting. Audited (ai_provider.evaluation_requested). Covers: a gold set is scored for citation precision and section acceptance; eval sets cover classification, version detection, contradiction precision, drafting acceptance and injection; a firm-supplied model must pass the evaluation gate before it is used for drafting. Test note: an automated run's provider (https://example.com/v1) cannot pass its connection test, so the happy path is expected to need marking manual after the first run; the 409 PROVIDER_NOT_TESTED case is what the runner reaches. Verified by hand against the dev app with a stand-in model: 202 queued, a second request 409 EVALUATION_RUNNING, the worker ran 49 calls, evalStatus passed and drafting could be enabled; a failing run set failed and removed drafting.",
   "endpoint": "/api/settings/ai-providers/:providerId/evaluation",
@@ -87,7 +83,6 @@
           "status": "queued"
         }
       },
-      "capturesResponse": true,
       "payload": {}
     },
     {

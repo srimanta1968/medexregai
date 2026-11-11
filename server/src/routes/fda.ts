@@ -67,6 +67,39 @@ fdaRouter.get(
   lookup((req) => fda((c) => c.getClearance(kNumber.parse(req.params.kNumber))))
 );
 
+/**
+ * Passages of a 510(k)'s public summary, in document order (F1.2): page, text and a
+ * stable ref ("K262392#4") that F7.3 cites as [R:<ref>]. passages is empty until the
+ * FDA data service has fetched and indexed the summary; summaryStatus / indexStatus say why.
+ */
+fdaRouter.get(
+  '/api/fda/510k/:kNumber/passages',
+  authenticate,
+  lookup((req) => {
+    const p = z
+      .object({ limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).max(100_000).default(0) })
+      .parse(req.query);
+    return fda((c) => c.getSummaryPassages(kNumber.parse(req.params.kNumber), p));
+  })
+);
+
+/** Hybrid (keyword + semantic) search across indexed public 510(k) summaries (F1.2). */
+fdaRouter.get(
+  '/api/fda/search/summaries',
+  authenticate,
+  lookup((req) => {
+    const p = z
+      .object({
+        q: z.string({ required_error: 'q is required' }).trim().min(2, 'q must be at least 2 characters').max(500),
+        productCode: productCode.optional(),
+        kNumber: kNumber.optional(),
+        limit: z.coerce.number().int().min(1).max(50).default(10),
+      })
+      .parse(req.query);
+    return fda((c) => c.searchSummaries(p));
+  })
+);
+
 /** Device class and regulation number for a product code. */
 fdaRouter.get(
   '/api/fda/product-codes/:code',
