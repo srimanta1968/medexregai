@@ -188,6 +188,12 @@ log ".env S3 storage credentials match server/.env"
 # The sandboxed docproc container checks the same key the API and worker send.
 set_value "$ROOT_ENV" DOCPROC_API_KEY "$(get_value "$SERVER_ENV" DOCPROC_API_KEY)"
 log ".env docproc key matches server/.env"
+# The FDA corpus database (fda-postgres) is local to compose: nothing else needs its
+# password, so it is generated once and never changed (its volume keeps the first one).
+if is_placeholder "$(get_value "$ROOT_ENV" FDA_POSTGRES_PASSWORD)"; then
+  set_value "$ROOT_ENV" FDA_POSTGRES_PASSWORD "$(hex_secret 24)"
+  log "generated FDA_POSTGRES_PASSWORD in .env"
+fi
 # The compose Postgres (port 5433) uses the same password as server/.env.
 if [ -n "$(get_value "$SERVER_ENV" DB_PASSWORD)" ]; then
   set_value "$ROOT_ENV" POSTGRES_PASSWORD "$(get_value "$SERVER_ENV" DB_PASSWORD)"

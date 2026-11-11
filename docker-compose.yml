@@ -83,7 +83,7 @@ services:
     volumes:
       - s3_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9333/cluster/healthz && nc -z localhost 8333"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/healthz && nc -z 127.0.0.1 8333"]
       interval: 10s
       timeout: 5s
       retries: 15
@@ -217,6 +217,11 @@ services:
     depends_on:
       docproc:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4200/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     read_only: true
     tmpfs:
       - /var/cache/nginx
