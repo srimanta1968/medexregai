@@ -119,6 +119,11 @@ export interface AppConfig {
     serviceKey: string | undefined;
     /** Above docproc's own parse limit so its PARSE_TIMEOUT answer arrives first. */
     timeoutMs: number;
+    /**
+     * Log the ingest queue depth in CloudWatch Embedded Metric Format (DOCPROC_QUEUE_METRIC=true).
+     * Only meaningful under the awslogs driver, where it becomes the metric docproc scales on.
+     */
+    queueMetric: boolean;
   };
   /**
    * Development-only file upload through the API (POST /api/projects/:id/files).
@@ -452,6 +457,7 @@ export function loadConfig(env: Env): AppConfig {
       serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
       serviceKey: optionalEnv(env, 'DOCPROC_API_KEY', '') || undefined,
       timeoutMs: parsePositiveInt(optionalEnv(env, 'DOCPROC_TIMEOUT_MS', '150000'), 'DOCPROC_TIMEOUT_MS'),
+      queueMetric: optionalEnv(env, 'DOCPROC_QUEUE_METRIC', 'false').toLowerCase() === 'true',
     },
   };
 }

@@ -7,7 +7,7 @@ state file.
 | Piece | What | Notes |
 |---|---|---|
 | Network | VPC, public / private / isolated subnets per AZ | Isolated subnets have no internet route; docproc runs there (ADR-013) and reaches AWS via VPC endpoints |
-| Compute | ECS Fargate (ARM64): `api`, `worker`, `docproc` | api behind an ALB; api scales on CPU; worker/docproc bounded, queue-depth scaling arrives with F8 |
+| Compute | ECS Fargate (ARM64): `api`, `worker`, `docproc` | api behind an ALB; api scales on CPU; docproc keeps one warm task and scales on the ingest queue depth the worker logs (docproc.tf); worker bounded, its queue-depth scaling arrives with F8 |
 | Database | RDS PostgreSQL 16 (pgvector available) | Master password managed by RDS in Secrets Manager; `rds.force_ssl=1`; Multi-AZ in production |
 | Cache | ElastiCache Redis 7.1 | TLS + AUTH token (Secrets Manager); replica + failover in production |
 | Files | S3 client bucket | Versioned, TLS-only, SSE-KMS; per-tenant KMS keys created by the API at onboarding, tagged `medexregai:tenant` |

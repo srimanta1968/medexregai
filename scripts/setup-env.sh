@@ -34,7 +34,7 @@ CLIENT_ENV="$ROOT/client/.env"
 CLIENT_EXAMPLE="$ROOT/client/.env.example"
 ROOT_ENV="$ROOT/.env"
 
-GENERATED_SECRETS=(JWT_SECRET ENCRYPTION_KEY S3_SECRET_ACCESS_KEY)
+GENERATED_SECRETS=(JWT_SECRET ENCRYPTION_KEY S3_SECRET_ACCESS_KEY DOCPROC_API_KEY)
 DB_PASSWORD_ARG="${DB_PASSWORD:-}"
 ROTATE_JWT=false
 
@@ -185,6 +185,9 @@ chmod 600 "$ROOT_ENV" 2>/dev/null || true
 set_value "$ROOT_ENV" S3_ACCESS_KEY_ID "$(get_value "$SERVER_ENV" S3_ACCESS_KEY_ID)"
 set_value "$ROOT_ENV" S3_SECRET_ACCESS_KEY "$(get_value "$SERVER_ENV" S3_SECRET_ACCESS_KEY)"
 log ".env S3 storage credentials match server/.env"
+# The sandboxed docproc container checks the same key the API and worker send.
+set_value "$ROOT_ENV" DOCPROC_API_KEY "$(get_value "$SERVER_ENV" DOCPROC_API_KEY)"
+log ".env docproc key matches server/.env"
 # The compose Postgres (port 5433) uses the same password as server/.env.
 if [ -n "$(get_value "$SERVER_ENV" DB_PASSWORD)" ]; then
   set_value "$ROOT_ENV" POSTGRES_PASSWORD "$(get_value "$SERVER_ENV" DB_PASSWORD)"

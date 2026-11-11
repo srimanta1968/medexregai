@@ -93,6 +93,7 @@ data "aws_iam_policy_document" "execution_secrets" {
       aws_secretsmanager_secret.app.arn,
       aws_secretsmanager_secret.redis_auth.arn,
       aws_db_instance.main.master_user_secret[0].secret_arn,
+      aws_secretsmanager_secret.docproc.arn,
     ]
   }
   statement {
@@ -113,8 +114,9 @@ resource "aws_iam_role" "task" {
   assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
-# Every service reads/writes the client bucket. Objects under a tenant prefix are
+# api and worker read/write the client bucket. Objects under a tenant prefix are
 # encrypted with that tenant's key; the app may only use keys tagged as tenant keys.
+# docproc gets none of this: the worker posts it the bytes (docproc.tf).
 data "aws_iam_policy_document" "task_data" {
   statement {
     sid       = "ClientBucket"
@@ -149,7 +151,7 @@ data "aws_iam_policy_document" "task_data" {
 }
 
 resource "aws_iam_role_policy" "task_data" {
-  for_each = local.services
+  for_each = toset(["api", "worker"])
   name     = "client-data"
   role     = aws_iam_role.task[each.key].id
   policy   = data.aws_iam_policy_document.task_data.json
@@ -209,26 +211,7 @@ resource "aws_vpc_security_group_egress_rule" "task_all" {
   description       = "Egress via NAT (Claude API, FDA data, SSO providers)"
 }
 
-# docproc: VPC-internal egress only (database, S3 gateway endpoint, AWS endpoints).
-resource "aws_vpc_security_group_egress_rule" "docproc_vpc" {
-  security_group_id = aws_security_group.task["docproc"].id
-  cidr_ipv4         = var.vpc_cidr
-  ip_protocol       = "-1"
-  description       = "VPC-internal only"
-}
-
-data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${var.region}.s3"
-}
-
-resource "aws_vpc_security_group_egress_rule" "docproc_s3" {
-  security_group_id = aws_security_group.task["docproc"].id
-  prefix_list_id    = data.aws_ec2_managed_prefix_list.s3.id
-  ip_protocol       = "tcp"
-  from_port         = 443
-  to_port           = 443
-  description       = "S3 through the gateway endpoint"
-}
+# docproc egress and ingress: docproc.tf (AWS endpoints only; worker on 4200).
 
 resource "aws_vpc_security_group_ingress_rule" "api_from_alb" {
   security_group_id            = aws_security_group.task["api"].id
@@ -273,10 +256,54 @@ locals {
     { name = "REDIS_AUTH_TOKEN", valueFrom = aws_secretsmanager_secret.redis_auth.arn },
   ]
 
+  docproc_url = "http://docproc.${aws_service_discovery_private_dns_namespace.internal.name}:4200"
+  docproc_key = [{ name = "DOCPROC_API_KEY", valueFrom = aws_secretsmanager_secret.docproc.arn }]
+
+  # docproc gets no database, cache or bucket settings and only its own key.
+  service_env = {
+    api    = concat(local.common_env, [{ name = "DOCPROC_URL", value = local.docproc_url }])
+    worker = concat(local.common_env, [{ name = "DOCPROC_URL", value = local.docproc_url }, { name = "DOCPROC_QUEUE_METRIC", value = "true" }])
+    docproc = [
+      { name = "DOCPROC_PARSE_TIMEOUT_S", value = tostring(var.docproc_parse_timeout_s) },
+      { name = "DOCPROC_CONCURRENCY", value = "1" },
+    ]
+  }
+  service_secrets = {
+    api     = concat(local.common_secrets, local.docproc_key)
+    worker  = concat(local.common_secrets, local.docproc_key)
+    docproc = local.docproc_key
+  }
+  service_ports = {
+    api     = [{ containerPort = 3000, protocol = "tcp" }]
+    worker  = []
+    docproc = [{ containerPort = 4200, protocol = "tcp" }]
+  }
+
+  # Container settings only the docproc sandbox gets (ADR-013).
+  container_extras = {
+    api    = {}
+    worker = {}
+    docproc = {
+      user        = "10001"
+      mountPoints = [{ sourceVolume = "scratch", containerPath = "/tmp", readOnly = false }]
+      linuxParameters = {
+        initProcessEnabled = true
+        capabilities       = { add = [], drop = ["ALL"] }
+      }
+      healthCheck = {
+        command     = ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:4200/health',timeout=2)"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 20
+      }
+    }
+  }
+
   task_sizes = {
     api     = { cpu = var.api_cpu, memory = var.api_memory }
     worker  = { cpu = 1024, memory = 2048 }
-    docproc = { cpu = 2048, memory = 4096 }
+    docproc = { cpu = var.docproc_cpu, memory = var.docproc_memory }
   }
   commands = {
     api     = null
@@ -298,15 +325,23 @@ resource "aws_ecs_task_definition" "svc" {
     operating_system_family = "LINUX"
     cpu_architecture        = "ARM64"
   }
-  container_definitions = jsonencode([{
+  # docproc sandbox (ADR-013): read-only root with a scratch /tmp, every Linux capability
+  # dropped, non-root user from the image, killed children reaped by init.
+  dynamic "volume" {
+    for_each = each.key == "docproc" ? [1] : []
+    content {
+      name = "scratch"
+    }
+  }
+  container_definitions = jsonencode([merge({
     name                   = each.key
     image                  = "${aws_ecr_repository.svc[each.key].repository_url}:${var.image_tag}"
     essential              = true
     command                = local.commands[each.key]
     readonlyRootFilesystem = each.key == "docproc"
-    portMappings           = each.key == "api" ? [{ containerPort = 3000, protocol = "tcp" }] : []
-    environment            = concat(local.common_env, [{ name = "SERVICE_ROLE", value = each.key }])
-    secrets                = local.common_secrets
+    portMappings           = local.service_ports[each.key]
+    environment            = concat(local.service_env[each.key], [{ name = "SERVICE_ROLE", value = each.key }])
+    secrets                = local.service_secrets[each.key]
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -315,7 +350,7 @@ resource "aws_ecs_task_definition" "svc" {
         awslogs-stream-prefix = each.key
       }
     }
-  }])
+  }, local.container_extras[each.key])])
 }
 
 resource "aws_ecs_service" "svc" {
@@ -324,7 +359,7 @@ resource "aws_ecs_service" "svc" {
   cluster                = aws_ecs_cluster.main.id
   task_definition        = aws_ecs_task_definition.svc[each.key].arn
   launch_type            = "FARGATE"
-  desired_count          = each.key == "api" ? var.api_desired_count : each.key == "worker" ? var.worker_desired_count : 0
+  desired_count          = each.key == "api" ? var.api_desired_count : each.key == "worker" ? var.worker_desired_count : var.docproc_min_count
   enable_execute_command = false
   propagate_tags         = "SERVICE"
   deployment_circuit_breaker {
@@ -335,6 +370,12 @@ resource "aws_ecs_service" "svc" {
     subnets          = each.key == "docproc" ? aws_subnet.isolated[*].id : aws_subnet.private[*].id
     security_groups  = [aws_security_group.task[each.key].id]
     assign_public_ip = false
+  }
+  dynamic "service_registries" {
+    for_each = each.key == "docproc" ? [1] : []
+    content {
+      registry_arn = aws_service_discovery_service.docproc.arn
+    }
   }
   dynamic "load_balancer" {
     for_each = each.key == "api" ? [1] : []
@@ -351,14 +392,15 @@ resource "aws_ecs_service" "svc" {
 }
 
 # --- Autoscaling ----------------------------------------------------------------------
-# api scales on CPU; worker and docproc get bounds here and are scaled on queue depth by
-# a CloudWatch metric the worker publishes (MedexRegAI/Queue Depth), wired in F8.x.
+# api scales on CPU; docproc scales on the ingest queue depth the worker publishes
+# (MedexRegAI/Ingest QueueDepth, policies in docproc.tf); worker gets bounds here and
+# its own queue-depth scaling with the F8 job framework.
 
 locals {
   scaling = {
     api     = { min = var.api_desired_count, max = var.api_max_count }
     worker  = { min = var.worker_desired_count, max = var.worker_max_count }
-    docproc = { min = 0, max = var.docproc_max_count }
+    docproc = { min = var.docproc_min_count, max = var.docproc_max_count }
   }
 }
 

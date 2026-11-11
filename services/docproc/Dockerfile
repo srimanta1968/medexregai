@@ -2,8 +2,9 @@
 #   docker build -t medexregai/docproc services/docproc
 # Full build adds Docling layout + OCR and bakes its models in (several GB):
 #   docker build --build-arg FULL=1 -t medexregai/docproc:full services/docproc
-# The no-egress network, CPU/memory limits and read-only filesystem are set where
-# the container runs (F7.2 sandbox task), not here.
+# The no-egress network, CPU/memory/process limits, read-only root and dropped
+# capabilities are set where the container runs: docker-compose.yml (local) and
+# infra/terraform/modules/platform/docproc.tf + compute.tf (AWS).
 FROM python:3.12.8-slim
 ARG FULL=0
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DOCPROC_HOST=0.0.0.0 DOCPROC_PORT=4200

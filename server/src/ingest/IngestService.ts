@@ -358,3 +358,22 @@ export async function processQueued(perOrg = 5, deps: IngestDeps = {}): Promise<
   }
   return counts;
 }
+
+/**
+ * File versions waiting for docproc or being parsed, across all active firms. The worker
+ * publishes it as the metric the sandboxed docproc pool scales on (Terraform: docproc_queue).
+ */
+export async function queueDepth(): Promise<number> {
+  const orgs = await dataService.query<{ id: string }>({}, 'orgs', "SELECT id FROM orgs WHERE status = 'active' ORDER BY id");
+  let depth = 0;
+  for (const { id: orgId } of orgs) {
+    const [row] = await dataService.query<{ n: string }>(
+      { orgId },
+      'file_versions',
+      "SELECT count(*) AS n FROM file_versions WHERE org_id = $1 AND parse_status IN ('queued', 'parsing')",
+      [orgId],
+    );
+    depth += Number(row?.n ?? 0);
+  }
+  return depth;
+}

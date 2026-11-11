@@ -112,6 +112,40 @@ variable "docproc_max_count" {
   default     = 4
 }
 
+variable "docproc_min_count" {
+  description = "Warm docproc tasks. At least 1: a queued file retries every 10 s and would use up its attempts during a cold start."
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.docproc_min_count >= 1
+    error_message = "docproc_min_count must be at least 1."
+  }
+}
+
+variable "docproc_cpu" {
+  description = "CPU units per docproc task (its sandbox CPU limit)."
+  type        = number
+  default     = 2048
+}
+
+variable "docproc_memory" {
+  description = "Memory (MiB) per docproc task (its sandbox memory limit; a parse past it is killed)."
+  type        = number
+  default     = 4096
+}
+
+variable "docproc_parse_timeout_s" {
+  description = "Seconds before docproc kills a parse (PARSE_TIMEOUT). Keep below the worker's DOCPROC_TIMEOUT_MS."
+  type        = number
+  default     = 120
+}
+
+variable "docproc_scale_out_depth" {
+  description = "Ingest queue depth (versions queued or parsing) at which docproc adds a task; twice this adds two."
+  type        = number
+  default     = 10
+}
+
 variable "image_tag" {
   description = "Container image tag deployed for api, worker and docproc."
   type        = string

@@ -25,8 +25,24 @@ Legacy `.doc/.xls/.ppt` and generic zip archives answer `415 UNSUPPORTED_FORMAT`
   count, total size and compression ratio before any parser opens them (`ARCHIVE_LIMIT`).
 - Each parse runs in a child process killed at `DOCPROC_PARSE_TIMEOUT_S` (`504 PARSE_TIMEOUT`).
 - `X-Docproc-Key` shared secret on every `/v1` call (constant-time compare).
-- Runs as a non-root user; the container gets no outbound network and CPU/memory
-  limits from the sandbox task.
+- Runs as a non-root user in a sandbox with no outbound network (see below).
+
+## Sandbox
+
+| | Local (`docker-compose.yml`) | AWS (`infra/terraform/modules/platform`) |
+|---|---|---|
+| Network | alone on the `internal` network `docproc_sandbox`; the host reaches it only through `docproc-gateway` on 127.0.0.1:4200 | isolated subnets with no internet route; egress only to the AWS interface endpoints and S3 (image layers); ingress only from the worker on 4200 |
+| Access | none to data stores: the worker posts the bytes | no database, cache, bucket or KMS permissions; its own key (`<env>/docproc-key`) |
+| Limits | 2 CPUs, 4 GB memory (no swap), 256 processes | `docproc_cpu` / `docproc_memory` (2 vCPU, 4 GB) |
+| Hardening | read-only root, tmpfs `/tmp`, all capabilities dropped, no-new-privileges, init | read-only root, scratch `/tmp`, all capabilities dropped, init |
+| Scaling | one container | one warm task, more on the ingest queue depth the worker logs (`MedexRegAI/Ingest QueueDepth`) up to `docproc_max_count` |
+
+Archives: Office files are the only zips opened, after the entry-count, size and ratio
+checks; generic archives are refused (`415`) and embedded files are never expanded, so
+nesting depth is one by construction.
+
+Check a running local sandbox with `scripts/verify-docproc-sandbox.sh` (no egress by IP
+or name, hardening, limits, reachable through the gateway, key required).
 
 ## API
 
@@ -40,6 +56,15 @@ POST /v1/parse      body: raw file bytes                     (X-Docproc-Key, X-F
 ```
 
 ## Run locally
+
+Sandboxed, as the app uses it (key from `scripts/setup-env.sh`):
+
+```bash
+docker compose up -d docproc docproc-gateway
+scripts/verify-docproc-sandbox.sh
+```
+
+Or unsandboxed, for working on the parsers:
 
 ```bash
 pip install -r requirements.txt

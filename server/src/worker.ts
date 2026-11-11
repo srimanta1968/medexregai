@@ -1,7 +1,7 @@
 import { evalStore } from './ai/eval/EvalStore';
 import { config } from './config/env';
 import { pushTrackedProductCodes } from './fda/fdaService';
-import { processQueued, sweep } from './ingest/IngestService';
+import { processQueued, queueDepth, sweep } from './ingest/IngestService';
 import { embedPendingAll } from './retrieval/embeddings';
 import { closePool } from './services/DataService';
 import { inboundEmailService } from './inbound/InboundEmailService';
@@ -80,10 +80,33 @@ async function inboundPass(): Promise<void> {
   }
 }
 
+/**
+ * One CloudWatch Embedded Metric Format line: under the awslogs driver CloudWatch turns it
+ * into MedexRegAI/Ingest QueueDepth, which scales the sandboxed docproc pool (no SDK needed).
+ */
+async function publishQueueDepth(): Promise<void> {
+  try {
+    const depth = await queueDepth();
+    console.info(
+      JSON.stringify({
+        _aws: {
+          Timestamp: Date.now(),
+          CloudWatchMetrics: [{ Namespace: 'MedexRegAI/Ingest', Dimensions: [['Environment']], Metrics: [{ Name: 'QueueDepth', Unit: 'Count' }] }],
+        },
+        Environment: process.env.APP_ENVIRONMENT ?? 'development',
+        QueueDepth: depth,
+      }),
+    );
+  } catch (err) {
+    console.error(`[worker] queue depth metric failed: ${(err as Error).message}`);
+  }
+}
+
 async function ingestPass(): Promise<void> {
   if (ingestRunning) return;
   ingestRunning = true;
   try {
+    if (config.docproc.queueMetric) await publishQueueDepth();
     const counts = await processQueued();
     const done = counts.parsed + counts.failed + counts.unsupported + counts.retry;
     if (done) console.info(`[worker] ingest: ${JSON.stringify(counts)}`);

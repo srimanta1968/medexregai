@@ -14,8 +14,11 @@
 #   postgres 5433  (5432 is usually taken by the shared ProjexLight Postgres, which
 #                   server/.env points at by default; switch DB_PORT=5433 to use this one)
 #   redis    6379   s3 (SeaweedFS S3 API) 9000   ollama 11434
+#   docproc  4200   (127.0.0.1 only, through docproc-gateway)
 #
-# The document-ingest sidecar (Docling, task F7.2) joins this file when it is built.
+# docproc parses client files in a sandbox (F7.2, ADR-013): it sits alone on an
+# internal network with no route out, so a hostile file cannot call anywhere.
+# Check it with:  scripts/verify-docproc-sandbox.sh
 # The ProjexLight Dev MCP is normally started by mcp-server/setup-all.sh; the
 # bundled definition below only runs with:  docker compose --profile mcp up -d
 # =============================================================================
@@ -175,6 +178,52 @@ services:
     restart: unless-stopped
     networks: [fda_network]
 
+  docproc:
+    # Document parsing sidecar (services/docproc). Same sandbox as in AWS: no outbound
+    # network, fixed CPU/memory/process limits, read-only root, no Linux capabilities,
+    # non-root user (from the image). Each parse also runs in a child process killed at
+    # DOCPROC_PARSE_TIMEOUT_S. Core build; FULL=1 adds Docling + OCR (several GB).
+    build:
+      context: ./services/docproc
+      args:
+        FULL: ${DOCPROC_FULL:-0}
+    image: medexregai/docproc:local
+    environment:
+      DOCPROC_API_KEY: ${DOCPROC_API_KEY:?run scripts/setup-env.sh to create .env}
+      DOCPROC_CONCURRENCY: "1"
+      DOCPROC_PARSE_TIMEOUT_S: "120"
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    cpus: 2
+    mem_limit: 4g
+    memswap_limit: 4g
+    pids_limit: 256
+    restart: unless-stopped
+    networks: [docproc_sandbox]
+
+  docproc-gateway:
+    # The only way in: forwards 127.0.0.1:4200 on the host to docproc. docproc itself has
+    # no published port and no route out; this proxy only relays connections it receives.
+    image: nginx:1.27.3-alpine
+    command: ["nginx", "-c", "/etc/nginx/docproc-gateway.conf", "-g", "daemon off;"]
+    volumes:
+      - ./infra/docker/docproc-gateway.conf:/etc/nginx/docproc-gateway.conf:ro
+    ports:
+      - "127.0.0.1:${DOCPROC_HOST_PORT:-4200}:4200"
+    depends_on:
+      docproc:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    restart: unless-stopped
+    networks: [docproc_sandbox, app_network]
+
   # ProjexLight MCP Server - Code Review Agent & Schema Sync (opt-in profile).
   # Image pulled from Docker Hub: https://hub.docker.com/r/projexlight/projex-dev-mcp
   mcp-server:
@@ -222,3 +271,7 @@ networks:
     driver: bridge
   fda_network:
     driver: bridge
+  docproc_sandbox:
+    # internal: no gateway to the host or the internet. Only docproc-gateway joins it too.
+    driver: bridge
+    internal: true
