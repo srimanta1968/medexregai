@@ -53,6 +53,9 @@ export interface LlmSettings {
   embeddingBaseUrl: string;
   /** Per-route model for this environment (AI_ROUTE_MODELS=route=model,...); unset routes use generationModel. */
   routeModels: Partial<Record<string, string>>;
+  /** Optional reranker (F7.3): a TEI-compatible POST /rerank endpoint serving bge-reranker-v2-m3. Unset: no rerank. */
+  rerankUrl: string | null;
+  rerankModel: string;
 }
 
 export type SsoProviderId = 'google' | 'microsoft';
@@ -368,6 +371,8 @@ export function loadConfig(env: Env): AppConfig {
       apiKey: optionalEnv(env, 'AI_API_KEY', '') || undefined,
       embeddingBaseUrl: optionalEnv(env, 'AI_EMBEDDING_BASE_URL', 'http://localhost:11434'),
       routeModels: parseRouteModels(optionalEnv(env, 'AI_ROUTE_MODELS', '')),
+      rerankUrl: optionalEnv(env, 'AI_RERANK_URL', '') || null,
+      rerankModel: optionalEnv(env, 'AI_RERANK_MODEL', 'bge-reranker-v2-m3'),
     },
     logLevel: optionalEnv(env, 'LOG_LEVEL', 'info'),
     logFormat: parseLogFormat(optionalEnv(env, 'LOG_FORMAT', 'dev')),

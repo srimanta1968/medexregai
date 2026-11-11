@@ -1,0 +1,69 @@
+{
+  "requiresAuth": true,
+  "taskId": "c2699c9b-ae5f-41a6-a590-6ea02048a4b5",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/search - hybrid search over the project's client passages",
+  "description": "Ranked passages from the project's current file versions (superseded versions only with includeSuperseded=true): Postgres full text over section path and text, pgvector cosine similarity to the query's bge-m3 embedding, fused by reciprocal rank and, when AI_RERANK_URL is set, reranked by bge-reranker-v2-m3. Each item has its file, version, start and end source location (page, sheet and cell range, slide or heading path), a readable 'where' and the [C:<file_version_id>#<from>-<to>] citation the citation gate accepts. mode is 'text' with a notice when passages are not embedded yet or the embedding model is unreachable. Covers: a query returns ranked passages with source locations.",
+  "endpoint": "/api/projects/:projectId/search",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 96,
+  "coversCriterion": [
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC1",
+    "c2699c9b-ae5f-41a6-a590-6ea02048a4b5#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "fieldEnums": {
+    "mode": ["hybrid", "text"],
+    "includeSuperseded": ["true", "false"]
+  },
+  "errorCases": [
+    { "status": 401, "code": "UNAUTHORIZED", "message": "Missing bearer token", "when": "no Authorization header" },
+    { "status": 404, "code": "NOT_FOUND", "message": "Project not found", "when": "no project with this id in the firm" },
+    { "status": 400, "code": "VALIDATION_ERROR", "message": "q must be at least 2 characters", "when": "missing or short query, or limit outside 1-50" }
+  ],
+  "testCases": [
+    {
+      "name": "Owner searches the project's passages",
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "queryParams": { "q": "tensile force acceptance criterion", "limit": "10" },
+      "expectedStatus": 200,
+      "expectedResponse": { "success": true }
+    },
+    {
+      "name": "400 - query too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "queryParams": { "q": "a" },
+      "expectedStatus": 400,
+      "expectedError": { "code": "VALIDATION_ERROR" }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": { "projectId": "{{static:00000000-0000-4000-8000-000000000000}}" },
+      "queryParams": { "q": "tensile" },
+      "expectedStatus": 404,
+      "expectedError": { "code": "NOT_FOUND" }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "queryParams": { "q": "tensile" },
+      "expectedStatus": 401,
+      "expectedError": { "code": "UNAUTHORIZED" }
+    }
+  ]
+}

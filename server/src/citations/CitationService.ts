@@ -8,6 +8,8 @@ import { applyCitationGate, CitationRef, GateResult, refKey, Resolution, SourceR
  *  [R:<record>#<passage>]                    an FDA record passage (510(k) summary text arrives with F1.2)
  */
 
+/** Longest run of passages one citation may cover (a retrieved chunk spans a few). */
+const MAX_RANGE = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface LocationRow {
@@ -43,32 +45,43 @@ export class ProjectSourceResolver implements SourceResolver {
     for (const r of refs.filter((x) => x.kind === 'R')) {
       out.set(refKey(r), { error: 'FDA passages cannot be cited yet (510(k) summary text is not loaded)' });
     }
-    const valid = client.filter((r) => UUID.test(r.source) && /^\d{1,7}$/.test(r.locator));
+    // "#3" is one passage; "#3-7" a run of passages (a retrieved chunk), at most MAX_RANGE long.
+    const span = (r: CitationRef): [number, number] | null => {
+      const m = /^(\d{1,7})(?:-(\d{1,7}))?$/.exec(r.locator);
+      if (!m) return null;
+      const lo = Number(m[1]);
+      const hi = m[2] === undefined ? lo : Number(m[2]);
+      return hi >= lo && hi - lo < MAX_RANGE ? [lo, hi] : null;
+    };
+    const valid = client.filter((r) => UUID.test(r.source) && span(r));
     for (const r of client.filter((x) => !valid.includes(x))) out.set(refKey(r), { error: 'malformed citation' });
     if (valid.length) {
       // Only passages of files in THIS project count: a citation to another project or firm resolves to nothing.
-      const rows = await dataService.query<LocationRow>(
+      const rows = await dataService.query<LocationRow & { ref: number }>(
         { orgId: this.orgId },
         'source_locations',
-        `SELECT v.id AS version_id, l.ordinal, l.page, l.sheet, l.cell_range, l.slide, l.section_path, l.text, f.name, v.version_no,
+        `SELECT want.ref, v.id AS version_id, l.ordinal, l.page, l.sheet, l.cell_range, l.slide, l.section_path, l.text, f.name, v.version_no,
                 (f.current_version_id IS NOT NULL AND f.current_version_id <> v.id) AS superseded
-           FROM unnest($3::uuid[], $4::int[]) AS want(version_id, ordinal)
-           JOIN source_locations l ON l.file_version_id = want.version_id AND l.ordinal = want.ordinal AND l.org_id = $1
+           FROM unnest($3::uuid[], $4::int[], $5::int[]) WITH ORDINALITY AS want(version_id, lo, hi, ref)
+           JOIN source_locations l ON l.file_version_id = want.version_id AND l.ordinal BETWEEN want.lo AND want.hi AND l.org_id = $1
            JOIN file_versions v ON v.id = l.file_version_id AND v.org_id = $1
            JOIN files f ON f.id = v.file_id AND f.org_id = $1
-          WHERE f.project_id = $2 AND f.status = 'active'`,
-        [this.orgId, this.projectId, valid.map((r) => r.source), valid.map((r) => Number(r.locator))],
+          WHERE f.project_id = $2 AND f.status = 'active'
+          ORDER BY want.ref, l.ordinal`,
+        [this.orgId, this.projectId, valid.map((r) => r.source), valid.map((r) => span(r)![0]), valid.map((r) => span(r)![1])],
       );
-      const byKey = new Map(rows.map((row) => [`C:${row.version_id}#${row.ordinal}`, row]));
-      for (const r of valid) {
-        const row = byKey.get(`C:${r.source.toLowerCase()}#${Number(r.locator)}`);
-        out.set(
-          refKey(r),
-          row
-            ? { text: row.text, label: `${row.name} v${row.version_no}, ${where(row)}`, superseded: row.superseded }
-            : { error: 'no such passage in this project' },
-        );
-      }
+      valid.forEach((r, i) => {
+        const [lo, hi] = span(r)!;
+        const parts = rows.filter((row) => Number(row.ref) === i + 1);
+        // Every passage of the range must exist, or the citation does not resolve.
+        if (parts.length !== hi - lo + 1) {
+          out.set(refKey(r), { error: 'no such passage in this project' });
+          return;
+        }
+        const first = parts[0];
+        const label = `${first.name} v${first.version_no}, ${where(first)}${parts.length > 1 ? ` to ${where(parts[parts.length - 1])}` : ''}`;
+        out.set(refKey(r), { text: parts.map((p) => p.text).join('\n'), label, superseded: first.superseded });
+      });
     }
     return out;
   }
