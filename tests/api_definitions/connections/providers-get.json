@@ -1,0 +1,52 @@
+{
+  "name": "GET /api/connections/providers - folder providers and their read-only scope",
+  "description": "Lists Dropbox, Box, SharePoint/OneDrive and Google Drive, whether each is set up on this server, the read-only scopes requested and the scope explained in plain words before connecting (AC1, AC2, AC4). Needs projects:read.",
+  "endpoint": "/api/connections/providers",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 140,
+  "taskId": "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC1",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC2",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC4",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC1",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant sees the providers and the read-only scope in plain words",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ]
+}

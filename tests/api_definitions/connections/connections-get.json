@@ -1,0 +1,75 @@
+{
+  "name": "GET /api/connections - the firm's folder connections",
+  "description": "The firm's read-only folder connections, newest first, keyset-paginated. Never returns token material (AC1, AC2). Needs projects:read. A connection is created only by a real provider sign-in (OAuth callback), so this list is where its id is read; in a freshly registered firm it is empty and the dependants that need a live connection skip.",
+  "endpoint": "/api/connections",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 141,
+  "taskId": "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC1",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC2",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC1",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "connections.connected.response.data.id": "data.items.0.id"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "limit must be at least 1",
+      "when": "limit outside 1..50 or a malformed cursor"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant lists connections",
+      "queryParams": {
+        "limit": "{{static:20}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    },
+    {
+      "name": "400 - limit out of range",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "queryParams": {
+        "limit": "{{static:0}}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "GET /api/connections/oauth/:provider/callback - provider redirects the browser back",
+  "description": "Public browser callback from the provider (no session; the one-time state binds it to the firm and user). Always answers 302 back into the app: ?connected=<id> on success, or ?connection_error=denied|invalid_state|not_read_only|provider_error|not_configured. A grant wider than read-only is revoked and refused (AC1, AC2). A successful exchange needs a real provider sign-in, so the automated cases cover the refusals.",
+  "endpoint": "/api/connections/oauth/:provider/callback",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 302,
+  "priority": 143,
+  "taskId": "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC1",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC2",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC1",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC2"
+  ],
+  "dependsOn": [],
+  "fieldEnums": {
+    "provider": [
+      "dropbox",
+      "box",
+      "onedrive",
+      "google_drive"
+    ]
+  },
+  "errorCases": [],
+  "testCases": [
+    {
+      "name": "Forged state is refused with a redirect",
+      "pathParams": {
+        "provider": "{{static:dropbox}}"
+      },
+      "queryParams": {
+        "state": "{{dynamic:uuid}}",
+        "code": "{{static:not-a-real-code}}"
+      },
+      "expectedStatus": 302
+    },
+    {
+      "name": "Missing state is refused with a redirect",
+      "testType": "negative",
+      "pathParams": {
+        "provider": "{{static:dropbox}}"
+      },
+      "queryParams": {
+        "code": "{{static:not-a-real-code}}"
+      },
+      "expectedStatus": 302
+    },
+    {
+      "name": "Unknown provider is refused with a redirect",
+      "testType": "negative",
+      "pathParams": {
+        "provider": "{{static:ftp}}"
+      },
+      "queryParams": {
+        "state": "{{dynamic:uuid}}"
+      },
+      "expectedStatus": 302
+    }
+  ]
+}

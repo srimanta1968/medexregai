@@ -1,0 +1,164 @@
+{
+  "name": "POST /api/projects/:projectId/folder-links - link a client folder",
+  "description": "Links a folder from a read-only connection to the project (AC1, AC2); the worker then imports its files and follows changes. folder is the provider folder id or path, resolved with the provider before saving. The happy path needs a connection made through a real provider sign-in. Needs projects:write.",
+  "endpoint": "/api/projects/:projectId/folder-links",
+  "method": "POST",
+  "requiresAuth": true,
+  "expectedStatus": 201,
+  "priority": 146,
+  "taskId": "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC1",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC2",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC1",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "folderLinks.create.response.data.id": "data.id"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (reviewer, viewer)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "folder is required",
+      "when": "connectionId or folder missing or malformed"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "not found",
+      "when": "project or connection unknown to this firm, or the provider has no such folder this account can read"
+    },
+    {
+      "status": 409,
+      "code": "FOLDER_ALREADY_LINKED",
+      "message": "already linked",
+      "when": "the folder is already linked to this project"
+    },
+    {
+      "status": 409,
+      "code": "CONNECTION_REVOKED",
+      "message": "has been disconnected",
+      "when": "the connection was disconnected"
+    },
+    {
+      "status": 409,
+      "code": "CONNECTION_NEEDS_REAUTH",
+      "message": "Reconnect this account",
+      "when": "the provider no longer accepts the stored access"
+    },
+    {
+      "status": 502,
+      "code": "PROVIDER_UNAVAILABLE",
+      "message": "did not answer",
+      "when": "the provider is rate limiting or unavailable"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant links a client folder",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "connectionId": "{{cache:connections.connected.response.data.id}}",
+        "folder": "{{static:/Clients/Acme}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "connectionId": "{{dynamic:uuid}}",
+        "folder": "{{static:/Clients/Acme}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot link",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "connectionId": "{{dynamic:uuid}}",
+        "folder": "{{static:/Clients/Acme}}"
+      }
+    },
+    {
+      "name": "400 - folder missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "connectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown connection (or project)",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "connectionId": "{{dynamic:uuid}}",
+        "folder": "{{static:/Clients/Acme}}"
+      }
+    }
+  ]
+}

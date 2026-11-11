@@ -1,0 +1,93 @@
+{
+  "name": "GET /api/connections/:connectionId - one connection",
+  "description": "One read-only connection: provider, account, granted scopes, status (active, needs_reauth, revoked) and how many folders use it; never token material (AC1, AC2). The happy path needs a connection made through a real provider sign-in. Needs projects:read.",
+  "endpoint": "/api/connections/:connectionId",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 144,
+  "taskId": "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "717d5baf-5788-4106-9669-e387af1830b0#AC1",
+    "717d5baf-5788-4106-9669-e387af1830b0#AC2",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC1",
+    "d3ab69bc-9f38-45e4-ae74-b9a5a447ddbf#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Connection not found",
+      "when": "no such connection, or it belongs to another firm (same answer)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant reads a connection",
+      "pathParams": {
+        "connectionId": "{{cache:connections.connected.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "connectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown connection",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "connectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "connectionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}
