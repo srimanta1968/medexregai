@@ -1,6 +1,6 @@
 {
   "name": "POST /api/projects/:projectId/folder-links - link a client folder",
-  "description": "Links a folder from a read-only connection to the project (AC1, AC2); the worker then imports its files and follows changes. folder is the provider folder id or path, resolved with the provider before saving. The happy path needs a connection made through a real provider sign-in. Needs projects:write.",
+  "description": "Links a folder from a read-only connection to the project (AC1, AC2); the worker then imports its files and follows changes. folder is the provider folder id or path, resolved with the provider before saving. The happy path needs a connection made through a real provider sign-in. Needs projects:write. A disconnected connection (409 CONNECTION_REVOKED) or one the provider stopped accepting (409 CONNECTION_NEEDS_REAUTH) is refused as well; those states need a live provider connection to set up and are verified by the folder-sync development check, not by this definition.",
   "endpoint": "/api/projects/:projectId/folder-links",
   "method": "POST",
   "requiresAuth": true,
@@ -59,22 +59,22 @@
       "when": "the folder is already linked to this project"
     },
     {
+      "status": 502,
+      "code": "PROVIDER_UNAVAILABLE",
+      "message": "did not answer",
+      "when": "the provider is rate limiting or unavailable"
+    },
+    {
       "status": 409,
       "code": "CONNECTION_REVOKED",
       "message": "has been disconnected",
-      "when": "the connection was disconnected"
+      "when": "the connection was disconnected (needs a live provider connection to set up; not automated)"
     },
     {
       "status": 409,
       "code": "CONNECTION_NEEDS_REAUTH",
       "message": "Reconnect this account",
-      "when": "the provider no longer accepts the stored access"
-    },
-    {
-      "status": 502,
-      "code": "PROVIDER_UNAVAILABLE",
-      "message": "did not answer",
-      "when": "the provider is rate limiting or unavailable"
+      "when": "the provider no longer accepts the stored access (needs a live provider connection to set up; not automated)"
     }
   ],
   "testCases": [
@@ -159,6 +159,23 @@
         "connectionId": "{{dynamic:uuid}}",
         "folder": "{{static:/Clients/Acme}}"
       }
+    },
+    {
+      "name": "409 - folder already linked",
+      "testType": "negative",
+      "coversErrorCase": "409|FOLDER_ALREADY_LINKED",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "FOLDER_ALREADY_LINKED"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "connectionId": "{{cache:connections.connected.response.data.id}}",
+        "folder": "{{static:/Clients/Acme}}"
+      },
+      "description": "Runs after the happy path linked the same folder; needs a connection made through a real provider sign-in."
     }
   ]
 }

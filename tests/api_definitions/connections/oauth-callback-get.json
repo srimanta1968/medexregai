@@ -24,7 +24,38 @@
       "google_drive"
     ]
   },
-  "errorCases": [],
+  "errorCases": [
+    {
+      "status": 302,
+      "code": "invalid_state",
+      "message": "connection_error=invalid_state",
+      "when": "state missing, forged, expired, already used, or for another provider"
+    },
+    {
+      "status": 302,
+      "code": "denied",
+      "message": "connection_error=denied",
+      "when": "the user declined at the provider (error parameter) or no code came back"
+    },
+    {
+      "status": 302,
+      "code": "not_read_only",
+      "message": "connection_error=not_read_only",
+      "when": "the provider granted more than the read-only scopes; the grant is revoked"
+    },
+    {
+      "status": 302,
+      "code": "provider_error",
+      "message": "connection_error=provider_error",
+      "when": "the code exchange or account lookup failed at the provider"
+    },
+    {
+      "status": 302,
+      "code": "not_configured",
+      "message": "connection_error=not_configured",
+      "when": "the provider's OAuth app is not set up on this server"
+    }
+  ],
   "testCases": [
     {
       "name": "Forged state is refused with a redirect",
@@ -35,7 +66,8 @@
         "state": "{{dynamic:uuid}}",
         "code": "{{static:not-a-real-code}}"
       },
-      "expectedStatus": 302
+      "expectedStatus": 302,
+      "coversErrorCase": "302|invalid_state"
     },
     {
       "name": "Missing state is refused with a redirect",
@@ -46,7 +78,8 @@
       "queryParams": {
         "code": "{{static:not-a-real-code}}"
       },
-      "expectedStatus": 302
+      "expectedStatus": 302,
+      "coversErrorCase": "302|invalid_state"
     },
     {
       "name": "Unknown provider is refused with a redirect",
@@ -57,7 +90,8 @@
       "queryParams": {
         "state": "{{dynamic:uuid}}"
       },
-      "expectedStatus": 302
+      "expectedStatus": 302,
+      "coversErrorCase": "302|invalid_state"
     }
   ]
 }
