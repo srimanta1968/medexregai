@@ -42,7 +42,7 @@ interface ClaimedVersion {
   sha256: string;
   storage_key: string | null;
   parse_attempts: number;
-  source: 'upload' | 'linked' | 'request';
+  source: 'upload' | 'linked' | 'request' | 'email';
   name: string;
 }
 

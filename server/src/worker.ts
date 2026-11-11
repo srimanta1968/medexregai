@@ -4,6 +4,7 @@ import { pushTrackedProductCodes } from './fda/fdaService';
 import { processQueued, sweep } from './ingest/IngestService';
 import { embedPendingAll } from './retrieval/embeddings';
 import { closePool } from './services/DataService';
+import { inboundEmailService } from './inbound/InboundEmailService';
 import { trustService } from './trust/TrustService';
 
 /**
@@ -21,6 +22,9 @@ import { trustService } from './trust/TrustService';
  *
  * F2.5: finishes project deletions (removes stored file objects, issues the
  * certificate). The API starts this right after a deletion; this pass retries.
+ *
+ * F2.1: processes emails forwarded to project addresses (every 15 s, so attachments
+ * land well within the 2 minutes FR-14.2 allows, also when the API's own attempt failed).
  */
 
 const PUSH_EVERY_MS = 6 * 60 * 60 * 1000;
@@ -28,6 +32,7 @@ const INGEST_EVERY_MS = 10 * 1000;
 const SWEEP_EVERY_MS = 10 * 60 * 1000;
 const EVAL_EVERY_MS = 30 * 1000;
 const DELETION_EVERY_MS = 60 * 1000;
+const INBOUND_EVERY_MS = 15 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
 let evalRunning = false;
@@ -57,6 +62,21 @@ async function deletionPass(): Promise<void> {
     console.error(`[worker] project deletion pass failed: ${(err as Error).message}`);
   } finally {
     deletionRunning = false;
+  }
+}
+
+let inboundRunning = false;
+
+async function inboundPass(): Promise<void> {
+  if (inboundRunning) return;
+  inboundRunning = true;
+  try {
+    const r = await inboundEmailService.processQueued();
+    if (Object.keys(r).length) console.info(`[worker] forwarded emails: ${JSON.stringify(r)}`);
+  } catch (err) {
+    console.error(`[worker] forwarded email pass failed: ${(err as Error).message}`);
+  } finally {
+    inboundRunning = false;
   }
 }
 
@@ -140,6 +160,7 @@ if (require.main === module) {
   timers.push(setInterval(() => void evalPass(), EVAL_EVERY_MS));
   void deletionPass();
   timers.push(setInterval(() => void deletionPass(), DELETION_EVERY_MS));
+  timers.push(setInterval(() => void inboundPass(), INBOUND_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {

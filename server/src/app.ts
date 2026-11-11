@@ -16,6 +16,7 @@ import { filesRouter } from './routes/files';
 import { citationsRouter } from './routes/citations';
 import { requestsRouter } from './routes/requests';
 import { trustRouter } from './routes/trust';
+import { inboundEmailRouter } from './routes/inboundEmail';
 import { searchRouter } from './routes/search';
 import { ssoRouter } from './routes/sso';
 import { AppError, ErrorCodes } from './utils/AppError';
@@ -99,6 +100,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(searchRouter);
   app.use(requestsRouter);
   app.use(trustRouter);
+  app.use(inboundEmailRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

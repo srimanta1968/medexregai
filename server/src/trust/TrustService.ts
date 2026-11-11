@@ -6,7 +6,7 @@ import { TEMPLATE_VERSIONS } from '../ai/guard/prompts';
 import { REGISTRY_VERSION } from '../ai/registry';
 import { config } from '../config/env';
 import { dataService } from '../services/DataService';
-import { fileObjectPrefix, ObjectStore, objectStore } from '../storage/objectStore';
+import { fileObjectPrefix, ObjectStore, objectStore, projectObjectPrefix } from '../storage/objectStore';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { decodeCursor, Page, toPage } from '../utils/pagination';
 import {
@@ -301,7 +301,8 @@ export class TrustService {
            (SELECT count(*) FROM client_requests r WHERE r.org_id = $1 AND r.project_id = $2) AS client_requests,
            (SELECT count(*) FROM client_request_items i JOIN client_requests r ON r.id = i.request_id WHERE r.org_id = $1 AND r.project_id = $2) AS client_request_items,
            (SELECT count(*) FROM upload_links l JOIN client_requests r ON r.id = l.request_id WHERE r.org_id = $1 AND r.project_id = $2) AS upload_links,
-           (SELECT count(*) FROM ai_calls a WHERE a.org_id = $1 AND a.project_id = $2) AS ai_calls`,
+           (SELECT count(*) FROM ai_calls a WHERE a.org_id = $1 AND a.project_id = $2) AS ai_calls,
+           (SELECT count(*) FROM inbound_emails e WHERE e.org_id = $1 AND e.project_id = $2) AS inbound_emails`,
         [orgId, projectId],
       );
       const counts = Object.fromEntries(DELETION_CATEGORIES.map((k) => [k.key, Number(c[k.key] ?? 0)]));
@@ -328,14 +329,13 @@ export class TrustService {
           config.trust.deletionDays,
         ],
       );
-      if (files.length) {
-        await tx.query(
-          'project_deletion_objects',
-          `INSERT INTO project_deletion_objects (deletion_id, org_id, prefix) SELECT $1, $2, unnest($3::text[]) ON CONFLICT DO NOTHING`,
-          [row.id, orgId, files.map((f) => fileObjectPrefix(orgId, f.id))],
-        );
-      }
-      // Every project table cascades from projects: files, versions, locations, chunks, gate runs, requests, links, AI calls.
+      // Every file's versions, plus project-level objects (raw forwarded emails not yet processed).
+      await tx.query(
+        'project_deletion_objects',
+        `INSERT INTO project_deletion_objects (deletion_id, org_id, prefix) SELECT $1, $2, unnest($3::text[]) ON CONFLICT DO NOTHING`,
+        [row.id, orgId, [...files.map((f) => fileObjectPrefix(orgId, f.id)), projectObjectPrefix(orgId, projectId)]],
+      );
+      // Every project table cascades from projects: files, versions, locations, chunks, gate runs, requests, links, AI calls, emails.
       await tx.query('projects', 'DELETE FROM projects WHERE id = $1 AND org_id = $2', [projectId, orgId]);
       return row.id;
     });

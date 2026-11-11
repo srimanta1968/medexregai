@@ -539,6 +539,7 @@ export const DELETION_CATEGORIES: { key: string; label: string }[] = [
   { key: 'client_request_items', label: 'Client request items' },
   { key: 'upload_links', label: 'Client upload links' },
   { key: 'ai_calls', label: 'AI call records' },
+  { key: 'inbound_emails', label: 'Emails forwarded to the project (records)' },
 ];
 
 const stamp = (iso: string) => `${new Date(iso).toISOString().replace('T', ' ').slice(0, 19)} UTC`;
@@ -557,7 +558,8 @@ export function certificateCanonical(i: CertificateInput): string {
     requestedAt: i.requestedAt,
     rowsDeletedAt: i.rowsDeletedAt,
     completedAt: i.completedAt,
-    counts: DELETION_CATEGORIES.map((c) => [c.key, i.counts[c.key] ?? 0]),
+    // Only the categories this deletion recorded: adding a category later must not change older fingerprints.
+    counts: DELETION_CATEGORIES.filter((c) => c.key in i.counts).map((c) => [c.key, i.counts[c.key]]),
     objectsRemoved: i.objectsRemoved,
     backupRetentionDays: i.backupRetentionDays,
   });
@@ -593,7 +595,10 @@ export function certificateBlocks(i: CertificateInput, sha256: string): Block[] 
         { label: 'Data', width: 4 },
         { label: 'Records removed', width: 1.4 },
       ],
-      rows: [...DELETION_CATEGORIES.map((c) => [c.label, String(i.counts[c.key] ?? 0)]), ['Stored file copies', String(i.objectsRemoved)]],
+      rows: [
+        ...DELETION_CATEGORIES.filter((c) => c.key in i.counts).map((c) => [c.label, String(i.counts[c.key])]),
+        ['Stored file copies', String(i.objectsRemoved)],
+      ],
     },
     { kind: 'h2', text: 'What is kept' },
     {

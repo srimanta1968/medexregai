@@ -11,7 +11,7 @@ import { decodeCursor, Page, toPage } from '../utils/pagination';
  * versions; sending the same bytes again adds nothing.
  */
 
-export type FileSource = 'upload' | 'linked' | 'request';
+export type FileSource = 'upload' | 'linked' | 'request' | 'email';
 
 export interface VersionSummary {
   id: string;

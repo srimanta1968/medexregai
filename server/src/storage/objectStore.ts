@@ -39,6 +39,11 @@ export function fileObjectPrefix(orgId: string, fileId: string): string {
   return assertObjectKey(`orgs/${orgId}/files/${fileId}/`.toLowerCase());
 }
 
+/** The prefix of objects that belong to a project as a whole (e.g. raw forwarded emails). */
+export function projectObjectPrefix(orgId: string, projectId: string): string {
+  return assertObjectKey(`orgs/${orgId}/projects/${projectId}/`.toLowerCase());
+}
+
 /** The key a file version is stored under. Prefixed by firm so per-tenant policies (F8.1) can apply. */
 export function versionObjectKey(orgId: string, fileId: string, versionNo: number, sha256: string): string {
   return assertObjectKey(`orgs/${orgId}/files/${fileId}/v${versionNo}-${sha256.slice(0, 16)}`.toLowerCase());

@@ -140,6 +140,13 @@ export interface AppConfig {
    * encrypted backups until those expire, and the packs and certificates say so.
    */
   trust: { releaseVersion: string; hostingRegion: string; deletionDays: number; backupRetentionDays: number };
+  /**
+   * Per-project forwarding addresses (F2.1, FR-14.2). `domain` is the receiving domain
+   * (addresses are <project-slug>.<token>@domain); `relayKey` authenticates the mail
+   * relay that posts raw messages to POST /api/inbound/email. Without a domain the
+   * feature is off; without a key the relay endpoint refuses every message.
+   */
+  inboundEmail: { domain: string | null; relayKey: string | null; maxBytes: number; maxAttachments: number };
 }
 
 /** Origins the ProjexLight platform previews the app from, plus local dev servers. */
@@ -434,6 +441,12 @@ export function loadConfig(env: Env): AppConfig {
       hostingRegion: optionalEnv(env, 'HOSTING_REGION', 'us-east-1'),
       deletionDays: 30,
       backupRetentionDays: parsePositiveInt(optionalEnv(env, 'BACKUP_RETENTION_DAYS', '35'), 'BACKUP_RETENTION_DAYS'),
+    },
+    inboundEmail: {
+      domain: optionalEnv(env, 'INBOUND_EMAIL_DOMAIN', '').trim().toLowerCase() || null,
+      relayKey: optionalEnv(env, 'INBOUND_EMAIL_RELAY_KEY', '') || null,
+      maxBytes: parsePositiveInt(optionalEnv(env, 'INBOUND_EMAIL_MAX_BYTES', String(40 * 1024 * 1024)), 'INBOUND_EMAIL_MAX_BYTES'),
+      maxAttachments: 20,
     },
     docproc: {
       serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
