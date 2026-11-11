@@ -1,0 +1,83 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "GET /api/project-deletions/:deletionId/certificate - the deletion certificate as PDF",
+  "description": "Any member (projects:read). Once the deletion has completed: application/pdf attachment naming the firm, project, client and device, who asked and when, when rows and stored copies were removed, the 30-day deadline, the records removed per category and what is kept (audit ids, the deletion record, backups until they expire), with the SHA-256 fingerprint of its canonical record (also in the X-Certificate-SHA256 header). Reissuing gives the same bytes. 409 DELETION_IN_PROGRESS before completion. Audited (deletion_certificate.downloaded). Covers: a consultant can delete all of a project's data within 30 days and get a deletion certificate.",
+  "endpoint": "/api/project-deletions/:deletionId/certificate",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 193,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/deletion"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Deletion not found",
+      "when": "no deletion with this id in the firm"
+    },
+    {
+      "status": 409,
+      "code": "DELETION_IN_PROGRESS",
+      "message": "The deletion is still in progress; the certificate is issued when it completes",
+      "when": "stored copies are still being removed"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Download the certificate",
+      "pathParams": {
+        "deletionId": "{{cache:trust.deletion.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4"
+      ]
+    },
+    {
+      "name": "404 - unknown deletion",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "deletionId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "deletionId": "{{cache:trust.deletion.response.data.id}}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "GET /api/project-deletions/:deletionId - one deletion and its progress",
+  "description": "Any member (projects:read). The deletion record: status, counts per category, stored copies total and removed, deadline (dueBy, 30 days after the request), completion time and certificate fingerprint, last error while removing stored copies (retried by the worker). Covers: a consultant can delete all of a project's data within 30 days and get a deletion certificate.",
+  "endpoint": "/api/project-deletions/:deletionId",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 192,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/deletion"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Deletion not found",
+      "when": "no deletion with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "deletionId must be a valid id",
+      "when": "deletionId is not a UUID"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Read the deletion",
+      "pathParams": {
+        "deletionId": "{{cache:trust.deletion.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "404 - unknown deletion",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "deletionId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "400 - not an id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "deletionId": "{{static:not-an-id}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "deletionId": "{{cache:trust.deletion.response.data.id}}"
+      }
+    }
+  ]
+}

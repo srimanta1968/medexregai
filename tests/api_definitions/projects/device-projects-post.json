@@ -22,7 +22,8 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "captureResponse": {
-    "projects.create.response.data.id": "data.id"
+    "projects.create.response.data.id": "data.id",
+    "projects.create.response.data.name": "data.name"
   },
   "fieldEnums": {
     "submissionType": [

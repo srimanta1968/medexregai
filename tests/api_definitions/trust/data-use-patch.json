@@ -1,0 +1,119 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "PATCH /api/settings/data-use - turn product-improvement use on or off",
+  "description": "Owner or admin (firm:manage). Body { productImprovement: boolean } only; any other field, including an attempt to allow AI training, is refused with 400. Records who changed it and when; audited (firm.data_use_updated). Covers: firm data-use settings show AI training never and product-improvement use off by default (and the firm can change only the latter).",
+  "endpoint": "/api/settings/data-use",
+  "method": "PATCH",
+  "expectedStatus": 200,
+  "priority": 113,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC3",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Only productImprovement can be changed; AI training on client data is never allowed",
+      "when": "any field other than productImprovement"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "productImprovement must be true or false",
+      "when": "productImprovement is not a boolean"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Your role (editor) does not allow this action",
+      "when": "the member is not an owner or admin"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner turns product-improvement use on",
+      "payload": {
+        "productImprovement": true
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "aiTraining": "never",
+          "productImprovement": true
+        }
+      }
+    },
+    {
+      "name": "Owner turns it back off",
+      "payload": {
+        "productImprovement": false
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "aiTraining": "never",
+          "productImprovement": false
+        }
+      },
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC3"
+      ]
+    },
+    {
+      "name": "400 - AI training cannot be allowed",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "productImprovement": false,
+        "aiTraining": "{{static:allowed}}"
+      }
+    },
+    {
+      "name": "400 - not a boolean",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "productImprovement": "{{static:yes}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {
+        "productImprovement": true
+      }
+    }
+  ]
+}

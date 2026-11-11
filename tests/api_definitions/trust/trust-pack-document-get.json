@@ -1,0 +1,83 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "a8814c39-b851-41a6-bc48-25ddc85ca41f",
+  "name": "GET /api/trust-pack/documents/:pack - download a pack as PDF",
+  "description": "Any member (projects:read). pack is validation (intended use, pre-filled risk assessment template, test evidence for this release, release notes, AI model change log) or data-handling (what is held and for how long, where data goes, subprocessors, AI and your data, deletion, security controls, client clause). Returns application/pdf as an attachment, generated for the firm and this deployment. Audited (trust_pack.downloaded). Covers: a consultant can download the validation pack and data-handling pack as PDF.",
+  "endpoint": "/api/trust-pack/documents/:pack",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 111,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC1",
+    "a8814c39-b851-41a6-bc48-25ddc85ca41f#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "pack must be one of validation, data-handling",
+      "when": "unknown pack"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Download the validation pack",
+      "pathParams": {
+        "pack": "{{static:validation}}"
+      },
+      "expectedStatus": 200,
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC1"
+      ]
+    },
+    {
+      "name": "Download the data-handling pack",
+      "pathParams": {
+        "pack": "{{static:data-handling}}"
+      },
+      "expectedStatus": 200,
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC1"
+      ]
+    },
+    {
+      "name": "400 - unknown pack",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "pack": "{{static:marketing}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "pack": "{{static:validation}}"
+      }
+    }
+  ]
+}

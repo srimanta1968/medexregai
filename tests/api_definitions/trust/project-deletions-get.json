@@ -1,0 +1,74 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "GET /api/project-deletions - the firm's project deletions",
+  "description": "Any member (projects:read). Newest first, cursor paginated (limit 1-50). Each deletion shows the project, client and device names, status (removing_files, completed), the counts removed per category, stored copies removed, requested by and when, the 30-day deadline, completion time and certificate fingerprint. Covers: a consultant can delete all of a project's data within 30 days and get a deletion certificate (the record of it).",
+  "endpoint": "/api/project-deletions",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 191,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/deletion"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "cursor is invalid",
+      "when": "a cursor that was not issued by this API"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "List deletions",
+      "queryParams": {
+        "limit": "{{static:20}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "400 - invalid cursor",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "queryParams": {
+        "cursor": "{{static:bm90LWEtY3Vyc29y}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "GET /api/settings/data-use - the firm's data-use settings",
+  "description": "Any member (projects:read). aiTraining is always \"never\" (client content is never used to train any model; it is not a setting). productImprovement is the firm's consent, false by default, with who changed it and when. Covers: firm data-use settings show AI training never and product-improvement use off by default.",
+  "endpoint": "/api/settings/data-use",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 112,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC3",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "A new firm: training never, product improvement off",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "aiTraining": "never",
+          "productImprovement": false
+        }
+      },
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC3"
+      ]
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ]
+}

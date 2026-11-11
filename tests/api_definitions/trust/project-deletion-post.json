@@ -1,0 +1,141 @@
+{
+  "requiresAuth": true,
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "taskId": "86184d18-499d-4d94-81e1-a7cbed77f9ec",
+  "name": "POST /api/projects/:projectId/deletion - delete all of a project's data",
+  "description": "Owner or admin (firm:manage), confirmed by typing the project's name (confirmName). In one transaction the rows are counted for the certificate and the project is deleted with everything under it: files and versions, extracted text and locations, search passages and embeddings, citation checks of drafts, client requests, items and links, AI call records. Answers 202 with the deletion record (status removing_files); stored file copies are removed right after and by the worker, then the deletion completes with a certificate fingerprint. dueBy is 30 days after the request. Audited (project.deleted). Runs last: it deletes the shared test project. Covers: a consultant can delete all of a project's data, including text, images, facts, drafts and embeddings, within 30 days and get a deletion certificate.",
+  "endpoint": "/api/projects/:projectId/deletion",
+  "method": "POST",
+  "expectedStatus": 202,
+  "priority": 190,
+  "coversCriterion": [
+    "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4",
+    "86184d18-499d-4d94-81e1-a7cbed77f9ec#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "confirmName is required",
+      "when": "no confirmName"
+    },
+    {
+      "status": 422,
+      "code": "CONFIRMATION_MISMATCH",
+      "message": "Type the project name exactly to confirm the deletion",
+      "when": "confirmName is not the project's name"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no project with this id in the firm (or already deleted)"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Your role (editor) does not allow this action",
+      "when": "the member is not an owner or admin"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "422 - the typed name does not match",
+      "testType": "negative",
+      "coversErrorCase": "422|CONFIRMATION_MISMATCH",
+      "expectedStatus": 422,
+      "expectedError": {
+        "code": "CONFIRMATION_MISMATCH"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "confirmName": "{{static:not the project name}}"
+      }
+    },
+    {
+      "name": "400 - no confirmation",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {}
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "confirmName": "{{static:Any project}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "confirmName": "{{cache:projects.create.response.data.name}}"
+      }
+    },
+    {
+      "name": "Owner deletes the project, confirming its name",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "confirmName": "{{cache:projects.create.response.data.name}}"
+      },
+      "expectedStatus": 202,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "removing_files"
+        }
+      },
+      "capturesResponse": true,
+      "coversCriterion": [
+        "d33c36a0-2260-4eea-b7c6-54a16726f311#AC4"
+      ]
+    }
+  ],
+  "captureResponse": {
+    "trust.deletion.response.data.id": "data.id"
+  }
+}
