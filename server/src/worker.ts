@@ -5,6 +5,7 @@ import { processQueued, queueDepth, sweep } from './ingest/IngestService';
 import { embedPendingAll } from './retrieval/embeddings';
 import { closePool } from './services/DataService';
 import { inboundEmailService } from './inbound/InboundEmailService';
+import { folderSync } from './connections/FolderSync';
 import { trustService } from './trust/TrustService';
 
 /**
@@ -33,6 +34,8 @@ const SWEEP_EVERY_MS = 10 * 60 * 1000;
 const EVAL_EVERY_MS = 30 * 1000;
 const DELETION_EVERY_MS = 60 * 1000;
 const INBOUND_EVERY_MS = 15 * 1000;
+/** How often due folder links are looked for; each link is itself due every 15 minutes (FolderSync). */
+const FOLDER_SYNC_EVERY_MS = 60 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
 let evalRunning = false;
@@ -62,6 +65,22 @@ async function deletionPass(): Promise<void> {
     console.error(`[worker] project deletion pass failed: ${(err as Error).message}`);
   } finally {
     deletionRunning = false;
+  }
+}
+
+let folderSyncRunning = false;
+
+/** F2.1 linked folders: change feeds every 15 minutes per link, full hash sweep daily. */
+async function folderSyncPass(): Promise<void> {
+  if (folderSyncRunning) return;
+  folderSyncRunning = true;
+  try {
+    const r = await folderSync.processDue();
+    if (r.links) console.info(`[worker] folder sync: ${JSON.stringify(r)}`);
+  } catch (err) {
+    console.error(`[worker] folder sync pass failed: ${(err as Error).message}`);
+  } finally {
+    folderSyncRunning = false;
   }
 }
 
@@ -184,6 +203,7 @@ if (require.main === module) {
   void deletionPass();
   timers.push(setInterval(() => void deletionPass(), DELETION_EVERY_MS));
   timers.push(setInterval(() => void inboundPass(), INBOUND_EVERY_MS));
+  timers.push(setInterval(() => void folderSyncPass(), FOLDER_SYNC_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {

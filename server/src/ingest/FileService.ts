@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { dataService } from '../services/DataService';
+import { dataService, Tx } from '../services/DataService';
 import { ObjectStore, objectStore, sha256Hex, versionObjectKey } from '../storage/objectStore';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { decodeCursor, Page, toPage } from '../utils/pagination';
@@ -160,6 +160,10 @@ export interface RecordInput {
   bytes: Buffer;
   /** Malware scan result of these bytes (F2.4); uploads are scanned before they are recorded. */
   scanStatus?: 'clean' | 'not_scanned';
+  /** Linked folders (F2.1): the link the file came through, its provider hash and path inside the folder. */
+  folderLinkId?: string;
+  sourceHash?: string | null;
+  sourcePath?: string | null;
 }
 
 export interface RecordResult {
@@ -200,7 +204,10 @@ export class FileService {
           'SELECT sha256 FROM file_versions WHERE file_id = $1 AND org_id = $2 ORDER BY version_no DESC LIMIT 1',
           [existing.id, orgId],
         );
-        if (latest?.sha256 === sha) return { fileId: existing.id, unchanged: true };
+        if (latest?.sha256 === sha) {
+          if (input.sourceRef) await this.touchLinked(tx, orgId, existing.id, input);
+          return { fileId: existing.id, unchanged: true };
+        }
       }
 
       const fileId = existing?.id ?? randomUUID();
@@ -211,12 +218,25 @@ export class FileService {
       await this.store().put(key, input.bytes);
       if (existing) {
         await tx.query('files', 'UPDATE files SET version_count = $3, updated_at = now() WHERE id = $1 AND org_id = $2', [fileId, orgId, versionNo]);
+        if (input.sourceRef) await this.touchLinked(tx, orgId, fileId, input);
       } else {
         await tx.query(
           'files',
-          `INSERT INTO files (id, org_id, workspace_id, project_id, source, source_ref, name, version_count, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8)`,
-          [fileId, orgId, project.workspace_id, projectId, source, input.sourceRef ?? null, name, userId],
+          `INSERT INTO files (id, org_id, workspace_id, project_id, source, source_ref, name, version_count, created_by, folder_link_id, source_hash, source_path)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11)`,
+          [
+            fileId,
+            orgId,
+            project.workspace_id,
+            projectId,
+            source,
+            input.sourceRef ?? null,
+            name,
+            userId,
+            input.folderLinkId ?? null,
+            input.sourceHash ?? null,
+            input.sourcePath?.slice(0, 1024) ?? null,
+          ],
         );
       }
       await tx.query(
@@ -241,6 +261,16 @@ export class FileService {
     });
     const file = await this.getSummary(orgId, result.fileId);
     return { file, unchanged: result.unchanged };
+  }
+
+  /** A linked file seen again: refresh its provider hash, path and name, and bring it back if it had been removed. */
+  private async touchLinked(tx: Tx, orgId: string, fileId: string, input: RecordInput): Promise<void> {
+    await tx.query(
+      'files',
+      `UPDATE files SET status = 'active', name = $3, folder_link_id = COALESCE($4, folder_link_id), source_hash = $5, source_path = $6, updated_at = now()
+        WHERE id = $1 AND org_id = $2`,
+      [fileId, orgId, cleanFileName(input.name), input.folderLinkId ?? null, input.sourceHash ?? null, input.sourcePath?.slice(0, 1024) ?? null],
+    );
   }
 
   private async getSummary(orgId: string, fileId: string): Promise<FileSummary> {
