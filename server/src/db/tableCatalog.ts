@@ -52,6 +52,9 @@ export const TABLE_CATALOG = {
   folder_connections: 'tenant',
   project_folder_links: 'tenant',
   connection_oauth_states: 'tenant',
+  // F2.2 eSTAR sections (FDA reference data) and each file's section (migration 025).
+  estar_sections: 'platform',
+  file_assignments: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
