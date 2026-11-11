@@ -70,14 +70,14 @@ const RULES: Rule[] = [
   {
     type: 'date_of_birth',
     confidence: 'high',
-    re: /\b(DOB|D\.O\.B\.?|date of birth|birth ?date|born(?: on)?)\s*[:\-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.? \d{1,2},? \d{4}|\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]* \d{4})/gi,
+    re: /\b(DOB|D\.O\.B\.?|date of birth|birth ?date|born(?: on)?)\s*[:-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.? \d{1,2},? \d{4}|\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]* \d{4})/gi,
     value: 2,
   },
   {
     type: 'patient_name',
     confidence: 'high',
     // "Patient: Jane Doe", "Patient name - DOE, Jane". Case-sensitive names: capitalised words.
-    re: /\b(?:[Pp]atient(?:'s)?(?: [Nn]ame)?|[Pp]t\.? [Nn]ame|[Nn]ame of [Pp]atient)\s*[:\-]\s*([A-Z][a-zA-Z'-]+(?:,? [A-Z][a-zA-Z'-]+){1,2})\b/g,
+    re: /\b(?:[Pp]atient(?:'s)?(?: [Nn]ame)?|[Pp]t\.? [Nn]ame|[Nn]ame of [Pp]atient)\s*[:-]\s*([A-Z][a-zA-Z'-]+(?:,? [A-Z][a-zA-Z'-]+){1,2})\b/g,
     value: 1,
     accept: (v) => !NOT_A_VALUE.test(v) && !/^(Subject|Patient|Unknown|Male|Female|Anonymous|Redacted)\b/i.test(v),
   },

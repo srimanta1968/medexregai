@@ -25,6 +25,8 @@ export interface VersionSummary {
   unitCount: number | null;
   phiStatus: 'not_scanned' | 'clean' | 'flagged' | 'redacted' | 'accepted';
   phiFindingCount: number;
+  /** Places where the text reads like instructions to an AI (F7.5): treated as data like everything else. */
+  injectionSignalCount: number;
   copyKept: boolean;
   createdAt: string;
   parsedAt: string | null;
@@ -46,6 +48,7 @@ export interface VersionDetail extends VersionSummary {
   locationCount: number;
   chunkCount: number;
   phiFindings: unknown[];
+  injectionSignals: unknown[];
   profile: unknown;
   discardedAt: string | null;
 }
@@ -67,13 +70,15 @@ interface VersionRow {
   unit_count: number | null;
   phi_status: VersionSummary['phiStatus'];
   phi_count: number;
+  injection_count: number;
   has_copy: boolean;
   created_at: Date;
   parsed_at: Date | null;
 }
 
 const VERSION_COLUMNS = `v.id, v.version_no, v.sha256, v.size_bytes, v.format, v.parse_status, v.parse_error, v.parser, v.unit_count,
-  v.phi_status, jsonb_array_length(v.phi_findings)::int AS phi_count, v.storage_key IS NOT NULL AS has_copy, v.created_at, v.parsed_at`;
+  v.phi_status, jsonb_array_length(v.phi_findings)::int AS phi_count,
+  jsonb_array_length(v.injection_signals)::int AS injection_count, v.storage_key IS NOT NULL AS has_copy, v.created_at, v.parsed_at`;
 
 function toVersion(r: VersionRow): VersionSummary {
   return {
@@ -88,6 +93,7 @@ function toVersion(r: VersionRow): VersionSummary {
     unitCount: r.unit_count,
     phiStatus: r.phi_status,
     phiFindingCount: r.phi_count,
+    injectionSignalCount: r.injection_count,
     copyKept: r.has_copy,
     createdAt: r.created_at.toISOString(),
     parsedAt: r.parsed_at ? r.parsed_at.toISOString() : null,
@@ -316,11 +322,18 @@ export class FileService {
     );
     if (!file) throw new AppError(404, ErrorCodes.NOT_FOUND, 'File not found');
     const versions = await dataService.query<
-      VersionRow & { location_count: number; chunk_count: number; phi_findings: unknown[]; profile: unknown; discarded_at: Date | null }
+      VersionRow & {
+        location_count: number;
+        chunk_count: number;
+        phi_findings: unknown[];
+        injection_signals: unknown[];
+        profile: unknown;
+        discarded_at: Date | null;
+      }
     >(
       { orgId },
       'file_versions',
-      `SELECT ${VERSION_COLUMNS}, v.phi_findings, v.profile, v.discarded_at,
+      `SELECT ${VERSION_COLUMNS}, v.phi_findings, v.injection_signals, v.profile, v.discarded_at,
               (SELECT count(*)::int FROM source_locations s WHERE s.file_version_id = v.id AND s.org_id = v.org_id) AS location_count,
               (SELECT count(*)::int FROM chunks c WHERE c.file_version_id = v.id AND c.org_id = v.org_id) AS chunk_count
          FROM file_versions v WHERE v.file_id = $1 AND v.org_id = $2 ORDER BY v.version_no DESC LIMIT 100`,
@@ -341,6 +354,7 @@ export class FileService {
         locationCount: v.location_count,
         chunkCount: v.chunk_count,
         phiFindings: v.phi_findings,
+        injectionSignals: v.injection_signals,
         profile: v.profile,
         discardedAt: v.discarded_at ? v.discarded_at.toISOString() : null,
       })),

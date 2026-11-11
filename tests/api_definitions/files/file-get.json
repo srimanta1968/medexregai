@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "GET /api/files/:fileId - one file with its version history",
-  "description": "Every version of a file, newest first: SHA-256, size, detected format, parse status, parser, unit count, number of source locations and retrieval chunks, PHI status with masked findings, raw-data or drawing profile, and when a linked copy was discarded (hash, text and locations are kept). Viewing is audited (file.viewed). Covers: files are parsed with page, sheet, cell or slide locations; re-uploading keeps the old version; fetched copies are deleted with hashes kept; drawing title blocks and raw-data profiles.",
+  "description": "Every version of a file, newest first: SHA-256, size, detected format, parse status, parser, unit count, number of source locations and retrieval chunks, PHI status with masked findings, raw-data or drawing profile, and when a linked copy was discarded (hash, text and locations are kept). Viewing is audited (file.viewed). Covers: files are parsed with page, sheet, cell or slide locations; re-uploading keeps the old version; fetched copies are deleted with hashes kept; drawing title blocks and raw-data profiles. Each version also lists injectionSignals: places where the text reads like instructions to an AI (kind, where, excerpt), found at ingest and shown to the consultant; they never change how the file is processed. Covers F7.5: instructions inside client files never change system behaviour.",
   "endpoint": "/api/files/:fileId",
   "method": "GET",
   "expectedStatus": 200,
@@ -18,7 +18,8 @@
     "25aed8eb-2a0c-411e-947c-1963ebf27356#AC4",
     "25aed8eb-2a0c-411e-947c-1963ebf27356#AC5",
     "2fd4277b-fd52-48f0-970f-3dc09c43653e#AC1",
-    "2fd4277b-fd52-48f0-970f-3dc09c43653e#AC2"
+    "2fd4277b-fd52-48f0-970f-3dc09c43653e#AC2",
+    "0c5e7968-0d64-41dc-bb62-74204eef3a96#AC1"
   ],
   "dependsOn": [
     "POST /api/auth/register",

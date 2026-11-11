@@ -2,7 +2,8 @@ import { dataService, Tx } from '../services/DataService';
 import { ObjectNotFoundError, ObjectStore, objectStore, sha256Hex } from '../storage/objectStore';
 import { DocLocation, DocprocClient, DocprocError, ParseResult } from './docproc';
 import { chunkLocations, ChunkInput } from './chunker';
-import { scanForPhi } from './phiScanner';
+import { scanForInjection } from '../ai/guard/injectionSignals';
+import { describeLocation, scanForPhi } from './phiScanner';
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -166,6 +167,8 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
   const note = result.needsOcr ? 'Some pages have no text layer and were not read (OCR not installed)' : null;
   // Scanned here, while we still hold the text, so a linked file is checked before its copy goes.
   const phi = scanForPhi(result.locations);
+  // Text that reads like instructions to an AI: a warning for the reviewer, never a change in handling (F7.5).
+  const injection = scanForInjection(result.locations.map((l) => ({ ordinal: l.ordinal, text: l.text, where: describeLocation(l) })));
   await dataService.transaction({ orgId }, async (tx) => {
     const stored = await storeLocations(tx, orgId, version, result.locations);
     await storeChunks(tx, orgId, version, stored);
@@ -176,7 +179,7 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
               format = $7, mime_type = $8, parsed_at = now(), parse_started_at = NULL,
               -- A consultant's earlier decision (redacted / accepted) is kept on a re-parse.
               phi_status = CASE WHEN phi_status IN ('redacted', 'accepted') THEN phi_status ELSE $9 END,
-              phi_findings = $10::jsonb, profile = $11::jsonb
+              phi_findings = $10::jsonb, profile = $11::jsonb, injection_signals = $12::jsonb
         WHERE id = $1 AND org_id = $2`,
       [
         version.id,
@@ -190,6 +193,7 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
         phi.status,
         JSON.stringify(phi.findings),
         result.profile ? JSON.stringify(result.profile) : null,
+        JSON.stringify(injection.signals),
       ],
     );
     // A newer version becomes the file's current one; an older one parsed late never takes over.

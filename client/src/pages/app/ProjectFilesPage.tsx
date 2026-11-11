@@ -11,6 +11,7 @@ import {
   filesApi,
   PARSE_LABELS,
   PHI_LABELS,
+  INJECTION_KIND_LABELS,
   PHI_TYPE_LABELS,
   ParseStatus,
   PhiStatus,
@@ -83,6 +84,29 @@ function PhiPrompt({ version, onDecide, busy }: { version: VersionDetail; onDeci
   );
 }
 
+/** Text that reads like instructions to an AI (F7.5): shown for review, never acted on. */
+function InjectionNotice({ version }: { version: VersionDetail }): JSX.Element {
+  const shown = version.injectionSignals.slice(0, 5);
+  const more = version.injectionSignalCount - shown.length;
+  return (
+    <div role="note" aria-label="Instruction-like text" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <p className="font-semibold">
+        Text in this file reads like instructions to an AI ({version.injectionSignalCount} {version.injectionSignalCount === 1 ? 'place' : 'places'})
+      </p>
+      <p className="mt-1">MedexRegAI treats it as document content only and never follows it. It may be worth asking the client why it is there.</p>
+      <ul className="mt-2 list-disc space-y-1 pl-5">
+        {shown.map((s, i) => (
+          <li key={`${s.kind}-${s.ordinal}-${i}`}>
+            {INJECTION_KIND_LABELS[s.kind] ?? s.kind}
+            {s.where ? ` at ${s.where}` : ''}: <span className="break-words font-mono text-xs">{s.excerpt}</span>
+          </li>
+        ))}
+      </ul>
+      {more > 0 && <p className="mt-1">and {more} more.</p>}
+    </div>
+  );
+}
+
 function Profile({ version }: { version: VersionDetail }): JSX.Element | null {
   const p = version.profile;
   if (!p) return null;
@@ -141,6 +165,7 @@ function VersionRow({
       </p>
       <p className={`mt-1 text-sm ${PHI_TONE[v.phiStatus]}`}>{PHI_LABELS[v.phiStatus]}</p>
       {v.phiStatus === 'flagged' && <PhiPrompt version={v} onDecide={onDecide} busy={busy} />}
+      {v.injectionSignalCount > 0 && <InjectionNotice version={v} />}
       <Profile version={v} />
     </li>
   );

@@ -18,6 +18,8 @@ export interface VersionSummary {
   unitCount: number | null;
   phiStatus: PhiStatus;
   phiFindingCount: number;
+  /** Places where the text reads like instructions to an AI (F7.5). */
+  injectionSignalCount: number;
   copyKept: boolean;
   createdAt: string;
   parsedAt: string | null;
@@ -43,6 +45,23 @@ export interface PhiFinding {
   excerpt: string;
 }
 
+export interface InjectionSignal {
+  kind: 'override' | 'role_change' | 'template_token' | 'hidden_text' | 'exfiltration' | 'tool_call' | 'addressed_to_ai';
+  ordinal: number | null;
+  where: string | null;
+  excerpt: string;
+}
+
+export const INJECTION_KIND_LABELS: Record<InjectionSignal['kind'], string> = {
+  override: 'Asks to ignore instructions',
+  role_change: 'Tries to change the AI’s role',
+  template_token: 'Chat-control or data-marker text',
+  hidden_text: 'Invisible characters',
+  exfiltration: 'Asks to send data elsewhere',
+  tool_call: 'Asks the AI to use a tool',
+  addressed_to_ai: 'Addressed to an AI',
+};
+
 export interface RawDataProfile {
   kind: 'raw_data';
   sheets: {
@@ -62,6 +81,7 @@ export interface VersionDetail extends VersionSummary {
   locationCount: number;
   chunkCount: number;
   phiFindings: PhiFinding[];
+  injectionSignals: InjectionSignal[];
   profile: RawDataProfile | DrawingProfile | null;
   discardedAt: string | null;
 }

@@ -22,7 +22,7 @@ import { GenerateRequest, GenerateResult, LlmProvider } from './types';
 export const AI_ROUTES = ['triage', 'classify', 'extract', 'contradiction', 'draft', 'request_wording'] as const;
 export type AiRoute = (typeof AI_ROUTES)[number];
 
-export const REGISTRY_VERSION = '2026-11-10.1';
+export const REGISTRY_VERSION = '2026-11-11.1';
 
 export interface RouteEntry {
   route: AiRoute;
@@ -34,6 +34,13 @@ export interface RouteEntry {
   maxTokens: number;
   /** Whether a firm-supplied model needs the evaluation gate before it may serve this route. */
   firmNeedsEval: boolean;
+  /**
+   * Document routes read client files, which are untrusted input (NFR-16): their text
+   * reaches the model only as delimited data (ai/guard) and their outputs are checked.
+   */
+  documentInput: true;
+  /** Tools a model may call on this route. Always none: no route can act on what a document says. */
+  tools: readonly [];
 }
 
 export const REGISTRY: Record<AiRoute, RouteEntry> = {
@@ -44,6 +51,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: true,
     maxTokens: 512,
     firmNeedsEval: false,
+    documentInput: true,
+    tools: [],
   },
   classify: {
     route: 'classify',
@@ -52,6 +61,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: true,
     maxTokens: 512,
     firmNeedsEval: false,
+    documentInput: true,
+    tools: [],
   },
   extract: {
     route: 'extract',
@@ -60,6 +71,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: true,
     maxTokens: 2048,
     firmNeedsEval: false,
+    documentInput: true,
+    tools: [],
   },
   contradiction: {
     route: 'contradiction',
@@ -68,6 +81,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: true,
     maxTokens: 1024,
     firmNeedsEval: false,
+    documentInput: true,
+    tools: [],
   },
   draft: {
     route: 'draft',
@@ -76,6 +91,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: false,
     maxTokens: 4096,
     firmNeedsEval: true,
+    documentInput: true,
+    tools: [],
   },
   request_wording: {
     route: 'request_wording',
@@ -84,6 +101,8 @@ export const REGISTRY: Record<AiRoute, RouteEntry> = {
     json: false,
     maxTokens: 1024,
     firmNeedsEval: false,
+    documentInput: true,
+    tools: [],
   },
 };
 
@@ -120,12 +139,22 @@ export async function resolveRoute(orgId: string, route: AiRoute): Promise<Resol
   };
 }
 
+const PLAIN_FIELDS = new Set(['system', 'prompt', 'maxTokens']);
+
+/** Refuses a request that carries anything but instructions and a prompt (no tools on any route). */
+export function assertPlainRequest(req: object): void {
+  const extra = Object.keys(req).filter((k) => !PLAIN_FIELDS.has(k));
+  if (extra.length) throw new Error(`AI requests take only system, prompt and maxTokens; refused: ${extra.join(', ')}`);
+}
+
 export interface AiContext {
   orgId: string;
   projectId?: string | null;
 }
 
 export interface AiGenerateResult extends GenerateResult {
+  /** The ai_calls row for this call. */
+  callId: string;
   route: AiRoute;
   source: 'platform' | 'firm';
   promptVersion: string;
@@ -143,10 +172,18 @@ export async function aiGenerate(
   route: AiRoute,
   req: Omit<GenerateRequest, 'model' | 'json' | 'maxTokens'> & { maxTokens?: number },
 ): Promise<AiGenerateResult> {
+  assertPlainRequest(req);
   const r = await resolveRoute(ctx.orgId, route);
   const started = Date.now();
   try {
-    const result = await r.llm.generate({ ...req, model: r.model, json: r.entry.json, maxTokens: req.maxTokens ?? r.entry.maxTokens });
+    // Built field by field: nothing a caller adds (tools, functions, extra messages) reaches a provider.
+    const result = await r.llm.generate({
+      system: req.system,
+      prompt: req.prompt,
+      model: r.model,
+      json: r.entry.json,
+      maxTokens: req.maxTokens ?? r.entry.maxTokens,
+    });
     const meter = await recordAiCall({
       orgId: ctx.orgId,
       projectId: ctx.projectId,
@@ -156,7 +193,15 @@ export async function aiGenerate(
       source: r.source,
       outcome: { ok: true, result },
     });
-    return { ...result, route, source: r.source, promptVersion: r.entry.promptVersion, registryVersion: r.registryVersion, costUsd: meter.costUsd };
+    return {
+      ...result,
+      callId: meter.callId,
+      route,
+      source: r.source,
+      promptVersion: r.entry.promptVersion,
+      registryVersion: r.registryVersion,
+      costUsd: meter.costUsd,
+    };
   } catch (error) {
     await recordAiCall({
       orgId: ctx.orgId,
