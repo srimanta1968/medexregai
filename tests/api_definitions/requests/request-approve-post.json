@@ -128,6 +128,25 @@
         "requestId": "{{cache:requests.create.response.data.id}}"
       },
       "payload": {}
+    },
+    {
+      "name": "Owner approves the second draft, leaving an open request",
+      "captureAs": "open",
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id@forApproval}}"
+      },
+      "payload": {
+        "expiresInDays": 7
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "request": {
+            "status": "open"
+          }
+        }
+      }
     }
   ]
 }

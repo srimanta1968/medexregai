@@ -52,25 +52,33 @@
       "status": 413,
       "code": "FILE_TOO_LARGE",
       "message": "Files up to 100 MB can be uploaded",
-      "when": "the file is over the size limit"
+      "when": "the file is over the size limit",
+      "reproducible": false,
+      "notReproducibleReason": "Needs a body over the 100 MB upload limit; JSON test cases cannot carry one. Verified by hand."
     },
     {
       "status": 409,
       "code": "UPLOAD_LIMIT_REACHED",
       "message": "This link has reached its limit of 50 files.",
-      "when": "the link's file limit is used up"
+      "when": "the link's file limit is used up",
+      "reproducible": false,
+      "notReproducibleReason": "Needs CLIENT_UPLOAD_MAX_FILES (50) uploads on one link before the refused one; too costly per run. Verified by hand."
     },
     {
       "status": 422,
       "code": "FILE_INFECTED",
       "message": "This file was refused: the malware scan found a threat in it.",
-      "when": "the scanner finds a threat"
+      "when": "the scanner finds a threat",
+      "reproducible": false,
+      "notReproducibleReason": "Needs a running clamd scanner (MALWARE_SCAN_HOST); development runs without one. Verified against a stand-in clamd."
     },
     {
       "status": 503,
       "code": "SCAN_UNAVAILABLE",
       "message": "Uploads are paused because the malware scanner is unavailable.",
-      "when": "a scan is required and clamd is missing or down"
+      "when": "a scan is required and clamd is missing or down",
+      "reproducible": false,
+      "notReproducibleReason": "Server fault: needs MALWARE_SCAN_REQUIRED=true with the scanner stopped. Verified by hand."
     }
   ],
   "testCases": [
@@ -167,12 +175,6 @@
       "notes": "Runs after the revoke definition (priority 109)."
     }
   ],
-  "manualErrorCases": {
-    "413|FILE_TOO_LARGE": "needs a body over 100 MB",
-    "409|UPLOAD_LIMIT_REACHED": "needs 50 uploads on one link",
-    "422|FILE_INFECTED": "needs clamd; verified against a stand-in clamd",
-    "503|SCAN_UNAVAILABLE": "needs MALWARE_SCAN_REQUIRED=true; verified against a stopped scanner"
-  },
   "captureResponse": {
     "requests.upload.response.data.fileName": "data.fileName",
     "requests.upload.response.data.itemId": "data.itemId"

@@ -21,7 +21,8 @@
     "POST /api/clients",
     "POST /api/clients/:clientId/devices",
     "POST /api/devices/:deviceId/projects",
-    "POST /api/projects/:projectId/requests"
+    "POST /api/projects/:projectId/requests",
+    "POST /api/requests/:requestId/approve"
   ],
   "errorCases": [
     {
@@ -52,14 +53,16 @@
       "status": 502,
       "code": "AI_OUTPUT_REJECTED",
       "message": "The AI output did not pass the safety checks and was discarded",
-      "when": "the model answer failed the output checks twice"
+      "when": "the model answer failed the output checks twice",
+      "reproducible": false,
+      "notReproducibleReason": "Needs a model answer that fails the output checks twice; a run cannot steer the model into that. The checks are covered by the prompt-injection CI suite."
     }
   ],
   "testCases": [
     {
       "name": "Draft the message for a draft request",
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@draft}}"
       },
       "payload": {},
       "expectedStatus": 200,
@@ -70,6 +73,19 @@
         "9f681fa2-274c-4df2-a91f-d57dee368de1#AC5"
       ],
       "capturesResponse": true
+    },
+    {
+      "name": "409 - the request has already been approved",
+      "testType": "negative",
+      "coversErrorCase": "409|REQUEST_NOT_DRAFT",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "REQUEST_NOT_DRAFT"
+      },
+      "pathParams": {
+        "requestId": "{{cache:requests.approve.response.data.request.id@open}}"
+      },
+      "payload": {}
     },
     {
       "name": "404 - unknown request",
@@ -97,7 +113,7 @@
       },
       "fixture": "tests/setup_scripts/10_auth_actors.py",
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@draft}}"
       },
       "payload": {}
     },
@@ -111,7 +127,7 @@
       },
       "headers": {},
       "pathParams": {
-        "requestId": "{{cache:requests.create.response.data.id}}"
+        "requestId": "{{cache:requests.create.response.data.id@draft}}"
       },
       "payload": {}
     }

@@ -40,7 +40,9 @@
       "status": 409,
       "code": "DELETION_IN_PROGRESS",
       "message": "The deletion is still in progress; the certificate is issued when it completes",
-      "when": "stored copies are still being removed"
+      "when": "stored copies are still being removed",
+      "reproducible": false,
+      "notReproducibleReason": "Stored copies are removed straight after the request, so the in-progress window is only observable when object storage fails or during a race. Verified by hand with storage stopped."
     }
   ],
   "testCases": [

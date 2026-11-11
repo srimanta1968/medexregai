@@ -34,19 +34,25 @@
       "status": 404,
       "code": "RECIPIENT_UNKNOWN",
       "message": "No active project address among the recipients",
-      "when": "no recipient is an active project address"
+      "when": "no recipient is an active project address",
+      "reproducible": false,
+      "notReproducibleReason": "Reached only after the relay key check; the key is a server secret that must not be written into a test definition. Verified with a scripted relay."
     },
     {
       "status": 413,
       "code": "FILE_TOO_LARGE",
       "message": "The message is too large",
-      "when": "over INBOUND_EMAIL_MAX_BYTES (40 MB)"
+      "when": "over INBOUND_EMAIL_MAX_BYTES (40 MB)",
+      "reproducible": false,
+      "notReproducibleReason": "Reached only after the relay key check (a server secret) and needs a body over 40 MB. Verified with a scripted relay."
     },
     {
       "status": 503,
       "code": "INBOUND_EMAIL_NOT_CONFIGURED",
       "message": "Inbound email is not set up on this server",
-      "when": "no INBOUND_EMAIL_RELAY_KEY on the server"
+      "when": "no INBOUND_EMAIL_RELAY_KEY on the server",
+      "reproducible": false,
+      "notReproducibleReason": "Server configuration: needs a server with no INBOUND_EMAIL_RELAY_KEY."
     }
   ],
   "testCases": [

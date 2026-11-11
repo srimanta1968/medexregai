@@ -147,6 +147,64 @@
           }
         ]
       }
+    },
+    {
+      "name": "Owner drafts a request that stays a draft",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "title": "{{static:Missing evidence for the 510(k)}}",
+        "message": "{{static:Please upload the documents below.}}",
+        "recipientName": "{{static:Ana Client}}",
+        "recipientEmail": "{{dynamic:email}}",
+        "items": [
+          {
+            "label": "{{static:EO residuals report}}",
+            "detail": "{{static:ISO 10993-7, final signed copy}}"
+          },
+          {
+            "label": "{{static:Signed tensile test report}}"
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "draft"
+        }
+      },
+      "captureAs": "draft"
+    },
+    {
+      "name": "Owner drafts a second request that is then approved",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "title": "{{static:Missing evidence for the 510(k)}}",
+        "message": "{{static:Please upload the documents below.}}",
+        "recipientName": "{{static:Ana Client}}",
+        "recipientEmail": "{{dynamic:email}}",
+        "items": [
+          {
+            "label": "{{static:EO residuals report}}",
+            "detail": "{{static:ISO 10993-7, final signed copy}}"
+          },
+          {
+            "label": "{{static:Signed tensile test report}}"
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "draft"
+        }
+      },
+      "captureAs": "forApproval"
     }
   ]
 }

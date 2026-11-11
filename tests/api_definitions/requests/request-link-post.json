@@ -85,6 +85,19 @@
       }
     },
     {
+      "name": "409 - the request is still a draft",
+      "testType": "negative",
+      "coversErrorCase": "409|REQUEST_NOT_OPEN",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "REQUEST_NOT_OPEN"
+      },
+      "pathParams": {
+        "requestId": "{{cache:requests.create.response.data.id@draft}}"
+      },
+      "payload": {}
+    },
+    {
       "name": "404 - unknown request",
       "testType": "negative",
       "coversErrorCase": "404|NOT_FOUND",
@@ -112,9 +125,6 @@
       "payload": {}
     }
   ],
-  "manualErrorCases": {
-    "409|REQUEST_NOT_OPEN": "needs a second, unapproved request in the chain; verified by hand"
-  },
   "captureResponse": {
     "requests.reissue.response.data.link.token": "data.link.token",
     "requests.reissue.response.data.request.id": "data.request.id"

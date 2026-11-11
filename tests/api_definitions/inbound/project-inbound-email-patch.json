@@ -40,7 +40,9 @@
       "status": 409,
       "code": "INBOUND_EMAIL_NOT_CONFIGURED",
       "message": "Forwarding addresses are not set up on this server (INBOUND_EMAIL_DOMAIN is empty)",
-      "when": "the server has no INBOUND_EMAIL_DOMAIN"
+      "when": "the server has no INBOUND_EMAIL_DOMAIN",
+      "reproducible": false,
+      "notReproducibleReason": "Server configuration: needs a server with no INBOUND_EMAIL_DOMAIN; the test server has one so the happy path can run."
     },
     {
       "status": 400,
