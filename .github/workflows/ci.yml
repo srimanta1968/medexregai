@@ -60,6 +60,23 @@ jobs:
       - run: npm run lint -- --max-warnings 0
       - run: npm run typecheck
       - run: npm test -- --ci
+      # Prompt-injection test set (F7.5, NFR-16): a failure blocks the build and so the release.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/docproc/requirements.txt
+      - name: Install docproc (parses the injection fixtures)
+        run: pip install -r ../services/docproc/requirements.txt
+      - name: Prompt-injection suite
+        run: npm run test:injection -- --require-docproc --report injection-report.json
+      - name: Keep the injection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-injection-report
+          path: server/injection-report.json
+          if-no-files-found: ignore
       - name: Migrations apply to an empty database
         run: npm run db:migrate
       - name: Migrations are idempotent

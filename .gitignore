@@ -119,3 +119,6 @@ veeva/screens/
 
 # Local object store (STORAGE_DRIVER=fs)
 server/.data/
+
+# Prompt-injection suite report (CI artifact)
+injection-report.json

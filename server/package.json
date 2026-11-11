@@ -10,6 +10,7 @@
     "lint": "eslint src tests",
     "db:migrate": "ts-node --transpile-only src/db/migrate.ts",
     "typecheck": "tsc --noEmit -p .",
+    "test:injection": "ts-node --transpile-only src/ai/guard/injectionSuite.ts",
     "worker": "node dist/worker.js",
     "dev:worker": "ts-node-dev --respawn --transpile-only src/worker.ts"
   },
