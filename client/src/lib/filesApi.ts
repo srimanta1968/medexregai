@@ -29,7 +29,7 @@ export interface FileSummary {
   id: string;
   projectId: string;
   name: string;
-  source: 'upload' | 'linked' | 'request';
+  source: 'upload' | 'linked' | 'request' | 'email';
   sourceRef: string | null;
   versionCount: number;
   latest: VersionSummary | null;

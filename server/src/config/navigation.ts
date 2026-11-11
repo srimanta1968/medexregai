@@ -22,7 +22,7 @@ export interface NavItemDef {
 
 export const NAV_CATALOG: readonly NavItemDef[] = [
   { key: 'clients', label: 'Clients and projects', description: 'One workspace per client, strictly separated', phase: 1, scope: 'firm', built: true },
-  { key: 'connect', label: 'Connect', description: 'Link a folder; get the upload link and forwarding address', phase: 1, scope: 'project', built: false },
+  { key: 'connect', label: 'Connect', description: 'Link a folder; get the upload link and forwarding address', phase: 1, scope: 'project', built: true },
   { key: 'files', label: 'Files', description: 'Sorted folder by eSTAR section, versions, unreadable files', phase: 1, scope: 'project', built: true },
   { key: 'problems', label: 'Problems', description: 'Missing items and contradictions', phase: 1, scope: 'project', built: false },
   { key: 'requests', label: 'Client requests', description: 'Drafted requests; status until received', phase: 1, scope: 'project', built: true },
