@@ -48,9 +48,39 @@ export interface FirmProvider {
   createdAt: string;
 }
 
+/** Gold-set scores of one evaluation run (F7.4). Shares are 0..1. */
+export interface EvalScores {
+  classification?: { accuracy: number; correct: number; n: number };
+  contradiction?: { precision: number; recall: number; n: number };
+  drafting?: { acceptance: number; citationPrecision: number | null; n: number };
+  injection?: { resistance: number; n: number };
+  versions?: { status: 'not_run'; reason: string; n: number };
+}
+
+export interface EvalThresholds {
+  classification: number;
+  contradiction: number;
+  drafting: number;
+  injection: number;
+}
+
+export interface EvalRun {
+  id: string;
+  status: 'queued' | 'running' | 'passed' | 'failed' | 'error';
+  provider: string | null;
+  model: string | null;
+  setsVersion: string;
+  scores: EvalScores;
+  failures: { set: string; id: string; why: string }[];
+  error: string | null;
+  createdAt: string | null;
+  finishedAt: string | null;
+}
+
 export interface AiSettings {
   registryVersion: string;
   outputSchemaVersion: string;
+  evaluation: { setsVersion: string; thresholds: EvalThresholds; platform: (EvalRun & { note: string | null }) | null };
   platform: { provider: string; generationModel: string; embeddingModel: string };
   routes: RouteUse[];
   providers: FirmProvider[];
@@ -106,6 +136,8 @@ export function aiSettingsApi(request: Request) {
     testProvider: (providerId: string) => request<ConnectionTest>(`/api/settings/ai-providers/${id(providerId)}/test`, { method: 'POST' }),
     setRoutes: (providerId: string, enabledRoutes: AiRoute[]) =>
       request<FirmProvider>(`/api/settings/ai-providers/${id(providerId)}`, { method: 'PATCH', body: { enabledRoutes } }),
+    evaluate: (providerId: string) => request<EvalRun>(`/api/settings/ai-providers/${id(providerId)}/evaluation`, { method: 'POST' }),
+    evaluations: (providerId: string) => request<{ items: EvalRun[]; thresholds: EvalThresholds }>(`/api/settings/ai-providers/${id(providerId)}/evaluations`),
     deleteProvider: (providerId: string) => request<void>(`/api/settings/ai-providers/${id(providerId)}`, { method: 'DELETE' }),
     usage: (cursor?: string) =>
       request<{ items: ProjectUsage[]; nextCursor: string | null }>(`/api/settings/ai-usage?limit=50${cursor ? `&cursor=${id(cursor)}` : ''}`),

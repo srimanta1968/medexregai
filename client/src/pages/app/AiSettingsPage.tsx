@@ -3,7 +3,18 @@ import { useAuth } from '../../auth/AuthContext';
 import { Field, FormMessage, SubmitButton } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { AiRoute, AiSettings, FirmProvider, PlatformHealth, ProjectUsage, ROUTE_LABELS, aiSettingsApi } from '../../lib/aiSettingsApi';
+import {
+  AiRoute,
+  AiSettings,
+  EvalRun,
+  EvalScores,
+  EvalThresholds,
+  FirmProvider,
+  PlatformHealth,
+  ProjectUsage,
+  ROUTE_LABELS,
+  aiSettingsApi,
+} from '../../lib/aiSettingsApi';
 import { formValue, useSubmit } from '../auth/useForm';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
@@ -138,13 +149,109 @@ function GuardPanel({ settings }: { settings: AiSettings }): JSX.Element {
   );
 }
 
-function ProviderCard({ p, onChanged }: { p: FirmProvider; onChanged: () => void }): JSX.Element {
+const pct = (x: number | null | undefined): string => (x === null || x === undefined ? 'n/a' : `${Math.round(x * 1000) / 10}%`);
+
+/** Gold-set scores against the thresholds, optionally beside our own model's (F7.4). */
+function ScoreList({ scores, thresholds, baseline }: { scores: EvalScores; thresholds: EvalThresholds; baseline?: EvalScores | null }): JSX.Element {
+  const rows: { label: string; value: number | undefined; target: number; extra?: string; base?: number }[] = [
+    {
+      label: 'Sorting files into sections',
+      value: scores.classification?.accuracy,
+      target: thresholds.classification,
+      base: baseline?.classification?.accuracy,
+    },
+    {
+      label: 'Contradictions found (precision)',
+      value: scores.contradiction?.precision,
+      target: thresholds.contradiction,
+      extra: scores.contradiction ? `recall ${pct(scores.contradiction.recall)}` : undefined,
+      base: baseline?.contradiction?.precision,
+    },
+    {
+      label: 'Drafts accepted',
+      value: scores.drafting?.acceptance,
+      target: thresholds.drafting,
+      extra: scores.drafting ? `citation precision ${pct(scores.drafting.citationPrecision)}` : undefined,
+      base: baseline?.drafting?.acceptance,
+    },
+    { label: 'Planted instructions resisted', value: scores.injection?.resistance, target: thresholds.injection, base: baseline?.injection?.resistance },
+  ];
+  return (
+    <ul className="mt-2 space-y-1 text-sm">
+      {rows.map((r) => (
+        <li key={r.label} className="flex flex-wrap gap-x-2">
+          <span className="text-slate-700">{r.label}:</span>
+          <span className={`font-semibold ${r.value !== undefined && r.value >= r.target ? 'text-emerald-700' : 'text-red-700'}`}>{pct(r.value)}</span>
+          <span className="text-slate-500">
+            (target {pct(r.target)}
+            {r.extra ? `; ${r.extra}` : ''}
+            {r.base !== undefined ? `; our model ${pct(r.base)}` : ''})
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const EVAL_LABELS: Record<FirmProvider['evalStatus'], string> = {
+  not_run: 'Not evaluated yet: drafting stays on our models until it passes',
+  running: 'Evaluation running…',
+  passed: 'Evaluation passed: this model may draft',
+  failed: 'Evaluation not passed: drafting stays on our models',
+};
+
+/** Our own model's latest evaluation, and how a firm model is judged (F7.4). */
+function EvaluationPanel({ settings }: { settings: AiSettings }): JSX.Element {
+  const e = settings.evaluation;
+  return (
+    <section className={`${card} mt-6`} aria-labelledby="eval-title">
+      <h2 id="eval-title" className="text-lg font-semibold text-slate-900">
+        How models are evaluated
+      </h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Every model is scored on the same fictional test package (gold sets {e.setsVersion}) through the same steps and checks your files go through. A model
+        must reach every target before it may draft.
+      </p>
+      {e.platform ? (
+        <>
+          <p className="mt-3 text-sm text-slate-700">
+            Our model <span className="font-mono text-xs">{e.platform.model}</span>, evaluated{' '}
+            {e.platform.finishedAt ? new Date(e.platform.finishedAt).toLocaleDateString() : ''}: {e.platform.status === 'passed' ? 'passed' : 'not passed'}.
+          </p>
+          <ScoreList scores={e.platform.scores} thresholds={e.thresholds} />
+        </>
+      ) : (
+        <p className="mt-3 text-sm text-slate-700">Our model has not been evaluated in this environment yet.</p>
+      )}
+    </section>
+  );
+}
+
+function ProviderCard({ p, onChanged, evaluation }: { p: FirmProvider; onChanged: () => void; evaluation: AiSettings['evaluation'] }): JSX.Element {
   const { authedRequest } = useAuth();
   const api = useMemo(() => aiSettingsApi(authedRequest), [authedRequest]);
   const [routes, setRoutes] = useState<AiRoute[]>(p.enabledRoutes);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
   useEffect(() => setRoutes(p.enabledRoutes), [p.enabledRoutes]);
+  const [latest, setLatest] = useState<EvalRun | null>(null);
+  useEffect(() => {
+    if (p.evalStatus === 'not_run') return;
+    let alive = true;
+    const load = (): void => {
+      api
+        .evaluations(p.id)
+        .then((r) => alive && setLatest(r.items[0] ?? null))
+        .catch(() => undefined);
+    };
+    load();
+    // While it runs, check back every 15 seconds; the worker records the result.
+    const timer = p.evalStatus === 'running' ? window.setInterval(() => (load(), onChanged()), 15_000) : undefined;
+    return () => {
+      alive = false;
+      if (timer) window.clearInterval(timer);
+    };
+  }, [api, p.id, p.evalStatus, onChanged]);
 
   const act = (work: () => Promise<{ tone: 'error' | 'success'; text: string } | void>) => async () => {
     setBusy(true);
@@ -179,6 +286,18 @@ function ProviderCard({ p, onChanged }: { p: FirmProvider; onChanged: () => void
         {status}
       </p>
       {p.testStatus === 'failed' && p.testError && <p className="text-xs text-red-700">{p.testError}</p>}
+      <p className={`mt-1 text-sm ${p.evalStatus === 'passed' ? 'text-emerald-700' : p.evalStatus === 'failed' ? 'text-red-700' : 'text-slate-600'}`}>
+        {EVAL_LABELS[p.evalStatus]}
+      </p>
+      {latest && latest.status !== 'queued' && latest.status !== 'running' && (
+        <div className="mt-1">
+          {latest.status === 'error' ? (
+            <p className="text-xs text-red-700">The last evaluation could not finish: {latest.error}</p>
+          ) : (
+            <ScoreList scores={latest.scores} thresholds={evaluation.thresholds} baseline={evaluation.platform?.scores} />
+          )}
+        </div>
+      )}
       <fieldset className="mt-3" disabled={busy || p.testStatus !== 'passed'}>
         <legend className="text-sm font-medium text-slate-800">Use this provider for</legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -226,6 +345,17 @@ function ProviderCard({ p, onChanged }: { p: FirmProvider; onChanged: () => void
           })}
         >
           Save steps
+        </button>
+        <button
+          type="button"
+          className={button}
+          disabled={busy || p.testStatus !== 'passed' || p.evalStatus === 'running'}
+          onClick={act(async () => {
+            await api.evaluate(p.id);
+            return { tone: 'success', text: 'Evaluation queued. It makes about 50 calls to your model and usually takes a few minutes.' };
+          })}
+        >
+          Run evaluation
         </button>
         <button
           type="button"
@@ -465,6 +595,7 @@ export default function AiSettingsPage(): JSX.Element {
       <HealthCard health={health} onCheck={check} checking={checking} />
       {settings && <RoutesTable settings={settings} />}
       {settings && <GuardPanel settings={settings} />}
+      {settings && <EvaluationPanel settings={settings} />}
       <section className={card} aria-labelledby="byo-title">
         <h2 id="byo-title" className="text-lg font-semibold text-slate-900">
           Your own AI provider
@@ -476,7 +607,7 @@ export default function AiSettingsPage(): JSX.Element {
         {settings && settings.providers.length > 0 && (
           <ul className="mt-4 space-y-3">
             {settings.providers.map((p) => (
-              <ProviderCard key={p.id} p={p} onChanged={load} />
+              <ProviderCard key={p.id} p={p} onChanged={load} evaluation={settings.evaluation} />
             ))}
           </ul>
         )}
