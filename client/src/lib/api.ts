@@ -23,10 +23,15 @@ export interface ApiRequest {
   rawBody?: Blob;
   headers?: Record<string, string>;
   token?: string;
+  /** 'blob': the response is a file (PDF download); errors are still JSON. */
+  responseType?: 'json' | 'blob';
 }
 
 /** Call the API (same origin; Vite proxies /api to the server in development). */
-export async function apiRequest<T>(path: string, { method = 'GET', body, rawBody, headers: extra, token }: ApiRequest = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  { method = 'GET', body, rawBody, headers: extra, token, responseType = 'json' }: ApiRequest = {},
+): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json', ...extra };
   if (rawBody !== undefined) {
     headers['Content-Type'] = rawBody.type || 'application/octet-stream';
@@ -44,6 +49,7 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, rawBod
   }
   // 204 No Content (e.g. DELETE) has no body to parse.
   if (response.status === 204) return undefined as T;
+  if (responseType === 'blob' && response.ok) return (await response.blob()) as T;
   const payload = (await response.json().catch(() => null)) as
     { success: true; data: T } | { success: false; error: { code: string; message: string; details?: { field: string; message: string }[] } } | null;
   if (!response.ok || !payload || payload.success === false) {
