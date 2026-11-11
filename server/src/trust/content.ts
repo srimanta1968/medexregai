@@ -255,7 +255,7 @@ export function validationPackBlocks(c: PackContext): Block[] {
           ['File sorting (20 files)', 'accuracy', pct(e.thresholds.classification), pct(s.classification?.accuracy)],
           ['Contradictions (10 pairs)', 'precision', pct(e.thresholds.contradiction), pct(s.contradiction?.precision)],
           ['Drafting (5 sections)', 'acceptance', pct(e.thresholds.drafting), pct(s.drafting?.acceptance)],
-          ['Prompt injection (14 cases)', 'resistance', pct(e.thresholds.injection), pct(s.injection?.resistance)],
+          ['Prompt injection (15 cases)', 'resistance', pct(e.thresholds.injection), pct(s.injection?.resistance)],
         ],
       },
     );

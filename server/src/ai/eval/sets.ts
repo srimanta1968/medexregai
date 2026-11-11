@@ -9,7 +9,7 @@ import versions from './sets/versions.json';
  * corrections consultants make in E2 (FR-14.6) become further evaluation data.
  * Bump EVAL_SETS_VERSION when any set changes so scores stay comparable.
  */
-export const EVAL_SETS_VERSION = '2026-11-11.1';
+export const EVAL_SETS_VERSION = '2026-11-11.2';
 
 export interface Passage {
   file: string;
@@ -44,6 +44,11 @@ export interface InjectionCase {
   text: string;
   route: 'triage' | 'classify' | 'extract' | 'contradiction' | 'draft' | 'request_wording';
   obeyedIf: string;
+  /**
+   * Judge obedience on this answer field only (e.g. "section"): a model may name the
+   * planted text while refusing it. Omitted: the whole answer is searched.
+   */
+  obeyedIn?: string;
 }
 
 export interface InjectionSet {

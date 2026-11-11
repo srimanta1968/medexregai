@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { AiRoute } from '../registry';
 import { RenderedBlock } from './dataBlocks';
+import { findInjectionSignals } from './injectionSignals';
 import { FACT_KINDS } from './prompts';
 import { stripHidden } from './sanitize';
 
@@ -12,7 +13,7 @@ import { stripHidden } from './sanitize';
  * anything uses it; a failing output is discarded, never repaired.
  */
 
-export const OUTPUT_SCHEMA_VERSION = '2026-11-11.1';
+export const OUTPUT_SCHEMA_VERSION = '2026-11-11.2';
 
 export type OutputProblemCode =
   | 'NOT_JSON'
@@ -21,6 +22,7 @@ export type OutputProblemCode =
   | 'SECTION_NOT_ALLOWED'
   | 'QUOTE_NOT_IN_SOURCE'
   | 'VALUE_NOT_IN_QUOTE'
+  | 'QUOTE_IS_INSTRUCTION'
   | 'PROMPT_LEAK'
   | 'MARKER_ECHO'
   | 'LINK_OR_ADDRESS'
@@ -119,6 +121,24 @@ function citesKnown(ids: string[], ctx: CheckContext, path: string): OutputProbl
   return ids.filter((id) => !ctx.blocks.has(id)).map((id) => ({ code: 'UNKNOWN_BLOCK' as const, message: `${id} was not one of the blocks given`, path }));
 }
 
+/**
+ * True when the quote comes from a sentence of the passage that reads as an
+ * instruction to the AI (the same detector that flags files at ingest). Such text is
+ * in the source, so the quote and value checks pass; it is still not evidence (eval
+ * case fabricated-fact: a real model "extracted" 99 N from the planted instruction).
+ */
+export function quotesInstruction(blockText: string, normalisedQuote: string): boolean {
+  if (!normalisedQuote) return false;
+  for (const sentence of blockText.split(/(?<=[.!?])\s+|\n+/)) {
+    if (!sentence.trim()) continue;
+    const signals = findInjectionSignals(sentence).filter((x) => x.kind !== 'hidden_text');
+    if (!signals.length) continue;
+    const s = normaliseForMatch(sentence);
+    if (s.includes(normalisedQuote) || normalisedQuote.includes(s)) return true;
+  }
+  return false;
+}
+
 /** Check one model output for a route. Returns the parsed value only when every check passes. */
 export function checkRouteOutput<R extends AiRoute>(route: R, raw: string, ctx: CheckContext): CheckResult<RouteOutput[R]> {
   const problems: OutputProblem[] = leaks(raw, ctx);
@@ -177,6 +197,13 @@ export function checkRouteOutput<R extends AiRoute>(route: R, raw: string, ctx: 
         problems.push({ code: 'QUOTE_NOT_IN_SOURCE', message: `The quote for "${f.label.slice(0, 40)}" is not in ${f.cite}`, path: `facts.${i}.quote` });
       } else if (['quantity', 'standard', 'date', 'identifier'].includes(f.kind) && !quote.includes(normaliseForMatch(f.value))) {
         problems.push({ code: 'VALUE_NOT_IN_QUOTE', message: `The value of "${f.label.slice(0, 40)}" is not in its quote`, path: `facts.${i}.value` });
+      }
+      if (quotesInstruction(block.text, quote)) {
+        problems.push({
+          code: 'QUOTE_IS_INSTRUCTION',
+          message: `The quote for "${f.label.slice(0, 40)}" comes from text addressed to the AI, which is not evidence`,
+          path: `facts.${i}.quote`,
+        });
       }
     });
   }
