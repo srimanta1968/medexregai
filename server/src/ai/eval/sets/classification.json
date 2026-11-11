@@ -1,15 +1,40 @@
 {
-  "$comment": "F7.4 classification gold set: which submission section a client file is evidence for. Fictional package (Fictional Medical Ltd, Demo Catheter DC-100); no client data. Section ids and titles follow PRD v2.0 FR-14.10 wording and are aligned to the eSTAR template's section names in E2. Standards are cited by number only (no edition) unless the passage itself is about the edition.",
+  "$comment": "F7.4 classification gold set: which submission section a client file is evidence for. Fictional package (Fictional Medical Ltd, Demo Catheter DC-100); no client data. Section ids and titles are those of server/migrations/025 (FDA eSTAR 510(k) guidance, 2023-10-02, Table 1): sterility and shelf life are separate eSTAR sections. Standards are cited by number only (no edition) unless the passage itself is about the edition.",
   "set": "classification",
-  "version": "2026-11-11.1",
+  "version": "2026-11-12.1",
   "sections": [
-    { "id": "device_description", "title": "Device description" },
-    { "id": "sterility_shelf_life", "title": "Sterilization, packaging and shelf life" },
-    { "id": "biocompatibility", "title": "Biocompatibility" },
-    { "id": "performance_bench", "title": "Performance testing - bench" },
-    { "id": "emc_electrical_safety", "title": "EMC and electrical safety" },
-    { "id": "software", "title": "Software" },
-    { "id": "labeling", "title": "Labeling" }
+    {
+      "id": "device_description",
+      "title": "Device Description"
+    },
+    {
+      "id": "labeling",
+      "title": "Labeling"
+    },
+    {
+      "id": "sterility",
+      "title": "Sterility"
+    },
+    {
+      "id": "shelf_life",
+      "title": "Shelf Life"
+    },
+    {
+      "id": "biocompatibility",
+      "title": "Biocompatibility"
+    },
+    {
+      "id": "software",
+      "title": "Software/Firmware"
+    },
+    {
+      "id": "emc_safety",
+      "title": "Electromagnetic Compatibility (EMC), Electrical, Mechanical, Wireless and Thermal Safety"
+    },
+    {
+      "id": "performance_testing",
+      "title": "Performance Testing"
+    }
   ],
   "items": [
     {
@@ -31,28 +56,28 @@
       "file": "EO validation report VR-221.pdf",
       "where": "page 4",
       "text": "Ethylene oxide sterilization was validated by the overkill half-cycle method per ISO 11135. All biological indicators in the half cycle were negative, supporting a sterility assurance level of 10^-6.",
-      "expected": "sterility_shelf_life"
+      "expected": "sterility"
     },
     {
       "id": "cls-04",
       "file": "EO residuals report.pdf",
       "where": "page 2",
       "text": "Ethylene oxide and ethylene chlorohydrin residuals were measured per ISO 10993-7 after the routine aeration period; all results were below the tolerable contact limits for a limited-exposure device.",
-      "expected": "sterility_shelf_life"
+      "expected": "sterility"
     },
     {
       "id": "cls-05",
       "file": "Accelerated ageing protocol AA-07.docx",
       "where": "Section 3",
       "text": "Packaged samples are aged at 55 C per ASTM F1980 to simulate 2 years of real-time shelf life, then tested for seal strength and package integrity.",
-      "expected": "sterility_shelf_life"
+      "expected": "shelf_life"
     },
     {
       "id": "cls-06",
       "file": "Package integrity results.xlsx",
       "where": "sheet Dye",
       "text": "Dye penetration: 0 of 60 aged pouches showed channels. Seal strength mean 1.4 N/15 mm, minimum 1.1 N/15 mm.",
-      "expected": "sterility_shelf_life"
+      "expected": "shelf_life"
     },
     {
       "id": "cls-07",
@@ -87,42 +112,42 @@
       "file": "Bench test report BT-001.docx",
       "where": "5 Results > 5.2 Tensile",
       "text": "Mean peak tensile force of the shaft-to-hub bond was 42.0 N (n = 30), above the 15 N acceptance criterion.",
-      "expected": "performance_bench"
+      "expected": "performance_testing"
     },
     {
       "id": "cls-12",
       "file": "Flow rate test.xlsx",
       "where": "sheet Flow",
       "text": "Gravity flow rate with saline at 100 cm head height: mean 32 mL/min, all samples within the labeled 28-36 mL/min range.",
-      "expected": "performance_bench"
+      "expected": "performance_testing"
     },
     {
       "id": "cls-13",
       "file": "Kink and torque report.pdf",
       "where": "page 6",
       "text": "Kink resistance: no lumen occlusion at a 10 mm bend radius. Torque to failure exceeded 0.05 N·m for all samples.",
-      "expected": "performance_bench"
+      "expected": "performance_testing"
     },
     {
       "id": "cls-14",
       "file": "Luer conformance ISO 80369-7.pdf",
       "where": "page 2",
       "text": "Small-bore luer connector testing per ISO 80369-7: leakage, separation from axial load and resistance to overriding all passed.",
-      "expected": "performance_bench"
+      "expected": "performance_testing"
     },
     {
       "id": "cls-15",
       "file": "Infusion pump controller EMC report.pdf",
       "where": "page 9",
       "text": "Radiated and conducted emissions met CISPR 11 Group 1 Class B limits; immunity tests per IEC 60601-1-2 passed with no loss of essential performance.",
-      "expected": "emc_electrical_safety"
+      "expected": "emc_safety"
     },
     {
       "id": "cls-16",
       "file": "Electrical safety test report.pdf",
       "where": "page 3",
       "text": "Leakage currents, dielectric strength and protective earth impedance were tested per IEC 60601-1; all results within limits for a Type BF applied part.",
-      "expected": "emc_electrical_safety"
+      "expected": "emc_safety"
     },
     {
       "id": "cls-17",

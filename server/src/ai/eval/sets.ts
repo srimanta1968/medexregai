@@ -9,7 +9,7 @@ import versions from './sets/versions.json';
  * corrections consultants make in E2 (FR-14.6) become further evaluation data.
  * Bump EVAL_SETS_VERSION when any set changes so scores stay comparable.
  */
-export const EVAL_SETS_VERSION = '2026-11-11.2';
+export const EVAL_SETS_VERSION = '2026-11-12.1';
 
 export interface Passage {
   file: string;

@@ -6,6 +6,7 @@ import { embedPendingAll } from './retrieval/embeddings';
 import { closePool } from './services/DataService';
 import { inboundEmailService } from './inbound/InboundEmailService';
 import { folderSync } from './connections/FolderSync';
+import { sectionClassifier } from './sorting/SectionClassifier';
 import { trustService } from './trust/TrustService';
 
 /**
@@ -36,6 +37,8 @@ const DELETION_EVERY_MS = 60 * 1000;
 const INBOUND_EVERY_MS = 15 * 1000;
 /** How often due folder links are looked for; each link is itself due every 15 minutes (FolderSync). */
 const FOLDER_SYNC_EVERY_MS = 60 * 1000;
+/** F2.2: sort newly read files into eSTAR sections. */
+const SORT_EVERY_MS = 15 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
 let evalRunning = false;
@@ -81,6 +84,21 @@ async function folderSyncPass(): Promise<void> {
     console.error(`[worker] folder sync pass failed: ${(err as Error).message}`);
   } finally {
     folderSyncRunning = false;
+  }
+}
+
+let sortRunning = false;
+
+async function sortPass(): Promise<void> {
+  if (sortRunning) return;
+  sortRunning = true;
+  try {
+    const r = await sectionClassifier.sortPending();
+    if (r.sorted || r.errors) console.info(`[worker] sorting: ${JSON.stringify(r)}`);
+  } catch (err) {
+    console.error(`[worker] sorting pass failed: ${(err as Error).message}`);
+  } finally {
+    sortRunning = false;
   }
 }
 
@@ -204,6 +222,7 @@ if (require.main === module) {
   timers.push(setInterval(() => void deletionPass(), DELETION_EVERY_MS));
   timers.push(setInterval(() => void inboundPass(), INBOUND_EVERY_MS));
   timers.push(setInterval(() => void folderSyncPass(), FOLDER_SYNC_EVERY_MS));
+  timers.push(setInterval(() => void sortPass(), SORT_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {
