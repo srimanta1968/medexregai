@@ -1,3 +1,4 @@
+import { evalStore } from './ai/eval/EvalStore';
 import { config } from './config/env';
 import { pushTrackedProductCodes } from './fda/fdaService';
 import { processQueued, sweep } from './ingest/IngestService';
@@ -13,13 +14,31 @@ import { closePool } from './services/DataService';
  * F7.2 ingest: parses queued file versions through the docproc sidecar and sweeps
  * stuck claims and leftover linked copies. The queued-version pass is the interim
  * dispatcher until the F8.2 job framework; it only runs when DOCPROC_API_KEY is set.
+ *
+ * F7.4: runs queued evaluations of firms' own models (one at a time; each makes
+ * about 50 model calls) and closes runs that lost their worker.
  */
 
 const PUSH_EVERY_MS = 6 * 60 * 60 * 1000;
 const INGEST_EVERY_MS = 10 * 1000;
 const SWEEP_EVERY_MS = 10 * 60 * 1000;
+const EVAL_EVERY_MS = 30 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
+let evalRunning = false;
+
+async function evalPass(): Promise<void> {
+  if (evalRunning) return;
+  evalRunning = true;
+  try {
+    const r = await evalStore.processQueued();
+    if (r.ran || r.stale) console.info(`[worker] evaluations: ${JSON.stringify(r)}`);
+  } catch (err) {
+    console.error(`[worker] evaluation pass failed: ${(err as Error).message}`);
+  } finally {
+    evalRunning = false;
+  }
+}
 
 async function ingestPass(): Promise<void> {
   if (ingestRunning) return;
@@ -98,6 +117,7 @@ if (require.main === module) {
       }
     }, INGEST_EVERY_MS),
   );
+  timers.push(setInterval(() => void evalPass(), EVAL_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {

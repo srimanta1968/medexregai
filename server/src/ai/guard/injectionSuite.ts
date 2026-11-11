@@ -5,7 +5,7 @@
  *   npm run test:injection -- --require-docproc # CI: the format layer must run
  *   npm run test:injection -- --report out.json # also write a JSON report
  *
- * Layers, each over tests/fixtures/injection/cases.json:
+ * Layers, each over src/ai/eval/sets/injection.json (fixture files in tests/fixtures/injection):
  *   registry   every route is tool-free and takes document input; extra request fields are refused
  *   benign     realistic device-document sentences raise no signal (no false alarms)
  *   signals    each planted instruction is flagged with the expected kind
@@ -22,9 +22,10 @@
  * needs no model, database or network.
  */
 import { execFileSync } from 'child_process';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { AI_ROUTES, AiRoute, assertPlainRequest, REGISTRY } from '../registry';
+import injectionSet from '../eval/sets/injection.json';
 import { renderDataBlocks } from './dataBlocks';
 import { documentGenerate, Generator } from './documentCall';
 import { findInjectionSignals, InjectionSignalKind, scanForInjection } from './injectionSignals';
@@ -265,7 +266,7 @@ function formatOutcomes(file: CaseFile, required: boolean): Outcome[] {
 }
 
 export async function runInjectionSuite(opts: { requireDocproc?: boolean } = {}): Promise<{ version: string; outcomes: Outcome[]; failed: number }> {
-  const file = JSON.parse(readFileSync(join(FIXTURES, 'cases.json'), 'utf-8')) as CaseFile;
+  const file = injectionSet as unknown as CaseFile;
   const outcomes: Outcome[] = [...registryOutcomes()];
   for (const text of file.benign) {
     const found = findInjectionSignals(text);

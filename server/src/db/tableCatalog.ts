@@ -40,6 +40,8 @@ export const TABLE_CATALOG = {
   source_locations: 'tenant',
   chunks: 'tenant',
   citation_gate_runs: 'tenant',
+  eval_runs: 'tenant',
+  platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
 export type CatalogTable = keyof typeof TABLE_CATALOG;

@@ -1,0 +1,55 @@
+{
+  "$comment": "F7.4 version-detection gold set: is file B a version of file A, and which is current? There is no version-detection step to score yet (E2, FR-14.7); the runner reports this set as not run until that step exists. Labels follow FR-14.7: unclear cases must be asked, never decided silently.",
+  "set": "versions",
+  "version": "2026-11-11.1",
+  "items": [
+    {
+      "id": "ver-01",
+      "a": {
+        "file": "Bench test report BT-001 rev A.docx",
+        "modified": "2026-02-03",
+        "text": "Bench test report BT-001, revision A. Mean peak tensile force 41.6 N (n = 20)."
+      },
+      "b": {
+        "file": "Bench test report BT-001 rev B.docx",
+        "modified": "2026-03-10",
+        "text": "Bench test report BT-001, revision B. Mean peak tensile force 42.0 N (n = 30)."
+      },
+      "expected": { "sameDocument": true, "current": "b" }
+    },
+    {
+      "id": "ver-02",
+      "a": { "file": "IFU draft v3.docx", "modified": "2026-01-20", "text": "Instructions for use, draft 3." },
+      "b": { "file": "IFU draft v4.docx", "modified": "2026-03-01", "text": "Instructions for use, draft 4." },
+      "expected": { "sameDocument": true, "current": "b" }
+    },
+    {
+      "id": "ver-03",
+      "a": { "file": "Cytotoxicity report CT-11.pdf", "modified": "2026-02-14", "text": "Cytotoxicity per ISO 10993-5, test article DC-100." },
+      "b": { "file": "Hemolysis study.pdf", "modified": "2026-02-15", "text": "Hemolysis per ASTM F756, test article DC-100." },
+      "expected": { "sameDocument": false, "current": null }
+    },
+    {
+      "id": "ver-04",
+      "a": { "file": "Bench test report BT-001 FINAL.docx", "modified": "2026-03-12", "text": "Bench test report BT-001, revision B, approved." },
+      "b": { "file": "Bench test report BT-001 FINAL (1).docx", "modified": "2026-03-12", "text": "Bench test report BT-001, revision B, approved." },
+      "expected": { "sameDocument": true, "current": "ask" }
+    },
+    {
+      "id": "ver-05",
+      "a": { "file": "Device description.docx", "modified": "2026-03-05", "text": "Device description, revision C." },
+      "b": { "file": "Device description old.docx", "modified": "2026-03-06", "text": "Device description, revision B." },
+      "expected": { "sameDocument": true, "current": "a" }
+    },
+    {
+      "id": "ver-06",
+      "a": { "file": "Package integrity results.xlsx", "modified": "2026-04-01", "text": "Dye penetration, aged pouches, 60 samples." },
+      "b": {
+        "file": "Package integrity results - copy.xlsx",
+        "modified": "2026-04-02",
+        "text": "Dye penetration, aged pouches, 60 samples; 2 rows corrected."
+      },
+      "expected": { "sameDocument": true, "current": "ask" }
+    }
+  ]
+}

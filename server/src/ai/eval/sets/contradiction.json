@@ -1,0 +1,80 @@
+{
+  "$comment": "F7.4 contradiction gold set: two passages from the same fictional package and whether they disagree. Precision is scored on 'contradiction' answers (a false alarm costs the consultant time); recall is reported alongside. 'unclear' gold items are excluded from precision and recall and counted separately.",
+  "set": "contradiction",
+  "version": "2026-11-11.1",
+  "question": "Do these passages state the same thing about the device or its evidence?",
+  "items": [
+    {
+      "id": "con-01",
+      "a": { "file": "DC-100 IFU draft v4.docx", "where": "Section 8", "text": "Shelf life: 3 years from the date of sterilization." },
+      "b": {
+        "file": "Accelerated ageing report AA-07R.pdf",
+        "where": "page 2",
+        "text": "Results support a shelf life of 2 years; 3-year samples were not tested."
+      },
+      "expected": "contradiction"
+    },
+    {
+      "id": "con-02",
+      "a": { "file": "DC-100 device description rev C.docx", "where": "Section 2", "text": "The hub is moulded from polycarbonate." },
+      "b": { "file": "Hub drawing D-10042.pdf", "where": "page 1", "text": "MATERIAL: POLYCARBONATE, MEDICAL GRADE" },
+      "expected": "consistent"
+    },
+    {
+      "id": "con-03",
+      "a": { "file": "Bench test report BT-001.docx", "where": "5.2 Tensile", "text": "Mean peak tensile force was 42.0 N (n = 30)." },
+      "b": { "file": "Design verification summary.xlsx", "where": "sheet DV, B12", "text": "Shaft-to-hub tensile: mean 24.0 N, n = 30, PASS" },
+      "expected": "contradiction"
+    },
+    {
+      "id": "con-04",
+      "a": { "file": "EO validation report VR-221.pdf", "where": "page 4", "text": "Sterilization method: ethylene oxide." },
+      "b": { "file": "Pouch label artwork.pdf", "where": "page 1", "text": "STERILE R" },
+      "expected": "contradiction"
+    },
+    {
+      "id": "con-05",
+      "a": { "file": "DC-100 IFU draft v4.docx", "where": "Section 2", "text": "Available in 5 Fr, lengths 10 cm and 20 cm." },
+      "b": { "file": "Product specification PS-100.docx", "where": "Table 1", "text": "Sizes: 5 Fr x 10 cm, 5 Fr x 20 cm." },
+      "expected": "consistent"
+    },
+    {
+      "id": "con-06",
+      "a": { "file": "Biological evaluation plan.docx", "where": "Section 4", "text": "Contact: circulating blood, limited duration (under 24 h)." },
+      "b": { "file": "DC-100 IFU draft v4.docx", "where": "Section 5", "text": "The catheter may remain in place for up to 72 hours." },
+      "expected": "contradiction"
+    },
+    {
+      "id": "con-07",
+      "a": { "file": "Cytotoxicity report CT-11.pdf", "where": "page 3", "text": "Test article: DC-100 finished device, lot 2403A, EO sterilized." },
+      "b": {
+        "file": "Biological evaluation plan.docx",
+        "where": "Section 6",
+        "text": "Biocompatibility testing is performed on finished, sterilized devices."
+      },
+      "expected": "consistent"
+    },
+    {
+      "id": "con-08",
+      "a": { "file": "Flow rate test.xlsx", "where": "sheet Flow", "text": "Mean gravity flow 32 mL/min." },
+      "b": { "file": "DC-100 IFU draft v4.docx", "where": "Section 3", "text": "Typical gravity flow rate: 28-36 mL/min." },
+      "expected": "consistent"
+    },
+    {
+      "id": "con-09",
+      "a": {
+        "file": "Bench test report BT-001.docx",
+        "where": "Section 3",
+        "text": "Samples were conditioned for 2 hours at 37 C in saline before tensile testing."
+      },
+      "b": { "file": "Bench test protocol TP-001.pdf", "where": "page 2", "text": "Condition samples for 2 hours at 37 C in saline before testing." },
+      "expected": "consistent"
+    },
+    {
+      "id": "con-10",
+      "a": { "file": "Bench test report BT-001.docx", "where": "Section 1", "text": "Testing was performed on 30 samples from three lots." },
+      "b": { "file": "Bench test protocol TP-001.pdf", "where": "page 1", "text": "The protocol does not state a sample size." },
+      "expected": "unclear"
+    }
+  ]
+}

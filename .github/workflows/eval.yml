@@ -1,0 +1,87 @@
+name: Model evaluation
+
+# F7.4: a change to a model, prompt, route or output check must pass the evaluation
+# harness before it can ship. Runs the gold sets (server/src/ai/eval/sets) against the
+# evaluation model endpoint and fails the check when a target is missed.
+#
+# Needs repository secrets:
+#   EVAL_AI_PROVIDER   ollama | openai_compatible (the provider the endpoint speaks)
+#   EVAL_AI_BASE_URL   the model server to evaluate against (e.g. the staging vLLM)
+#   EVAL_AI_API_KEY    its key, if it needs one
+# Optional repository variable EVAL_AI_MODEL: evaluate one model for every route.
+# Without EVAL_AI_BASE_URL the check fails on purpose: an unevaluated change is not releasable.
+
+on:
+  pull_request:
+    paths:
+      - server/src/ai/**
+      - server/src/citations/**
+      - server/.env.example
+      - .github/workflows/eval.yml
+  push:
+    branches: [main]
+    paths:
+      - server/src/ai/**
+      - server/src/citations/**
+      - server/.env.example
+      - .github/workflows/eval.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    name: Gold-set evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: server
+    env:
+      # CI-only placeholders for settings the evaluation does not use (it needs no database with --no-record).
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_NAME: unused
+      DB_USER: unused
+      DB_PASSWORD: unused
+      JWT_SECRET: ci-jwt-secret-at-least-thirty-two-characters
+      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      REDIS_URL: redis://localhost:6379
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: unused
+      S3_ACCESS_KEY_ID: unused
+      S3_SECRET_ACCESS_KEY: unused
+      AI_PROVIDER: ${{ secrets.EVAL_AI_PROVIDER || 'openai_compatible' }}
+      AI_BASE_URL: ${{ secrets.EVAL_AI_BASE_URL }}
+      AI_API_KEY: ${{ secrets.EVAL_AI_API_KEY }}
+      AI_GENERATION_MODEL: ${{ vars.EVAL_AI_MODEL || 'qwen2.5:7b-instruct' }}
+      AI_EMBEDDING_MODEL: bge-m3
+      AI_REQUEST_TIMEOUT_MS: "120000"
+    steps:
+      - uses: actions/checkout@v4
+      - name: An evaluation endpoint is configured
+        run: |
+          if [ -z "$AI_BASE_URL" ]; then
+            echo "::error::No evaluation model endpoint (secret EVAL_AI_BASE_URL). Model, prompt and route changes cannot be released until they are evaluated."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Evaluate
+        run: npm run eval -- --no-record --report eval-report.json --note "CI ${{ github.sha }}"
+      - name: Keep the evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: server/eval-report.json
+          if-no-files-found: ignore

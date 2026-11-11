@@ -1,0 +1,158 @@
+{
+  "requiresAuth": true,
+  "taskId": "8b7a4760-34e9-418a-bcca-19b18721546f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "aiProviders.evaluation.response.data.id": "data.id",
+    "aiProviders.evaluation.response.data.status": "data.status"
+  },
+  "name": "POST /api/settings/ai-providers/:providerId/evaluation - queue an evaluation of the firm's own model",
+  "description": "For owners and admins (firm:manage). Queues an evaluation of a firm's own model (BYO) against the gold sets: classification, contradictions, drafting, prompt injection (version detection is listed but not run until E2). It goes through the same prompts, data blocks, output checks and citation gate as real work. Returns 202 with the queued run; the worker runs it (about 50 model calls, metered to the firm as eval:<route>) and records scores against the thresholds (classification 90%, contradiction precision 70%, drafting acceptance 70%, injection resistance 100%). Passing sets the provider's evalStatus to passed, which is what allows it to serve drafting; failing removes drafting. Audited (ai_provider.evaluation_requested). Covers: a gold set is scored for citation precision and section acceptance; eval sets cover classification, version detection, contradiction precision, drafting acceptance and injection; a firm-supplied model must pass the evaluation gate before it is used for drafting. Test note: an automated run's provider (https://example.com/v1) cannot pass its connection test, so the happy path is expected to need marking manual after the first run; the 409 PROVIDER_NOT_TESTED case is what the runner reaches. Verified by hand against the dev app with a stand-in model: 202 queued, a second request 409 EVALUATION_RUNNING, the worker ran 49 calls, evalStatus passed and drafting could be enabled; a failing run set failed and removed drafting.",
+  "endpoint": "/api/settings/ai-providers/:providerId/evaluation",
+  "method": "POST",
+  "expectedStatus": 202,
+  "priority": 86,
+  "coversCriterion": [
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC1",
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC3",
+    "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC7",
+    "8b7a4760-34e9-418a-bcca-19b18721546f#AC1",
+    "8b7a4760-34e9-418a-bcca-19b18721546f#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/settings/ai-providers",
+    "POST /api/settings/ai-providers/:providerId/test"
+  ],
+  "responseFields": [
+    "id",
+    "status",
+    "setsVersion",
+    "registryVersion",
+    "checksVersion",
+    "thresholds"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Missing permission firm:manage",
+      "when": "caller is a reviewer"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Provider not found",
+      "when": "no provider with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "providerId must be a valid id",
+      "when": "providerId is not a uuid"
+    },
+    {
+      "status": 409,
+      "code": "PROVIDER_NOT_TESTED",
+      "message": "Run the connection test first; only a provider that passed it can be evaluated.",
+      "when": "the provider has not passed its connection test"
+    },
+    {
+      "status": 409,
+      "code": "EVALUATION_RUNNING",
+      "message": "An evaluation of this provider is already queued or running.",
+      "when": "an evaluation is already queued or running"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner queues an evaluation of a tested provider",
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      },
+      "expectedStatus": 202,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "queued"
+        }
+      },
+      "capturesResponse": true
+    },
+    {
+      "name": "409 - provider has not passed its connection test",
+      "testType": "negative",
+      "coversErrorCase": "409|PROVIDER_NOT_TESTED",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "PROVIDER_NOT_TESTED"
+      },
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown provider",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "providerId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "400 - provider id not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "providerId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot manage AI settings",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      }
+    }
+  ]
+}

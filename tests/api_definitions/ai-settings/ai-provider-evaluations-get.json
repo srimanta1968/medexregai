@@ -1,0 +1,123 @@
+{
+  "requiresAuth": true,
+  "taskId": "8b7a4760-34e9-418a-bcca-19b18721546f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/settings/ai-providers/:providerId/evaluations - a firm model's evaluations",
+  "description": "For owners and admins (firm:manage). The provider's evaluation runs, newest first (at most 10): status (queued, running, passed, failed, error), model, gold-set, registry and output-check versions, scores per set (classification accuracy; contradiction precision and recall; drafting acceptance and citation precision; injection resistance; versions not run), a sample of failed items and the thresholds applied. A new provider has none. Covers: a gold set is scored for citation precision and section acceptance; eval sets cover classification, version detection, contradiction precision, drafting acceptance and injection.",
+  "endpoint": "/api/settings/ai-providers/:providerId/evaluations",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 87,
+  "coversCriterion": [
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC1",
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC3",
+    "8b7a4760-34e9-418a-bcca-19b18721546f#AC1",
+    "8b7a4760-34e9-418a-bcca-19b18721546f#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/settings/ai-providers"
+  ],
+  "responseFields": [
+    "items",
+    "thresholds"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Missing permission firm:manage",
+      "when": "caller is a reviewer"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Provider not found",
+      "when": "no provider with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "providerId must be a valid id",
+      "when": "providerId is not a uuid"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner lists a provider's evaluations (none yet)",
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "items": []
+        }
+      }
+    },
+    {
+      "name": "404 - unknown provider",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "providerId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    },
+    {
+      "name": "400 - provider id not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "providerId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot manage AI settings",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "pathParams": {
+        "providerId": "{{cache:aiProviders.create.response.data.id}}"
+      }
+    }
+  ]
+}

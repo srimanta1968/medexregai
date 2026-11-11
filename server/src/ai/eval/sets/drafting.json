@@ -1,0 +1,88 @@
+{
+  "$comment": "F7.4 drafting gold set. A draft counts as accepted (an automated proxy for 'accepted without material change', PRD FR-14.10) when the citation gate keeps every sentence (nothing removed, not refused) and every required fact appears in a kept sentence. Citation precision is the share of cited sentences the gate keeps. The consultant's real acceptance rate is measured in the pilot (E4).",
+  "set": "drafting",
+  "version": "2026-11-11.1",
+  "items": [
+    {
+      "id": "dra-01",
+      "heading": "Performance testing - bench: tensile strength",
+      "passages": [
+        {
+          "file": "Bench test report BT-001.docx",
+          "where": "5.2 Tensile",
+          "text": "Mean peak tensile force of the shaft-to-hub bond was 42.0 N (n = 30), above the 15 N acceptance criterion."
+        },
+        { "file": "Bench test protocol TP-001.pdf", "where": "page 2", "text": "Samples are conditioned for 2 hours at 37 C in saline before tensile testing." }
+      ],
+      "requiredFacts": ["42.0 N", "15 N"]
+    },
+    {
+      "id": "dra-02",
+      "heading": "Sterilization",
+      "passages": [
+        {
+          "file": "EO validation report VR-221.pdf",
+          "where": "page 4",
+          "text": "Ethylene oxide sterilization was validated by the overkill half-cycle method per ISO 11135. All biological indicators in the half cycle were negative, supporting a sterility assurance level of 10^-6."
+        },
+        {
+          "file": "EO residuals report.pdf",
+          "where": "page 2",
+          "text": "Ethylene oxide and ethylene chlorohydrin residuals were measured per ISO 10993-7; all results were below the tolerable contact limits for a limited-exposure device."
+        }
+      ],
+      "requiredFacts": ["ISO 11135", "ISO 10993-7"]
+    },
+    {
+      "id": "dra-03",
+      "heading": "Shelf life and packaging",
+      "passages": [
+        {
+          "file": "Accelerated ageing protocol AA-07.docx",
+          "where": "Section 3",
+          "text": "Packaged samples are aged at 55 C per ASTM F1980 to simulate 2 years of real-time shelf life, then tested for seal strength and package integrity."
+        },
+        {
+          "file": "Package integrity results.xlsx",
+          "where": "sheet Dye",
+          "text": "Dye penetration: 0 of 60 aged pouches showed channels. Seal strength mean 1.4 N/15 mm, minimum 1.1 N/15 mm."
+        }
+      ],
+      "requiredFacts": ["2 years", "ASTM F1980"]
+    },
+    {
+      "id": "dra-04",
+      "heading": "Biocompatibility: cytotoxicity and hemolysis",
+      "passages": [
+        {
+          "file": "Cytotoxicity report CT-11.pdf",
+          "where": "page 3",
+          "text": "In vitro cytotoxicity per ISO 10993-5 (MEM elution): the test article extract scored grade 0; the device is non-cytotoxic."
+        },
+        {
+          "file": "Hemolysis study.pdf",
+          "where": "page 5",
+          "text": "Hemolysis (direct and indirect contact) per ASTM F756: hemolytic index 0.4%, classified non-hemolytic."
+        }
+      ],
+      "requiredFacts": ["ISO 10993-5", "ASTM F756"]
+    },
+    {
+      "id": "dra-05",
+      "heading": "Performance testing - bench: connectors and flow",
+      "passages": [
+        {
+          "file": "Luer conformance ISO 80369-7.pdf",
+          "where": "page 2",
+          "text": "Small-bore luer connector testing per ISO 80369-7: leakage, separation from axial load and resistance to overriding all passed."
+        },
+        {
+          "file": "Flow rate test.xlsx",
+          "where": "sheet Flow",
+          "text": "Gravity flow rate with saline at 100 cm head height: mean 32 mL/min, all samples within the labeled 28-36 mL/min range."
+        }
+      ],
+      "requiredFacts": ["ISO 80369-7", "32 mL/min"]
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
+import { evalStore } from '../ai/eval/EvalStore';
+import { THRESHOLDS } from '../ai/eval/runner';
+import { EVAL_SETS_VERSION } from '../ai/eval/sets';
 import { firmProviderStore } from '../ai/FirmProviderStore';
 import { OUTPUT_CHECKS, OUTPUT_SCHEMA_VERSION } from '../ai/guard/outputSchemas';
 import { buildProviders, platformProviders } from '../ai/providers';
@@ -18,6 +21,8 @@ import { UnsafeUrlError, assertPublicHttpsUrl } from '../utils/ssrf';
  *   GET    /api/settings/ai                       platform default, per-route resolution, firm providers
  *   POST   /api/settings/ai-providers             add a provider; the key is stored encrypted, never returned
  *   POST   /api/settings/ai-providers/:id/test    connection test (reachable, key accepted, model present)
+ *   POST   /api/settings/ai-providers/:id/evaluation   queue an evaluation (F7.4); 202
+ *   GET    /api/settings/ai-providers/:id/evaluations  its evaluations with scores
  *   PATCH  /api/settings/ai-providers/:id         rename or choose the routes it serves
  *   DELETE /api/settings/ai-providers/:id
  *   GET    /api/settings/ai-usage                 AI cost and tokens per project, estimates, open alerts
@@ -123,6 +128,8 @@ aiSettingsRouter.get(
       data: {
         registryVersion: REGISTRY_VERSION,
         outputSchemaVersion: OUTPUT_SCHEMA_VERSION,
+        // Our own model's latest evaluation: the baseline a firm model is compared with (F7.4).
+        evaluation: { setsVersion: EVAL_SETS_VERSION, thresholds: THRESHOLDS, platform: await evalStore.latestPlatform() },
         platform: { provider: platform.llm.kind, generationModel: platform.llm.defaultModel, embeddingModel: platform.embeddings.embeddingModel },
         routes,
         providers: await firmProviderStore.list(c.orgId),
@@ -213,6 +220,33 @@ aiSettingsRouter.post(
       [providerId, ok, error ? `${error.code}: ${error.message}`.slice(0, 300) : null],
     );
     res.status(200).json({ success: true, data: { passed: ok, latencyMs, error, provider: await mustGet(c, providerId) } });
+  }),
+);
+
+/**
+ * Queue an evaluation of the firm's own model against the gold sets (F7.4). The worker
+ * runs it; passing is what allows the model to serve drafting.
+ */
+aiSettingsRouter.post(
+  '/api/settings/ai-providers/:providerId/evaluation',
+  guard,
+  audit('ai_provider.evaluation_requested', { targetType: 'ai_provider', targetId: fromParam('providerId') }),
+  handle(async (req, res) => {
+    const c = ctx(req);
+    const providerId = id('providerId').parse(req.params.providerId);
+    res.status(202).json({ success: true, data: await evalStore.request(c.orgId, c.userId, providerId) });
+  }),
+);
+
+/** The provider's evaluations, newest first, with scores against the thresholds. */
+aiSettingsRouter.get(
+  '/api/settings/ai-providers/:providerId/evaluations',
+  guard,
+  handle(async (req, res) => {
+    const c = ctx(req);
+    const providerId = id('providerId').parse(req.params.providerId);
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: { items: await evalStore.list(c.orgId, providerId), thresholds: THRESHOLDS } });
   }),
 );
 

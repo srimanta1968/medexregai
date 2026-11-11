@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "GET /api/settings/ai - what the firm's AI calls use",
-  "description": "For owners and admins (firm:manage): registry version, the platform default (provider, generation and embedding model) and, per AI route (triage, classify, extract, contradiction, draft, request_wording), the provider and model that answer it today (firm provider or platform) plus the firm's providers (never their keys). Covers: with no configuration all generation and embedding use our self-hosted models; each AI route is mapped to a provider and model in a versioned registry; an admin can see the active model and provider. Each route also carries guard (F7.5): documentInput, dataBlocks=true, tools=[] (no route can call tools), the output check it applies, and last30Days counts of checked and discarded outputs and of calls whose files held instruction-like text; outputSchemaVersion names the check set. Covers F7.5: document routes have no tools and their outputs are schema-checked; instructions inside client files never change system behaviour.",
+  "description": "For owners and admins (firm:manage): registry version, the platform default (provider, generation and embedding model) and, per AI route (triage, classify, extract, contradiction, draft, request_wording), the provider and model that answer it today (firm provider or platform) plus the firm's providers (never their keys). Covers: with no configuration all generation and embedding use our self-hosted models; each AI route is mapped to a provider and model in a versioned registry; an admin can see the active model and provider. Each route also carries guard (F7.5): documentInput, dataBlocks=true, tools=[] (no route can call tools), the output check it applies, and last30Days counts of checked and discarded outputs and of calls whose files held instruction-like text; outputSchemaVersion names the check set. Covers F7.5: document routes have no tools and their outputs are schema-checked; instructions inside client files never change system behaviour. It also returns evaluation (F7.4): the gold-set version, the thresholds, and our own model's latest evaluation (status, model, scores), or null when it has not been evaluated in this environment; this is the baseline a firm model is compared with and what the model card (docs/ai/model-card.md) reports. Covers F7.4: a gold set is scored for citation precision and section acceptance; a model card documents the model, limits and scores.",
   "endpoint": "/api/settings/ai",
   "method": "GET",
   "expectedStatus": 200,
@@ -17,7 +17,9 @@
     "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC3",
     "4c39a3ec-c61a-4e2b-8b39-2fd1c101a93a#AC4",
     "0c5e7968-0d64-41dc-bb62-74204eef3a96#AC1",
-    "0c5e7968-0d64-41dc-bb62-74204eef3a96#AC2"
+    "0c5e7968-0d64-41dc-bb62-74204eef3a96#AC2",
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC1",
+    "e153ccad-4097-40de-ae9d-38e5b8f1a098#AC2"
   ],
   "dependsOn": [
     "POST /api/auth/register"
