@@ -50,8 +50,8 @@
     {
       "status": 403,
       "code": "FORBIDDEN",
-      "message": "Your role (editor) does not allow this action",
-      "when": "the member is not an owner or admin"
+      "message": "Your role (reviewer) does not allow this action",
+      "when": "the member is not an owner or admin (e.g. a reviewer)"
     }
   ],
   "testCases": [
@@ -107,6 +107,25 @@
         "code": "UNAUTHORIZED"
       },
       "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "payload": {
+        "confirmName": "{{cache:projects.create.response.data.name}}"
+      }
+    },
+    {
+      "name": "403 - a reviewer cannot delete a project",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
       "pathParams": {
         "projectId": "{{cache:projects.create.response.data.id}}"
       },
