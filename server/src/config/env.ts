@@ -134,6 +134,18 @@ export interface AppConfig {
   /** No-login client upload links (F2.4). */
   clientUploads: { maxBytes: number; defaultDays: number; maxDays: number; maxFilesPerLink: number };
   /**
+   * F2.1 read-only folder connections. A provider is offered only when its OAuth app
+   * is configured (client id and secret). Redirect URI registered with each provider:
+   * <APP_BASE_URL>/api/connections/oauth/<provider>/callback.
+   */
+  connections: {
+    providers: Record<'dropbox' | 'box' | 'onedrive' | 'google_drive', { clientId: string; clientSecret: string } | null>;
+    /** Microsoft identity platform tenant: organizations (work accounts), common, or a tenant id. */
+    microsoftTenant: string;
+    /** A linked file larger than this is not fetched (same cap as client uploads). */
+    maxFileBytes: number;
+  };
+  /**
    * Malware scan of every upload (clamd INSTREAM). Required in production: without a
    * scanner configured there, uploads are refused rather than stored unscanned.
    */
@@ -434,6 +446,16 @@ export function loadConfig(env: Env): AppConfig {
     },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
     devUploads: parseDevUploads(env, nodeEnv),
+    connections: {
+      providers: {
+        dropbox: oauthApp(env, 'DROPBOX'),
+        box: oauthApp(env, 'BOX'),
+        onedrive: oauthApp(env, 'MICROSOFT'),
+        google_drive: oauthApp(env, 'GOOGLE_DRIVE'),
+      },
+      microsoftTenant: optionalEnv(env, 'MICROSOFT_FILES_TENANT', 'organizations'),
+      maxFileBytes: parsePositiveInt(optionalEnv(env, 'CLIENT_UPLOAD_MAX_BYTES', String(100 * 1024 * 1024)), 'CLIENT_UPLOAD_MAX_BYTES'),
+    },
     clientUploads: {
       maxBytes: parsePositiveInt(optionalEnv(env, 'CLIENT_UPLOAD_MAX_BYTES', String(100 * 1024 * 1024)), 'CLIENT_UPLOAD_MAX_BYTES'),
       defaultDays: 14,
@@ -460,6 +482,13 @@ export function loadConfig(env: Env): AppConfig {
       queueMetric: optionalEnv(env, 'DOCPROC_QUEUE_METRIC', 'false').toLowerCase() === 'true',
     },
   };
+}
+
+/** <PREFIX>_CLIENT_ID / <PREFIX>_CLIENT_SECRET for one folder provider; null unless both are set. */
+function oauthApp(env: Env, prefix: string): { clientId: string; clientSecret: string } | null {
+  const clientId = optionalEnv(env, `${prefix}_CLIENT_ID`, '').trim();
+  const clientSecret = optionalEnv(env, `${prefix}_CLIENT_SECRET`, '').trim();
+  return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
 /** Process-wide config, validated once at import. Startup fails fast on a bad .env. */
