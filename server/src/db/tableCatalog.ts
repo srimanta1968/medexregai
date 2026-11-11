@@ -41,6 +41,9 @@ export const TABLE_CATALOG = {
   chunks: 'tenant',
   citation_gate_runs: 'tenant',
   eval_runs: 'tenant',
+  client_requests: 'tenant',
+  client_request_items: 'tenant',
+  upload_links: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
