@@ -5,7 +5,7 @@ import { fdaDateLabel } from '../../components/app/FdaDataAsOf';
 import { Field, FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { Clearance, Flags, K_NUMBER, PRODUCT_CODE, ProductCode, fdaApi } from '../../lib/fdaApi';
+import { Clearance, Flags, K_NUMBER, PRODUCT_CODE, ProductCode, SummaryDocument, fdaApi } from '../../lib/fdaApi';
 
 interface Result {
   clearance?: Clearance;
@@ -50,6 +50,46 @@ const FdaLink = ({ href, children }: { href: string; children: ReactNode }): JSX
   </a>
 );
 
+/**
+ * F1.2: whether we hold the public 510(k) summary for this K-number. "No summary on file"
+ * is stated plainly; anything not yet retrieved says so rather than implying it is missing.
+ */
+function SummaryStatus({ doc, statementOrSummary }: { doc: SummaryDocument | null; statementOrSummary: string | null }): JSX.Element {
+  if (doc?.status === 'fetched') {
+    return (
+      <span data-testid="summary-status" data-status="fetched">
+        Summary PDF on file{doc.fetchedAt ? `, retrieved ${fdaDateLabel(doc.fetchedAt.slice(0, 10))}` : ''}
+        {doc.sourceUrl && (
+          <>
+            {' · '}
+            <FdaLink href={doc.sourceUrl}>Open the 510(k) summary PDF</FdaLink>
+          </>
+        )}
+      </span>
+    );
+  }
+  if (doc?.status === 'no_summary' || (!doc && statementOrSummary === 'Statement')) {
+    const reason = doc?.reason ?? 'The FDA lists a 510(k) statement, not a summary, for this clearance';
+    return (
+      <span data-testid="summary-status" data-status="no_summary">
+        <strong className="font-semibold">No summary on file</strong>
+        <span className="block text-xs text-slate-600">{reason}</span>
+      </span>
+    );
+  }
+  const detail = !doc
+    ? 'Summaries are retrieved for the product codes your firm works with'
+    : doc.status === 'failed'
+      ? 'The FDA website did not answer; it will be tried again'
+      : 'Queued for retrieval from the FDA website';
+  return (
+    <span data-testid="summary-status" data-status={doc?.status ?? 'not_checked'}>
+      Summary not retrieved yet
+      <span className="block text-xs text-slate-600">{detail}</span>
+    </span>
+  );
+}
+
 function ClearanceCard({ c }: { c: Clearance }): JSX.Element {
   return (
     <Card title={`${c.kNumber} verified`} source={asOf(c.dataAsOf)}>
@@ -68,6 +108,7 @@ function ClearanceCard({ c }: { c: Clearance }): JSX.Element {
           ['Regulation number', c.regulationNumber ? `21 CFR ${c.regulationNumber}` : null],
           ['Type', c.clearanceType],
           ['Summary or statement', c.statementOrSummary],
+          ['510(k) summary', <SummaryStatus key="summary" doc={c.summaryDocument ?? null} statementOrSummary={c.statementOrSummary} />],
         ]}
       />
       <div className="mt-4">
