@@ -1,0 +1,110 @@
+{
+  "name": "GET /api/projects/:projectId/files/unreadable - files that could not be read",
+  "description": "Unreadable files are listed with the reason and never skipped (AC7): files whose latest version failed to parse, is an unsupported format or had no text (a scan without OCR), and files seen in a linked folder but not fetched (native CAD, types not read, over the size limit), each with a kind, a plain-words label and reason, and what to ask the client for. Keyset-paginated. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/files/unreadable",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 92,
+  "taskId": "8530a526-68f9-4f87-913c-110195c09e7f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC7",
+    "8530a526-68f9-4f87-913c-110195c09e7f#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID, or limit outside 1..50"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project, or it belongs to another firm (same answer)"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant lists unreadable files",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "limit": "{{static:20}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "kind": [
+      "native_cad",
+      "password_protected",
+      "legacy_office",
+      "unsupported_format",
+      "corrupt",
+      "too_large",
+      "no_text",
+      "parse_timeout",
+      "not_stored"
+    ]
+  }
+}

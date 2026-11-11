@@ -4,6 +4,7 @@ import { DocLocation, DocprocClient, DocprocError, ParseResult } from './docproc
 import { chunkLocations, ChunkInput } from './chunker';
 import { scanForInjection } from '../ai/guard/injectionSignals';
 import { describeLocation, scanForPhi } from './phiScanner';
+import { classifyParseFailure, UnreadableKind } from './unreadable';
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -63,13 +64,19 @@ async function claim(orgId: string, versionId: string): Promise<ClaimedVersion |
   return rows[0] ?? null;
 }
 
-async function finishWithError(orgId: string, versionId: string, status: 'failed' | 'unsupported', reason: string): Promise<void> {
+async function finishWithError(
+  orgId: string,
+  versionId: string,
+  status: 'failed' | 'unsupported',
+  reason: string,
+  kind: UnreadableKind | null,
+): Promise<void> {
   await dataService.query(
     { orgId },
     'file_versions',
-    `UPDATE file_versions SET parse_status = $3, parse_error = left($4, 500), parse_started_at = NULL
+    `UPDATE file_versions SET parse_status = $3, parse_error = left($4, 500), unreadable_kind = $5, parse_started_at = NULL
       WHERE id = $1 AND org_id = $2 AND parse_status = 'parsing'`,
-    [versionId, orgId, status, reason],
+    [versionId, orgId, status, reason, kind],
   );
 }
 
@@ -179,7 +186,9 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
               format = $7, mime_type = $8, parsed_at = now(), parse_started_at = NULL,
               -- A consultant's earlier decision (redacted / accepted) is kept on a re-parse.
               phi_status = CASE WHEN phi_status IN ('redacted', 'accepted') THEN phi_status ELSE $9 END,
-              phi_findings = $10::jsonb, profile = $11::jsonb, injection_signals = $12::jsonb
+              phi_findings = $10::jsonb, profile = $11::jsonb, injection_signals = $12::jsonb,
+              -- Read, but nothing came out (a scan with no text layer and no OCR): listed as unreadable.
+              unreadable_kind = CASE WHEN $13 THEN 'no_text' ELSE NULL END
         WHERE id = $1 AND org_id = $2`,
       [
         version.id,
@@ -194,6 +203,7 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
         JSON.stringify(phi.findings),
         result.profile ? JSON.stringify(result.profile) : null,
         JSON.stringify(injection.signals),
+        result.needsOcr && !result.locations.some((l) => l.text.trim().length > 0),
       ],
     );
     // A newer version becomes the file's current one; an older one parsed late never takes over.
@@ -240,19 +250,20 @@ export async function processVersion(orgId: string, versionId: string, deps: Ing
   const version = await claim(orgId, versionId);
   if (!version) return { status: 'skipped' };
 
-  const fail = async (status: 'failed' | 'unsupported', reason: string): Promise<ProcessOutcome> => {
-    await finishWithError(orgId, version.id, status, reason);
+  // kind: why the FILE cannot be read; null when the fault is ours (storage, parser), not the file's.
+  const fail = async (status: 'failed' | 'unsupported', reason: string, kind: UnreadableKind | null = null): Promise<ProcessOutcome> => {
+    await finishWithError(orgId, version.id, status, reason, kind);
     // A linked copy we cannot use is still a copy we should not keep.
     const discarded = DISCARDS_COPY(version.source) ? await discardCopy(orgId, version.id, store) : false;
     return { status, reason, discarded };
   };
 
-  if (!version.storage_key) return fail('failed', 'No stored copy of this file version to read');
+  if (!version.storage_key) return fail('failed', 'No stored copy of this file version to read', 'not_stored');
   let bytes: Buffer;
   try {
     bytes = await store.get(version.storage_key);
   } catch (err) {
-    if (err instanceof ObjectNotFoundError) return fail('failed', 'The stored copy of this file version is missing');
+    if (err instanceof ObjectNotFoundError) return fail('failed', 'The stored copy of this file version is missing', 'not_stored');
     if (version.parse_attempts >= MAX_PARSE_ATTEMPTS) return fail('failed', 'File storage was unavailable on every attempt');
     await requeue(orgId, version.id, 'File storage was unavailable');
     return { status: 'retry', reason: 'File storage was unavailable' };
@@ -270,9 +281,10 @@ export async function processVersion(orgId: string, versionId: string, deps: Ing
       await requeue(orgId, version.id, err.message);
       return { status: 'retry', reason: err.message };
     }
-    if (err.code === 'UNSUPPORTED_FORMAT') return fail('unsupported', err.message);
+    if (err.code === 'UNSUPPORTED_FORMAT') return fail('unsupported', err.message, classifyParseFailure(err.code, err.message, version.name));
     // Platform faults (bad key, sidecar bug) are not the user's file: say so plainly.
-    return fail('failed', err.fileProblem ? err.message : `Document parsing failed (${err.code}); an operator has been notified`);
+    if (!err.fileProblem) return fail('failed', `Document parsing failed (${err.code}); an operator has been notified`);
+    return fail('failed', err.message, classifyParseFailure(err.code, err.message, version.name));
   }
   if (result.sha256 !== version.sha256) {
     return fail('failed', 'The parser received different bytes than were recorded');

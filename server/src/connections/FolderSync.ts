@@ -1,7 +1,8 @@
 import { config } from '../config/env';
 import { fileService } from '../ingest/FileService';
 import { dataService } from '../services/DataService';
-import { assertAcceptedUpload } from '../storage/fileTypes';
+import { ACCEPTED_EXTENSIONS, assertAcceptedUpload } from '../storage/fileTypes';
+import { classifyRefusal, UNREADABLE_LABEL, UnreadableKind } from '../ingest/unreadable';
 import { scanUpload } from '../storage/malwareScan';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { connectionService } from './ConnectionService';
@@ -59,6 +60,8 @@ export interface SyncReport {
 /** The provider hash as stored in files.source_hash. */
 export const hashOf = (f: RemoteFile): string =>
   f.providerHash ? `${f.providerHash.algorithm}:${f.providerHash.value}` : `mtime:${f.modifiedAt ?? 'unknown'}`;
+
+const extOf = (name: string): string => /\.([a-z0-9]{1,5})$/i.exec(name)?.[1]?.toLowerCase() ?? '';
 
 const sourceRef = (linkId: string, fileId: string): string => `${linkId}:${fileId}`.slice(0, 1024);
 
@@ -144,8 +147,29 @@ async function importFiles(
       report.unchanged++;
       continue;
     }
+    const listOnly = async (kind: UnreadableKind, reason: string) => {
+      await fileService.recordListedOnly({
+        orgId: link.org_id,
+        userId,
+        projectId: link.project_id,
+        sourceRef: ref,
+        name: f.exportAs ? exportName(f) : f.name,
+        folderLinkId: link.id,
+        sourceHash: hashOf(f),
+        sourcePath: f.path,
+        kind,
+        reason,
+      });
+      report.skipped.push({ path: f.path, reason });
+    };
     if (f.sizeBytes !== null && f.sizeBytes > config.connections.maxFileBytes) {
-      report.skipped.push({ path: f.path, reason: `larger than ${config.connections.maxFileBytes} bytes` });
+      await listOnly('too_large', `The file is larger than the ${Math.round(config.connections.maxFileBytes / 1048576)} MB limit, so it was not read.`);
+      continue;
+    }
+    // A type we never read (CAD models, archives, legacy Office...) is listed without downloading it.
+    if (!f.exportAs && !ACCEPTED_EXTENSIONS.includes(extOf(f.name))) {
+      const kind = classifyRefusal(f.name, 'type');
+      await listOnly(kind, `${UNREADABLE_LABEL[kind]}: listed only, not read.`);
       continue;
     }
     if (downloads >= MAX_DOWNLOADS_PER_RUN) {
@@ -158,7 +182,7 @@ async function importFiles(
       bytes = await provider.download(accessToken, f, config.connections.maxFileBytes);
     } catch (err) {
       if (err instanceof ProviderError && err.status === 413) {
-        report.skipped.push({ path: f.path, reason: err.message });
+        await listOnly('too_large', err.message);
         continue;
       }
       throw err;
@@ -168,7 +192,8 @@ async function importFiles(
       assertAcceptedUpload(name, bytes);
     } catch (err) {
       if (err instanceof AppError) {
-        report.skipped.push({ path: f.path, reason: err.message });
+        // The contents do not match the name (e.g. a renamed file): listed, not read.
+        await listOnly('unsupported_format', err.message);
         continue;
       }
       throw err;

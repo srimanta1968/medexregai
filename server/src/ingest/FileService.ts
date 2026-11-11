@@ -3,6 +3,7 @@ import { dataService, Tx } from '../services/DataService';
 import { ObjectStore, objectStore, sha256Hex, versionObjectKey } from '../storage/objectStore';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { decodeCursor, Page, toPage } from '../utils/pagination';
+import { UNREADABLE_ADVICE, UNREADABLE_LABEL, UnreadableKind } from './unreadable';
 
 /**
  * Project files and their versions (F7.2). recordVersion is the single intake path:
@@ -166,6 +167,21 @@ export interface RecordInput {
   sourcePath?: string | null;
 }
 
+export interface UnreadableFile {
+  id: string;
+  name: string;
+  source: FileSource;
+  /** Path inside the linked folder, for linked files. */
+  path: string | null;
+  kind: UnreadableKind | null;
+  label: string;
+  reason: string;
+  advice: string;
+  /** Seen in a linked folder but not fetched: there is no version. */
+  listedOnly: boolean;
+  versionNo: number | null;
+}
+
 export interface RecordResult {
   file: FileSummary;
   /** True when these exact bytes are already the file's latest version: nothing was added. */
@@ -263,11 +279,105 @@ export class FileService {
     return { file, unchanged: result.unchanged };
   }
 
+  /**
+   * A linked file we did not fetch (native CAD, a type we do not read, too large):
+   * recorded with no versions so it is listed, with the reason, instead of skipped.
+   */
+  async recordListedOnly(input: {
+    orgId: string;
+    userId: string;
+    projectId: string;
+    sourceRef: string;
+    name: string;
+    folderLinkId: string;
+    sourceHash: string | null;
+    sourcePath: string | null;
+    kind: UnreadableKind;
+    reason: string;
+  }): Promise<void> {
+    const { orgId, projectId } = input;
+    await dataService.transaction({ orgId, userId: input.userId }, async (tx) => {
+      const [project] = await tx.query<{ workspace_id: string }>('projects', 'SELECT workspace_id FROM projects WHERE id = $1 AND org_id = $2', [projectId, orgId]);
+      if (!project) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Project not found');
+      await tx.query(
+        'files',
+        `INSERT INTO files (org_id, workspace_id, project_id, source, source_ref, name, version_count, created_by, folder_link_id, source_hash, source_path,
+                            unreadable_kind, unreadable_reason)
+         VALUES ($1, $2, $3, 'linked', $4, $5, 0, $6, $7, $8, $9, $10, left($11, 500))
+         ON CONFLICT (project_id, source_ref) WHERE source_ref IS NOT NULL DO UPDATE
+           SET name = EXCLUDED.name, status = 'active', folder_link_id = EXCLUDED.folder_link_id, source_hash = EXCLUDED.source_hash,
+               source_path = EXCLUDED.source_path, unreadable_kind = EXCLUDED.unreadable_kind, unreadable_reason = EXCLUDED.unreadable_reason, updated_at = now()`,
+        [
+          orgId,
+          project.workspace_id,
+          projectId,
+          input.sourceRef,
+          cleanFileName(input.name),
+          input.userId,
+          input.folderLinkId,
+          input.sourceHash,
+          input.sourcePath?.slice(0, 1024) ?? null,
+          input.kind,
+          input.reason,
+        ],
+      );
+    });
+  }
+
+  /**
+   * Files of a project that could not be read, with the reason: listed-only linked
+   * files, and files whose latest version failed, is unsupported, or had no text.
+   */
+  async unreadable(orgId: string, projectId: string, size: number, cursor?: string): Promise<Page<UnreadableFile>> {
+    const c = decodeCursor(cursor);
+    const [project] = await dataService.query<{ id: string }>({ orgId }, 'projects', 'SELECT id FROM projects WHERE id = $1 AND org_id = $2', [projectId, orgId]);
+    if (!project) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Project not found');
+    const rows = await dataService.query<{
+      id: string;
+      name: string;
+      source: FileSource;
+      source_path: string | null;
+      kind: UnreadableKind | null;
+      reason: string | null;
+      version_no: number | null;
+      created_at: Date;
+    }>(
+      { orgId },
+      'files',
+      `SELECT f.id, f.name, f.source, f.source_path, f.created_at,
+              COALESCE(f.unreadable_kind, v.unreadable_kind) AS kind,
+              COALESCE(f.unreadable_reason, v.parse_error) AS reason,
+              v.version_no
+         FROM files f
+         LEFT JOIN LATERAL (SELECT version_no, unreadable_kind, parse_status, parse_error FROM file_versions
+                             WHERE file_id = f.id AND org_id = f.org_id ORDER BY version_no DESC LIMIT 1) v ON true
+        WHERE f.org_id = $1 AND f.project_id = $2 AND f.status = 'active'
+          AND (f.unreadable_kind IS NOT NULL OR v.unreadable_kind IS NOT NULL OR v.parse_status IN ('failed', 'unsupported'))
+          AND ($3::timestamptz IS NULL OR (f.created_at, f.id) < ($3::timestamptz, $4::uuid))
+        ORDER BY f.created_at DESC, f.id DESC
+        LIMIT $5`,
+      [orgId, projectId, c.createdAt, c.id, size + 1],
+    );
+    return toPage(rows, size, (r) => ({
+      id: r.id,
+      name: r.name,
+      source: r.source,
+      path: r.source_path,
+      kind: r.kind,
+      label: r.kind ? UNREADABLE_LABEL[r.kind] : 'Could not be read',
+      reason: r.reason ?? 'The file could not be read.',
+      advice: r.kind ? UNREADABLE_ADVICE[r.kind] : 'An operator has been told. Try adding the file again later.',
+      listedOnly: r.version_no === null,
+      versionNo: r.version_no,
+    }));
+  }
+
   /** A linked file seen again: refresh its provider hash, path and name, and bring it back if it had been removed. */
   private async touchLinked(tx: Tx, orgId: string, fileId: string, input: RecordInput): Promise<void> {
     await tx.query(
       'files',
-      `UPDATE files SET status = 'active', name = $3, folder_link_id = COALESCE($4, folder_link_id), source_hash = $5, source_path = $6, updated_at = now()
+      `UPDATE files SET status = 'active', name = $3, folder_link_id = COALESCE($4, folder_link_id), source_hash = $5, source_path = $6,
+              unreadable_kind = NULL, unreadable_reason = NULL, updated_at = now()
         WHERE id = $1 AND org_id = $2`,
       [fileId, orgId, cleanFileName(input.name), input.folderLinkId ?? null, input.sourceHash ?? null, input.sourcePath?.slice(0, 1024) ?? null],
     );

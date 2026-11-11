@@ -71,6 +71,20 @@ filesRouter.get(
   }),
 );
 
+/** F2.2: files that could not be read, each with the reason and what to do; never silently skipped. */
+filesRouter.get(
+  '/api/projects/:projectId/files/unreadable',
+  guard('projects:read'),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const projectId = parse(uuid('projectId'), req.params.projectId);
+    const q = parse(listQuery, req.query);
+    const page = await fileService.unreadable(orgId, projectId, pageSize(q.limit), q.cursor);
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: page });
+  }),
+);
+
 filesRouter.get(
   '/api/files/:fileId',
   guard('projects:read'),
