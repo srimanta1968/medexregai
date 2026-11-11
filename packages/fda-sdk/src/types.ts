@@ -38,7 +38,22 @@ export interface Clearance {
   statementOrSummary: string | null;
   thirdPartyReview: boolean;
   fdaUrl: string;
+  /** Our cached copy of the public 510(k) summary PDF (F1.2); null until the fetcher has seen this K-number. */
+  summaryDocument: SummaryDocument | null;
   dataAsOf: string | null;
+}
+
+/** "no_summary" means no summary on file: the FDA lists a statement, or publishes no summary PDF. */
+export type SummaryDocumentStatus = 'queued' | 'fetching' | 'fetched' | 'no_summary' | 'failed';
+
+export interface SummaryDocument {
+  status: SummaryDocumentStatus;
+  reason: string | null;
+  sourceUrl: string | null;
+  sha256: string | null;
+  sizeBytes: number | null;
+  fetchedAt: string | null;
+  checkedAt: string | null;
 }
 
 export interface ClearanceSummary {

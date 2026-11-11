@@ -284,6 +284,24 @@ export const openapi = {
           statementOrSummary: nstr,
           thirdPartyReview: bool,
           fdaUrl: str,
+          summaryDocument: {
+            description: 'Our cached copy of the public 510(k) summary PDF (F1.2); null until the fetcher has seen this K-number.',
+            oneOf: [
+              { type: 'null' },
+              {
+                type: 'object',
+                properties: {
+                  status: { enum: ['queued', 'fetching', 'fetched', 'no_summary', 'failed'] },
+                  reason: nstr,
+                  sourceUrl: nstr,
+                  sha256: nstr,
+                  sizeBytes: nint,
+                  fetchedAt: { type: ['string', 'null'], format: 'date-time' },
+                  checkedAt: { type: ['string', 'null'], format: 'date-time' },
+                },
+              },
+            ],
+          },
           dataAsOf: ndate,
         },
       },

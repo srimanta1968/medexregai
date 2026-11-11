@@ -172,6 +172,10 @@ services:
     environment:
       FDA_DATABASE_URL: postgres://${FDA_POSTGRES_USER:-fda}:${FDA_POSTGRES_PASSWORD}@fda-postgres:5432/fda_db
       OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
+      # 510(k) summary PDFs (F1.2): a local folder here; AWS uses the FDA document bucket.
+      FDA_DOCS_DIR: /app/data/fda-docs
+    volumes:
+      - fda_docs:/app/data/fda-docs
     depends_on:
       fda-api:
         condition: service_healthy
@@ -270,6 +274,7 @@ volumes:
   s3_data:
   ollama_data:
   fda_postgres_data:
+  fda_docs:
 
 networks:
   app_network:

@@ -23,6 +23,26 @@ export interface Config {
     extraEventProductCodes: string[];
     syncHourUtc: number;
   };
+  /** Public 510(k) summary PDFs (F1.2), fetched politely and cached in the FDA document bucket. */
+  docs: {
+    /** FDA_DOCS_ENABLED (default true): the worker fetches summaries for tracked product codes. */
+    enabled: boolean;
+    /** FDA_DOCS_BUCKET: S3 bucket for the PDFs; blank = local directory FDA_DOCS_DIR. */
+    bucket: string | null;
+    region: string;
+    endpoint: string | null;
+    forcePathStyle: boolean;
+    accessKeyId: string | null;
+    secretAccessKey: string | null;
+    dir: string;
+    /** At least this long between two requests to accessdata.fda.gov. */
+    minIntervalMs: number;
+    /** K-numbers fetched per worker pass. */
+    batchSize: number;
+    /** A summary PDF larger than this is refused (failed, not cached). */
+    maxBytes: number;
+    timeoutMs: number;
+  };
 }
 
 function required(name: string): string {
@@ -78,6 +98,20 @@ export function loadConfig(): Config {
         .map((c) => c.trim().toUpperCase())
         .filter((c) => /^[A-Z]{3}$/.test(c)),
       syncHourUtc: int('FDA_SYNC_HOUR_UTC', 3, 0, 23),
+    },
+    docs: {
+      enabled: process.env.FDA_DOCS_ENABLED !== 'false',
+      bucket: process.env.FDA_DOCS_BUCKET || null,
+      region: process.env.FDA_DOCS_REGION || process.env.AWS_REGION || 'us-east-1',
+      endpoint: process.env.FDA_DOCS_S3_ENDPOINT || null,
+      forcePathStyle: process.env.FDA_DOCS_S3_FORCE_PATH_STYLE === 'true',
+      accessKeyId: process.env.FDA_DOCS_S3_ACCESS_KEY_ID || null,
+      secretAccessKey: process.env.FDA_DOCS_S3_SECRET_ACCESS_KEY || null,
+      dir: process.env.FDA_DOCS_DIR || 'data/fda-docs',
+      minIntervalMs: int('FDA_DOCS_MIN_INTERVAL_MS', 5000, 1000, 600_000),
+      batchSize: int('FDA_DOCS_BATCH', 20, 1, 500),
+      maxBytes: int('FDA_DOCS_MAX_BYTES', 50 * 1024 * 1024, 1024, 500 * 1024 * 1024),
+      timeoutMs: int('FDA_DOCS_TIMEOUT_MS', 60_000, 1000, 600_000),
     },
   };
 }

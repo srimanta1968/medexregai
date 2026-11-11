@@ -209,7 +209,8 @@ resource "aws_iam_role_policy" "fda_execution_secrets" {
   policy = data.aws_iam_policy_document.fda_execution_secrets.json
 }
 
-# Task role has no AWS permissions: the service needs only its database and openFDA.
+# Task roles: fda-api has no AWS permissions; fda-worker may read and write the FDA
+# document bucket (fda_docs.tf) for 510(k) summary PDFs.
 resource "aws_iam_role" "fda_task" {
   for_each           = local.fda_services
   name               = "${local.name}-${each.key}-task"
@@ -228,6 +229,8 @@ locals {
     { name = "FDA_DB_SSL", value = "true" },
     { name = "FDA_READ_DB_HOST", value = var.fda_db_read_replica ? aws_db_instance.fda_replica[0].address : "" },
     { name = "PORT", value = "4100" },
+    { name = "FDA_DOCS_BUCKET", value = aws_s3_bucket.fda_docs.bucket },
+    { name = "FDA_DOCS_REGION", value = var.region },
   ]
   fda_secrets = [
     { name = "FDA_DB_USER", valueFrom = "${local.fda_db_secret}:username::" },

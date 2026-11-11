@@ -46,6 +46,25 @@ interface ClearanceRow {
   regulation_number: string | null;
 }
 
+/** Summary PDF status (F1.2): null when the K-number has not been looked at yet. */
+async function summaryDocument(kNumber: string) {
+  const [d] = await qRead<{ status: string; reason: string | null; source_url: string | null; sha256: string | null; size_bytes: number | null; fetched_at: Date | null; checked_at: Date | null }>(
+    `SELECT status, reason, source_url, sha256, size_bytes, fetched_at, checked_at FROM fda_510k_documents WHERE k_number = $1`,
+    [kNumber],
+  );
+  if (!d) return null;
+  return {
+    /** queued | fetching | fetched | no_summary | failed ("no_summary" = no summary on file). */
+    status: d.status,
+    reason: d.reason,
+    sourceUrl: d.source_url,
+    sha256: d.sha256,
+    sizeBytes: d.size_bytes,
+    fetchedAt: d.fetched_at ? d.fetched_at.toISOString() : null,
+    checkedAt: d.checked_at ? d.checked_at.toISOString() : null,
+  };
+}
+
 async function clearance(kNumber: string): Promise<ClearanceRow> {
   const [row] = await qRead<ClearanceRow>(
     `SELECT k_number, applicant, device_name, product_code, decision_date, decision_code, decision_description,
@@ -60,7 +79,7 @@ async function clearance(kNumber: string): Promise<ClearanceRow> {
 export const lookups = {
   /** Verify a K-number (or DEN number) against our copy of the FDA 510(k) database. */
   async verify510k(kNumber: string) {
-    const [row, dates] = await Promise.all([clearance(kNumber), asOf(['510k'])]);
+    const [row, dates, summary] = await Promise.all([clearance(kNumber), asOf(['510k']), summaryDocument(kNumber)]);
     return {
       kNumber: row.k_number,
       verified: true,
@@ -78,6 +97,8 @@ export const lookups = {
       statementOrSummary: row.statement_or_summary,
       thirdPartyReview: row.third_party_flag === 'Y',
       fdaUrl: (row.k_number.startsWith('DEN') ? DENOVO_URL : PMN_URL) + encodeURIComponent(row.k_number),
+      /** Our cached copy of the public summary PDF (F1.2); null until the fetcher has seen this K-number. */
+      summaryDocument: summary,
       dataAsOf: dates['510k'] ?? null,
     };
   },
