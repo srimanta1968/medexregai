@@ -1,4 +1,5 @@
 # @fixture scope=tenant tier=api reason="fresh reviewer + second-firm account per session; tokens expire in 15 minutes, so this cannot be a once-per-environment seed"
+# @exports reviewer_token, reviewer_email, other_account_email
 """
 Provision, through MedexRegAI's own HTTP APIs, the extra people the auth and invite
 definitions need for their negative cases:
