@@ -48,6 +48,10 @@ export const TABLE_CATALOG = {
   project_deletion_objects: 'tenant',
   project_inbound_addresses: 'tenant',
   inbound_emails: 'tenant',
+  // F2.1 read-only folder connections (migration 023).
+  folder_connections: 'tenant',
+  project_folder_links: 'tenant',
+  connection_oauth_states: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
