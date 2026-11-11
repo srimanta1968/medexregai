@@ -13,6 +13,7 @@ import { auditRouter } from './routes/audit';
 import { fdaRouter } from './routes/fda';
 import { aiSettingsRouter } from './routes/aiSettings';
 import { filesRouter } from './routes/files';
+import { citationsRouter } from './routes/citations';
 import { ssoRouter } from './routes/sso';
 import { AppError, ErrorCodes } from './utils/AppError';
 
@@ -89,6 +90,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(fdaRouter);
   app.use(aiSettingsRouter);
   app.use(filesRouter);
+  app.use(citationsRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

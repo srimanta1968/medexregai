@@ -1,0 +1,73 @@
+{
+  "requiresAuth": true,
+  "taskId": "8d8e9fcf-a850-41e4-ae7f-e0b6613ea566",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/projects/:projectId/citations/check - run citation gate v2 over a text",
+  "description": "Citation gate v2 (Architecture §9), no off switch. Client sources are cited [C:<file_version_id>#<location ordinal>], FDA passages [R:<record>#<passage>]. Resolve: each citation must point at a passage of a file in this project (a superseded version is kept with a warning). Match: quoted words must appear in the cited text, and every number, unit, standard edition, date and K-number must equal a fact extracted from a cited location. Cover: a sentence with a value, standard, date, material or method needs a citation. Failing sentences are removed and returned with a code (UNCITED, UNRESOLVED, QUOTE_MISMATCH, VALUE_MISMATCH) and the run is logged; refused=true when no cited statement survives. The happy path checks a draft with an uncited value, which is removed and the answer refused. Covers: an answer without a citable passage is refused and uncited sentences are dropped; values must equal an extracted fact or the sentence is removed; a citation to a superseded version is flagged.",
+  "endpoint": "/api/projects/:projectId/citations/check",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 95,
+  "coversCriterion": [
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC2",
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC3",
+    "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC4",
+    "8d8e9fcf-a850-41e4-ae7f-e0b6613ea566#AC1",
+    "8d8e9fcf-a850-41e4-ae7f-e0b6613ea566#AC2",
+    "8d8e9fcf-a850-41e4-ae7f-e0b6613ea566#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "fieldEnums": {
+    "route": ["triage", "classify", "extract", "contradiction", "draft", "request_wording", "check"],
+    "removed.code": ["UNCITED", "UNRESOLVED", "QUOTE_MISMATCH", "VALUE_MISMATCH"]
+  },
+  "errorCases": [
+    { "status": 401, "code": "UNAUTHORIZED", "message": "Missing bearer token", "when": "no Authorization header" },
+    { "status": 404, "code": "NOT_FOUND", "message": "Project not found", "when": "no project with this id in the firm" },
+    { "status": 400, "code": "VALIDATION_ERROR", "message": "text is required", "when": "empty text, text over 50,000 characters or unknown route" }
+  ],
+  "testCases": [
+    {
+      "name": "Owner checks a draft whose only value is uncited",
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "payload": { "text": "Burst pressure was 300 kPa. The results are summarised below.", "route": "draft" },
+      "expectedStatus": 200,
+      "expectedResponse": { "success": true }
+    },
+    {
+      "name": "400 - empty text",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "payload": { "text": "" },
+      "expectedStatus": 400,
+      "expectedError": { "code": "VALIDATION_ERROR" }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": { "projectId": "{{static:00000000-0000-4000-8000-000000000000}}" },
+      "payload": { "text": "Burst pressure was 300 kPa." },
+      "expectedStatus": 404,
+      "expectedError": { "code": "NOT_FOUND" }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
+      "payload": { "text": "Burst pressure was 300 kPa." },
+      "expectedStatus": 401,
+      "expectedError": { "code": "UNAUTHORIZED" }
+    }
+  ]
+}
