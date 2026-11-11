@@ -7,6 +7,7 @@ import { authenticate, requireAuth } from '../middleware/authenticate';
 import { audit, fromData, fromParam } from '../middleware/audit';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { AppError, ErrorCodes } from '../utils/AppError';
+import { scanUpload } from '../storage/malwareScan';
 import { pageSize } from '../utils/pagination';
 
 /**
@@ -166,7 +167,8 @@ filesRouter.post(
     if (bytes.length === 0) {
       throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'The request body must be the file', [{ field: 'file', message: 'The file is empty' }]);
     }
-    const { file, unchanged } = await fileService.recordVersion({ orgId, userId, projectId, source: 'upload', name, mimeType, bytes });
+    const scan = await scanUpload(bytes);
+    const { file, unchanged } = await fileService.recordVersion({ orgId, userId, projectId, source: 'upload', name, mimeType, bytes, scanStatus: scan.status });
     // Development convenience: parse right away when docproc is configured, so a lone
     // `npm run dev` works without the worker. Production parsing runs only in the worker.
     if (!unchanged && file.latest && config.docproc.serviceKey) {

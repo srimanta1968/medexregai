@@ -158,6 +158,8 @@ export interface RecordInput {
   name: string;
   mimeType?: string;
   bytes: Buffer;
+  /** Malware scan result of these bytes (F2.4); uploads are scanned before they are recorded. */
+  scanStatus?: 'clean' | 'not_scanned';
 }
 
 export interface RecordResult {
@@ -219,8 +221,8 @@ export class FileService {
       }
       await tx.query(
         'file_versions',
-        `INSERT INTO file_versions (org_id, workspace_id, file_id, version_no, sha256, size_bytes, mime_type, format, storage_key, uploaded_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        `INSERT INTO file_versions (org_id, workspace_id, file_id, version_no, sha256, size_bytes, mime_type, format, storage_key, uploaded_by, scan_status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           orgId,
           project.workspace_id,
@@ -232,6 +234,7 @@ export class FileService {
           formatHint(name),
           key,
           userId,
+          input.scanStatus ?? 'not_scanned',
         ],
       );
       return { fileId, unchanged: false };

@@ -126,6 +126,13 @@ export interface AppConfig {
    * DEV_UPLOADS=true is refused when NODE_ENV=production.
    */
   devUploads: { enabled: boolean; maxBytes: number };
+  /** No-login client upload links (F2.4). */
+  clientUploads: { maxBytes: number; defaultDays: number; maxDays: number; maxFilesPerLink: number };
+  /**
+   * Malware scan of every upload (clamd INSTREAM). Required in production: without a
+   * scanner configured there, uploads are refused rather than stored unscanned.
+   */
+  malwareScan: { host?: string; port: number; timeoutMs: number; required: boolean };
 }
 
 /** Origins the ProjexLight platform previews the app from, plus local dev servers. */
@@ -233,6 +240,20 @@ export function parseDevUploads(env: Env, nodeEnv: string): AppConfig['devUpload
     throw new Error('DEV_UPLOADS=true is for local development only and is refused when NODE_ENV=production (uploads use presigned URLs, F8.2).');
   }
   return { enabled, maxBytes: parsePositiveInt(optionalEnv(env, 'DEV_UPLOAD_MAX_BYTES', String(50 * 1024 * 1024)), 'DEV_UPLOAD_MAX_BYTES') };
+}
+
+export function parseMalwareScan(env: Env, nodeEnv: string): AppConfig['malwareScan'] {
+  const host = optionalEnv(env, 'CLAMAV_HOST', '') || undefined;
+  const required = optionalEnv(env, 'MALWARE_SCAN_REQUIRED', nodeEnv === 'production' ? 'true' : 'false').toLowerCase() === 'true';
+  if (nodeEnv === 'production' && !required) {
+    throw new Error('MALWARE_SCAN_REQUIRED=false is refused when NODE_ENV=production: client uploads must be scanned.');
+  }
+  return {
+    host,
+    port: parsePositiveInt(optionalEnv(env, 'CLAMAV_PORT', '3310'), 'CLAMAV_PORT'),
+    timeoutMs: parsePositiveInt(optionalEnv(env, 'CLAMAV_TIMEOUT_MS', '30000'), 'CLAMAV_TIMEOUT_MS'),
+    required,
+  };
 }
 
 /** Validate MAIL_TRANSPORT; the log transport must never be used in production. */
@@ -394,6 +415,13 @@ export function loadConfig(env: Env): AppConfig {
     },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
     devUploads: parseDevUploads(env, nodeEnv),
+    clientUploads: {
+      maxBytes: parsePositiveInt(optionalEnv(env, 'CLIENT_UPLOAD_MAX_BYTES', String(100 * 1024 * 1024)), 'CLIENT_UPLOAD_MAX_BYTES'),
+      defaultDays: 14,
+      maxDays: 30,
+      maxFilesPerLink: parsePositiveInt(optionalEnv(env, 'CLIENT_UPLOAD_MAX_FILES', '50'), 'CLIENT_UPLOAD_MAX_FILES'),
+    },
+    malwareScan: parseMalwareScan(env, nodeEnv),
     docproc: {
       serviceUrl: optionalEnv(env, 'DOCPROC_URL', 'http://localhost:4200'),
       serviceKey: optionalEnv(env, 'DOCPROC_API_KEY', '') || undefined,
