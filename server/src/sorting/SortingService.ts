@@ -50,7 +50,7 @@ export interface CoverageSection {
 }
 
 export interface ChecklistStep {
-  key: 'files_added' | 'files_read' | 'files_sorted' | 'sorting_confirmed' | 'coverage_reviewed';
+  key: 'files_added' | 'files_read' | 'files_sorted' | 'sorting_confirmed' | 'versions_confirmed' | 'coverage_reviewed';
   label: string;
   done: boolean;
   detail: string;
@@ -193,6 +193,13 @@ export const sortingService = {
         WHERE f.org_id = $1 AND f.project_id = $2 AND f.status = 'active'`,
       [orgId, projectId, CONFIDENT],
     );
+    const [vg] = await dataService.query<{ unclear: string }>(
+      { orgId },
+      'file_revision_groups',
+      "SELECT count(*) AS unclear FROM file_revision_groups WHERE org_id = $1 AND project_id = $2 AND status = 'unclear'",
+      [orgId, projectId],
+    );
+    const unclearVersions = Number(vg.unclear);
     const n = (k: keyof typeof t) => Number(t[k]);
     const cov = sections.map((s) => ({ id: s.id, title: s.title, ordinal: s.ordinal, fileCount: Number(s.n), empty: Number(s.n) === 0 }));
     const empty = cov.filter((s) => s.empty).length;
@@ -218,6 +225,12 @@ export const sortingService = {
         detail: n('unsure') ? `${n('unsure')} to confirm` : 'Nothing to confirm',
       },
       {
+        key: 'versions_confirmed',
+        label: 'Confirm unclear versions',
+        done: n('files') > 0 && unclearVersions === 0,
+        detail: unclearVersions ? `${unclearVersions} file group(s) where the current version is unclear` : 'No unclear versions',
+      },
+      {
         key: 'coverage_reviewed',
         label: 'Check sections with no evidence',
         done: n('files') > 0 && empty === 0,
@@ -227,7 +240,7 @@ export const sortingService = {
     return {
       sections: cov,
       checklist,
-      totals: { files: n('files'), read: n('read'), unreadable: n('unreadable'), sorted: n('sorted'), unsure: n('unsure'), sectionsWithoutEvidence: empty },
+      totals: { files: n('files'), read: n('read'), unreadable: n('unreadable'), sorted: n('sorted'), unsure: n('unsure'), unclearVersions, sectionsWithoutEvidence: empty },
     };
   },
 

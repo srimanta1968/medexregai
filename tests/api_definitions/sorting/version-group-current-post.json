@@ -1,0 +1,143 @@
+{
+  "name": "POST /api/projects/:projectId/version-groups/:groupId/current - consultant says which version is current",
+  "description": "The consultant answers \"which is current?\" (AC6): marks one member current, the others superseded (identical copies stay duplicates), and the group confirmed; the choice stands until the group’s files change. Only a member of the group can be chosen. The happy path needs a group, which exists once the worker has found two versions of one document in the project. Action endpoint: 200. Needs projects:write.",
+  "endpoint": "/api/projects/:projectId/version-groups/:groupId/current",
+  "method": "POST",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 98,
+  "taskId": "dad13be0-c591-49b6-ac5c-81164bbb7844",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC6",
+    "dad13be0-c591-49b6-ac5c-81164bbb7844#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId/version-groups"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "versionGroups.confirm.response.data.id": "data.id"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "not one of the versions in this group",
+      "when": "fileId missing, malformed or not a member of the group"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Version group not found",
+      "when": "no such group in this project, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant confirms the current version",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+      },
+      "payload": {
+        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "confirmed"
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+      },
+      "payload": {
+        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot confirm",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+      },
+      "payload": {
+        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+      }
+    },
+    {
+      "name": "400 - file not in the group",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+      },
+      "payload": {
+        "fileId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown group (or project)",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}",
+        "groupId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+      }
+    }
+  ]
+}

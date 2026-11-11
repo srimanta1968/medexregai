@@ -1,0 +1,111 @@
+{
+  "name": "GET /api/projects/:projectId/version-groups - revisions and copies of the same document",
+  "description": "When the current version of a file is unclear the consultant is asked and the tool never chooses silently (AC6): files that are revisions or identical copies of one document, grouped by base name; each group is clear (one latest revision, read from the name or the drawing title block), unclear (needsDecision: a tie, labels that cannot be ordered such as rev C and rev C1, or no revision) or confirmed by a consultant; members carry their revision and role (current, superseded, duplicate, candidate). Unclear groups first. A group exists once the worker has examined the project. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/version-groups",
+  "method": "GET",
+  "requiresAuth": true,
+  "expectedStatus": 200,
+  "priority": 97,
+  "taskId": "dad13be0-c591-49b6-ac5c-81164bbb7844",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "coversCriterion": [
+    "ce498dad-6bbe-4344-9969-1d64da4484e5#AC6",
+    "dad13be0-c591-49b6-ac5c-81164bbb7844#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "captureResponse": {
+    "versionGroups.list.response.data.0.id": "data.0.id",
+    "versionGroups.list.response.data.0.members.0.fileId": "data.0.members.0.fileId"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant lists version groups",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "status": [
+      "clear",
+      "unclear",
+      "confirmed"
+    ],
+    "role": [
+      "current",
+      "superseded",
+      "duplicate",
+      "candidate"
+    ]
+  }
+}

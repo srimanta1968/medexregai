@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { audit, fromParam } from '../middleware/audit';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
+import { revisionDetector } from '../sorting/RevisionDetector';
 import { sortingService } from '../sorting/SortingService';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { pageSize } from '../utils/pagination';
@@ -13,6 +14,8 @@ import { pageSize } from '../utils/pagination';
  *   GET /api/projects/:projectId/sorted-files       files with section, confidence, source and reason (?section=<id>|none)
  *   GET /api/projects/:projectId/estar-coverage     every evidence section with its file count, and the first-hour checklist
  *   PUT /api/files/:fileId/assignment               a consultant files it ({ sectionId } or null); the sorter learns from it
+ *   GET /api/projects/:projectId/version-groups     revisions and copies of the same document; unclear ones need a decision
+ *   POST /api/projects/:projectId/version-groups/:groupId/current  { fileId }: the consultant says which is current
  */
 export const sortingRouter = Router();
 
@@ -86,5 +89,32 @@ sortingRouter.put(
     const { orgId, userId } = requireAuth(req);
     const body = parse(assignBody, req.body);
     res.status(200).json({ success: true, data: await sortingService.reassign(orgId, userId, parse(uuid('fileId'), req.params.fileId), body.sectionId) });
+  }),
+);
+
+sortingRouter.get(
+  '/api/projects/:projectId/version-groups',
+  guard('projects:read'),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: await revisionDetector.list(orgId, parse(uuid('projectId'), req.params.projectId)) });
+  }),
+);
+
+const currentBody = z.object({ fileId: uuid('fileId') }).strict();
+
+sortingRouter.post(
+  '/api/projects/:projectId/version-groups/:groupId/current',
+  guard('projects:write'),
+  audit('file.version_confirmed', { targetType: 'version_group', targetId: fromParam('groupId') }),
+  handle(async (req, res) => {
+    const { orgId, userId } = requireAuth(req);
+    const projectId = parse(uuid('projectId'), req.params.projectId);
+    const groupId = parse(uuid('groupId'), req.params.groupId);
+    const body = parse(currentBody, req.body);
+    await revisionDetector.confirm(orgId, userId, projectId, groupId, body.fileId);
+    const group = (await revisionDetector.list(orgId, projectId)).find((g) => g.id === groupId);
+    res.status(200).json({ success: true, data: group });
   }),
 );

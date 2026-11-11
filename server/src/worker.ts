@@ -7,6 +7,7 @@ import { closePool } from './services/DataService';
 import { inboundEmailService } from './inbound/InboundEmailService';
 import { folderSync } from './connections/FolderSync';
 import { sectionClassifier } from './sorting/SectionClassifier';
+import { revisionDetector } from './sorting/RevisionDetector';
 import { trustService } from './trust/TrustService';
 
 /**
@@ -95,6 +96,8 @@ async function sortPass(): Promise<void> {
   try {
     const r = await sectionClassifier.sortPending();
     if (r.sorted || r.errors) console.info(`[worker] sorting: ${JSON.stringify(r)}`);
+    const v = await revisionDetector.detectChanged();
+    if (v.projects) console.info(`[worker] version groups: ${JSON.stringify(v)}`);
   } catch (err) {
     console.error(`[worker] sorting pass failed: ${(err as Error).message}`);
   } finally {
