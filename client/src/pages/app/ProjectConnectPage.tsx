@@ -1,9 +1,10 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
+import { Connection, FolderLink, ProviderInfo, connectionsApi } from '../../lib/connectionsApi';
 import { InboundEmail, InboundSettings, inboundApi } from '../../lib/inboundApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
@@ -21,19 +22,152 @@ const STATUS_LABEL: Record<InboundEmail['status'], string> = {
   failed: 'Failed',
 };
 
-/** Option A: linked folders. The provider apps are not registered yet, so connecting is not offered. */
-function LinkFolder(): JSX.Element {
+const CONNECT_ERRORS: Record<string, string> = {
+  denied: 'The connection was cancelled at the provider. Nothing was connected.',
+  invalid_state: 'That sign-in link had expired or was already used. Start connecting again.',
+  not_read_only: 'The provider granted more than read access, so we refused it and revoked the grant. Nothing was connected.',
+  provider_error: 'The provider did not complete the connection. Please try again.',
+  not_configured: 'This provider is not set up on this server.',
+};
+
+const LINK_STATUS: Record<FolderLink['status'], string> = { active: 'Syncing', paused: 'Paused: reconnect the account', unlinked: 'Stopped' };
+const CONNECTION_STATUS: Record<Connection['status'], string> = { active: 'Connected', needs_reauth: 'Needs reconnecting', revoked: 'Disconnected' };
+const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : 'not yet');
+
+/** Option A: link a folder from Dropbox, Box, SharePoint/OneDrive or Google Drive, read-only. */
+function LinkFolder({ projectId }: { projectId: string }): JSX.Element {
+  const { authedRequest } = useAuth();
+  const api = useMemo(() => connectionsApi(authedRequest, projectId), [authedRequest, projectId]);
+  const [params, setParams] = useSearchParams();
+  const [providers, setProviders] = useState<ProviderInfo[] | null>(null);
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [links, setLinks] = useState<FolderLink[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [folderError, setFolderError] = useState<string | undefined>();
+
+  const load = useCallback(() => {
+    api
+      .providers()
+      .then(setProviders)
+      .catch((err: unknown) => setError(message(err, 'Could not load the folder providers.')));
+    api
+      .connections()
+      .then((p) => setConnections(p.items.filter((c) => c.status !== 'revoked')))
+      .catch(() => undefined);
+    api
+      .links()
+      .then((p) => setLinks(p.items))
+      .catch(() => undefined);
+  }, [api]);
+  useEffect(load, [load]);
+
+  // Back from the provider: ?connected=<id> or ?connection_error=<reason>.
+  useEffect(() => {
+    const connected = params.get('connected');
+    const failed = params.get('connection_error');
+    if (!connected && !failed) return;
+    if (connected) setNotice('Account connected, read-only. Now pick the client folder to link.');
+    if (failed) setError(CONNECT_ERRORS[failed] ?? 'The connection did not complete.');
+    params.delete('connected');
+    params.delete('connection_error');
+    setParams(params, { replace: true });
+  }, [params, setParams]);
+
+  // While a first import is pending, refresh so the file count and sync time appear.
+  useEffect(() => {
+    if (!links.some((l) => l.status === 'active' && !l.lastSyncAt)) return;
+    const t = setTimeout(load, 5000);
+    return () => clearTimeout(t);
+  }, [links, load]);
+
+  const connect = async (p: ProviderInfo) => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const { authorizeUrl } = await api.start(p.id, `/app/projects/${projectId}/connect`);
+      window.location.assign(authorizeUrl);
+    } catch (err) {
+      setError(message(err, `Could not start connecting ${p.label}.`));
+      setBusy(false);
+    }
+  };
+
+  const disconnect = async (c: Connection) => {
+    if (!window.confirm(`Disconnect ${c.accountLabel}? Every folder linked through it stops syncing. Files already added stay in their projects.`)) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await api.disconnect(c.id);
+      setNotice(
+        `${c.accountLabel} disconnected${r.revokedAtProvider ? ' and access revoked at the provider' : ''}. ${r.unlinkedFolders} folder(s) stopped syncing.${r.note ? ` ${r.note}` : ''}`,
+      );
+      load();
+    } catch (err) {
+      setError(message(err, 'Could not disconnect.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const linkFolder = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    const connectionId = String(form.get('connectionId') ?? '');
+    const folder = String(form.get('folder') ?? '').trim();
+    setFolderError(undefined);
+    if (!folder) {
+      setFolderError('Enter the folder path, for example /Clients/Northbay');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const l = await api.link(connectionId, folder);
+      setNotice(`Folder ${l.folderPath} linked. Its files are being added; changes are picked up every 15 minutes.`);
+      formEl.reset();
+      load();
+    } catch (err) {
+      if (err instanceof ApiError && ['NOT_FOUND', 'VALIDATION_ERROR', 'FOLDER_ALREADY_LINKED'].includes(err.code ?? '')) setFolderError(err.message);
+      else setError(message(err, 'Could not link the folder.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unlink = async (l: FolderLink) => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await api.unlink(l.id);
+      setNotice(`Stopped syncing ${l.folderPath}. Files already added stay in the project.`);
+      load();
+    } catch (err) {
+      setError(message(err, 'Could not stop syncing the folder.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const usable = connections.filter((c) => c.status === 'active');
   return (
     <section className={card} aria-labelledby="link-title">
       <h2 id="link-title" className="text-lg font-semibold text-slate-900">
         A. Link the client&apos;s folder
       </h2>
+      <p className="mt-1 text-sm text-slate-600">We read files where they are. Nothing is copied into a new system.</p>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">What MedexRegAI can do with a linked folder</h3>
           <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700">
-            <li>See and download the files in the one folder you choose, where the provider lets us limit access to it.</li>
-            <li>Notice when a file in that folder changes, so new versions are picked up.</li>
+            <li>See and download the files in the folder you link, read-only.</li>
+            <li>Notice when a file in that folder changes, so new versions are picked up within a day (usually within 15 minutes).</li>
           </ul>
         </div>
         <div>
@@ -42,21 +176,110 @@ function LinkFolder(): JSX.Element {
             <li>Change, move, rename, delete or share any file.</li>
             <li>Keep a fetched copy after reading it: only text, page locations and fingerprints are kept.</li>
           </ul>
-          <p className="mt-1 text-sm text-slate-700">You or your firm admin can disconnect at any time, which revokes our access at the provider.</p>
+          <p className="mt-1 text-sm text-slate-700">You can disconnect at any time, which stops syncing and revokes our access where the provider allows it.</p>
         </div>
       </div>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-        {PROVIDERS.map((p) => (
-          <li key={p} className="rounded-lg border border-slate-200 p-3 text-sm">
-            <p className="font-medium text-slate-900">{p}</p>
-            <p className="text-slate-500">Read-only. Not available yet.</p>
-          </li>
-        ))}
+
+      <div aria-live="polite" className="mt-3 space-y-2">
+        {notice && <FormMessage tone="success">{notice}</FormMessage>}
+        {error && <FormMessage tone="error">{error}</FormMessage>}
+      </div>
+
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2" aria-label="Folder providers">
+        {providers === null
+          ? PROVIDERS.map((label) => (
+              <li key={label} className="rounded-lg border border-slate-200 p-3 text-sm">
+                <p className="font-medium text-slate-900">{label}</p>
+                <p className="mt-2 text-slate-500">Loading…</p>
+              </li>
+            ))
+          : providers.map((p) => (
+              <li key={p.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                <p className="font-medium text-slate-900">{p.label}</p>
+                <p className="mt-1 text-slate-600">{p.plainWords}</p>
+                {p.available ? (
+                  <button type="button" className={`${button} mt-2`} disabled={busy} onClick={() => void connect(p)}>
+                    Connect {p.label}
+                  </button>
+                ) : (
+                  <p className="mt-2 text-slate-500">Not set up on this server yet.</p>
+                )}
+              </li>
+            ))}
       </ul>
-      <p className="mt-3 text-xs text-slate-500">
-        Folder links need MedexRegAI to be registered as an app with each provider, which is not done yet. Until then, use an upload link or the forwarding
-        address.
-      </p>
+
+      {connections.length > 0 && (
+        <div className="mt-5">
+          <h3 className="text-sm font-semibold text-slate-900">Connected accounts</h3>
+          <ul className="mt-2 divide-y divide-slate-100">
+            {connections.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span>
+                  <span className="font-medium text-slate-900">{c.accountLabel}</span> · {providers?.find((p) => p.id === c.provider)?.label ?? c.provider} ·{' '}
+                  {CONNECTION_STATUS[c.status]} · {c.activeLinks} folder(s)
+                  {c.status === 'needs_reauth' && <span className="block text-amber-700">Access stopped working. Connect the account again to resume.</span>}
+                </span>
+                <button type="button" className={button} disabled={busy} onClick={() => void disconnect(c)}>
+                  Disconnect
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {usable.length > 0 && (
+        <form className="mt-5 grid gap-3 sm:grid-cols-[1fr_2fr_auto] sm:items-end" onSubmit={(e) => void linkFolder(e)} noValidate>
+          <label className="text-sm">
+            <span className="font-medium text-slate-900">Account</span>
+            <select name="connectionId" className="mt-1 block w-full rounded-md border border-slate-300 px-2 py-1.5">
+              {usable.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.accountLabel}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="font-medium text-slate-900">Client folder</span>
+            <input
+              name="folder"
+              placeholder="/Clients/Northbay/IS-200 510k"
+              aria-invalid={folderError ? true : undefined}
+              aria-describedby={folderError ? 'folder-error' : undefined}
+              className="mt-1 block w-full rounded-md border border-slate-300 px-2 py-1.5"
+            />
+          </label>
+          <button type="submit" className={primary} disabled={busy}>
+            Link folder
+          </button>
+          {folderError && (
+            <p id="folder-error" className="text-sm text-red-700 sm:col-span-3">
+              {folderError}
+            </p>
+          )}
+        </form>
+      )}
+
+      {links.length > 0 && (
+        <div className="mt-5">
+          <h3 className="text-sm font-semibold text-slate-900">Linked folders</h3>
+          <ul className="mt-2 divide-y divide-slate-100">
+            {links.map((l) => (
+              <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span>
+                  <span className="font-medium text-slate-900">{l.folderPath}</span> · {LINK_STATUS[l.status]} · {l.fileCount} file(s) · last checked{' '}
+                  {when(l.lastSyncAt)}
+                  {l.lastError && <span className="block text-amber-700">{l.lastError}</span>}
+                </span>
+                <button type="button" className={button} disabled={busy} onClick={() => void unlink(l)}>
+                  Stop syncing
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
@@ -236,7 +459,7 @@ export default function ProjectConnectPage(): JSX.Element {
           Three ways to get the client&apos;s evidence into this project. Use whichever the client allows.
         </p>
       </div>
-      <LinkFolder />
+      <LinkFolder projectId={projectId} />
       <section className={card} aria-labelledby="upload-title">
         <h2 id="upload-title" className="text-lg font-semibold text-slate-900">
           B. Send the client an upload link

@@ -1,7 +1,8 @@
 @feature_id:717d5baf-5788-4106-9669-e387af1830b0 @epic_id:9d350589-13a9-4573-8e7a-600d3ec59a32
 Feature: F2.1 Connect client files: forwarding address and read-only scope
-  The Connect screen offers three ways in: a linked folder (read-only scope explained in
-  plain words; connecting needs provider app registration), a client upload link, and the
+  The Connect screen offers three ways in: a linked folder from Dropbox, Box, SharePoint/OneDrive
+  or Google Drive (read-only, its scope explained in plain words per provider before connecting;
+  a provider is offered once its OAuth app is set up on the server), a client upload link, and the
   project's own forwarding address. Attachments mailed to the address from the firm's
   members or allowed senders are added to the project's files.
   Source: client/src/pages/app/ProjectConnectPage.tsx
@@ -28,7 +29,10 @@ Feature: F2.1 Connect client files: forwarding address and read-only scope
   Scenario: A consultant reads the read-only scope before linking a folder
     Then I should see "What MedexRegAI can do with a linked folder"
     And I should see "Change, move, rename, delete or share any file."
-    And I should see "Google Drive"
+    And I should see "MedexRegAI can see the names of your Dropbox files and folders and open the files to read them. It cannot edit, move, share or delete anything."
+    And I should see "MedexRegAI can read the Box files and folders you can see. It cannot upload, edit, share or delete anything."
+    And I should see "MedexRegAI can read files in SharePoint and OneDrive that you can open, and see your name and email. It cannot edit, upload, share or delete anything."
+    And I should see "MedexRegAI can see and download your Google Drive files. It cannot edit, upload, share or delete anything."
 
   @scenario_type:UI @ui_test @portal:web
   @scenario_id:18f7112d-c007-4c3c-a5be-746694a9d897
