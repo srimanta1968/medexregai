@@ -4,7 +4,8 @@
 #   - runs in the isolated subnets (no route to the internet, network.tf) and may only
 #     reach the AWS interface endpoints it needs to start and log, plus S3 for image layers;
 #   - holds no database, cache, bucket or KMS access: the worker posts it the bytes;
-#   - accepts connections from the worker only, on 4200, authenticated with its own key;
+#   - accepts connections from the worker and fda-worker only, on 4200, authenticated
+#     with its own key;
 #   - runs read-only, non-root, with every Linux capability dropped and fixed CPU/memory
 #     (compute.tf); each parse also runs in a child process killed at its time limit;
 #   - scales on the ingest queue depth the worker publishes, keeping one task warm so a
@@ -36,6 +37,15 @@ resource "aws_vpc_security_group_ingress_rule" "docproc_from_worker" {
   to_port                      = 4200
   ip_protocol                  = "tcp"
   description                  = "docproc /v1 from the ingest worker"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "docproc_from_fda_worker" {
+  security_group_id            = aws_security_group.task["docproc"].id
+  referenced_security_group_id = aws_security_group.fda_task["fda-worker"].id
+  from_port                    = 4200
+  to_port                      = 4200
+  ip_protocol                  = "tcp"
+  description                  = "docproc /v1 from fda-worker (510(k) summary index, F1.2)"
 }
 
 resource "aws_vpc_security_group_egress_rule" "worker_to_docproc" {

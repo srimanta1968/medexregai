@@ -183,8 +183,10 @@ resource "aws_secretsmanager_secret_version" "fda" {
 
 data "aws_iam_policy_document" "fda_execution_secrets" {
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.fda.arn, aws_db_instance.fda.master_user_secret[0].secret_arn]
+    actions = ["secretsmanager:GetSecretValue"]
+    # The docproc key is the sandboxed parser's key (docproc.tf), not an app secret:
+    # fda-worker posts 510(k) summary PDFs to docproc to index them (F1.2).
+    resources = [aws_secretsmanager_secret.fda.arn, aws_db_instance.fda.master_user_secret[0].secret_arn, aws_secretsmanager_secret.docproc.arn]
   }
   statement {
     actions   = ["kms:Decrypt"]
@@ -231,11 +233,18 @@ locals {
     { name = "PORT", value = "4100" },
     { name = "FDA_DOCS_BUCKET", value = aws_s3_bucket.fda_docs.bucket },
     { name = "FDA_DOCS_REGION", value = var.region },
+    # F1.2 summary index: parse in the docproc sandbox, embed with bge-m3 (1024 dims).
+    # FDA_EMBEDDING_URL empty = no model yet: summaries are fetched, indexing waits.
+    { name = "DOCPROC_URL", value = local.docproc_url },
+    { name = "FDA_EMBEDDING_PROVIDER", value = "openai_compatible" },
+    { name = "FDA_EMBEDDING_URL", value = var.fda_embedding_url },
+    { name = "FDA_EMBEDDING_MODEL", value = var.fda_embedding_model },
   ]
   fda_secrets = [
     { name = "FDA_DB_USER", valueFrom = "${local.fda_db_secret}:username::" },
     { name = "FDA_DB_PASSWORD", valueFrom = "${local.fda_db_secret}:password::" },
     { name = "OPENFDA_API_KEY", valueFrom = "${aws_secretsmanager_secret.fda.arn}:OPENFDA_API_KEY::" },
+    { name = "DOCPROC_API_KEY", valueFrom = aws_secretsmanager_secret.docproc.arn },
   ]
   fda_tasks = {
     # The API applies pending migrations at start (advisory-locked, safe with several tasks).

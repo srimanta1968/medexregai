@@ -123,7 +123,8 @@ services:
       retries: 10
       start_period: 20s
     restart: unless-stopped
-    networks: [app_network]
+    # fda_network too: fda-data embeds the public 510(k) summary index with the same model.
+    networks: [app_network, fda_network]
 
   fda-postgres:
     # FDA corpus database (ADR-017): its own instance, never shared with customer data.
@@ -152,6 +153,8 @@ services:
       PORT: 4100
       FDA_DATABASE_URL: postgres://${FDA_POSTGRES_USER:-fda}:${FDA_POSTGRES_PASSWORD}@fda-postgres:5432/fda_db
       OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
+      # /v1/search/summaries embeds the query (bge-m3); keyword-only if unreachable.
+      FDA_EMBEDDING_URL: http://ollama:11434
     ports:
       - "${FDA_API_HOST_PORT:-4100}:4100"
     depends_on:
@@ -174,6 +177,10 @@ services:
       OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
       # 510(k) summary PDFs (F1.2): a local folder here; AWS uses the FDA document bucket.
       FDA_DOCS_DIR: /app/data/fda-docs
+      # ...parsed in the docproc sandbox and embedded with bge-m3 into fda_db.
+      DOCPROC_URL: http://docproc-gateway:4200
+      DOCPROC_API_KEY: ${DOCPROC_API_KEY:?run scripts/setup-env.sh to create .env}
+      FDA_EMBEDDING_URL: http://ollama:11434
     volumes:
       - fda_docs:/app/data/fda-docs
     depends_on:
@@ -231,7 +238,8 @@ services:
       - /var/cache/nginx
       - /var/run
     restart: unless-stopped
-    networks: [docproc_sandbox, app_network]
+    # fda_network: fda-worker parses 510(k) summary PDFs here too (F1.2).
+    networks: [docproc_sandbox, app_network, fda_network]
 
   # ProjexLight MCP Server - Code Review Agent & Schema Sync (opt-in profile).
   # Image pulled from Docker Hub: https://hub.docker.com/r/projexlight/projex-dev-mcp

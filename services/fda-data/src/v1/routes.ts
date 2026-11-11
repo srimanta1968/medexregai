@@ -5,6 +5,7 @@ import { requireScope } from '../auth/apiClients';
 import { eventCounts, meta, recalls, search510k, udi } from './catalog';
 import { lookups } from './lookups';
 import { openapi } from './openapi';
+import { searchSummaries, summaryPassages } from './summaries';
 
 /**
  * fda-data /v1 read API (ADR-017). Every route needs a service key with fda:read.
@@ -74,6 +75,35 @@ v1ReadRouter.get(
   '/v1/510k/:kNumber',
   guard,
   read((req) => lookups.verify510k(kNumber.parse(req.params.kNumber))),
+);
+
+/** Passages of one 510(k) summary, in document order (F1.2). */
+v1ReadRouter.get(
+  '/v1/510k/:kNumber/passages',
+  guard,
+  read((req) => {
+    const p = z
+      .object({ limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).max(100_000).default(0) })
+      .parse(req.query);
+    return summaryPassages(kNumber.parse(req.params.kNumber), p.limit, p.offset);
+  }),
+);
+
+/** Hybrid (keyword + semantic) search across indexed 510(k) summaries (F1.2). */
+v1ReadRouter.get(
+  '/v1/search/summaries',
+  guard,
+  read((req) => {
+    const p = z
+      .object({
+        q: z.string().trim().min(2).max(500),
+        productCode: productCode.optional(),
+        kNumber: kNumber.optional(),
+        limit: z.coerce.number().int().min(1).max(50).default(10),
+      })
+      .parse(req.query);
+    return searchSummaries(p);
+  }),
 );
 
 /** Search 510(k)s (newest decision first, cursor paging). */

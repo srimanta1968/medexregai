@@ -9,6 +9,9 @@ import type {
   Recall,
   RecallParams,
   Search510kParams,
+  SearchSummariesParams,
+  SummaryPassages,
+  SummarySearchResult,
   TrackedCodesResult,
   UdiDevice,
 } from './types';
@@ -101,6 +104,16 @@ export class FdaClient {
 
   search510k(params: Search510kParams): Promise<Page<ClearanceSummary>> {
     return this.get(`/v1/510k${query(params)}`);
+  }
+
+  /** Passages of one 510(k) summary, in document order (F1.2). */
+  getSummaryPassages(kNumber: string, params: { limit?: number; offset?: number } = {}): Promise<SummaryPassages> {
+    return this.get(`/v1/510k/${encodeURIComponent(kNumber)}/passages${query(params)}`);
+  }
+
+  /** Hybrid keyword + semantic search across indexed 510(k) summaries (F1.2). */
+  searchSummaries(params: SearchSummariesParams): Promise<SummarySearchResult> {
+    return this.get(`/v1/search/summaries${query(params)}`);
   }
 
   getProductCode(code: string): Promise<ProductCode> {

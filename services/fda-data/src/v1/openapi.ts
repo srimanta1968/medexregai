@@ -109,6 +109,38 @@ export const openapi = {
         },
       },
     },
+    '/v1/510k/{kNumber}/passages': {
+      get: {
+        operationId: 'getSummaryPassages',
+        summary: 'Passages of one 510(k) summary, in document order (F1.2)',
+        parameters: [
+          pathParam('kNumber', K, 'K262392'),
+          query('limit', { type: 'integer', minimum: 1, maximum: 200, default: 50 }),
+          query('offset', { type: 'integer', minimum: 0, default: 0 }),
+        ],
+        responses: {
+          '200': { description: 'OK (passages is empty until the summary is indexed)', ...json(ok({ $ref: '#/components/schemas/SummaryPassages' })) },
+          ...errors,
+          ...notFound,
+        },
+      },
+    },
+    '/v1/search/summaries': {
+      get: {
+        operationId: 'searchSummaries',
+        summary: 'Hybrid keyword + semantic search across indexed 510(k) summaries (F1.2)',
+        parameters: [
+          query('q', { type: 'string', minLength: 2, maxLength: 500 }, true),
+          query('productCode', { type: 'string', pattern: CODE }),
+          query('kNumber', { type: 'string', pattern: K }),
+          query('limit', { type: 'integer', minimum: 1, maximum: 50, default: 10 }),
+        ],
+        responses: {
+          '200': { description: 'OK', ...json(ok({ $ref: '#/components/schemas/SummarySearchResult' })) },
+          ...errors,
+        },
+      },
+    },
     '/v1/510k': {
       get: {
         operationId: 'search510k',
@@ -303,6 +335,58 @@ export const openapi = {
             ],
           },
           dataAsOf: ndate,
+        },
+      },
+      SummaryPassages: {
+        type: 'object',
+        properties: {
+          kNumber: str,
+          summaryStatus: { enum: ['queued', 'fetching', 'fetched', 'no_summary', 'failed', null] },
+          indexStatus: { enum: ['pending', 'indexing', 'indexed', 'needs_ocr', 'failed', null] },
+          reason: nstr,
+          sourceUrl: nstr,
+          pageCount: nint,
+          passageCount: int,
+          indexedAt: { type: ['string', 'null'], format: 'date-time' },
+          embeddingModel: nstr,
+          passages: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { ref: str, kNumber: str, ordinal: int, page: nint, sectionPath: nstr, text: str },
+            },
+          },
+          nextOffset: nint,
+        },
+      },
+      SummarySearchResult: {
+        type: 'object',
+        properties: {
+          query: str,
+          mode: { enum: ['hybrid', 'keyword'] },
+          note: nstr,
+          hits: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                ref: str,
+                kNumber: str,
+                ordinal: int,
+                page: nint,
+                sectionPath: nstr,
+                text: str,
+                score: { type: 'number' },
+                keywordRank: nint,
+                semanticRank: nint,
+                applicant: nstr,
+                deviceName: nstr,
+                productCode: nstr,
+                decisionDate: ndate,
+                sourceUrl: nstr,
+              },
+            },
+          },
         },
       },
       ClearanceSummary: {

@@ -178,6 +178,230 @@
         }
       }
     },
+    "/v1/510k/{kNumber}/passages": {
+      "get": {
+        "operationId": "getSummaryPassages",
+        "summary": "Passages of one 510(k) summary, in document order (F1.2)",
+        "parameters": [
+          {
+            "name": "kNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(K|DEN)\\d{6}$"
+            },
+            "example": "K262392"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK (passages is empty until the summary is indexed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SummaryPassages"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/search/summaries": {
+      "get": {
+        "operationId": "searchSummaries",
+        "summary": "Hybrid keyword + semantic search across indexed 510(k) summaries (F1.2)",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "productCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "kNumber",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(K|DEN)\\d{6}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SummarySearchResult"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/510k": {
       "get": {
         "operationId": "search510k",
@@ -1184,6 +1408,204 @@
               "null"
             ],
             "format": "date"
+          }
+        }
+      },
+      "SummaryPassages": {
+        "type": "object",
+        "properties": {
+          "kNumber": {
+            "type": "string"
+          },
+          "summaryStatus": {
+            "enum": [
+              "queued",
+              "fetching",
+              "fetched",
+              "no_summary",
+              "failed",
+              null
+            ]
+          },
+          "indexStatus": {
+            "enum": [
+              "pending",
+              "indexing",
+              "indexed",
+              "needs_ocr",
+              "failed",
+              null
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageCount": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "passageCount": {
+            "type": "integer"
+          },
+          "indexedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "embeddingModel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "passages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "kNumber": {
+                  "type": "string"
+                },
+                "ordinal": {
+                  "type": "integer"
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sectionPath": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "nextOffset": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "SummarySearchResult": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "hybrid",
+              "keyword"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "kNumber": {
+                  "type": "string"
+                },
+                "ordinal": {
+                  "type": "integer"
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sectionPath": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "keywordRank": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "semanticRank": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "applicant": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "deviceName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "productCode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "decisionDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "sourceUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
           }
         }
       },

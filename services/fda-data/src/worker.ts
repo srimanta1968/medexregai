@@ -3,6 +3,7 @@ import { DATASETS, FdaSyncService } from './sync/FdaSyncService';
 import { closePools as closePool, q } from './db/pool';
 import { runNextSyncRequest } from './sync/requestQueue';
 import { SummaryFetcher } from './docs/SummaryFetcher';
+import { SummaryIndexer } from './docs/SummaryIndexer';
 
 /**
  * fda-data worker (ADR-017): the only writer to the FDA database. Runs the daily
@@ -10,8 +11,10 @@ import { SummaryFetcher } from './docs/SummaryFetcher';
  * POST /v1/admin/syncs (polled every QUEUE_POLL_MS). Several instances are safe: each dataset
  * sync takes a Postgres advisory lock, so only one runs at a time.
  *
- * F1.2: every DOCS_POLL_MS it queues the 510(k) summaries of tracked product codes and
- * fetches a batch politely into the FDA document bucket (FDA_DOCS_ENABLED=false turns it off).
+ * F1.2: every DOCS_POLL_MS it queues the 510(k) summaries of tracked product codes,
+ * fetches a batch politely into the FDA document bucket, then parses (docproc sandbox),
+ * chunks and embeds fetched ones into fda_510k_passages (FDA_DOCS_ENABLED=false turns it off;
+ * indexing waits until DOCPROC_API_KEY is set).
  */
 
 const sync = new FdaSyncService();
@@ -22,6 +25,7 @@ const QUEUE_POLL_MS = 15_000;
 const DOCS_POLL_MS = 60_000;
 let docsTimer: NodeJS.Timeout | undefined;
 let fetcher: SummaryFetcher | undefined;
+let indexer: SummaryIndexer | undefined;
 
 /** Milliseconds until the next FDA_SYNC_HOUR_UTC:00. */
 export function msUntilNextRun(now: Date, hourUtc: number): number {
@@ -87,6 +91,9 @@ function pollDocs(): void {
       console.info(`[worker] 510(k) summaries: ${added.queued} queued, ${added.statements} statements (no summary on file)`);
     const r = await f.runPass();
     if (r.fetched + r.cached + r.no_summary + r.failed) console.info(`[worker] 510(k) summaries: ${JSON.stringify(r)}`);
+    indexer ??= new SummaryIndexer();
+    const ix = await indexer.runPass();
+    if (ix.indexed + ix.needs_ocr + ix.failed + ix.retry) console.info(`[worker] 510(k) summary index: ${JSON.stringify(ix)}`);
   })()
     .catch((err: unknown) => console.error(`[worker] 510(k) summary pass failed: ${(err as Error).message}`))
     .finally(() => {

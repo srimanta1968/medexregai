@@ -42,7 +42,13 @@ export interface Config {
     /** A summary PDF larger than this is refused (failed, not cached). */
     maxBytes: number;
     timeoutMs: number;
+    /** Fetched summaries parsed, chunked and embedded per worker pass. */
+    indexBatch: number;
   };
+  /** The sandboxed parser (services/docproc) that turns summary PDFs into page passages. */
+  docproc: { url: string; apiKey: string | null; timeoutMs: number };
+  /** Embedding model for the summary index (bge-m3, 1024 dimensions, same as the app). */
+  embedding: { provider: 'ollama' | 'openai_compatible'; baseUrl: string; model: string; apiKey: string | null; timeoutMs: number };
 }
 
 function required(name: string): string {
@@ -112,6 +118,20 @@ export function loadConfig(): Config {
       batchSize: int('FDA_DOCS_BATCH', 20, 1, 500),
       maxBytes: int('FDA_DOCS_MAX_BYTES', 50 * 1024 * 1024, 1024, 500 * 1024 * 1024),
       timeoutMs: int('FDA_DOCS_TIMEOUT_MS', 60_000, 1000, 600_000),
+      indexBatch: int('FDA_DOCS_INDEX_BATCH', 5, 1, 100),
+    },
+    docproc: {
+      url: process.env.DOCPROC_URL || 'http://localhost:4200',
+      apiKey: process.env.DOCPROC_API_KEY || null,
+      timeoutMs: int('DOCPROC_TIMEOUT_MS', 150_000, 1000, 900_000),
+    },
+    embedding: {
+      provider: process.env.FDA_EMBEDDING_PROVIDER === 'openai_compatible' ? 'openai_compatible' : 'ollama',
+      // Explicitly empty = no embedding model: PDFs are still fetched, indexing waits.
+      baseUrl: process.env.FDA_EMBEDDING_URL ?? 'http://localhost:11434',
+      model: process.env.FDA_EMBEDDING_MODEL || 'bge-m3',
+      apiKey: process.env.FDA_EMBEDDING_API_KEY || null,
+      timeoutMs: int('FDA_EMBEDDING_TIMEOUT_MS', 120_000, 1000, 600_000),
     },
   };
 }

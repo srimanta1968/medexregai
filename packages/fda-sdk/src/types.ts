@@ -159,3 +159,55 @@ export interface TrackedCodesResult {
   /** A MAUDE count sync was queued for the new codes. */
   syncQueued: boolean;
 }
+
+/** One passage of a public 510(k) summary (F1.2). `ref` is what F7.3 cites as [R:<ref>]. */
+export interface SummaryPassage {
+  ref: string;
+  kNumber: string;
+  ordinal: number;
+  page: number | null;
+  sectionPath: string | null;
+  text: string;
+}
+
+export interface SummaryPassages {
+  kNumber: string;
+  /** fetched | no_summary | queued | fetching | failed; null = not looked at yet. */
+  summaryStatus: SummaryDocumentStatus | null;
+  /** indexed | pending | indexing | needs_ocr | failed; null when there is no PDF. */
+  indexStatus: 'pending' | 'indexing' | 'indexed' | 'needs_ocr' | 'failed' | null;
+  reason: string | null;
+  sourceUrl: string | null;
+  pageCount: number | null;
+  passageCount: number;
+  indexedAt: string | null;
+  embeddingModel: string | null;
+  passages: SummaryPassage[];
+  nextOffset: number | null;
+}
+
+export interface SearchSummariesParams {
+  q: string;
+  productCode?: string;
+  kNumber?: string;
+  limit?: number;
+}
+
+export interface SummarySearchHit extends SummaryPassage {
+  score: number;
+  keywordRank: number | null;
+  semanticRank: number | null;
+  applicant: string | null;
+  deviceName: string | null;
+  productCode: string | null;
+  decisionDate: string | null;
+  sourceUrl: string | null;
+}
+
+export interface SummarySearchResult {
+  query: string;
+  /** hybrid, or keyword when the embedding model is unavailable (see note). */
+  mode: 'hybrid' | 'keyword';
+  note: string | null;
+  hits: SummarySearchHit[];
+}

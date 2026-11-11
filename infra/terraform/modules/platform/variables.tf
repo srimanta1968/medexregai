@@ -208,3 +208,15 @@ variable "fda_worker_count" {
   type        = number
   default     = 1
 }
+
+variable "fda_embedding_url" {
+  description = "OpenAI-compatible embeddings endpoint (bge-m3, 1024 dims) for the public 510(k) summary index. Empty: summaries are fetched but not indexed."
+  type        = string
+  default     = ""
+}
+
+variable "fda_embedding_model" {
+  description = "Embedding model name served at fda_embedding_url. Must produce 1024-dimension vectors (bge-m3)."
+  type        = string
+  default     = "bge-m3"
+}
