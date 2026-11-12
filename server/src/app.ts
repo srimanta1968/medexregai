@@ -21,6 +21,7 @@ import { searchRouter } from './routes/search';
 import { ssoRouter } from './routes/sso';
 import { connectionsRouter } from './routes/connections';
 import { sortingRouter } from './routes/sorting';
+import { problemsRouter } from './routes/problems';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -105,6 +106,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(inboundEmailRouter);
   app.use(connectionsRouter);
   app.use(sortingRouter);
+  app.use(problemsRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

@@ -1,0 +1,168 @@
+{
+  "requiresAuth": true,
+  "taskId": "fe1cc93e-b5fb-48d7-a6ee-664a75e3778d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/problems/:problemId/decision - resolve or dismiss a problem with a note",
+  "description": "A consultant can resolve or dismiss a problem with a note (AC2). Decisions: note_for_client, request_data, accepted (accept with reason), add_to_request (resolve) and dismissed; the note is required. request_data and add_to_request also add an item, linked to the problem, to the project’s draft client request (created if none); nothing reaches the client before that request is approved. Action endpoint: 200. Needs projects:write.",
+  "endpoint": "/api/problems/:problemId/decision",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 102,
+  "coversCriterion": [
+    "7a98c57b-d633-406d-9803-39075fa4aee8#AC2",
+    "fe1cc93e-b5fb-48d7-a6ee-664a75e3778d#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/problems/check"
+  ],
+  "captureResponse": {
+    "problems.decision.response.data.requestItemId": "data.requestItemId"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (reviewer, viewer)"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Add a short note explaining the decision",
+      "when": "note missing or too short, or an unknown decision"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Problem not found",
+      "when": "no such problem, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant adds the gap to the client request",
+      "pathParams": {
+        "problemId": "{{cache:problems.check.response.data.open.0.id}}"
+      },
+      "payload": {
+        "decision": "{{static:add_to_request}}",
+        "note": "{{static:Please send the device description and drawings.}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "resolved",
+          "decision": "add_to_request"
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "problemId": "{{cache:problems.check.response.data.open.0.id}}"
+      },
+      "payload": {
+        "decision": "{{static:dismissed}}",
+        "note": "{{static:Not applicable}}"
+      }
+    },
+    {
+      "name": "403 - reviewer cannot decide",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "problemId": "{{cache:problems.check.response.data.open.0.id}}"
+      },
+      "payload": {
+        "decision": "{{static:dismissed}}",
+        "note": "{{static:Not applicable}}"
+      }
+    },
+    {
+      "name": "400 - note missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "problemId": "{{cache:problems.check.response.data.open.0.id}}"
+      },
+      "payload": {
+        "decision": "{{static:dismissed}}"
+      }
+    },
+    {
+      "name": "400 - unknown decision",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "problemId": "{{cache:problems.check.response.data.open.0.id}}"
+      },
+      "payload": {
+        "decision": "{{static:ignore}}",
+        "note": "{{static:Not applicable}}"
+      }
+    },
+    {
+      "name": "404 - unknown problem",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "problemId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "decision": "{{static:dismissed}}",
+        "note": "{{static:Not applicable}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "decision": [
+      "note_for_client",
+      "request_data",
+      "accepted",
+      "add_to_request",
+      "dismissed"
+    ]
+  }
+}
