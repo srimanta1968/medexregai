@@ -17,7 +17,8 @@
     "POST /api/auth/register",
     "POST /api/clients",
     "POST /api/clients/:clientId/devices",
-    "POST /api/devices/:deviceId/projects"
+    "POST /api/devices/:deviceId/projects",
+    "POST /api/projects/:projectId/folder-links"
   ],
   "headers": {
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
