@@ -61,6 +61,9 @@ export const TABLE_CATALOG = {
   // F2.3 extracted facts and problems (migration 028).
   facts: 'tenant',
   problems: 'tenant',
+  // F3.1 review board: sections of a submission and their status history (migration 030).
+  project_sections: 'tenant',
+  section_status_events: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
