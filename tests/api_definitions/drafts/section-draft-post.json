@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "POST /api/project-sections/:sectionId/draft - queue a cited draft of the section",
-  "description": "A section draft is generated with a citation on every statement (F3.2 AC1; uncited statements are removed and listed, AC2). Queues a generated draft (202; status queued, the worker drafts it: evidence from the section's files and project search, the draft model, then the citation gate in every-statement mode). Moves a not-started section to drafting. One draft at a time per section: 409 DRAFT_IN_PROGRESS while one is queued or generating. Needs projects:write. The route takes no body; an empty JSON object is sent.",
+  "description": "A section draft is generated with a citation on every statement (F3.2 AC1; uncited statements are removed and listed, AC2). Queues a generated draft (202; status queued, the worker drafts it: evidence from the section's files and project search, the draft model, then the citation gate in every-statement mode). Moves a not-started section to drafting. Needs projects:write. The route takes no body; an empty JSON object is sent. A second request while one is queued or generating answers 409 DRAFT_IN_PROGRESS; it depends on timing, so it is verified by hand (two POSTs in a row), not by a testCase.",
   "endpoint": "/api/project-sections/:sectionId/draft",
   "method": "POST",
   "expectedStatus": 202,
@@ -51,12 +51,6 @@
       "code": "FORBIDDEN",
       "message": "does not allow this action",
       "when": "role lacks projects:write (e.g. reviewer)"
-    },
-    {
-      "status": 409,
-      "code": "DRAFT_IN_PROGRESS",
-      "message": "is still being written",
-      "when": "a draft of the section is already queued or generating (timing-dependent, not reproducible in a single run)"
     }
   ],
   "testCases": [

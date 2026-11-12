@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "POST /api/project-sections/:sectionId/draft/import - import the edited Word copy",
-  "description": "An edited DOCX can be re-imported and human edits are kept as human-approved (F3.2 AC4). Body { fileName, contentBase64 } of an export of this section. Creates a new draft version (origin imported, based on the exported one): untouched statements keep their citations; edited statements become human_edited and text written outside any statement becomes human_added, both human-approved by the importer; deleted statements are listed in importSummary. 415 for a file that is not a .docx, 400 for a DOCX not exported from this section. Needs projects:write.",
+  "description": "An edited DOCX can be re-imported and human edits are kept as human-approved (F3.2 AC4). Body { fileName, contentBase64 } of an export of this section. Creates a new draft version (origin imported, based on the exported one): untouched statements keep their citations; edited statements become human_edited and text written outside any statement becomes human_added, both human-approved by the importer; deleted statements are listed in importSummary. 415 for a file that is not a .docx, 400 for a DOCX not exported from this section. Needs projects:write. Over 5 MB the service answers 413 FILE_TOO_LARGE, but the 1 MB JSON body limit (BODY_PARSER_LIMIT) refuses such a body first, so that case is not testable here.",
   "endpoint": "/api/project-sections/:sectionId/draft/import",
   "method": "POST",
   "expectedStatus": 201,
@@ -50,12 +50,6 @@
       "code": "NOT_FOUND",
       "message": "Section not found",
       "when": "no such section, or another firm’s"
-    },
-    {
-      "status": 413,
-      "code": "FILE_TOO_LARGE",
-      "message": "can be imported",
-      "when": "the document is over 5 MB (the 1 MB JSON body limit usually refuses it first)"
     },
     {
       "status": 415,
