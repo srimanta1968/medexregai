@@ -82,6 +82,9 @@ export const TABLE_CATALOG = {
   // F4.2 pilot report: the firm's baseline and RA lead sign-offs (migration 039).
   pilot_baselines: 'tenant',
   pilot_signoffs: 'tenant',
+  // F4.3 usage per client and project (migration 040).
+  usage_events: 'tenant',
+  usage_daily: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 

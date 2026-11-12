@@ -10,6 +10,7 @@ import { sectionClassifier } from './sorting/SectionClassifier';
 import { revisionDetector } from './sorting/RevisionDetector';
 import { problemEngine } from './problems/ProblemEngine';
 import { checkPendingDrafts } from './drafting/DraftChecker';
+import { usageService } from './usage/UsageService';
 import { draftPending } from './drafting/SectionDrafter';
 import { trustService } from './trust/TrustService';
 
@@ -123,6 +124,8 @@ async function draftPass(): Promise<void> {
     // F3.5: predicate K-numbers in ready drafts, checked against FDA data.
     const c = await checkPendingDrafts();
     if (c) console.info(`[worker] draft FDA checks: ${c}`);
+    // F4.3: daily usage per client and project, from the usage events of the last two days.
+    await usageService.rollupRecent();
   } catch (err) {
     console.error(`[worker] drafting pass failed: ${(err as Error).message}`);
   } finally {

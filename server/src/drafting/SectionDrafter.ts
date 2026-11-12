@@ -4,6 +4,7 @@ import { parseCitations, splitSentences } from '../citations/gate';
 import { hybridSearch, leadingChunks, SearchHit } from '../retrieval/search';
 import { dataService, Tx } from '../services/DataService';
 import { DraftingStyle, styleRefs, styleSourceService } from '../style/StyleSourceService';
+import { recordDraftGenerated } from '../usage/UsageService';
 import { checkClaims } from './ClaimChecker';
 import { DRAFT_PROMPT_VERSION, DRAFT_SYSTEM, templateFor } from './templates';
 
@@ -311,6 +312,8 @@ export async function generateDraft(orgId: string, draftId: string): Promise<voi
           WHERE id = $1 AND org_id = $2`,
         [draftId, orgId, `${ai.provider}:${ai.model}`, DRAFT_PROMPT_VERSION, gate.runId, JSON.stringify(removed), JSON.stringify(styleRefs(style))],
       );
+      // F4.3: a generated draft counts toward the client's usage.
+      await recordDraftGenerated(tx, orgId, draftId);
     });
     // Claims beyond the IFU or the cited evidence are flagged, not removed: the consultant decides.
     await checkClaims(orgId, draftId).catch((err) => console.error(`[drafts] claim check of ${draftId} failed: ${(err as Error).message}`));

@@ -8,6 +8,8 @@ import { classifyParseFailure, UnreadableKind } from './unreadable';
 import { sectionClassifier } from '../sorting/SectionClassifier';
 import { revisionDetector } from '../sorting/RevisionDetector';
 import { problemEngine } from '../problems/ProblemEngine';
+import { recordFileRead } from '../usage/UsageService';
+
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -226,6 +228,8 @@ async function recordParse(orgId: string, version: ClaimedVersion, result: Parse
         result.needsOcr && !result.locations.some((l) => l.text.trim().length > 0),
       ],
     );
+    // F4.3: usage per client and project, counted once per version (a re-parse adds nothing).
+    await recordFileRead(tx, orgId, version, result.unitCount);
     // A newer version becomes the file's current one; an older one parsed late never takes over.
     await tx.query(
       'files',
