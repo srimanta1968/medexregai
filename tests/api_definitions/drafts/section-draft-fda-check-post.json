@@ -1,0 +1,119 @@
+{
+  "requiresAuth": true,
+  "taskId": "ed22ee74-cc16-4fb9-ba8d-f37dca76377f",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/project-sections/:sectionId/draft/fda-check - re-check predicate K-numbers against FDA data",
+  "description": "Predicate K-numbers in a draft are verified and recall/MAUDE flags show inline (F3.5 AC1). Every K-number (K or DEN + 6 digits) in the draft's statements is looked up in FDA's 510(k) data through the FDA data service: verified (applicant, device, product code, decision and date, FDA link), not_found (not in our copy of FDA's 510(k) data), or unavailable (service unreachable; re-check later). Verified ones carry recall totals (open and closed, with the latest three) and MAUDE counts, which are per product code, not per device. The check runs in the worker after a draft is ready or imported; this call queues it again for the latest ready draft (or ?version=n) and returns the draft (202) with its stored results in fdaCheck. 404 when the section has no finished draft. Needs projects:read.",
+  "endpoint": "/api/project-sections/:sectionId/draft/fda-check",
+  "method": "POST",
+  "expectedStatus": 202,
+  "priority": 118,
+  "coversCriterion": [
+    "9d6b89e3-d4e0-4774-baa3-594e89aaa63a#AC1",
+    "ed22ee74-cc16-4fb9-ba8d-f37dca76377f#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId/sections"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "sectionId must be a valid id",
+      "when": "path id is not a UUID, or version is not a positive number"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "no finished draft to check",
+      "when": "no such section, no ready draft yet, or no such version"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant re-checks the K-numbers in the latest draft",
+      "headers": {
+        "Authorization": "Bearer {{var:check_token}}"
+      },
+      "fixture": "tests/setup_scripts/40_draft_check.py",
+      "payload": {},
+      "pathParams": {
+        "sectionId": "{{var:check_section_id}}"
+      },
+      "expectedStatus": 202,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "ready",
+          "origin": "imported",
+          "fdaCheck": {
+            "counts": {
+              "references": 2,
+              "verified": 1,
+              "notFound": 1,
+              "withRecalls": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "404 - section with no draft yet",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:check_token}}"
+      },
+      "fixture": "tests/setup_scripts/40_draft_check.py",
+      "payload": {},
+      "pathParams": {
+        "sectionId": "{{var:check_empty_section_id}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {},
+      "pathParams": {
+        "sectionId": "{{cache:sections.board.response.data.sections.0.id}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {},
+      "pathParams": {
+        "sectionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}

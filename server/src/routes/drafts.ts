@@ -12,6 +12,7 @@ import { AppError, ErrorCodes } from '../utils/AppError';
  *   GET  /api/project-sections/:sectionId/draft          latest draft (or ?version=n) and every version
  *   GET  /api/project-sections/:sectionId/draft/export   the latest ready draft (or ?version=n) as .docx
  *   POST /api/project-sections/:sectionId/draft/import   { fileName, contentBase64 } an edited export -> new version (201)
+ *   POST /api/project-sections/:sectionId/draft/fda-check re-check the draft's predicate K-numbers against FDA data (202)
  * Drafting and importing need projects:write (checked in DraftService); reading needs projects:read.
  */
 export const draftsRouter = Router();
@@ -96,5 +97,17 @@ draftsRouter.post(
     const id = sectionId(req);
     const body = parse(importBody, req.body);
     res.status(201).json({ success: true, data: await draftService.importDocx(orgId, userId, id, body) });
+  }),
+);
+
+draftsRouter.post(
+  '/api/project-sections/:sectionId/draft/fda-check',
+  guard('projects:read'),
+  audit('draft.fda_check_requested', { targetType: 'project_section', targetId: fromParam('sectionId') }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const id = sectionId(req);
+    const { version } = parse(versionQuery, req.query);
+    res.status(202).json({ success: true, data: await draftService.recheckFda(orgId, id, version) });
   }),
 );

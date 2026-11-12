@@ -3,6 +3,7 @@ import { Permission, roleHasPermission } from '../middleware/authorize';
 import { sectionService } from '../sections/SectionService';
 import { dataService } from '../services/DataService';
 import { AppError, ErrorCodes } from '../utils/AppError';
+import { checkDraft, checkSoonInDev, draftFdaCheck, DraftFdaCheck, requeueCheck } from './DraftChecker';
 import { draftFileName, writeDraftDocx } from './docxWriter';
 import { BaseStatement, diffImport, ImportSummary, NotADraftDocxError, readDraftDocx } from './roundTrip';
 import { generateDraft, saveStatements } from './SectionDrafter';
@@ -47,6 +48,8 @@ export interface Draft extends DraftVersion {
   statements: DraftStatement[];
   removed: { text: string; code: string; reason: string }[];
   importSummary: ImportSummary | null;
+  /** F3.5: predicate K-numbers in the draft checked against FDA data (null until the draft is ready). */
+  fdaCheck: DraftFdaCheck | null;
 }
 
 /** An edited DOCX of one section is small; the JSON body limit (BODY_PARSER_LIMIT) bounds it too. */
@@ -161,7 +164,9 @@ export const draftService = {
     // worker. In production only the worker drafts (draftPass), never the API process.
     if (config.nodeEnv !== 'production') {
       setImmediate(() => {
-        generateDraft(orgId, draftId).catch((err) => console.error(`[drafts] dev draft ${draftId} failed: ${(err as Error).message}`));
+        generateDraft(orgId, draftId)
+          .then(() => checkDraft(orgId, draftId))
+          .catch((err) => console.error(`[drafts] dev draft ${draftId} failed: ${(err as Error).message}`));
       });
     }
     return this.get(orgId, projectSectionId, draftId);
@@ -204,6 +209,7 @@ export const draftService = {
       statements: r.status === 'ready' ? await statementsOf(orgId, r.id) : [],
       removed: r.removed_items,
       importSummary: r.import_summary,
+      fdaCheck: r.status === 'ready' ? await draftFdaCheck(orgId, r.id) : null,
     };
   },
 
@@ -292,6 +298,25 @@ export const draftService = {
       await saveStatements(tx, orgId, row.id, statements);
       return row.id;
     });
+    // An edit may add or change a predicate's K-number: the new version gets its own check.
+    checkSoonInDev(orgId, draftId);
     return this.get(orgId, projectSectionId, draftId);
+  },
+
+  /** Check the K-numbers of the latest ready draft (or the given version) against FDA data again. */
+  async recheckFda(orgId: string, projectSectionId: string, versionNo?: number): Promise<Draft> {
+    await section(orgId, projectSectionId);
+    const [r] = await dataService.query<{ id: string }>(
+      { orgId },
+      'section_drafts',
+      `SELECT id FROM section_drafts
+        WHERE org_id = $1 AND project_section_id = $2 AND status = 'ready' AND ($3::int IS NULL OR version_no = $3::int)
+        ORDER BY version_no DESC LIMIT 1`,
+      [orgId, projectSectionId, versionNo ?? null],
+    );
+    if (!r) throw new AppError(404, ErrorCodes.NOT_FOUND, versionNo === undefined ? 'This section has no finished draft to check yet' : `Draft version ${versionNo} is not finished`);
+    await requeueCheck(orgId, r.id);
+    checkSoonInDev(orgId, r.id);
+    return this.get(orgId, projectSectionId, r.id);
   },
 };

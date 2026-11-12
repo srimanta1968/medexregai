@@ -1,0 +1,195 @@
+# @fixture scope=tenant tier=api reason="a ready section draft can only come from the drafter (parse + model call), and its FDA check needs the FDA data service, so each session makes one through the app's own APIs"
+# @exports check_token, check_section_id, check_empty_section_id
+"""
+Provision, through MedexRegAI's own HTTP APIs, a section draft whose predicate K-numbers
+have been checked against FDA data (F3.5):
+
+  check_token             owner of a fresh firm (Bearer token)
+  check_section_id        the project's Sterility section; its latest draft (an imported edit)
+                          names K942988 (a real 510(k) with recalls) and K999999 (not issued),
+                          and its FDA check is done
+  check_empty_section_id  another section of the project with no draft yet
+
+Steps: register, client, device, project; upload a FICTIONAL EO validation report (DOCX
+built here, no real company or device); file it under Sterility; request a draft and wait
+until it is ready; export it, add a paragraph naming the two K-numbers, import it; wait
+for the FDA check of the imported version.
+
+Needs the dev stack with docproc, the generation model (Ollama) and the FDA data service
+running. Fresh random names every run. Standard library only.
+"""
+
+import base64
+import io
+import json
+import os
+import re
+import secrets
+import sys
+import time
+import urllib.error
+import urllib.request
+import zipfile
+
+API = (os.environ.get('API_BASE_URL') or 'http://localhost:3000').rstrip('/')
+OUT = os.environ.get('SETUP_VARS_OUT')
+PASSWORD = 'Fx-' + secrets.token_urlsafe(18)
+
+REPORT = [
+    'EO-09 Ethylene Oxide Sterilization Validation Report, Revision A',
+    'The IS-200 infusion set is sterilized using 100% ethylene oxide in a validated cycle.',
+    'The sterilization process was validated using the overkill half-cycle approach in accordance with ISO 11135:2014.',
+    'Biological indicators were inactivated in all three half cycles, which demonstrates a sterility assurance level (SAL) of 10^-6.',
+    'The EO residual was 0.8 mg per device against a limit of 4 mg per device, evaluated in accordance with ISO 10993-7:2008.',
+]
+
+
+def call(method, path, body=None, token=None, raw=False):
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
+    data = json.dumps(body).encode('utf-8') if body is not None else None
+    req = urllib.request.Request(API + path, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as res:
+            payload = res.read()
+            return res.status, payload if raw else json.loads(payload or b'{}')
+    except urllib.error.HTTPError as err:
+        return err.code, json.loads(err.read() or b'{}')
+
+
+def expect(status, payload, wanted, what):
+    if status != wanted:
+        code = (payload.get('error') or {}).get('code') if isinstance(payload, dict) else None
+        sys.exit(f'{what}: expected {wanted}, got {status} {code}')
+    return payload['data'] if isinstance(payload, dict) else payload
+
+
+def esc(text):
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+# A real 510(k) in FDA's data (B. Braun FILTERED EXTENSION SETS, product code FPA, cleared
+# 1995-07-14, with recalls in FDA's recall data) and a K-number FDA never issued.
+PREDICATE = 'K942988'
+MISSING = 'K999999'
+PREDICATE_TEXT = [
+    f'The predicate device is the FILTERED EXTENSION SETS cleared under {PREDICATE}.',
+    f'A second comparison device, {MISSING}, was also considered.',
+]
+
+
+def source_docx(paragraphs=None):
+    body = ''.join(f'<w:p><w:r><w:t xml:space="preserve">{esc(t)}</w:t></w:r></w:p>' for t in (paragraphs or REPORT))
+    parts = {
+        '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+        '_rels/.rels': '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+        'word/document.xml': f'<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>{body}</w:body></w:document>',
+    }
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+        for name, xml in parts.items():
+            z.writestr(name, xml)
+    return buf.getvalue()
+
+
+def with_predicates(export_bytes):
+    """Add the consultant's own paragraph naming a real predicate and a K-number that does not exist."""
+    src = zipfile.ZipFile(io.BytesIO(export_bytes))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+        for name in src.namelist():
+            data = src.read(name)
+            if name == 'word/document.xml':
+                xml = data.decode('utf-8')
+                para = ''.join(f'<w:p><w:r><w:t xml:space="preserve">{esc(t)}</w:t></w:r></w:p>' for t in PREDICATE_TEXT)
+                if '<w:sectPr>' not in xml:
+                    sys.exit('edit: no section properties in the export')
+                xml = xml.replace('<w:sectPr>', para + '<w:sectPr>', 1)
+                data = xml.encode('utf-8')
+            z.writestr(name, data)
+    return out.getvalue()
+
+
+def wait_parsed(token, file_id):
+    for _ in range(60):
+        detail = expect(*call('GET', f'/api/files/{file_id}', None, token), 200, 'file')
+        status = (detail.get('versions') or [{}])[0].get('parseStatus')
+        if status in ('parsed', 'failed', 'unsupported'):
+            break
+        time.sleep(2)
+    if status != 'parsed':
+        sys.exit(f'the source report was not read (parse status {status}); is docproc running?')
+
+
+def main():
+    owner = expect(*call('POST', '/api/auth/register', {
+        'fullName': 'Fixture Checker',
+        'email': f'fixture-checker-{secrets.token_hex(6)}@example.test',
+        'password': PASSWORD,
+        'firmName': f'Fixture Checking Firm {secrets.token_hex(4)}',
+    }), 201, 'register')
+    token = owner['token']
+    client = expect(*call('POST', '/api/clients', {'name': f'Fixture Client {secrets.token_hex(4)}'}, token), 201, 'client')
+    device = expect(*call('POST', f"/api/clients/{client['id']}/devices", {'name': 'IS-200 infusion set'}, token), 201, 'device')
+    project = expect(*call('POST', f"/api/devices/{device['id']}/projects", {'name': 'IS-200 Traditional 510(k)', 'submissionType': 'traditional'}, token), 201, 'project')
+
+    upload = expect(*call('POST', f"/api/projects/{project['id']}/files", {
+        'fileName': 'EO-09 validation report.docx',
+        'contentBase64': base64.b64encode(source_docx()).decode('ascii'),
+    }, token), 201, 'upload')
+    wait_parsed(token, upload['id'])
+    expect(*call('PUT', f"/api/files/{upload['id']}/assignment", {'sectionId': 'sterility'}, token), 200, 'assign')
+
+    board = expect(*call('GET', f"/api/projects/{project['id']}/sections", None, token), 200, 'board')
+    section = next(s for s in board['sections'] if s['sectionId'] == 'sterility')
+    # The model is small and not deterministic: a draft where nothing survives the citation
+    # gate fails honestly, so ask again (up to three drafts) before giving up.
+    for _attempt in range(3):
+        expect(*call('POST', f"/api/project-sections/{section['id']}/draft", None, token), 202, 'request draft')
+        for _ in range(90):
+            current = expect(*call('GET', f"/api/project-sections/{section['id']}/draft", None, token), 200, 'draft')['draft']
+            if current['status'] in ('ready', 'failed'):
+                break
+            time.sleep(2)
+        if current['status'] == 'ready':
+            break
+    if current['status'] != 'ready':
+        sys.exit(f"the draft did not finish ({current['status']}: {current.get('error')}); is the generation model running?")
+
+    status, export = call('GET', f"/api/project-sections/{section['id']}/draft/export", None, token, raw=True)
+    if status != 200:
+        sys.exit(f'export: expected 200, got {status}')
+
+    status, payload = call('POST', f"/api/project-sections/{section['id']}/draft/import", {
+        'fileName': 'Sterility draft.docx',
+        'contentBase64': base64.b64encode(with_predicates(export)).decode('ascii'),
+    }, token)
+    imported = expect(status, payload, 201, 'import')
+    # The check runs after the import (inline in development, in the worker otherwise).
+    for _ in range(60):
+        current = expect(*call('GET', f"/api/project-sections/{section['id']}/draft", None, token), 200, 'draft')['draft']
+        if current['id'] == imported['id'] and (current.get('fdaCheck') or {}).get('status') in ('done', 'failed'):
+            break
+        time.sleep(2)
+    check = current.get('fdaCheck') or {}
+    if check.get('status') != 'done':
+        sys.exit(f"the FDA check did not finish ({check.get('status')}: {check.get('error')}); is the FDA data service running?")
+    found = {r['kNumber']: r['status'] for r in check['references']}
+    if found.get(PREDICATE) != 'verified' or found.get(MISSING) != 'not_found':
+        sys.exit(f'the FDA check gave {found}; expected {PREDICATE} verified and {MISSING} not found')
+
+    values = {
+        'check_token': token,
+        'check_section_id': section['id'],
+        'check_empty_section_id': next(s['id'] for s in board['sections'] if s['sectionId'] == 'device_description'),
+    }
+    if OUT:
+        with open(OUT, 'w', encoding='utf-8') as fh:
+            json.dump(values, fh)
+    else:
+        print(json.dumps(values))
+
+
+if __name__ == '__main__':
+    main()

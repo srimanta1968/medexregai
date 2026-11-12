@@ -9,6 +9,7 @@ import { folderSync } from './connections/FolderSync';
 import { sectionClassifier } from './sorting/SectionClassifier';
 import { revisionDetector } from './sorting/RevisionDetector';
 import { problemEngine } from './problems/ProblemEngine';
+import { checkPendingDrafts } from './drafting/DraftChecker';
 import { draftPending } from './drafting/SectionDrafter';
 import { trustService } from './trust/TrustService';
 
@@ -119,6 +120,9 @@ async function draftPass(): Promise<void> {
   try {
     const n = await draftPending();
     if (n) console.info(`[worker] section drafts: ${n}`);
+    // F3.5: predicate K-numbers in ready drafts, checked against FDA data.
+    const c = await checkPendingDrafts();
+    if (c) console.info(`[worker] draft FDA checks: ${c}`);
   } catch (err) {
     console.error(`[worker] drafting pass failed: ${(err as Error).message}`);
   } finally {
