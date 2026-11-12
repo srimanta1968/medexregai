@@ -1,0 +1,158 @@
+{
+  "requiresAuth": true,
+  "taskId": "86a103cf-51e2-4eef-844b-a8a460a12046",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/usage/export - usage per client as CSV for rebilling",
+  "description": "Usage can be exported per client for rebilling (F4.3 AC2). Same query as GET /api/usage (?workspaceId for one client): CSV for Excel with a UTF-8 byte order mark, one row per project (client, project, files read, pages/sheets/slides read, drafts generated, from, to) and a total row per client; cells never read as formulas. Needs billing:manage; audited as usage.exported.",
+  "endpoint": "/api/usage/export",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 181,
+  "coversCriterion": [
+    "a710c1ee-ca46-4272-a45c-7af68c969ba1#AC2",
+    "86a103cf-51e2-4eef-844b-a8a460a12046#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "from must be a date (YYYY-MM-DD)",
+      "when": "from/to missing or not dates, to before from, more than 400 days, or a bad workspaceId"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks billing:manage (only the owner has it)"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Client not found",
+      "when": "workspaceId is not a client of the caller's firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner exports one client for rebilling",
+      "headers": {
+        "Authorization": "Bearer {{var:usage_token}}"
+      },
+      "fixture": "tests/setup_scripts/44_usage.py",
+      "queryParams": {
+        "from": "{{var:usage_from}}",
+        "to": "{{var:usage_to}}",
+        "workspaceId": "{{var:usage_workspace_id}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Owner exports every client",
+      "headers": {
+        "Authorization": "Bearer {{var:usage_token}}"
+      },
+      "fixture": "tests/setup_scripts/44_usage.py",
+      "queryParams": {
+        "from": "{{var:usage_from}}",
+        "to": "{{var:usage_to}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "400 - to before from",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "headers": {
+        "Authorization": "Bearer {{var:usage_token}}"
+      },
+      "queryParams": {
+        "from": "{{var:usage_to}}",
+        "to": "{{var:usage_from}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "fixture": "tests/setup_scripts/44_usage.py"
+    },
+    {
+      "name": "400 - from is not a date",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "headers": {
+        "Authorization": "Bearer {{var:usage_token}}"
+      },
+      "queryParams": {
+        "from": "last month",
+        "to": "{{var:usage_to}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "fixture": "tests/setup_scripts/44_usage.py"
+    },
+    {
+      "name": "403 - a reviewer cannot see billing usage",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "queryParams": {
+        "from": "2026-11-01",
+        "to": "2026-11-30"
+      },
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "404 - another firm's client",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "queryParams": {
+        "from": "{{var:usage_from}}",
+        "to": "{{var:usage_to}}",
+        "workspaceId": "{{var:usage_workspace_id}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/44_usage.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "queryParams": {
+        "from": "2026-11-01",
+        "to": "2026-11-30"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
