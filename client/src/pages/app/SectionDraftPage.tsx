@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { Draft, DraftStatement, DraftVersion, draftsApi, fileToBase64 } from '../../lib/draftsApi';
+import { Draft, DraftStatement, DraftVersion, draftsApi, fileToBase64, ReferenceCheck } from '../../lib/draftsApi';
 import { saveBlob } from '../../lib/trustApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
@@ -19,7 +19,127 @@ const REMOVAL: Record<string, string> = {
   NOT_A_STATEMENT: 'Not about the device',
 };
 
-function Statement({ s }: { s: DraftStatement }): JSX.Element {
+const chip = 'mr-1 inline-block rounded-full px-2 py-0.5 align-middle text-xs';
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
+
+/** F3.5 inline chips for a K-number the statement mentions: verified or not, recalls, MAUDE. */
+function ReferenceChips({ r }: { r: ReferenceCheck }): JSX.Element {
+  if (r.status === 'not_found') {
+    return (
+      <span className={`${chip} bg-rose-100 font-medium text-rose-900`} title={r.notes.join(' ')}>
+        {r.kNumber} · not in FDA 510(k) data
+      </span>
+    );
+  }
+  if (r.status === 'unavailable') {
+    return (
+      <span className={`${chip} bg-slate-100 text-slate-700`} title={r.notes.join(' ')}>
+        {r.kNumber} · not checked yet
+      </span>
+    );
+  }
+  const recalls = r.flags?.recalls;
+  const maude = r.flags?.maude;
+  return (
+    <>
+      <a href={r.clearance?.fdaUrl} target="_blank" rel="noreferrer" className={`${chip} bg-emerald-100 font-medium text-emerald-900 hover:underline`}>
+        {r.kNumber} · verified with FDA
+      </a>
+      {recalls && recalls.total > 0 && (
+        <span className={`${chip} ${recalls.open ? 'bg-rose-100 text-rose-900' : 'bg-amber-100 text-amber-900'}`}>
+          {plural(recalls.total, 'recall')}
+          {recalls.open ? ` · ${recalls.open} open` : ''}
+        </span>
+      )}
+      {recalls && recalls.total === 0 && <span className={`${chip} bg-slate-100 text-slate-700`}>No recalls</span>}
+      {maude && (
+        <span className={`${chip} bg-slate-100 text-slate-700`} title={maude.note}>
+          {maude.tracked && maude.reportsLast12Months !== null
+            ? `MAUDE ${maude.productCode ?? ''}: ${plural(maude.reportsLast12Months, 'report')} in 12 months`
+            : 'MAUDE not tracked'}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** F3.5 the draft's predicate K-numbers, checked against FDA data, with the detail behind the chips. */
+function FdaCheckPanel({ draft, busy, onRecheck }: { draft: Draft; busy: boolean; onRecheck: () => void }): JSX.Element | null {
+  const c = draft.fdaCheck;
+  if (!c) return null;
+  const running = c.status === 'pending' || c.status === 'checking';
+  return (
+    <section className={card} aria-labelledby="fda-check-title">
+      <h2 id="fda-check-title" className="font-semibold text-slate-900">
+        Predicates checked with FDA · {c.counts.references}
+      </h2>
+      {running && (
+        <p role="status" className="mt-1 text-sm text-slate-600">
+          Checking the K-numbers in this draft against FDA data…{c.references.length ? ' The last results stay below until it finishes.' : ''}
+        </p>
+      )}
+      {c.status === 'failed' ? (
+        <FormMessage tone="error">The check could not finish{c.error ? `: ${c.error}` : '.'}</FormMessage>
+      ) : c.references.length === 0 ? (
+        !running && <p className="mt-1 text-sm text-slate-600">No K-numbers in this draft.</p>
+      ) : (
+        <p className="mt-1 text-sm text-slate-700">
+          {c.counts.verified} verified · {c.counts.notFound} not found · {c.counts.withRecalls} with recalls
+          {c.counts.unavailable ? ` · ${c.counts.unavailable} not checked` : ''}
+        </p>
+      )}
+      {c.references.length > 0 && (
+        <ul className="mt-2 space-y-2 text-sm">
+          {c.references.map((r) => (
+            <li key={r.kNumber} className={`rounded-lg p-2 ${r.status === 'not_found' ? 'bg-rose-50' : 'bg-slate-50'}`}>
+              <span className="block font-medium text-slate-900">
+                {r.kNumber}
+                {r.clearance && ` · ${r.clearance.deviceName ?? 'device name not given'}`}
+              </span>
+              {r.clearance && (
+                <span className="block text-slate-700">
+                  {r.clearance.applicant ?? 'Applicant not given'} · {r.clearance.decisionDescription ?? 'decision not given'}
+                  {r.clearance.decisionDate && ` on ${r.clearance.decisionDate}`}
+                  {r.clearance.productCode && ` · product code ${r.clearance.productCode}`}
+                </span>
+              )}
+              {r.notes.map((n) => (
+                <span key={n} className="block text-slate-700">
+                  {n}
+                </span>
+              ))}
+              {r.flags?.recalls.items.length ? (
+                <ul className="mt-1 list-disc pl-5 text-xs text-slate-600">
+                  {r.flags.recalls.items.map((i) => (
+                    <li key={i.productResNumber}>
+                      {i.fdaUrl ? (
+                        <a href={i.fdaUrl} target="_blank" rel="noreferrer" className="underline">
+                          {i.productResNumber}
+                        </a>
+                      ) : (
+                        i.productResNumber
+                      )}{' '}
+                      · {i.recallStatus ?? 'status not given'}
+                      {i.dateInitiated && ` · ${i.dateInitiated}`}
+                      {i.reasonForRecall && ` · ${i.reasonForRecall}`}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {r.flags?.maude && <span className="mt-1 block text-xs text-slate-500">{r.flags.maude.note}</span>}
+              {r.dataAsOf && <span className="block text-xs text-slate-500">FDA 510(k) data as of {r.dataAsOf}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <button type="button" className={`${secondary} mt-3`} disabled={busy || running} onClick={onRecheck}>
+        Re-check with FDA
+      </button>
+    </section>
+  );
+}
+
+function Statement({ s, refs }: { s: DraftStatement; refs: ReferenceCheck[] }): JSX.Element {
   if (s.kind === 'heading') return <h3 className="mt-4 font-semibold text-slate-900">{s.text}</h3>;
   return (
     <span className="mr-1">
@@ -36,6 +156,9 @@ function Statement({ s }: { s: DraftStatement }): JSX.Element {
           {w}
         </span>
       ))}
+      {refs.map((r) => (
+        <ReferenceChips key={r.kNumber} r={r} />
+      ))}
     </span>
   );
 }
@@ -46,12 +169,13 @@ function DraftBody({ draft }: { draft: Draft }): JSX.Element {
     for (const s of draft.statements) m.set(s.paragraph, [...(m.get(s.paragraph) ?? []), s]);
     return [...m.values()];
   }, [draft.statements]);
+  const refsOf = (ordinal: number) => (draft.fdaCheck?.references ?? []).filter((r) => r.statementOrdinals.includes(ordinal));
   return (
     <div className="space-y-3 leading-7 text-slate-800">
       {paragraphs.map((p) => (
         <p key={p[0].id}>
           {p.map((s) => (
-            <Statement key={s.id} s={s} />
+            <Statement key={s.id} s={s} refs={refsOf(s.ordinal)} />
           ))}
         </p>
       ))}
@@ -94,11 +218,13 @@ export default function SectionDraftPage(): JSX.Element {
 
   // While the draft is being written, check every few seconds.
   const working = draft?.status === 'queued' || draft?.status === 'generating';
+  const checking = draft?.fdaCheck?.status === 'pending' || draft?.fdaCheck?.status === 'checking';
   useEffect(() => {
-    if (!working) return;
-    const t = setInterval(() => void load(version), 2000);
+    if (!working && !checking) return;
+    // An FDA check takes a second or two; a draft about a minute.
+    const t = setInterval(() => void load(version), working ? 2000 : 1000);
     return () => clearInterval(t);
-  }, [working, load, version]);
+  }, [working, checking, load, version]);
 
   const run = async (what: () => Promise<void>, fallback: string) => {
     setBusy(true);
@@ -126,6 +252,12 @@ export default function SectionDraftPage(): JSX.Element {
       saveBlob(await api.exportDocx(draft?.versionNo), name);
       setNotice(`Downloaded ${name}. Sources are Word comments; edit it and import it back.`);
     }, 'Could not export the draft.');
+  const recheck = () =>
+    run(async () => {
+      const d = await api.recheckFda(draft?.versionNo);
+      setDraft(d);
+      setNotice(`Checking the K-numbers in version ${d.versionNo} against FDA data again.`);
+    }, 'Could not start the FDA check.');
   const importFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -205,6 +337,7 @@ export default function SectionDraftPage(): JSX.Element {
         <div className={`${card} mt-6`}>
           <h2 className="font-semibold text-slate-900">No draft yet</h2>
           <p className="mt-1 text-sm text-slate-600">Draft this section from the client files filed under it. Each statement will cite its source.</p>
+          <p className="mt-1 text-sm text-slate-600">Any predicate K-number in the draft is then checked against FDA data, with its recalls and MAUDE reports shown beside it.</p>
         </div>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -226,6 +359,7 @@ export default function SectionDraftPage(): JSX.Element {
             )}
           </article>
           <aside className="space-y-4">
+            <FdaCheckPanel draft={draft} busy={busy} onRecheck={() => void recheck()} />
             <section className={card} aria-labelledby="removed-title">
               <h2 id="removed-title" className="font-semibold text-slate-900">
                 Removed: no source found · {draft.removed.length}
