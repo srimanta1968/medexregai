@@ -39,6 +39,8 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     built: true,
   },
   // FR-14.20 time capture was moved earlier in PRD v2.0 ("P3-01, moved earlier"): visible from phase 1.
+  // F4.2: the pilot report reads FR-14.20 time against the firm's baseline, so it shows wherever Time does.
+  { key: 'pilot-report', label: 'Pilot report', description: 'Hours against the firm baseline; drafts kept without change; RA lead sign-off', phase: 1, scope: 'project', built: true },
   { key: 'time', label: 'Time', description: 'One-click time log by activity; weekly summary and CSV', phase: 1, scope: 'firm', built: true },
   { key: 'usage', label: 'Usage', description: 'Per-client usage export for rebilling', phase: 3, scope: 'firm', permission: 'billing:manage', built: false },
   {
