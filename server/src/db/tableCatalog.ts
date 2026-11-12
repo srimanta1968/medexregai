@@ -79,6 +79,9 @@ export const TABLE_CATALOG = {
   // F4.1 time capture: activity codes (migration 037, reference data) and entries (038).
   time_activities: 'platform',
   time_entries: 'tenant',
+  // F4.2 pilot report: the firm's baseline and RA lead sign-offs (migration 039).
+  pilot_baselines: 'tenant',
+  pilot_signoffs: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
