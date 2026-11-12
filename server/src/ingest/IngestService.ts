@@ -5,6 +5,8 @@ import { chunkLocations, ChunkInput } from './chunker';
 import { scanForInjection } from '../ai/guard/injectionSignals';
 import { describeLocation, scanForPhi } from './phiScanner';
 import { classifyParseFailure, UnreadableKind } from './unreadable';
+import { sectionClassifier } from '../sorting/SectionClassifier';
+import { revisionDetector } from '../sorting/RevisionDetector';
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -45,6 +47,20 @@ interface ClaimedVersion {
   parse_attempts: number;
   source: 'upload' | 'linked' | 'request' | 'email';
   name: string;
+}
+
+/**
+ * F2.2: once a version has been read (or found unreadable), file it in an eSTAR section
+ * and refresh the project's version groups. Never fails the ingest step: the worker's
+ * sorting pass picks up anything missed here.
+ */
+async function afterRead(orgId: string, version: ClaimedVersion): Promise<void> {
+  try {
+    await sectionClassifier.sortFile(orgId, version.file_id);
+    await revisionDetector.detect(orgId, version.project_id);
+  } catch (err) {
+    console.warn(`[ingest] sorting after read of ${version.id} failed (the worker will retry): ${(err as Error).message}`);
+  }
 }
 
 /** Only fetched copies of linked files are discarded; uploads are the firm's evidence and stay. */
@@ -255,6 +271,7 @@ export async function processVersion(orgId: string, versionId: string, deps: Ing
     await finishWithError(orgId, version.id, status, reason, kind);
     // A linked copy we cannot use is still a copy we should not keep.
     const discarded = DISCARDS_COPY(version.source) ? await discardCopy(orgId, version.id, store) : false;
+    await afterRead(orgId, version);
     return { status, reason, discarded };
   };
 
@@ -292,6 +309,7 @@ export async function processVersion(orgId: string, versionId: string, deps: Ing
 
   const phi = await recordParse(orgId, version, result);
   const discarded = DISCARDS_COPY(version.source) ? await discardCopy(orgId, version.id, store) : false;
+  await afterRead(orgId, version);
   return { status: 'parsed', locations: result.locations.length, needsOcr: result.needsOcr, phi, discarded };
 }
 

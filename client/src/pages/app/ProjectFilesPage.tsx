@@ -21,6 +21,7 @@ import {
 } from '../../lib/filesApi';
 import { ProjectDetail, workspaceApi } from '../../lib/workspaceApi';
 
+import { SortedFolder } from '../../components/app/SortedFolder';
 const card = 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
 const button = 'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:border-brand-400 disabled:opacity-60';
 /** While anything is waiting or being read, refresh this often. Live push (SSE) arrives with F8.2. */
@@ -393,6 +394,8 @@ export default function ProjectFilesPage(): JSX.Element {
           <p className="mt-1">Open {flagged.length === 1 ? 'it' : 'each one'} to see what was found and redact it before it is used in the submission.</p>
         </div>
       )}
+
+      {files && <SortedFolder projectId={projectId} refreshKey={files.map((f) => `${f.id}:${f.versionCount}:${f.latest?.parseStatus ?? ''}`).join('|')} />}
 
       <div className={`${card} mt-6`}>
         {files === null && !error && (
