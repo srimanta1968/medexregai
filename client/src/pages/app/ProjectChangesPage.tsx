@@ -4,13 +4,16 @@ import { useAuth } from '../../auth/AuthContext';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { ACTION_LABEL, Impact, ImpactItem, impactApi, Revision } from '../../lib/impactApi';
+import { filesApi, PassageView } from '../../lib/filesApi';
+import { ACTION_LABEL, Impact, ImpactAction, ImpactItem, impactApi, Revision } from '../../lib/impactApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
 const message = (err: unknown, fallback: string) => (err instanceof ApiError ? err.message : fallback);
+const primary = 'rounded-md bg-brand-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60';
+const secondary = 'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:border-brand-400 disabled:opacity-60';
 const KIND_LABEL: Record<ImpactItem['kind'], string> = { draft: 'Draft', problem: 'Problem', request_item: 'Client request' };
 
-function ItemRow({ item }: { item: ImpactItem }): JSX.Element {
+function ItemRow({ item, busy, onAct }: { item: ImpactItem; busy: boolean; onAct: (item: ImpactItem, action: ImpactAction) => void }): JSX.Element {
   return (
     <tr className="border-t border-slate-100 align-top">
       <td className="py-3 pr-4">
@@ -33,19 +36,70 @@ function ItemRow({ item }: { item: ImpactItem }): JSX.Element {
         )}
       </td>
       <td className="py-3 text-sm">
-        {item.handled ? (
-          <span className="text-emerald-800">
+        {item.handled && (
+          <span className="block text-emerald-800">
             {ACTION_LABEL[item.handled.action]} · {item.handled.by ?? 'someone'} · {new Date(item.handled.at).toLocaleString()}
           </span>
-        ) : (
-          <span className="text-slate-600">Suggested: {ACTION_LABEL[item.suggested]}</span>
+        )}
+        {item.stillAffected && item.actions.length > 0 && (
+          <span className="mt-1 flex flex-wrap gap-2">
+            {item.actions.map((a) => (
+              <button
+                key={a}
+                type="button"
+                className={a === item.suggested ? primary : secondary}
+                disabled={busy || item.handled?.action === a}
+                aria-label={`${ACTION_LABEL[a]}: ${item.title}`}
+                onClick={() => onAct(item, a)}
+              >
+                {ACTION_LABEL[a]}
+              </button>
+            ))}
+          </span>
         )}
       </td>
     </tr>
   );
 }
 
-function ImpactView({ impact }: { impact: Impact }): JSX.Element {
+/** The two versions' passages side by side; text that is not in the other version is marked. */
+function CompareVersions({ before, after }: { before: PassageView; after: PassageView }): JSX.Element {
+  const norm = (t: string) => t.replace(/\s+/g, ' ').trim();
+  const inBefore = new Set(before.passages.map((p) => norm(p.text)));
+  const inAfter = new Set(after.passages.map((p) => norm(p.text)));
+  const column = (view: PassageView, other: Set<string>, tone: string, label: string) => (
+    <div>
+      <h3 className="text-sm font-semibold text-slate-900">{label}</h3>
+      <ol className="mt-1 space-y-1 text-sm">
+        {view.passages.map((p) => (
+          <li key={p.ordinal} className={other.has(norm(p.text)) ? 'text-slate-600' : `rounded px-1 ${tone}`}>
+            {p.text}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+  return (
+    <div className="mt-3 grid gap-4 md:grid-cols-2">
+      {column(before, inAfter, 'bg-rose-50 text-rose-900', `v${before.versionNo} (old)`)}
+      {column(after, inBefore, 'bg-emerald-50 text-emerald-900', `v${after.versionNo} (new)`)}
+    </div>
+  );
+}
+
+function ImpactView({
+  impact,
+  busy,
+  onAct,
+  onCompare,
+  compare,
+}: {
+  impact: Impact;
+  busy: boolean;
+  onAct: (item: ImpactItem, action: ImpactAction) => void;
+  onCompare: () => void;
+  compare: { before: PassageView; after: PassageView } | null;
+}): JSX.Element {
   if (!impact.previous) return <p className="text-sm text-slate-600">This is the first version of the file; nothing relied on an earlier one.</p>;
   return (
     <div className="space-y-6">
@@ -69,16 +123,22 @@ function ImpactView({ impact }: { impact: Impact }): JSX.Element {
             </thead>
             <tbody>
               {impact.items.map((i) => (
-                <ItemRow key={i.key} item={i} />
+                <ItemRow key={i.key} item={i} busy={busy} onAct={onAct} />
               ))}
             </tbody>
           </table>
         )}
       </section>
       <section className={card} aria-labelledby="changed-title">
-        <h2 id="changed-title" className="text-lg font-semibold text-slate-900">
-          What changed in v{impact.version.versionNo}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="changed-title" className="text-lg font-semibold text-slate-900">
+            What changed in v{impact.version.versionNo}
+          </h2>
+          <button type="button" className={secondary} onClick={onCompare} disabled={busy}>
+            {compare ? 'Hide comparison' : 'Compare versions'}
+          </button>
+        </div>
+        {compare && <CompareVersions before={compare.before} after={compare.after} />}
         {impact.changes.length === 0 && impact.passages.length === 0 ? (
           <p className="mt-1 text-sm text-slate-600">The text of the two versions is the same.</p>
         ) : (
@@ -114,6 +174,10 @@ export default function ProjectChangesPage(): JSX.Element {
   const [openId, setOpenId] = useState<string | null>(null);
   const [impact, setImpact] = useState<Impact | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [compare, setCompare] = useState<{ before: PassageView; after: PassageView } | null>(null);
+  const files = useMemo(() => filesApi(authedRequest), [authedRequest]);
 
   useEffect(() => {
     api
@@ -133,8 +197,49 @@ export default function ProjectChangesPage(): JSX.Element {
     [api],
   );
   useEffect(() => {
+    setCompare(null);
+    setNotice(null);
     if (openId) void loadImpact(openId);
   }, [openId, loadImpact]);
+
+  const act = async (item: ImpactItem, action: ImpactAction) => {
+    if (!impact) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const done = await api.act(impact.version.id, item.key, action);
+      const r = done.handled?.result ?? {};
+      setNotice(
+        action === 'redraft'
+          ? `${item.title}: draft version ${String(r.draftVersionNo ?? '')} is being written from the new version.`
+          : action === 'recheck'
+            ? `${item.title}: re-checked. ${r.problemStillPresent ? 'The problem is still there.' : 'The problem is no longer found.'}`
+            : action === 'mark_received'
+              ? `${item.title}: marked received.`
+              : `${item.title}: kept as it is.`,
+      );
+      await loadImpact(impact.version.id);
+      setRevisions(await api.revisions());
+    } catch (err) {
+      setError(message(err, 'Could not carry out that action.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const toggleCompare = async () => {
+    if (!impact?.previous) return;
+    if (compare) {
+      setCompare(null);
+      return;
+    }
+    try {
+      const [before, after] = await Promise.all([files.passages(impact.previous.id, 0, 49), files.passages(impact.version.id, 0, 49)]);
+      setCompare({ before, after });
+    } catch (err) {
+      setError(message(err, 'Could not load the two versions.'));
+    }
+  };
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -148,11 +253,10 @@ export default function ProjectChangesPage(): JSX.Element {
       <p className="mt-1 max-w-3xl text-sm text-slate-600">
         When a client sends a new version of a file, everything that cited the old one is listed here with what to do about it.
       </p>
-      {error && (
-        <div className="mt-3">
-          <FormMessage tone="error">{error}</FormMessage>
-        </div>
-      )}
+      <div aria-live="polite" className="mt-3 space-y-2">
+        {notice && <FormMessage tone="success">{notice}</FormMessage>}
+        {error && <FormMessage tone="error">{error}</FormMessage>}
+      </div>
       {revisions === null ? (
         <p role="status" className="mt-6 text-slate-500">
           Loading…
@@ -185,7 +289,7 @@ export default function ProjectChangesPage(): JSX.Element {
               </li>
             ))}
           </ul>
-          <div>{impact && impact.version.id === openId ? <ImpactView impact={impact} /> : <p className="text-slate-500">Loading…</p>}</div>
+          <div>{impact && impact.version.id === openId ? <ImpactView impact={impact} busy={busy} onAct={(i, a) => void act(i, a)} onCompare={() => void toggleCompare()} compare={compare} /> : <p className="text-slate-500">Loading…</p>}</div>
         </div>
       )}
     </section>
