@@ -48,7 +48,7 @@
       },
       "fixture": "tests/setup_scripts/42_time_log.py",
       "payload": {
-        "activityCode": "write"
+        "activityCode": "{{static:write}}"
       },
       "expectedStatus": 201,
       "expectedResponse": {
@@ -71,7 +71,7 @@
       "testType": "negative",
       "coversErrorCase": "400|VALIDATION_ERROR",
       "payload": {
-        "activityCode": "billing"
+        "activityCode": "{{static:billing}}"
       },
       "expectedStatus": 400,
       "expectedError": {
@@ -87,7 +87,7 @@
       "testType": "negative",
       "coversErrorCase": "404|NOT_FOUND",
       "payload": {
-        "activityCode": "read",
+        "activityCode": "{{static:read}}",
         "projectId": "{{var:time_stopper_project_id}}"
       },
       "expectedStatus": 404,
@@ -101,7 +101,7 @@
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",
       "payload": {
-        "activityCode": "write"
+        "activityCode": "{{static:write}}"
       },
       "expectedStatus": 401,
       "expectedError": {

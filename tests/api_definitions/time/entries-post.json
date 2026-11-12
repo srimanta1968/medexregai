@@ -48,7 +48,7 @@
       },
       "fixture": "tests/setup_scripts/42_time_log.py",
       "payload": {
-        "activityCode": "read",
+        "activityCode": "{{static:read}}",
         "startedAt": "{{var:time_manual_start}}",
         "endedAt": "{{var:time_manual_end}}",
         "note": "EO report"
@@ -72,7 +72,7 @@
       "testType": "negative",
       "coversErrorCase": "400|VALIDATION_ERROR",
       "payload": {
-        "activityCode": "read",
+        "activityCode": "{{static:read}}",
         "startedAt": "{{var:time_manual_end}}",
         "endedAt": "{{var:time_manual_start}}"
       },
@@ -90,7 +90,7 @@
       "testType": "negative",
       "coversErrorCase": "400|VALIDATION_ERROR",
       "payload": {
-        "activityCode": "billing",
+        "activityCode": "{{static:billing}}",
         "startedAt": "{{var:time_manual_start}}",
         "endedAt": "{{var:time_manual_end}}"
       },
@@ -108,7 +108,7 @@
       },
       "fixture": "tests/setup_scripts/42_time_log.py",
       "payload": {
-        "activityCode": "read",
+        "activityCode": "{{static:read}}",
         "projectId": "{{var:time_stopper_project_id}}",
         "startedAt": "{{var:time_manual_start}}",
         "endedAt": "{{var:time_manual_end}}"
@@ -124,7 +124,7 @@
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",
       "payload": {
-        "activityCode": "read",
+        "activityCode": "{{static:read}}",
         "startedAt": "{{var:time_manual_start}}",
         "endedAt": "{{var:time_manual_end}}"
       },
