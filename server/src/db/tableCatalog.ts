@@ -76,6 +76,8 @@ export const TABLE_CATALOG = {
   // F3.6 firm templates and past wording (migration 035).
   firm_templates: 'tenant',
   firm_precedents: 'tenant',
+  // F4.1 time capture: activity codes (migration 037, reference data) and entries (038).
+  time_activities: 'platform',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
