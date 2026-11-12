@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import TimerWidget from './TimerWidget';
 
 export interface NavItem {
   key: string;
@@ -24,7 +25,7 @@ export function useNavigation(): Navigation | null {
 }
 
 /** Where each built firm-level item lives; everything else opens its "coming" page. */
-const FIRM_PATHS: Record<string, string> = { clients: '/app/clients', users: '/app', 'ai-settings': '/app/settings/ai', 'trust-pack': '/app/trust-pack', templates: '/app/templates' };
+const FIRM_PATHS: Record<string, string> = { clients: '/app/clients', users: '/app', 'ai-settings': '/app/settings/ai', 'trust-pack': '/app/trust-pack', templates: '/app/templates', time: '/app/time' };
 
 export function navPath(item: NavItem, projectId?: string): string {
   if (item.scope === 'project') {
@@ -102,6 +103,7 @@ export default function AppLayout(): JSX.Element {
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
+              <TimerWidget />
               <span className="hidden text-slate-600 md:inline">{session?.user.fullName}</span>
               <button type="button" onClick={onSignOut} className="rounded-md border border-slate-300 px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
                 Sign out

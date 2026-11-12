@@ -38,7 +38,8 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     scope: 'project',
     built: true,
   },
-  { key: 'time', label: 'Time', description: 'One-click time log; pilot report', phase: 3, scope: 'firm', built: false },
+  // FR-14.20 time capture was moved earlier in PRD v2.0 ("P3-01, moved earlier"): visible from phase 1.
+  { key: 'time', label: 'Time', description: 'One-click time log by activity; weekly summary and CSV', phase: 1, scope: 'firm', built: true },
   { key: 'usage', label: 'Usage', description: 'Per-client usage export for rebilling', phase: 3, scope: 'firm', permission: 'billing:manage', built: false },
   {
     key: 'fda-letters',
