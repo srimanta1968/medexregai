@@ -91,6 +91,9 @@ export async function gatherEvidence(input: {
   fdaDescription: string;
 }): Promise<Passage[]> {
   const { orgId, projectId, sectionId } = input;
+  // Nothing read in the project yet: no search can find anything, so do not run a dozen of them.
+  const [any] = await dataService.query<{ one: number }>({ orgId }, 'chunks', 'SELECT 1 AS one FROM chunks WHERE org_id = $1 AND project_id = $2 LIMIT 1', [orgId, projectId]);
+  if (!any) return [];
   const filed = await dataService.query<{ file_id: string }>(
     { orgId },
     'file_assignments',

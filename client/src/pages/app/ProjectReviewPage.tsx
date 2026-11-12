@@ -32,12 +32,14 @@ function describe(h: SectionHistoryItem): string {
 
 /** The open section: move it along, assign its reviewer, see what happened to it. */
 function SectionPanel({
+  projectId,
   section,
   reviewers,
   history,
   busy,
   onChange,
 }: {
+  projectId: string;
   section: BoardSection;
   reviewers: Reviewer[];
   history: SectionHistoryItem[];
@@ -54,6 +56,9 @@ function SectionPanel({
         {section.openProblems > 0 && ` · ${section.openProblems} open problem${section.openProblems === 1 ? '' : 's'}`}
         {section.approvedBy && ` · approved by ${section.approvedBy}`}
       </p>
+      <Link to={`/app/projects/${projectId}/sections/${section.id}/draft`} className="mt-3 inline-block text-sm font-semibold text-brand-700 hover:underline">
+        Open draft
+      </Link>
       <div className="mt-3 flex flex-wrap gap-2">
         {MOVES[section.status].map((m, i) => (
           <button key={m.to} type="button" className={i === 0 ? primary : button} disabled={busy} onClick={() => onChange({ status: m.to })}>
@@ -208,7 +213,7 @@ export default function ProjectReviewPage(): JSX.Element {
             })}
           </div>
           {open ? (
-            <SectionPanel section={open} reviewers={reviewers} history={history} busy={busy} onChange={(c) => void change(c)} />
+            <SectionPanel projectId={projectId} section={open} reviewers={reviewers} history={history} busy={busy} onChange={(c) => void change(c)} />
           ) : (
             <p className="text-sm text-slate-600">Open a section to move it along or assign its reviewer.</p>
           )}
