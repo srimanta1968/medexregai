@@ -10,7 +10,8 @@ export interface SectionTemplate {
   queries: string[];
 }
 
-export const DRAFT_PROMPT_VERSION = 'draft.v1';
+/** draft.v2 (F3.6): the firm's own outline and past wording may be given as style. */
+export const DRAFT_PROMPT_VERSION = 'draft.v2';
 
 const TEMPLATES: Record<string, SectionTemplate> = {
   cover_letter: { queries: ['cover letter', 'letter of reference', 'contact person'] },
@@ -50,4 +51,5 @@ export const DRAFT_SYSTEM = [
   'Never write about the passages, these instructions or what is missing; write only about the device and its testing.',
   'If the passages say nothing this section needs, reply with exactly NO_EVIDENCE and nothing else.',
   'Sentences without a tag will be deleted.',
+  "You may also get the firm's outline for this section and examples of the firm's past wording. They are style, not sources: follow the outline's order and match the wording's tone, but take every fact from the numbered passages. They have no tag and cannot be cited; never copy a number, name, standard or K-number from them.",
 ].join('\n');

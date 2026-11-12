@@ -3,6 +3,8 @@ import { runCitationGate } from '../citations/CitationService';
 import { parseCitations, splitSentences } from '../citations/gate';
 import { hybridSearch, leadingChunks, SearchHit } from '../retrieval/search';
 import { dataService, Tx } from '../services/DataService';
+import { DraftingStyle, styleRefs, styleSourceService } from '../style/StyleSourceService';
+import { checkClaims } from './ClaimChecker';
 import { DRAFT_PROMPT_VERSION, DRAFT_SYSTEM, templateFor } from './templates';
 
 /**
@@ -145,11 +147,26 @@ export function isMeta(sentence: string): boolean {
   return META.test(sentence.replace(/\[(C|R):[^\]]+\]/g, ''));
 }
 
-export function buildPrompt(title: string, fdaDescription: string, passages: Passage[]): string {
+const noTags = (s: string): string => s.replace(/<\/?(?:passage|firm_outline|firm_wording)/gi, '');
+
+/**
+ * The firm's outline and past wording (F3.6), in their own delimited blocks after the
+ * passages. They carry no tag, so nothing in them can be cited: facts still come only
+ * from the passages, and the citation gate checks every value against those.
+ */
+export function styleBlock(style: DraftingStyle | null): string {
+  if (!style || (!style.template && !style.precedents.length)) return '';
+  const parts: string[] = [];
+  if (style.template) parts.push(`<firm_outline name="${style.template.name.replace(/"/g, "'")}">\n${noTags(style.template.body)}\n</firm_outline>`);
+  for (const p of style.precedents) parts.push(`<firm_wording from="${p.sourceLabel.replace(/"/g, "'")}">\n${noTags(p.text)}\n</firm_wording>`);
+  return `\n\nThe firm's style for this section (follow the outline's order and match the tone; not a source of facts, never cite or copy facts from it):\n${parts.join('\n')}`;
+}
+
+export function buildPrompt(title: string, fdaDescription: string, passages: Passage[], style: DraftingStyle | null = null): string {
   const blocks = passages
-    .map((p) => `<passage tag="${p.tag}" source="${p.label.replace(/"/g, "'")}">\n${p.text.replace(/<\/?passage/gi, '')}\n</passage>`)
+    .map((p) => `<passage tag="${p.tag}" source="${p.label.replace(/"/g, "'")}">\n${noTags(p.text)}\n</passage>`)
     .join('\n');
-  return `Section: ${title}\nWhat FDA expects in this section: ${fdaDescription}\n\nSource passages:\n${blocks}\n\nWrite the section now. End every sentence with its passage tag.`;
+  return `Section: ${title}\nWhat FDA expects in this section: ${fdaDescription}\n\nSource passages:\n${blocks}${styleBlock(style)}\n\nWrite the section now. End every sentence with its passage tag.`;
 }
 
 /** Replace [S2] / [S2, S5] / [S2][S5] with the passages' citation markers; unknown tags are left and fail the gate. */
@@ -210,13 +227,16 @@ export async function generateDraft(orgId: string, draftId: string): Promise<voi
     title: string;
     fda_description: string;
     created_by: string | null;
+    device_name: string;
   }>(
     { orgId },
     'section_drafts',
     `UPDATE section_drafts d SET status = 'generating', started_at = now()
        FROM project_sections ps JOIN estar_sections s ON s.id = ps.section_id
+       JOIN projects p ON p.id = ps.project_id AND p.org_id = ps.org_id
+       JOIN devices dv ON dv.id = p.device_id AND dv.org_id = p.org_id
       WHERE d.id = $1 AND d.org_id = $2 AND d.status = 'queued' AND ps.id = d.project_section_id AND ps.org_id = d.org_id
-      RETURNING ps.project_id, ps.section_id, s.title, s.fda_description, d.created_by`,
+      RETURNING ps.project_id, ps.section_id, s.title, s.fda_description, d.created_by, dv.name AS device_name`,
     [draftId, orgId],
   );
   if (!d) return;
@@ -226,7 +246,9 @@ export async function generateDraft(orgId: string, draftId: string): Promise<voi
       await fail(orgId, draftId, 'No client passages were found for this section, so nothing could be drafted with a source. File evidence under it and draft again.');
       return;
     }
-    const prompt = buildPrompt(d.title, d.fda_description, passages);
+    // Read at claim time: a source the firm turned off before this moment is not used.
+    const style = await styleSourceService.forDrafting(orgId, d.section_id, `${d.title} ${d.device_name}`);
+    const prompt = buildPrompt(d.title, d.fda_description, passages, style);
     let ai = await aiGenerate({ orgId, projectId: d.project_id }, 'draft', { system: DRAFT_SYSTEM, prompt });
     const gateRun = (text: string) =>
       runCitationGate({
@@ -284,11 +306,14 @@ export async function generateDraft(orgId: string, draftId: string): Promise<voi
       await saveStatements(tx, orgId, draftId, statements);
       await tx.query(
         'section_drafts',
-        `UPDATE section_drafts SET status = 'ready', model = $3, prompt_version = $4, gate_run_id = $5, removed_items = $6::jsonb, finished_at = now()
+        `UPDATE section_drafts SET status = 'ready', model = $3, prompt_version = $4, gate_run_id = $5, removed_items = $6::jsonb,
+                style_sources = $7::jsonb, finished_at = now()
           WHERE id = $1 AND org_id = $2`,
-        [draftId, orgId, `${ai.provider}:${ai.model}`, DRAFT_PROMPT_VERSION, gate.runId, JSON.stringify(removed)],
+        [draftId, orgId, `${ai.provider}:${ai.model}`, DRAFT_PROMPT_VERSION, gate.runId, JSON.stringify(removed), JSON.stringify(styleRefs(style))],
       );
     });
+    // Claims beyond the IFU or the cited evidence are flagged, not removed: the consultant decides.
+    await checkClaims(orgId, draftId).catch((err) => console.error(`[drafts] claim check of ${draftId} failed: ${(err as Error).message}`));
   } catch (err) {
     await fail(orgId, draftId, `Drafting failed: ${(err as Error).message}`);
   }

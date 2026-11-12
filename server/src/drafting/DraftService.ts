@@ -3,6 +3,8 @@ import { Permission, roleHasPermission } from '../middleware/authorize';
 import { sectionService } from '../sections/SectionService';
 import { dataService } from '../services/DataService';
 import { AppError, ErrorCodes } from '../utils/AppError';
+import { DraftingStyle, StyleSourceRef, styleSourceService } from '../style/StyleSourceService';
+import { checkClaims } from './ClaimChecker';
 import { checkDraft, checkSoonInDev, draftFdaCheck, DraftFdaCheck, requeueCheck } from './DraftChecker';
 import { draftFileName, writeDraftDocx } from './docxWriter';
 import { BaseStatement, diffImport, ImportSummary, NotADraftDocxError, readDraftDocx } from './roundTrip';
@@ -24,6 +26,8 @@ export interface DraftStatement {
   text: string;
   citations: { marker: string; label: string }[];
   warnings: string[];
+  /** F3.6: where the statement claims more than the Indications for Use or its cited source supports. */
+  claimWarnings: string[];
   origin: 'generated' | 'human_edited' | 'human_added';
   humanApproved: boolean;
   approvedBy: string | null;
@@ -50,6 +54,11 @@ export interface Draft extends DraftVersion {
   importSummary: ImportSummary | null;
   /** F3.5: predicate K-numbers in the draft checked against FDA data (null until the draft is ready). */
   fdaCheck: DraftFdaCheck | null;
+  /**
+   * F3.6: the firm style sources this version was written with, and the firm's past wording
+   * for the section as it stands now (empty when the firm has style sources off).
+   */
+  style: { used: StyleSourceRef[]; precedents: DraftingStyle['precedents'] };
 }
 
 /** An edited DOCX of one section is small; the JSON body limit (BODY_PARSER_LIMIT) bounds it too. */
@@ -68,6 +77,7 @@ interface DraftRow {
   finished_at: Date | null;
   removed_items: { text: string; code: string; reason: string }[];
   import_summary: ImportSummary | null;
+  style_sources: StyleSourceRef[];
 }
 
 async function must(orgId: string, userId: string, permission: Permission, what: string): Promise<void> {
@@ -94,7 +104,7 @@ async function section(orgId: string, projectSectionId: string): Promise<{ id: s
 }
 
 const DRAFT_SELECT = `SELECT d.id, d.version_no, d.origin, d.status, d.created_at, b.version_no AS based_on_version, d.model, d.error,
-         u.full_name AS created_by_name, d.finished_at, d.removed_items, d.import_summary
+         u.full_name AS created_by_name, d.finished_at, d.removed_items, d.import_summary, d.style_sources
     FROM section_drafts d
     LEFT JOIN section_drafts b ON b.id = d.based_on_draft_id AND b.org_id = d.org_id
     LEFT JOIN user_profiles u ON u.user_id = d.created_by`;
@@ -108,13 +118,14 @@ async function statementsOf(orgId: string, draftId: string): Promise<DraftStatem
     text: string;
     citations: { marker: string; label: string }[];
     warnings: string[];
+    claim_warnings: string[];
     origin: DraftStatement['origin'];
     human_approved: boolean;
     approved_by_name: string | null;
   }>(
     { orgId },
     'draft_statements',
-    `SELECT st.id, st.ordinal, st.paragraph, st.kind, st.text, st.citations, st.warnings, st.origin, st.human_approved, u.full_name AS approved_by_name
+    `SELECT st.id, st.ordinal, st.paragraph, st.kind, st.text, st.citations, st.warnings, st.claim_warnings, st.origin, st.human_approved, u.full_name AS approved_by_name
        FROM draft_statements st LEFT JOIN user_profiles u ON u.user_id = st.approved_by
       WHERE st.org_id = $1 AND st.draft_id = $2 ORDER BY st.ordinal`,
     [orgId, draftId],
@@ -127,6 +138,7 @@ async function statementsOf(orgId: string, draftId: string): Promise<DraftStatem
     text: r.text,
     citations: r.citations,
     warnings: r.warnings,
+    claimWarnings: r.claim_warnings,
     origin: r.origin,
     humanApproved: r.human_approved,
     approvedBy: r.approved_by_name,
@@ -210,6 +222,10 @@ export const draftService = {
       removed: r.removed_items,
       importSummary: r.import_summary,
       fdaCheck: r.status === 'ready' ? await draftFdaCheck(orgId, r.id) : null,
+      style: {
+        used: r.style_sources,
+        precedents: (await styleSourceService.forDrafting(orgId, s.sectionId, s.title)).precedents,
+      },
     };
   },
 
@@ -298,6 +314,8 @@ export const draftService = {
       await saveStatements(tx, orgId, row.id, statements);
       return row.id;
     });
+    // A consultant's edit is checked like a generated sentence: claims beyond the IFU or the evidence are flagged.
+    await checkClaims(orgId, draftId);
     // An edit may add or change a predicate's K-number: the new version gets its own check.
     checkSoonInDev(orgId, draftId);
     return this.get(orgId, projectSectionId, draftId);
