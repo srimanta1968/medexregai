@@ -70,7 +70,17 @@ export async function saveStatements(tx: Tx, orgId: string, draftId: string, sta
   );
 }
 
-const label = (h: SearchHit): string => `${h.fileName} v${h.versionNo}, ${h.where}`;
+/**
+ * Where a consultant finds the passage: page, sheet range or slide when the file has them;
+ * otherwise the passage number (what the passage viewer shows) and the heading it sits under.
+ */
+export function label(h: SearchHit): string {
+  const located = h.start.page !== null || h.start.slide !== null || (h.start.sheet !== null && h.start.cellRange !== null);
+  if (located) return `${h.fileName} v${h.versionNo}, ${h.where}`;
+  const range = h.end.ordinal > h.start.ordinal ? `passages ${h.start.ordinal}-${h.end.ordinal}` : `passage ${h.start.ordinal}`;
+  const heading = h.sectionPath && !h.sectionPath.startsWith('(') ? `, under "${h.sectionPath}"` : '';
+  return `${h.fileName} v${h.versionNo}, ${range}${heading}`;
+}
 
 /** Evidence for a section: its own files first, then what the searches find elsewhere in the project. */
 export async function gatherEvidence(input: {
@@ -199,19 +209,32 @@ export async function generateDraft(orgId: string, draftId: string): Promise<voi
       await fail(orgId, draftId, 'No client passages were found for this section, so nothing could be drafted with a source. File evidence under it and draft again.');
       return;
     }
-    const ai = await aiGenerate({ orgId, projectId: d.project_id }, 'draft', { system: DRAFT_SYSTEM, prompt: buildPrompt(d.title, d.fda_description, passages) });
+    const prompt = buildPrompt(d.title, d.fda_description, passages);
+    let ai = await aiGenerate({ orgId, projectId: d.project_id }, 'draft', { system: DRAFT_SYSTEM, prompt });
+    const gateRun = (text: string) =>
+      runCitationGate({
+        orgId,
+        userId: d.created_by ?? undefined,
+        projectId: d.project_id,
+        route: 'draft',
+        // NO_EVIDENCE after real content is the model hedging, not a statement.
+        text: resolveTags(text.replace(/\s*\bNO_EVIDENCE\b\.?/g, ''), passages),
+        everyStatement: true,
+      });
     if (/^\s*NO_EVIDENCE\s*\.?\s*$/.test(ai.text)) {
       await fail(orgId, draftId, 'The client passages found for this section do not cover what it needs, so nothing was drafted. File evidence under it and draft again.');
       return;
     }
-    const gate = await runCitationGate({
-      orgId,
-      userId: d.created_by ?? undefined,
-      projectId: d.project_id,
-      route: 'draft',
-      text: resolveTags(ai.text, passages),
-      everyStatement: true,
-    });
+    let gate = await gateRun(ai.text);
+    // A small model sometimes drops the passage tags altogether. Ask once more, firmly; the
+    // gate judges the second answer exactly like the first.
+    if (!gate.kept.length && gate.removed.length && gate.removed.filter((r) => r.code === 'UNCITED').length * 2 >= gate.removed.length) {
+      ai = await aiGenerate({ orgId, projectId: d.project_id }, 'draft', {
+        system: DRAFT_SYSTEM,
+        prompt: `${prompt}\n\nYour previous answer had no passage tags, so every sentence was deleted. End EACH sentence with its tag, like [S1].`,
+      });
+      gate = await gateRun(ai.text);
+    }
     const warnings = new Map(gate.kept.map((k) => [k.text, k.warnings]));
     const removed: { text: string; code: string; reason: string }[] = [...gate.removed];
     const statements = toStatements(gate.text, passages, warnings).filter((s) => {

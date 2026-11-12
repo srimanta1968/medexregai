@@ -1,0 +1,138 @@
+{
+  "requiresAuth": true,
+  "taskId": "91e7f58c-a5fa-49b6-a2f4-fc8bb115e36d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/project-sections/:sectionId/draft - the latest draft, its cited statements and what was removed",
+  "description": "A section draft with a citation on every statement (F3.2 AC1): the latest draft (or ?version=n) with each statement's citations (marker and a readable source label), its origin (generated, human_edited, human_added) and whether it is human-approved (AC4); uncited statements the gate removed are listed with the reason (AC2); plus every version. draft is null before the first request. Needs projects:read.",
+  "endpoint": "/api/project-sections/:sectionId/draft",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 107,
+  "coversCriterion": [
+    "4bb0c6e6-956d-41c0-a6ee-01496b331169#AC1",
+    "4bb0c6e6-956d-41c0-a6ee-01496b331169#AC2",
+    "4bb0c6e6-956d-41c0-a6ee-01496b331169#AC4",
+    "91e7f58c-a5fa-49b6-a2f4-fc8bb115e36d#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId/sections"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID or version is not a positive number"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "not found",
+      "when": "no such section, or no such version"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant reads the ready draft with its citations",
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "sectionId": "{{var:draft_section_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "draft": {
+            "status": "ready"
+          }
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "sectionId": "{{cache:sections.board.response.data.sections.0.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown section",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "sectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown version",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "sectionId": "{{var:draft_section_id}}"
+      },
+      "queryParams": {
+        "version": "{{static:99}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "sectionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "status": [
+      "queued",
+      "generating",
+      "ready",
+      "failed"
+    ],
+    "origin": [
+      "generated",
+      "human_edited",
+      "human_added"
+    ]
+  }
+}

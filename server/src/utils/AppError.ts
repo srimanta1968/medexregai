@@ -74,4 +74,6 @@ export const ErrorCodes = {
   FOLDER_ALREADY_LINKED: 'FOLDER_ALREADY_LINKED',
   // F3.1 review board
   SECTION_STATUS_INVALID: 'SECTION_STATUS_INVALID',
+  // F3.2: a section's draft is still being written.
+  DRAFT_IN_PROGRESS: 'DRAFT_IN_PROGRESS',
 } as const;

@@ -1,0 +1,96 @@
+{
+  "requiresAuth": true,
+  "taskId": "91e7f58c-a5fa-49b6-a2f4-fc8bb115e36d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/project-sections/:sectionId/draft/export - the draft as a Word document",
+  "description": "A draft exports to DOCX with citations as Word comments or bookmarks (F3.2 AC3): every statement in a bookmark mx_s_<n> with a MedexRegAI comment naming its source; statements the gate removed become one note with an open-item comment; the draft id is a custom document property so the edited copy can be imported. Latest ready draft, or ?version=n. 404 when the section has no finished draft. Needs projects:read.",
+  "endpoint": "/api/project-sections/:sectionId/draft/export",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 108,
+  "coversCriterion": [
+    "4bb0c6e6-956d-41c0-a6ee-01496b331169#AC3",
+    "91e7f58c-a5fa-49b6-a2f4-fc8bb115e36d#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId/sections"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "sectionId must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "no finished draft",
+      "when": "no such section, or no ready draft yet"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant downloads the draft in Word",
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "sectionId": "{{var:draft_section_id}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "sectionId": "{{cache:sections.board.response.data.sections.0.id}}"
+      }
+    },
+    {
+      "name": "404 - no finished draft yet",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "sectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "sectionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}
