@@ -1,0 +1,144 @@
+{
+  "requiresAuth": true,
+  "taskId": "470069e8-c4ad-47de-8e91-1610ad6bb2a5",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/pilot-report - hours against the baseline and draft acceptance",
+  "description": "The pilot report shows hours versus firm baseline and draft acceptance rate (F4.2 AC1). For one project: hours logged (finished time entries) by A3 activity against the firm baseline; wholeProject (G3, proposed target 25% lower) and draftedSections (write + tabulate + reconcile, G2, target 30% lower) with reduction and metTarget (null without a baseline); acceptance: of the model-drafted statements in each re-imported version, how many came back from Word unchanged (G2, target 70%; any edit counts, so a floor; rate null before a re-import); sign-offs and the SHA-256 of the numbers. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/pilot-report",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 172,
+  "coversCriterion": [
+    "8810a366-70b1-4b42-a9ca-ab8411e7ce9c#AC1",
+    "470069e8-c4ad-47de-8e91-1610ad6bb2a5#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "projectId must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project in the caller's firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Project with 20 h logged against an 88 h baseline",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "pathParams": {
+        "projectId": "{{var:pilot_project_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "wholeProject": {
+            "actualHours": 20,
+            "baselineHours": 88,
+            "reduction": 0.77,
+            "metTarget": true
+          },
+          "draftedSections": {
+            "actualHours": 14,
+            "baselineHours": 30,
+            "reduction": 0.53,
+            "metTarget": true
+          },
+          "acceptance": {
+            "rate": null,
+            "sectionsReimported": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Project whose re-imported draft kept every drafted statement",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "acceptance": {
+            "rate": 1,
+            "edited": 0,
+            "deleted": 0,
+            "sectionsReimported": 1,
+            "metTarget": true
+          }
+        }
+      }
+    },
+    {
+      "name": "404 - another firm's project",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "pathParams": {
+        "projectId": "{{var:pilot_project_id}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

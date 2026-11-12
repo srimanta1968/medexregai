@@ -258,3 +258,70 @@ export const pilotService = {
     };
   },
 };
+
+const pct = (n: number | null): string => (n === null ? 'no baseline' : `${Math.round(n * 100)}%`);
+const hrs = (n: number | null): string => (n === null ? '-' : n.toFixed(1));
+
+/** The report as PDF blocks (trust/pdf.ts). ASCII only: the PDF writer measures Helvetica. */
+export function pilotBlocks(r: PilotReport): import('../trust/pdf').Block[] {
+  const verdict = (c: Comparison) => (c.metTarget === null ? 'no baseline to compare' : c.metTarget ? 'target met' : 'target not met');
+  return [
+    { kind: 'title', text: `Pilot report: ${r.projectName}` },
+    { kind: 'subtitle', text: `${r.clientName}, ${r.deviceName}. Generated ${r.generatedAt.slice(0, 16).replace('T', ' ')} UTC` },
+    {
+      kind: 'fields',
+      rows: [
+        ['Firm baseline', r.baseline.totalHours ? `${hrs(r.baseline.totalHours)} h${r.baseline.basis ? ` (${r.baseline.basis})` : ''}${r.baseline.complete ? '' : ', not every activity entered'}` : 'Not entered'],
+        ['Time logged on this project', `${hrs(r.wholeProject.actualHours)} h in ${r.timeEntries} entries by ${r.people} ${r.people === 1 ? 'person' : 'people'}`],
+        ['Report fingerprint (SHA-256)', r.sha256],
+      ],
+    },
+    { kind: 'h2', text: 'Against the firm baseline' },
+    {
+      kind: 'table',
+      columns: [
+        { label: 'Measure', width: 3 },
+        { label: 'Logged (h)', width: 1.2 },
+        { label: 'Baseline (h)', width: 1.2 },
+        { label: 'Lower by', width: 1.2 },
+        { label: 'Proposed target', width: 1.6 },
+        { label: 'Result', width: 2 },
+      ],
+      rows: [
+        ['Whole project (G3)', hrs(r.wholeProject.actualHours), hrs(r.wholeProject.baselineHours), pct(r.wholeProject.reduction), `>= ${pct(r.wholeProject.target)} lower`, verdict(r.wholeProject)],
+        ['Drafted sections: write + tabulate + reconcile (G2)', hrs(r.draftedSections.actualHours), hrs(r.draftedSections.baselineHours), pct(r.draftedSections.reduction), `>= ${pct(r.draftedSections.target)} lower`, verdict(r.draftedSections)],
+      ],
+    },
+    { kind: 'h2', text: 'Drafts kept without change (G2)' },
+    {
+      kind: 'p',
+      text:
+        r.acceptance.rate === null
+          ? 'No draft has been re-imported from Word yet.'
+          : `${r.acceptance.unchanged} of ${r.acceptance.draftedStatements} drafted statements came back from Word unchanged (${pct(r.acceptance.rate)}; proposed target >= ${pct(r.acceptance.target)}): ${r.acceptance.edited} edited, ${r.acceptance.deleted} deleted, across ${r.acceptance.sectionsReimported} section${r.acceptance.sectionsReimported === 1 ? '' : 's'}.`,
+    },
+    { kind: 'note', text: 'Any edit counts as a change, so this rate is a floor: a small wording fix and a material correction count the same.' },
+    { kind: 'h2', text: 'Hours by activity' },
+    {
+      kind: 'table',
+      columns: [
+        { label: 'Activity', width: 2 },
+        { label: 'Logged (h)', width: 1 },
+        { label: 'Baseline (h)', width: 1 },
+        { label: 'Lower by', width: 1 },
+      ],
+      rows: r.byActivity.map((a) => [a.label, hrs(a.actualHours), hrs(a.baselineHours), pct(a.reduction)]),
+    },
+    { kind: 'h2', text: 'Sign-off by the firm RA lead' },
+    r.signoffs.length
+      ? {
+          kind: 'bullets',
+          items: r.signoffs.map((s) => `${s.signerName}, ${s.signerTitle}, ${s.signedAt.slice(0, 10)}${s.current ? '' : ' (signed earlier figures; the numbers have changed since)'}${s.note ? `: ${s.note}` : ''}`),
+        }
+      : { kind: 'p', text: 'Not signed yet.' },
+    {
+      kind: 'note',
+      text: 'Targets are the proposed targets of the MedexRegAI PRD v2.0, section 12. Hours are the time the firm logged in MedexRegAI against its own baseline; the firm judges what they show.',
+    },
+  ];
+}

@@ -1,0 +1,57 @@
+{
+  "requiresAuth": true,
+  "taskId": "470069e8-c4ad-47de-8e91-1610ad6bb2a5",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/pilot/baseline - the firm's baseline",
+  "description": "The pilot report shows hours versus firm baseline and draft acceptance rate (F4.2 AC1). The firm's Phase 0 baseline: hours per A3 activity on one comparable past 510(k), as the validation workbook (section A3) asks for it; null for an activity not entered. Returns basis, activities, totalHours, complete. Needs projects:read.",
+  "endpoint": "/api/pilot/baseline",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 170,
+  "coversCriterion": [
+    "8810a366-70b1-4b42-a9ca-ab8411e7ce9c#AC1",
+    "470069e8-c4ad-47de-8e91-1610ad6bb2a5#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Firm with a baseline",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "totalHours": 88,
+          "complete": true
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

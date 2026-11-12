@@ -1,0 +1,135 @@
+{
+  "requiresAuth": true,
+  "taskId": "470069e8-c4ad-47de-8e91-1610ad6bb2a5",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "PUT /api/pilot/baseline - set the firm's baseline",
+  "description": "The pilot report shows hours versus firm baseline and draft acceptance rate (F4.2 AC1). Body { basis? (what the baseline is, at most 200), hours: { <activity code>: hours 0-10000 } }; replaces the baseline (activities left out are cleared). Needs firm:manage; audited as pilot.baseline_updated.",
+  "endpoint": "/api/pilot/baseline",
+  "method": "PUT",
+  "expectedStatus": 200,
+  "priority": 171,
+  "coversCriterion": [
+    "8810a366-70b1-4b42-a9ca-ab8411e7ce9c#AC1",
+    "470069e8-c4ad-47de-8e91-1610ad6bb2a5#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Not activity codes: billing",
+      "when": "unknown activity code, negative or non-numeric hours, or extra fields"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks firm:manage"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Owner enters the baseline",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "basis": "Traditional 510(k), 2025",
+        "hours": {
+          "write": 16,
+          "tabulate": 8,
+          "reconcile": 6
+        }
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "totalHours": 30,
+          "complete": false
+        }
+      }
+    },
+    {
+      "name": "400 - unknown activity code",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "payload": {
+        "hours": {
+          "billing": 3
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "400 - negative hours",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "payload": {
+        "hours": {
+          "write": -1
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "403 - a reviewer cannot set the baseline",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "payload": {
+        "hours": {
+          "write": 1
+        }
+      },
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "payload": {
+        "hours": {
+          "write": 1
+        }
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
