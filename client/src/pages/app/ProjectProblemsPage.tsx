@@ -4,7 +4,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { ProblemDetail, ProblemStatus, ProblemSummary, Severity, problemsApi } from '../../lib/problemsApi';
+import { DecidePanel } from '../../components/app/DecidePanel';
+import { Decision, ProblemDetail, ProblemStatus, ProblemSummary, Severity, problemsApi } from '../../lib/problemsApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
 const button = 'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:border-brand-400 disabled:opacity-60';
@@ -81,6 +82,28 @@ export default function ProjectProblemsPage(): JSX.Element {
       setOpen(await api.get(id));
     } catch (err) {
       setError(message(err, 'Could not open the problem.'));
+    }
+  };
+  const decide = async (decision: Decision, note: string) => {
+    if (!open) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const d = await api.decide(open.id, decision, note);
+      setOpen(d);
+      setNotice(
+        d.status === 'dismissed'
+          ? 'Dismissed. Your note is kept in the project record.'
+          : d.requestItemId
+            ? 'Resolved and added to the draft client request. Nothing is sent until you approve the request.'
+            : 'Resolved. Your decision and reason are kept in the project record.',
+      );
+      load();
+    } catch (err) {
+      setError(message(err, 'Could not save the decision.'));
+    } finally {
+      setBusy(false);
     }
   };
   const recheck = async () => {
@@ -180,10 +203,20 @@ export default function ProjectProblemsPage(): JSX.Element {
                 {open.kind === 'contradiction' ? 'Contradiction' : 'Gap'} · {open.severityReason}
               </p>
               <SourcesSideBySide problem={open} />
-              {open.status !== 'open' && (
+              {open.status !== 'open' ? (
                 <p className="mt-4 text-sm text-slate-700">
                   {STATUS_LABEL[open.status]} by {open.decidedBy ?? 'a consultant'}: {open.decisionNote}
+                  {open.requestItemId && (
+                    <>
+                      {' '}
+                      <Link to={`/app/projects/${projectId}/requests`} className="text-brand-700 hover:underline">
+                        See the client request
+                      </Link>
+                    </>
+                  )}
                 </p>
+              ) : (
+                <DecidePanel key={open.id} problem={open} busy={busy} onDecide={(d, n) => void decide(d, n)} />
               )}
             </>
           )}
