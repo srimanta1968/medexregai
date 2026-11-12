@@ -7,6 +7,7 @@ import { describeLocation, scanForPhi } from './phiScanner';
 import { classifyParseFailure, UnreadableKind } from './unreadable';
 import { sectionClassifier } from '../sorting/SectionClassifier';
 import { revisionDetector } from '../sorting/RevisionDetector';
+import { problemEngine } from '../problems/ProblemEngine';
 
 /**
  * F7.2 ingest step for one file version: read our copy, check it is the bytes we
@@ -50,14 +51,17 @@ interface ClaimedVersion {
 }
 
 /**
- * F2.2: once a version has been read (or found unreadable), file it in an eSTAR section
- * and refresh the project's version groups. Never fails the ingest step: the worker's
+ * F2.2/F2.3: once a version has been read (or found unreadable), file it in an eSTAR section,
+ * refresh the project's version groups, extract its facts and re-check the project's problems. Never fails the ingest step: the worker's
  * sorting pass picks up anything missed here.
  */
 async function afterRead(orgId: string, version: ClaimedVersion): Promise<void> {
   try {
     await sectionClassifier.sortFile(orgId, version.file_id);
     await revisionDetector.detect(orgId, version.project_id);
+    // F2.3: the facts this version states, then the project's contradictions and gaps.
+    await problemEngine.extractForVersion(orgId, version.id);
+    await problemEngine.detect(orgId, version.project_id);
   } catch (err) {
     console.warn(`[ingest] sorting after read of ${version.id} failed (the worker will retry): ${(err as Error).message}`);
   }

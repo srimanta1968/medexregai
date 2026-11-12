@@ -1,6 +1,7 @@
 import { dataService } from '../services/DataService';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { decodeCursor, Page, toPage } from '../utils/pagination';
+import { problemEngine } from '../problems/ProblemEngine';
 import { CONFIDENT, sectionClassifier } from './SectionClassifier';
 
 /** F2.2 read side of the sorted folder: files with their section, coverage and the first-hour checklist. */
@@ -247,6 +248,9 @@ export const sortingService = {
   /** A consultant files a file (or marks it as not evidence); returns the new assignment. */
   async reassign(orgId: string, userId: string, fileId: string, sectionId: string | null): Promise<{ fileId: string; assignment: Assignment }> {
     await sectionClassifier.reassign(orgId, userId, fileId, sectionId);
+    const [f] = await dataService.query<{ project_id: string }>({ orgId }, 'files', 'SELECT project_id FROM files WHERE id = $1 AND org_id = $2', [fileId, orgId]);
+    // Moving a file can open or close a gap.
+    if (f) await problemEngine.detect(orgId, f.project_id).catch((err) => console.warn(`[problems] re-check after re-filing failed: ${(err as Error).message}`));
     const [a] = await dataService.query<AssignmentRow & { project_id: string }>(
       { orgId },
       'file_assignments',

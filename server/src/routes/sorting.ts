@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { audit, fromParam } from '../middleware/audit';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
+import { problemEngine } from '../problems/ProblemEngine';
 import { revisionDetector } from '../sorting/RevisionDetector';
 import { sortingService } from '../sorting/SortingService';
 import { AppError, ErrorCodes } from '../utils/AppError';
@@ -114,6 +115,8 @@ sortingRouter.post(
     const groupId = parse(uuid('groupId'), req.params.groupId);
     const body = parse(currentBody, req.body);
     await revisionDetector.confirm(orgId, userId, projectId, groupId, body.fileId);
+    // Superseded files no longer count in contradictions.
+    await problemEngine.detect(orgId, projectId).catch((err) => console.warn(`[problems] re-check after version choice failed: ${(err as Error).message}`));
     const group = (await revisionDetector.list(orgId, projectId)).find((g) => g.id === groupId);
     res.status(200).json({ success: true, data: group });
   }),
