@@ -68,6 +68,20 @@ export async function saveStatements(tx: Tx, orgId: string, draftId: string, sta
       ),
     ],
   );
+  // The statement -> source graph (F3.3): one edge per client citation, keyed by file so a
+  // new version of a file finds every statement that cited an older one.
+  await tx.query(
+    'statement_sources',
+    `INSERT INTO statement_sources (org_id, statement_id, draft_id, file_version_id, file_id, locator)
+     SELECT st.org_id, st.id, st.draft_id, v.id, v.file_id, m[2]
+       FROM draft_statements st
+       CROSS JOIN LATERAL jsonb_array_elements(st.citations) c
+       CROSS JOIN LATERAL regexp_match(c->>'marker', '^\\[C:([0-9a-fA-F-]{36})#([^\\]]{1,40})\\]$') m
+       JOIN file_versions v ON v.id = m[1]::uuid AND v.org_id = st.org_id
+      WHERE st.org_id = $1 AND st.draft_id = $2
+     ON CONFLICT DO NOTHING`,
+    [orgId, draftId],
+  );
 }
 
 /**

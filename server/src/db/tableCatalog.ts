@@ -66,6 +66,9 @@ export const TABLE_CATALOG = {
   section_status_events: 'tenant',
   section_drafts: 'tenant',
   draft_statements: 'tenant',
+  // F3.3 revision impact (migration 032).
+  statement_sources: 'tenant',
+  impact_actions: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
