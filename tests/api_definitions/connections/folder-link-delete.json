@@ -1,6 +1,6 @@
 {
   "name": "DELETE /api/projects/:projectId/folder-links/:linkId - stop syncing a folder",
-  "description": "Unlinks a folder (AC3): the sync job stops following it; files already imported stay in the project. Returns 200 with the link (status unlinked). The happy path needs a folder linked through a real provider connection. Needs projects:write.",
+  "description": "Unlinks a folder (AC3): the sync job stops following it; files already imported stay in the project. Returns 200 with the link (status unlinked). The happy path needs a folder linked through a real provider connection. Needs projects:write. The happy path needs a folder link made through a real provider sign-in (no fixture can create one): set connected_folder_link_id in tests/config/test-config.json to such a link to run it; without it the case is skipped rather than run on a stale id.",
   "endpoint": "/api/projects/:projectId/folder-links/:linkId",
   "method": "DELETE",
   "requiresAuth": true,
@@ -54,7 +54,7 @@
       "name": "Consultant stops syncing a folder",
       "pathParams": {
         "projectId": "{{cache:projects.create.response.data.id}}",
-        "linkId": "{{cache:folderLinks.create.response.data.id}}"
+        "linkId": "{{var:connected_folder_link_id}}"
       },
       "expectedStatus": 200,
       "expectedResponse": {
