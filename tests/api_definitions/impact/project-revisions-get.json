@@ -1,0 +1,98 @@
+{
+  "requiresAuth": true,
+  "taskId": "8bcb5999-7f69-4b4b-a005-eb063c9e601c",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/revisions - new versions of client files",
+  "description": "A new client file version lists every affected statement and section (F3.3 AC1): every version 2+ of the project's files, newest first, with the version it replaces, how many statements in the latest drafts cite an older version, and how many items have been handled. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/revisions",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 110,
+  "coversCriterion": [
+    "155a7678-363d-4da7-9b55-7e38f099069e#AC1",
+    "8bcb5999-7f69-4b4b-a005-eb063c9e601c#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant sees the revised report and how many statements cite the old one",
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "projectId": "{{var:draft_project_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}

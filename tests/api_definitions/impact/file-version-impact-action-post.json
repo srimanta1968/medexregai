@@ -1,0 +1,181 @@
+{
+  "requiresAuth": true,
+  "taskId": "8bcb5999-7f69-4b4b-a005-eb063c9e601c",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/file-versions/:versionId/impact/actions - act on one affected item",
+  "description": "Each affected item offers an action and nothing changes until the consultant chooses (F3.3 AC2). Body { itemKey: draft:<projectSectionId> | problem:<id> | request_item:<id>, action }. redraft queues a new draft of the section; recheck re-reads the new version's facts and re-checks the project's problems; mark_received marks the request item received; keep records that nothing needs doing. The choice is recorded (who, when, result) and the item stays listed. 400 for an action the item does not offer; 404 for an item this version does not affect. Needs projects:write.",
+  "endpoint": "/api/file-versions/:versionId/impact/actions",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 112,
+  "coversCriterion": [
+    "155a7678-363d-4da7-9b55-7e38f099069e#AC2",
+    "8bcb5999-7f69-4b4b-a005-eb063c9e601c#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "captureResponse": {
+    "impact.action.response.data.key": "data.key"
+  },
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "is not an action for this item",
+      "when": "malformed itemKey or action, or an action the item does not offer"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "does not allow this action",
+      "when": "role lacks projects:write (e.g. reviewer)"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "does not affect that item",
+      "when": "no such version, or the version does not affect the item"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant keeps the draft as it is for now",
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "versionId": "{{var:revision_version_id}}"
+      },
+      "payload": {
+        "itemKey": "draft:{{var:draft_section_id}}",
+        "action": "{{static:keep}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "kind": "draft",
+          "handled": {
+            "action": "keep"
+          }
+        }
+      }
+    },
+    {
+      "name": "400 - a draft cannot be marked received",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "versionId": "{{var:revision_version_id}}"
+      },
+      "payload": {
+        "itemKey": "draft:{{var:draft_section_id}}",
+        "action": "{{static:mark_received}}"
+      }
+    },
+    {
+      "name": "404 - an item this version does not affect",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "versionId": "{{var:revision_version_id}}"
+      },
+      "payload": {
+        "itemKey": "problem:{{dynamic:uuid}}",
+        "action": "{{static:recheck}}"
+      }
+    },
+    {
+      "name": "400 - malformed item key",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "versionId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "itemKey": "{{static:section-7}}",
+        "action": "{{static:keep}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "versionId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "itemKey": "draft:{{dynamic:uuid}}",
+        "action": "{{static:keep}}"
+      }
+    },
+    {
+      "name": "403 - reviewer role cannot act",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "pathParams": {
+        "versionId": "{{dynamic:uuid}}"
+      },
+      "payload": {
+        "itemKey": "draft:{{dynamic:uuid}}",
+        "action": "{{static:keep}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "action": [
+      "redraft",
+      "recheck",
+      "mark_received",
+      "keep"
+    ]
+  }
+}

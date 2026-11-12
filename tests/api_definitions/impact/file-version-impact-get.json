@@ -1,0 +1,120 @@
+{
+  "requiresAuth": true,
+  "taskId": "8bcb5999-7f69-4b4b-a005-eb063c9e601c",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/file-versions/:versionId/impact - what a new version affects",
+  "description": "A new client file version lists every affected statement and section (F3.3 AC1): sections whose latest draft cites an older version of the file, with those statements; open problems built on facts from the older version; requested client items for those problems or the file's section; the facts and passages that changed between the versions. Each item offers its actions (AC2: redraft / recheck / mark_received, or keep) and shows what was chosen; nothing is changed until then. Needs projects:read.",
+  "endpoint": "/api/file-versions/:versionId/impact",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 111,
+  "coversCriterion": [
+    "155a7678-363d-4da7-9b55-7e38f099069e#AC1",
+    "155a7678-363d-4da7-9b55-7e38f099069e#AC2",
+    "8bcb5999-7f69-4b4b-a005-eb063c9e601c#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "File version not found",
+      "when": "no such version, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant opens the impact of the revised report",
+      "headers": {
+        "Authorization": "Bearer {{var:draft_token}}"
+      },
+      "fixture": "tests/setup_scripts/20_section_draft.py",
+      "pathParams": {
+        "versionId": "{{var:revision_version_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "version": {
+            "versionNo": 2
+          },
+          "previous": {
+            "versionNo": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "versionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "404 - unknown version",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "versionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "versionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "kind": [
+      "draft",
+      "problem",
+      "request_item"
+    ],
+    "suggested": [
+      "redraft",
+      "recheck",
+      "mark_received",
+      "keep"
+    ]
+  }
+}

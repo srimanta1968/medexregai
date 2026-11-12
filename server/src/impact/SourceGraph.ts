@@ -28,10 +28,10 @@ export interface DependentSection {
 }
 
 /**
- * Sections whose latest ready draft cites a version of `fileId` other than `exceptVersionId`
- * (normally the new version), with the statements that do.
+ * Sections whose latest ready draft cites a version of `fileId` OLDER than `newVersionId`,
+ * with the statements that do. A draft already citing the new version (or a later one) is not affected.
  */
-export async function sectionsCitingFile(orgId: string, fileId: string, exceptVersionId: string): Promise<DependentSection[]> {
+export async function sectionsCitingFile(orgId: string, fileId: string, newVersionId: string): Promise<DependentSection[]> {
   const rows = await dataService.query<{
     project_section_id: string;
     section_id: string;
@@ -61,9 +61,10 @@ export async function sectionsCitingFile(orgId: string, fileId: string, exceptVe
        JOIN file_versions v ON v.id = ss.file_version_id AND v.org_id = ss.org_id
        JOIN project_sections ps ON ps.id = l.project_section_id AND ps.org_id = ss.org_id
        JOIN estar_sections s ON s.id = ps.section_id
-      WHERE ss.org_id = $1 AND ss.file_id = $2 AND ss.file_version_id <> $3
+      WHERE ss.org_id = $1 AND ss.file_id = $2
+        AND v.version_no < (SELECT nv.version_no FROM file_versions nv WHERE nv.id = $3 AND nv.org_id = $1)
       ORDER BY s.ordinal, st.ordinal`,
-    [orgId, fileId, exceptVersionId],
+    [orgId, fileId, newVersionId],
   );
   const bySection = new Map<string, DependentSection>();
   for (const r of rows) {
@@ -86,7 +87,7 @@ export async function sectionsCitingFile(orgId: string, fileId: string, exceptVe
   return [...bySection.values()];
 }
 
-/** How many statements in latest drafts cite an older version of each file (for the revisions list). */
+/** For each new version: how many statements in latest drafts cite an older version of its file (the revisions list). */
 export async function citingCounts(orgId: string, pairs: { fileId: string; versionId: string }[]): Promise<Map<string, number>> {
   if (!pairs.length) return new Map();
   const rows = await dataService.query<{ version_id: string; n: string }>(
@@ -98,7 +99,9 @@ export async function citingCounts(orgId: string, pairs: { fileId: string; versi
      )
      SELECT want.version_id, count(DISTINCT ss.statement_id) AS n
        FROM unnest($2::uuid[], $3::uuid[]) AS want(file_id, version_id)
-       JOIN statement_sources ss ON ss.org_id = $1 AND ss.file_id = want.file_id AND ss.file_version_id <> want.version_id
+       JOIN file_versions nv ON nv.id = want.version_id AND nv.org_id = $1
+       JOIN statement_sources ss ON ss.org_id = $1 AND ss.file_id = want.file_id
+       JOIN file_versions cv ON cv.id = ss.file_version_id AND cv.org_id = $1 AND cv.version_no < nv.version_no
        JOIN latest l ON l.id = ss.draft_id
       GROUP BY want.version_id`,
     [orgId, pairs.map((p) => p.fileId), pairs.map((p) => p.versionId)],

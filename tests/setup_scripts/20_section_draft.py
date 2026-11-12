@@ -1,5 +1,5 @@
 # @fixture scope=tenant tier=api reason="a ready section draft can only come from the drafter (parse + model call), so each session makes one through the app's own APIs"
-# @exports draft_token, draft_section_id, draft_other_section_id, draft_import_base64
+# @exports draft_token, draft_section_id, draft_other_section_id, draft_import_base64, draft_project_id, revision_version_id
 """
 Provision, through MedexRegAI's own HTTP APIs, a section with a READY generated draft for
 the F3.2 export and import definitions:
@@ -8,6 +8,10 @@ the F3.2 export and import definitions:
   draft_section_id     the project's Sterility section, whose latest draft is ready
   draft_other_section_id  another section of the same project (Device Description), to show
                        an export of one section is refused by another
+  draft_project_id     the project
+  revision_version_id  version 2 of the report (Revision B: EO residual 1.1 mg instead of 0.8 mg),
+                       uploaded after the draft, so the draft's statements cite the old version
+                       (F3.3 revision impact)
   draft_import_base64  an edited copy of that draft's DOCX export (one statement extended,
                        one paragraph added), as a consultant would send back
 
@@ -69,8 +73,11 @@ def esc(text):
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
-def source_docx():
-    body = ''.join(f'<w:p><w:r><w:t xml:space="preserve">{esc(t)}</w:t></w:r></w:p>' for t in REPORT)
+REVISION_B = [t.replace('Revision A', 'Revision B').replace('0.8 mg', '1.1 mg') for t in REPORT]
+
+
+def source_docx(paragraphs=None):
+    body = ''.join(f'<w:p><w:r><w:t xml:space="preserve">{esc(t)}</w:t></w:r></w:p>' for t in (paragraphs or REPORT))
     parts = {
         '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
         '_rels/.rels': '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
@@ -101,6 +108,17 @@ def edited(export_bytes):
     return out.getvalue()
 
 
+def wait_parsed(token, file_id):
+    for _ in range(60):
+        detail = expect(*call('GET', f'/api/files/{file_id}', None, token), 200, 'file')
+        status = (detail.get('versions') or [{}])[0].get('parseStatus')
+        if status in ('parsed', 'failed', 'unsupported'):
+            break
+        time.sleep(2)
+    if status != 'parsed':
+        sys.exit(f'the source report was not read (parse status {status}); is docproc running?')
+
+
 def main():
     owner = expect(*call('POST', '/api/auth/register', {
         'fullName': 'Fixture Drafter',
@@ -117,14 +135,7 @@ def main():
         'fileName': 'EO-09 validation report.docx',
         'contentBase64': base64.b64encode(source_docx()).decode('ascii'),
     }, token), 201, 'upload')
-    for _ in range(60):
-        detail = expect(*call('GET', f"/api/files/{upload['id']}", None, token), 200, 'file')
-        status = (detail.get('versions') or [{}])[0].get('parseStatus')
-        if status in ('parsed', 'failed', 'unsupported'):
-            break
-        time.sleep(2)
-    if status != 'parsed':
-        sys.exit(f'the source report was not read (parse status {status}); is docproc running?')
+    wait_parsed(token, upload['id'])
     expect(*call('PUT', f"/api/files/{upload['id']}/assignment", {'sectionId': 'sterility'}, token), 200, 'assign')
 
     board = expect(*call('GET', f"/api/projects/{project['id']}/sections", None, token), 200, 'board')
@@ -147,7 +158,18 @@ def main():
     if status != 200:
         sys.exit(f'export: expected 200, got {status}')
 
+    # The client sends Revision B: the draft now cites an old version.
+    revised = expect(*call('POST', f"/api/projects/{project['id']}/files", {
+        'fileName': 'EO-09 validation report.docx',
+        'contentBase64': base64.b64encode(source_docx(REVISION_B)).decode('ascii'),
+    }, token), 201, 'upload revision')
+    if revised['latest']['versionNo'] != 2:
+        sys.exit(f"revision: expected version 2, got {revised['latest']['versionNo']}")
+    wait_parsed(token, revised['id'])
+
     values = {
+        'draft_project_id': project['id'],
+        'revision_version_id': revised['latest']['id'],
         'draft_token': token,
         'draft_section_id': section['id'],
         'draft_other_section_id': next(s['id'] for s in board['sections'] if s['sectionId'] == 'device_description'),
