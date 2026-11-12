@@ -5,6 +5,7 @@ import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
 import { Draft, DraftStatement, DraftVersion, draftsApi, fileToBase64, ReferenceCheck } from '../../lib/draftsApi';
+import { SectionStyle, styleApi } from '../../lib/styleApi';
 import { saveBlob } from '../../lib/trustApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
@@ -156,10 +157,129 @@ function Statement({ s, refs }: { s: DraftStatement; refs: ReferenceCheck[] }): 
           {w}
         </span>
       ))}
+      {s.claimWarnings.map((w) => (
+        <span key={w} className="mr-1 inline-block rounded-full bg-orange-100 px-2 py-0.5 align-middle text-xs text-orange-900">
+          Claim check: {w}
+        </span>
+      ))}
       {refs.map((r) => (
         <ReferenceChips key={r.kNumber} r={r} />
       ))}
     </span>
+  );
+}
+
+/** F3.6: statements whose claims go beyond the Indications for Use or their own cited source. */
+function ClaimPanel({ draft }: { draft: Draft }): JSX.Element | null {
+  if (draft.status !== 'ready') return null;
+  const warned = draft.statements.filter((st) => st.claimWarnings.length);
+  return (
+    <section className={card} aria-labelledby="claims-title">
+      <h2 id="claims-title" className="font-semibold text-slate-900">
+        Claims to check · {warned.length}
+      </h2>
+      {warned.length === 0 ? (
+        <p className="mt-1 text-sm text-slate-600">No statement claims more than the Indications for Use or its cited source.</p>
+      ) : (
+        <ul className="mt-2 space-y-2 text-sm">
+          {warned.map((st) => (
+            <li key={st.id} className="rounded-lg bg-orange-50 p-2">
+              <span className="block text-slate-800">“{st.text}”</span>
+              {st.claimWarnings.map((w) => (
+                <span key={w} className="block text-xs text-orange-900">
+                  {w}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-slate-500">Flagged for you to decide; nothing is removed. Compared with the Indications for Use and each statement&apos;s own source.</p>
+    </section>
+  );
+}
+
+/**
+ * F3.6: the firm's template and past wording for this section, as drafting would use them
+ * now, the switch to use the template, and what this version was written with.
+ */
+function FirmStylePanel({ sectionId, draft }: { sectionId: string; draft: Draft | null }): JSX.Element | null {
+  const { authedRequest } = useAuth();
+  const api = useMemo(() => styleApi(authedRequest), [authedRequest]);
+  const [style, setStyle] = useState<SectionStyle | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    api
+      .forSection(sectionId)
+      .then(setStyle)
+      .catch(() => setStyle(null));
+  }, [api, sectionId]);
+  useEffect(load, [load]);
+  if (!style) return null;
+  const setTemplateInUse = async (on: boolean) => {
+    if (!style.template) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.updateTemplate(style.template.id, { enabled: on });
+      load();
+    } catch (err) {
+      setError(message(err, 'Could not change the template.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const used = draft?.status === 'ready' && draft.origin === 'generated' ? draft.style.used : [];
+  return (
+    <section className={card} aria-labelledby="style-title">
+      <h2 id="style-title" className="font-semibold text-slate-900">
+        Firm style for this section
+      </h2>
+      {!style.enabled ? (
+        <p className="mt-1 text-sm text-slate-600">
+          Firm style sources are off, so drafts use no template or past wording.{' '}
+          <Link to="/app/templates" className="font-semibold text-brand-700 hover:underline">
+            Templates and past wording
+          </Link>
+        </p>
+      ) : (
+        <>
+          {style.template ? (
+            <label className="mt-2 flex items-start gap-2 text-sm text-slate-800">
+              <input type="checkbox" name="useFirmTemplate" checked={style.template.enabled} disabled={busy} onChange={(e) => void setTemplateInUse(e.target.checked)} />
+              <span>
+                Use the firm&apos;s template “{style.template.name}”
+                <span className="block text-xs text-slate-500">Applies to this section in every project of your firm, from the next draft.</span>
+              </span>
+            </label>
+          ) : (
+            <p className="mt-1 text-sm text-slate-600">
+              Your firm has no template for this section.{' '}
+              <Link to="/app/templates" className="font-semibold text-brand-700 hover:underline">
+                Add one
+              </Link>
+            </p>
+          )}
+          <h3 className="mt-3 text-sm font-semibold text-slate-900">Past wording · {style.precedentCount}</h3>
+          {style.precedents.length === 0 ? (
+            <p className="text-sm text-slate-600">No past wording for this section.</p>
+          ) : (
+            <ul className="mt-1 space-y-2 text-sm">
+              {style.precedents.map((p) => (
+                <li key={p.id} className="rounded-lg bg-slate-50 p-2">
+                  <span className="block text-xs font-medium text-slate-500">{p.sourceLabel}</span>
+                  <span className="block text-slate-700">{p.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-slate-500">Style only: the draft follows the outline and tone; every fact comes from the client&apos;s files.</p>
+        </>
+      )}
+      {used.length > 0 && <p className="mt-2 text-xs text-slate-600">Version {draft?.versionNo} was written with: {used.map((u) => u.label).join('; ')}.</p>}
+      {error && <FormMessage tone="error">{error}</FormMessage>}
+    </section>
   );
 }
 
@@ -338,6 +458,10 @@ export default function SectionDraftPage(): JSX.Element {
           <h2 className="font-semibold text-slate-900">No draft yet</h2>
           <p className="mt-1 text-sm text-slate-600">Draft this section from the client files filed under it. Each statement will cite its source.</p>
           <p className="mt-1 text-sm text-slate-600">Any predicate K-number in the draft is then checked against FDA data, with its recalls and MAUDE reports shown beside it.</p>
+          <p className="mt-1 text-sm text-slate-600">Claims beyond the Indications for Use or the cited evidence are flagged for you to decide.</p>
+          <div className="mt-4">
+            <FirmStylePanel sectionId={sectionId} draft={null} />
+          </div>
         </div>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -360,6 +484,8 @@ export default function SectionDraftPage(): JSX.Element {
           </article>
           <aside className="space-y-4">
             <FdaCheckPanel draft={draft} busy={busy} onRecheck={() => void recheck()} />
+            <ClaimPanel draft={draft} />
+            <FirmStylePanel sectionId={sectionId} draft={draft} />
             <section className={card} aria-labelledby="removed-title">
               <h2 id="removed-title" className="font-semibold text-slate-900">
                 Removed: no source found · {draft.removed.length}

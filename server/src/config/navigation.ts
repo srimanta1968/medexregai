@@ -28,6 +28,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
   { key: 'requests', label: 'Client requests', description: 'Drafted requests; status until received', phase: 1, scope: 'project', built: true },
   { key: 'trust-pack', label: 'Trust pack', description: 'Validation and data-handling packs, scopes, deletion', phase: 1, scope: 'firm', built: true },
   { key: 'review', label: 'Review', description: 'Section board, Word export and re-import, open items', phase: 2, scope: 'project', built: true },
+  { key: 'templates', label: 'Templates and past wording', description: "Your firm's section templates and past wording for drafting", phase: 2, scope: 'firm', built: true },
   { key: 'changes', label: 'Changes', description: 'What a new client revision affects', phase: 2, scope: 'project', built: true },
   {
     key: 'readiness',

@@ -5,6 +5,8 @@ import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
 import { BoardSection, Reviewer, SectionHistoryItem, SectionStatus, sectionsApi } from '../../lib/sectionsApi';
+import { ADMIN_DOC_KINDS, AdminDocKind, AdminDocs, SummaryTable, submissionDocsApi } from '../../lib/submissionDocsApi';
+import { saveBlob } from '../../lib/trustApi';
 
 const STATUS_LABEL: Record<SectionStatus, string> = { not_started: 'Not started', drafting: 'Drafting', in_review: 'In review', approved: 'Approved' };
 const COLUMNS: SectionStatus[] = ['not_started', 'drafting', 'in_review', 'approved'];
@@ -96,6 +98,111 @@ function SectionPanel({
             </li>
           ))}
         </ol>
+      )}
+    </section>
+  );
+}
+
+const RESULT_LABEL = { pass: 'Pass', fail: 'Fail', not_stated: 'Not stated' } as const;
+
+/**
+ * F3.6 documents drafted from the project: the summary of testing (with its mismatches against
+ * the drafts) and the four administrative documents, each downloadable, signatures left blank.
+ */
+function SubmissionDocsPanel({ projectId }: { projectId: string }): JSX.Element {
+  const { authedRequest } = useAuth();
+  const api = useMemo(() => submissionDocsApi(authedRequest, projectId), [authedRequest, projectId]);
+  const [table, setTable] = useState<SummaryTable | null>(null);
+  const [docs, setDocs] = useState<AdminDocs | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showMismatches, setShowMismatches] = useState(false);
+  useEffect(() => {
+    Promise.all([api.summaryTable(), api.adminDocs()])
+      .then(([t, d]) => {
+        setTable(t);
+        setDocs(d);
+      })
+      .catch((err: unknown) => setError(message(err, 'Could not prepare the documents.')));
+  }, [api]);
+  const download = async (work: () => Promise<Blob>, fileName: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      saveBlob(await work(), fileName);
+    } catch (err) {
+      setError(message(err, 'Could not download the document.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const mismatches = table?.rows.flatMap((r) => r.mismatches.map((m) => ({ report: r.report, ...m }))) ?? [];
+  return (
+    <section aria-labelledby="docs-title" className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 id="docs-title" className="text-lg font-semibold text-slate-900">
+        Documents drafted from the project
+      </h2>
+      <p className="mt-1 max-w-3xl text-sm text-slate-600">
+        Built from the filed test reports, the drafts and the project details. What the project does not hold is marked “To be completed”, and every signature field is
+        left blank for the submitter.
+      </p>
+      {error && <FormMessage tone="error">{error}</FormMessage>}
+      {table === null || docs === null ? (
+        <p role="status" className="mt-3 text-sm text-slate-500">
+          Preparing…
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-slate-100">
+          <li className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div>
+              <p className="font-medium text-slate-900">Summary of testing</p>
+              <p className="text-sm text-slate-600">
+                {table.reportCount} test report{table.reportCount === 1 ? '' : 's'} · {table.mismatchCount} mismatch{table.mismatchCount === 1 ? '' : 'es'} with the drafts
+                {table.rows.length > 0 && ` · ${table.rows.map((r) => `${r.report}: ${RESULT_LABEL[r.result]}`).join('; ')}`}
+              </p>
+              {mismatches.length > 0 && (
+                <button type="button" className="mt-1 text-sm font-semibold text-brand-700 hover:underline" onClick={() => setShowMismatches((v) => !v)}>
+                  {showMismatches ? 'Hide mismatches' : 'Show mismatches'}
+                </button>
+              )}
+              {showMismatches && (
+                <ul className="mt-2 space-y-1 text-sm">
+                  {mismatches.map((m, i) => (
+                    <li key={i} className="rounded-lg bg-amber-50 p-2">
+                      <span className="block font-medium text-amber-900">
+                        {m.report} · {m.section}
+                      </span>
+                      <span className="block text-slate-700">{m.detail}</span>
+                      <span className="block text-xs text-slate-500">“{m.statement}”</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button type="button" className={button} disabled={busy} onClick={() => void download(api.summaryTableXlsx, 'Summary of testing.xlsx')}>
+              Download Excel
+            </button>
+          </li>
+          {ADMIN_DOC_KINDS.map((k: AdminDocKind) => {
+            const d = docs.docs[k];
+            return (
+              <li key={k} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div>
+                  <p className="font-medium text-slate-900">{d.title}</p>
+                  <p className="text-sm text-slate-600">
+                    {d.openItemCount === 0 ? 'Nothing to complete' : `${d.openItemCount} item${d.openItemCount === 1 ? '' : 's'} to complete`}
+                    {d.signatureFields.length > 0 && (d.signaturesBlank ? ' · signature fields left blank' : ' · check the signature fields')}
+                  </p>
+                  {k === 'fda_3601' && <p className="text-xs text-slate-500">Form FDA 3601 itself is created in FDA&apos;s online user fee system; this sheet gathers what it asks for.</p>}
+                  {k === 'truthful_accurate' && <p className="text-xs text-slate-500">FDA: signed by a responsible person of the submitting firm, not a consultant.</p>}
+                </div>
+                <button type="button" className={button} disabled={busy} aria-label={`Download ${d.title} in Word`} onClick={() => void download(() => api.adminDocDocx(k), `${d.title}.docx`)}>
+                  Download Word
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </section>
   );
@@ -219,6 +326,7 @@ export default function ProjectReviewPage(): JSX.Element {
           )}
         </div>
       )}
+      <SubmissionDocsPanel projectId={projectId} />
     </section>
   );
 }

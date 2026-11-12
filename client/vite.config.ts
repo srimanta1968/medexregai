@@ -14,7 +14,8 @@ const config: UserConfig = {
     allowedHosts: ['host.docker.internal'],
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        // API_PROXY_TARGET overrides the API address when port 3000 is taken locally.
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: true,
       },
     },

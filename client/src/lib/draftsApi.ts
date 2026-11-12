@@ -12,6 +12,8 @@ export interface DraftStatement {
   text: string;
   citations: { marker: string; label: string }[];
   warnings: string[];
+  /** F3.6: where the statement claims more than the Indications for Use or its cited source supports. */
+  claimWarnings: string[];
   origin: 'generated' | 'human_edited' | 'human_added';
   humanApproved: boolean;
   approvedBy: string | null;
@@ -38,6 +40,15 @@ export interface Draft extends DraftVersion {
   importSummary: { unchanged: number; edited: number; added: number; deleted: string[] } | null;
   /** F3.5: predicate K-numbers checked against FDA data; null until the draft is ready. */
   fdaCheck: DraftFdaCheck | null;
+  /** F3.6: firm style this version was written with, and the firm's wording for the section now. */
+  style: {
+    used: { kind: 'template' | 'precedent'; id: string; label: string }[];
+    usedCount: number;
+    precedents: { id: string; sourceLabel: string; text: string }[];
+    precedentCount: number;
+  };
+  /** F3.6: statements with claims beyond the Indications for Use or their cited source. */
+  claimCheck: { warned: number; generatedWarned: number; humanWarned: number };
 }
 
 export type ReferenceStatus = 'verified' | 'not_found' | 'unavailable';
