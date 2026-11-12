@@ -1,0 +1,98 @@
+{
+  "requiresAuth": true,
+  "taskId": "2cb97497-4c3b-44db-a4be-265564f1b16e",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/project-sections/:sectionId/history - status changes and reviewer assignments",
+  "description": "The history behind a section’s status (AC1) and reviewer (AC2): every status change and reviewer assignment or removal, who did it, when and the note, newest first. Needs projects:read.",
+  "endpoint": "/api/project-sections/:sectionId/history",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 105,
+  "coversCriterion": [
+    "989d6eb8-075c-49df-8c36-8974220a2936#AC1",
+    "989d6eb8-075c-49df-8c36-8974220a2936#AC2",
+    "2cb97497-4c3b-44db-a4be-265564f1b16e#AC1",
+    "2cb97497-4c3b-44db-a4be-265564f1b16e#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects",
+    "GET /api/projects/:projectId/sections",
+    "PATCH /api/project-sections/:sectionId"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Section not found",
+      "when": "no such section, or another firm’s"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant reads the section history",
+      "pathParams": {
+        "sectionId": "{{cache:sections.board.response.data.sections.0.id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "sectionId": "{{cache:sections.board.response.data.sections.0.id}}"
+      }
+    },
+    {
+      "name": "404 - unknown section",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "sectionId": "{{dynamic:uuid}}"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "sectionId": "{{static:not-a-uuid}}"
+      }
+    }
+  ]
+}
