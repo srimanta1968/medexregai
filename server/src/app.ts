@@ -26,6 +26,7 @@ import { sectionsRouter } from './routes/sections';
 import { draftsRouter } from './routes/drafts';
 import { impactRouter } from './routes/impact';
 import { readinessRouter } from './routes/readiness';
+import { recordsRouter } from './routes/records';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -115,6 +116,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(draftsRouter);
   app.use(impactRouter);
   app.use(readinessRouter);
+  app.use(recordsRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

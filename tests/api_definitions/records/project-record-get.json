@@ -1,0 +1,127 @@
+{
+  "requiresAuth": true,
+  "taskId": "34dbc9e8-df24-49a0-b055-e1a2e0bc69c9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/records/:kind - a dated record for the eQMS",
+  "description": "A dated PDF/DOCX record can be generated for the eQMS (F3.4 AC3); dated records include the project record, problem log and client request log (AC5). kind: project_record (sections with status and approvals, attachment checks, client files with SHA-256), problem_log (every problem and its decision), request_log (every request, its items and what arrived); ?format=pdf (default) or docx. Every generation is logged with the SHA-256 of the bytes, also returned in X-Record-SHA256. Needs projects:read. The other kinds and DOCX were checked by hand (all six kind/format pairs: valid files, hash matches the header).",
+  "endpoint": "/api/projects/:projectId/records/:kind",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 116,
+  "coversCriterion": [
+    "0ad2942c-8e6a-42bb-ad18-257d9cb83890#AC3",
+    "0ad2942c-8e6a-42bb-ad18-257d9cb83890#AC5",
+    "34dbc9e8-df24-49a0-b055-e1a2e0bc69c9#AC1",
+    "f0995034-730b-48d3-900c-27c409a35da8#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register",
+    "POST /api/clients",
+    "POST /api/clients/:clientId/devices",
+    "POST /api/devices/:deviceId/projects"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project, or another firm’s"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "kind must be one of",
+      "when": "unknown kind or format, or path id not a UUID"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant downloads the project record as PDF",
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "kind": "{{static:project_record}}"
+      },
+      "queryParams": {
+        "format": "{{static:pdf}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "400 - unknown kind",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "kind": "{{static:audit_log}}"
+      }
+    },
+    {
+      "name": "400 - unknown format",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "kind": "{{static:problem_log}}"
+      },
+      "queryParams": {
+        "format": "{{static:xlsx}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}",
+        "kind": "{{static:project_record}}"
+      }
+    },
+    {
+      "name": "404 - unknown project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "pathParams": {
+        "projectId": "{{dynamic:uuid}}",
+        "kind": "{{static:request_log}}"
+      }
+    }
+  ],
+  "fieldEnums": {
+    "kind": [
+      "project_record",
+      "problem_log",
+      "request_log"
+    ],
+    "format": [
+      "pdf",
+      "docx"
+    ]
+  }
+}
