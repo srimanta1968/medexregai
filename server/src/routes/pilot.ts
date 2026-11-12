@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { audit, fromParam } from '../middleware/audit';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
-import { pilotBlocks, pilotService } from '../pilot/PilotService';
+import { pilotBlocks, pilotCsv, pilotService, signPilotReport } from '../pilot/PilotService';
 import { renderPdf } from '../trust/pdf';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
@@ -94,5 +94,43 @@ pilotRouter.get(
     res.set('Cache-Control', 'no-store');
     res.set('Content-Length', String(bytes.length));
     res.status(200).end(bytes);
+  }),
+);
+
+/*
+ *   GET  /api/projects/:projectId/pilot-report/csv        hours by activity against the baseline, as CSV
+ *   POST /api/projects/:projectId/pilot-report/sign-off   { signerTitle, note? } the firm's RA lead signs the report (drafts:review) (201)
+ */
+const signBody = z
+  .object({
+    signerTitle: z.string({ required_error: 'signerTitle is required' }).trim().min(1, 'signerTitle is required').max(200, 'signerTitle must be at most 200 characters'),
+    note: z.string().trim().max(1000, 'note must be at most 1000 characters').nullable().optional(),
+  })
+  .strict();
+
+pilotRouter.get(
+  '/api/projects/:projectId/pilot-report/csv',
+  guard('projects:read'),
+  audit('pilot.report_exported', { targetType: 'project', targetId: fromParam('projectId') }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const r = await pilotService.report(orgId, projectIdOf(req));
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="${safeName(r.projectName)} - Pilot hours by activity ${r.generatedAt.slice(0, 10)}.csv"`);
+    res.set('X-Report-SHA256', r.sha256);
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition, X-Report-SHA256');
+    res.set('Cache-Control', 'no-store');
+    res.status(200).send(pilotCsv(r));
+  }),
+);
+
+pilotRouter.post(
+  '/api/projects/:projectId/pilot-report/sign-off',
+  guard('drafts:review'),
+  audit('pilot.report_signed', { targetType: 'project', targetId: fromParam('projectId') }),
+  handle(async (req, res) => {
+    const { orgId, userId } = requireAuth(req);
+    const id = projectIdOf(req);
+    res.status(201).json({ success: true, data: await signPilotReport({ orgId, userId }, id, parse(signBody, req.body)) });
   }),
 );

@@ -325,3 +325,40 @@ export function pilotBlocks(r: PilotReport): import('../trust/pdf').Block[] {
     },
   ];
 }
+
+/** Hours by activity against the baseline, then the two G2/G3 totals, as CSV for Excel. */
+export function pilotCsv(r: PilotReport): string {
+  const cell = (v: string | number | null): string => {
+    if (v === null) return '';
+    let s = String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const pctCell = (n: number | null) => (n === null ? '' : (n * 100).toFixed(0));
+  const rows: (string | number | null)[][] = [
+    ['Activity code', 'Activity', 'Logged hours', 'Baseline hours', 'Lower by (%)'],
+    ...r.byActivity.map((a) => [a.code, a.label, a.actualHours.toFixed(2), a.baselineHours === null ? null : a.baselineHours.toFixed(2), pctCell(a.reduction)]),
+    ['drafted_sections', 'Drafted sections (write + tabulate + reconcile)', r.draftedSections.actualHours.toFixed(2), r.draftedSections.baselineHours?.toFixed(2) ?? null, pctCell(r.draftedSections.reduction)],
+    ['whole_project', 'Whole project', r.wholeProject.actualHours.toFixed(2), r.wholeProject.baselineHours?.toFixed(2) ?? null, pctCell(r.wholeProject.reduction)],
+  ];
+  return `﻿${rows.map((row) => row.map(cell).join(',')).join('\r\n')}\r\n`;
+}
+
+/** The RA lead signs the report as it stands now: name from the profile, the numbers' SHA-256 kept. */
+export async function signPilotReport(ctx: Ctx, projectId: string, input: { signerTitle: string; note?: string | null }): Promise<PilotReport> {
+  const r = await pilotService.report(ctx.orgId, projectId);
+  const [me] = await dataService.query<{ full_name: string | null; email: string }>(
+    {},
+    'users',
+    'SELECT p.full_name, u.email FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id WHERE u.id = $1',
+    [ctx.userId],
+  );
+  await dataService.query(
+    ctx,
+    'pilot_signoffs',
+    `INSERT INTO pilot_signoffs (org_id, project_id, signed_by, signer_name, signer_title, note, report_sha256)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [ctx.orgId, projectId, ctx.userId, me?.full_name || me?.email || 'Unknown', input.signerTitle, input.note ?? null, r.sha256],
+  );
+  return pilotService.report(ctx.orgId, projectId);
+}

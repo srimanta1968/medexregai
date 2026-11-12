@@ -56,7 +56,7 @@
       "headers": {
         "Authorization": "Bearer {{var:pilot_token}}"
       },
-      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "fixture": "tests/setup_scripts/41_firm_style.py",
       "testType": "negative",
       "coversErrorCase": "404|NOT_FOUND",
       "pathParams": {
