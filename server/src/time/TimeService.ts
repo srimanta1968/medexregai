@@ -298,3 +298,78 @@ function checkSpan(startedAt: string, endedAt: string): void {
   }
   if (e > Date.now() + 60_000) throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'endedAt cannot be in the future', [{ field: 'endedAt', message: 'In the future' }]);
 }
+
+export interface TotalRow {
+  projectId: string | null;
+  projectName: string;
+  clientName: string | null;
+  activityCode: string;
+  activityLabel: string;
+  person: string | null;
+  seconds: number;
+  entries: number;
+}
+
+/** A CSV cell: quoted when needed, and never read by a spreadsheet as a formula. */
+export function csvCell(v: string | number | null): string {
+  if (v === null) return '';
+  let s = String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * F4.1 totals by project and activity (FR-14.20), for the CSV export. Finished entries only (a
+ * running timer counts once it stops), within [from, to) on their start time. scope 'mine' is the
+ * caller's own time; 'firm' is everyone's in the firm, one row per person.
+ */
+export async function timeTotals(ctx: Ctx, opts: { from: string; to: string; scope: 'mine' | 'firm' }): Promise<TotalRow[]> {
+  const rows = await dataService.query<{
+    project_id: string | null;
+    project_name: string | null;
+    client_name: string | null;
+    activity_code: string;
+    label: string;
+    ordinal: number;
+    person: string | null;
+    seconds: number;
+    entries: number;
+  }>(
+    ctx,
+    'time_entries',
+    `SELECT e.project_id, p.name AS project_name, w.name AS client_name, e.activity_code, a.label, a.ordinal,
+            CASE WHEN $5 = 'firm' THEN COALESCE(up.full_name, u.email) END AS person,
+            sum(floor(extract(epoch FROM (e.ended_at - e.started_at))))::int AS seconds, count(*)::int AS entries
+       FROM time_entries e
+       JOIN time_activities a ON a.code = e.activity_code
+       LEFT JOIN projects p ON p.id = e.project_id AND p.org_id = e.org_id
+       LEFT JOIN client_workspaces w ON w.id = p.workspace_id AND w.org_id = p.org_id
+       JOIN users u ON u.id = e.user_id
+       LEFT JOIN user_profiles up ON up.user_id = e.user_id
+      WHERE e.org_id = $1 AND ($5 = 'firm' OR e.user_id = $2) AND e.ended_at IS NOT NULL
+        AND e.started_at >= $3 AND e.started_at < $4
+      GROUP BY e.project_id, p.name, w.name, e.activity_code, a.label, a.ordinal, 7
+      ORDER BY p.name NULLS LAST, 7 NULLS FIRST, a.ordinal`,
+    [ctx.orgId, ctx.userId, opts.from, opts.to, opts.scope],
+  );
+  return rows.map((r) => ({
+    projectId: r.project_id,
+    projectName: r.project_name ?? 'No project',
+    clientName: r.client_name,
+    activityCode: r.activity_code,
+    activityLabel: r.label,
+    person: r.person,
+    seconds: Number(r.seconds),
+    entries: Number(r.entries),
+  }));
+}
+
+/** The totals as CSV: one row per project, activity (and person for the firm), hours to 2 decimals. */
+export function totalsCsv(rows: TotalRow[], scope: 'mine' | 'firm'): string {
+  const header = ['Client', 'Project', ...(scope === 'firm' ? ['Person'] : []), 'Activity code', 'Activity', 'Hours', 'Entries'];
+  const lines = rows.map((r) =>
+    [r.clientName, r.projectName, ...(scope === 'firm' ? [r.person] : []), r.activityCode, r.activityLabel, (r.seconds / 3600).toFixed(2), r.entries].map(csvCell).join(','),
+  );
+  // Excel opens a UTF-8 CSV correctly only with the byte order mark.
+  return `﻿${[header.join(','), ...lines].join('\r\n')}\r\n`;
+}

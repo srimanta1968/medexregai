@@ -1,0 +1,119 @@
+{
+  "requiresAuth": true,
+  "taskId": "96a64888-4465-404c-9d9e-1d8bb01404dc",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/time/export - totals by project and activity as CSV",
+  "description": "Totals by project and activity export to CSV (F4.1 AC4), against the A3 activity codes (AC3). ?from&to (ISO date-times, on each entry's start; at most 400 days) and ?scope=mine (default: the caller's own time) or firm (everyone in the firm, one row per person; needs firm:manage, else 403). Finished entries only: a running timer counts once it stops. text/csv with a UTF-8 byte order mark for Excel; columns Client, Project, [Person], Activity code, Activity, Hours (2 decimals), Entries; X-Total-Seconds header. Cells are never read as formulas. Audited as time.exported.",
+  "endpoint": "/api/time/export",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 159,
+  "coversCriterion": [
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC4",
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC3",
+    "96a64888-4465-404c-9d9e-1d8bb01404dc#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "to must be after from",
+      "when": "from/to missing or not date-times, to not after from, more than 400 days, or unknown scope"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Only an owner or admin can export the whole firm's time",
+      "when": "scope=firm without firm:manage"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant exports last week's totals",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "queryParams": {
+        "from": "{{var:time_week_start}}T00:00:00Z",
+        "to": "{{var:time_week_end}}T00:00:00Z"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Owner exports the firm's totals",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "queryParams": {
+        "from": "{{var:time_week_start}}T00:00:00Z",
+        "to": "{{var:time_week_end}}T00:00:00Z",
+        "scope": "firm"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "400 - to before from",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "queryParams": {
+        "from": "{{var:time_week_end}}T00:00:00Z",
+        "to": "{{var:time_week_start}}T00:00:00Z"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "400 - unknown scope",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "queryParams": {
+        "from": "{{var:time_week_start}}T00:00:00Z",
+        "to": "{{var:time_week_end}}T00:00:00Z",
+        "scope": "everyone"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "headers": {},
+      "queryParams": {
+        "from": "2026-11-02T00:00:00Z",
+        "to": "2026-11-09T00:00:00Z"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

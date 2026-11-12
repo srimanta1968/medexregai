@@ -2,7 +2,9 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
-import { timeService } from '../time/TimeService';
+import { audit } from '../middleware/audit';
+import { roleHasPermission } from '../middleware/authorize';
+import { timeService, timeTotals, totalsCsv } from '../time/TimeService';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
 /**
@@ -16,6 +18,7 @@ import { AppError, ErrorCodes } from '../utils/AppError';
  *   PATCH  /api/time/entries/:entryId       { activityCode?, projectId?, startedAt?, endedAt?, note? }
  *   DELETE /api/time/entries/:entryId       (204)
  *   GET    /api/time/summary                ?weekStart=YYYY-MM-DD&tzOffset=<minutes>  the week by day, activity and project
+ *   GET    /api/time/export                 ?from&to&scope=mine|firm  totals by project and activity as CSV (firm needs firm:manage)
  * Every member may log their own time (projects:read); nobody reads or edits another person's entries here.
  */
 export const timeRouter = Router();
@@ -147,5 +150,36 @@ timeRouter.get(
     const q = parse(summaryQuery, req.query);
     res.set('Cache-Control', 'no-store');
     res.status(200).json({ success: true, data: await timeService.week(ctx(req), q.weekStart, q.tzOffset ?? 0) });
+  }),
+);
+
+const exportQuery = z.object({
+  from: instant('from'),
+  to: instant('to'),
+  scope: z.enum(['mine', 'firm'], { errorMap: () => ({ message: 'scope must be mine or firm' }) }).optional(),
+});
+
+timeRouter.get(
+  '/api/time/export',
+  guard('projects:read'),
+  audit('time.exported', { targetType: 'org' }),
+  handle(async (req, res) => {
+    const auth = requireAuth(req);
+    const q = parse(exportQuery, req.query);
+    if (Date.parse(q.to) <= Date.parse(q.from)) throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'to must be after from', [{ field: 'to', message: 'Must be after from' }]);
+    if (Date.parse(q.to) - Date.parse(q.from) > 400 * 86_400_000) throw new AppError(400, ErrorCodes.VALIDATION_ERROR, 'Export at most 400 days at a time', [{ field: 'to', message: 'At most 400 days after from' }]);
+    const scope = q.scope ?? 'mine';
+    if (scope === 'firm' && !roleHasPermission(auth.role, 'firm:manage')) {
+      throw new AppError(403, ErrorCodes.FORBIDDEN, "Only an owner or admin can export the whole firm's time");
+    }
+    const rows = await timeTotals({ orgId: auth.orgId, userId: auth.userId }, { from: q.from, to: q.to, scope });
+    const csv = totalsCsv(rows, scope);
+    const name = `Time by project and activity ${q.from.slice(0, 10)} to ${q.to.slice(0, 10)}${scope === 'firm' ? ' (firm)' : ''}.csv`;
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="${name}"`);
+    res.set('X-Total-Seconds', String(rows.reduce((s, r) => s + r.seconds, 0)));
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition, X-Total-Seconds');
+    res.set('Cache-Control', 'no-store');
+    res.status(200).send(csv);
   }),
 );

@@ -1,5 +1,5 @@
 # @fixture scope=tenant tier=api reason="time totals need entries in a known past week and timers in known states, each owned by its own person, so each session makes three fresh firms through the app's own APIs"
-# @exports time_manual_start, time_manual_end, time_token, time_project_id, time_week_start, time_entry_id, time_spare_entry_id, time_stopper_token, time_stopper_project_id, time_idle_token
+# @exports time_week_end, time_manual_start, time_manual_end, time_token, time_project_id, time_week_start, time_entry_id, time_spare_entry_id, time_stopper_token, time_stopper_project_id, time_idle_token
 """
 Provision, through MedexRegAI's own HTTP APIs, three firms for F4.1 time capture:
 
@@ -12,6 +12,7 @@ Provision, through MedexRegAI's own HTTP APIs, three firms for F4.1 time capture
   time_stopper_token             "stopper": a timer running now (stop test), on
   time_stopper_project_id        its own project (another firm's project for the logger)
   time_idle_token                "idle": no timer and no entries (stop -> 404)
+  time_week_end                  the Monday after that week (export upper bound)
   time_manual_start / _end       an hour three days ago (10:00-11:00 UTC), for typed-in entries
 
 Each person sees only their own time, so these never collide with the definitions' own
@@ -103,6 +104,7 @@ def main():
         'time_token': token,
         'time_project_id': project_id,
         'time_week_start': week.date().isoformat(),
+        'time_week_end': (week + timedelta(days=7)).date().isoformat(),
         'time_entry_id': entry_id,
         'time_spare_entry_id': spare_id,
         'time_stopper_token': stopper_token,
