@@ -71,7 +71,7 @@ Summary at start (2026-11-12): 18 in place (one inherited from AWS), 11 partial,
 | Id | Control | Status | Evidence / gap | Owner |
 |---|---|---|---|---|
 | CC6-01 | Tenant isolation: every query on client data runs in one firm's context | Partial | Enforced in the application: DataService checks every table against server/src/db/tableCatalog.ts and sets app.org_id per transaction. Database row-level security policies are not yet created (planned F8.1). Until then isolation rests on application code alone | Engineering |
-| CC6-02 | Role-based permissions within a firm (owner, admin, editor, reviewer) | In place | server/src/middleware/authorize.ts; 403 cases in tests/api_definitions/** | Engineering |
+| CC6-02 | Role-based permissions within a firm (owner, admin, editor, reviewer, viewer) | In place | server/src/middleware/authorize.ts; 403 cases in tests/api_definitions/** | Engineering |
 | CC6-03 | Passwords stored as salted hashes; short-lived access tokens | In place | bcryptjs; JWT_EXPIRES_IN default 15m with refresh tokens (server/src/config/env.ts) | Engineering |
 | CC6-04 | Multi-factor authentication for customer accounts, or SSO with the firm's identity provider | Partial | SSO sign-in exists (server/src/routes/sso.ts); no MFA for password accounts | Engineering |
 | CC6-05 | Login throttling or lockout against password guessing | Not started | No rate limiting on auth routes found | Engineering |
