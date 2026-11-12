@@ -106,6 +106,23 @@
       "fixture": "tests/setup_scripts/44_usage.py"
     },
     {
+      "name": "400 - more than 400 days at a time",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "fixture": "tests/setup_scripts/44_usage.py",
+      "headers": {
+        "Authorization": "Bearer {{var:usage_token}}"
+      },
+      "queryParams": {
+        "from": "2024-01-01",
+        "to": "2026-01-01"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
       "name": "403 - a reviewer cannot see billing usage",
       "testType": "negative",
       "coversErrorCase": "403|FORBIDDEN",
