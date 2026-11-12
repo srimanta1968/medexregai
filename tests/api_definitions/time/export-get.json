@@ -102,6 +102,24 @@
       }
     },
     {
+      "name": "403 - a reviewer exports the firm's time",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "queryParams": {
+        "from": "2026-11-02T00:00:00Z",
+        "to": "2026-11-09T00:00:00Z",
+        "scope": "firm"
+      },
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      }
+    },
+    {
       "name": "401 - missing bearer token",
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",

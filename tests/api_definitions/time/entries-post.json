@@ -100,6 +100,25 @@
       }
     },
     {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "headers": {
+        "Authorization": "Bearer {{var:time_idle_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "payload": {
+        "activityCode": "read",
+        "projectId": "{{var:time_stopper_project_id}}",
+        "startedAt": "{{var:time_manual_start}}",
+        "endedAt": "{{var:time_manual_end}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
       "name": "401 - missing bearer token",
       "headers": {},
       "testType": "negative",
