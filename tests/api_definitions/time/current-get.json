@@ -1,0 +1,75 @@
+{
+  "requiresAuth": true,
+  "taskId": "e39bf66f-0168-47cb-ad67-4413518095e9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/time/current - the running timer",
+  "description": "A consultant can start and stop a timer per task category in one click (F4.1 AC1); time is logged against the A3 activity codes: chase, find, version, map, trace, read, reconcile, tabulate, write, forms, attachments, client review (AC3). The caller's running timer ({ entry }), or entry null. Only the caller's own. Needs projects:read.",
+  "endpoint": "/api/time/current",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 151,
+  "coversCriterion": [
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC1",
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC3",
+    "e39bf66f-0168-47cb-ad67-4413518095e9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant with a timer running",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "entry": {
+            "activityCode": "read",
+            "running": true,
+            "source": "timer"
+          }
+        }
+      }
+    },
+    {
+      "name": "Consultant with no timer",
+      "headers": {
+        "Authorization": "Bearer {{var:time_idle_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "entry": null
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

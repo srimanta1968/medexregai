@@ -1,0 +1,104 @@
+{
+  "requiresAuth": true,
+  "taskId": "e39bf66f-0168-47cb-ad67-4413518095e9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/time/summary - the weekly summary",
+  "description": "A weekly summary of logged time is shown (F4.1 AC2). ?weekStart=YYYY-MM-DD (first day, caller's local date) and ?tzOffset (minutes, as the browser's Date.getTimezoneOffset). Returns totalSeconds, byDay (7 days), byActivity (A3 codes with time), byProject (No project for firm-level time) and entryCount; a running timer counts up to now; entries count on the day they start. Only the caller's own time. Needs projects:read.",
+  "endpoint": "/api/time/summary",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 158,
+  "coversCriterion": [
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC2",
+    "e39bf66f-0168-47cb-ad67-4413518095e9#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "weekStart must be a date (YYYY-MM-DD)",
+      "when": "weekStart missing or not a date, or tzOffset outside -840..840"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant's week: 2 h tabulate on the project, 1 h write on no project",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "queryParams": {
+        "weekStart": "{{var:time_week_start}}",
+        "tzOffset": "0"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "weekStart": "{{var:time_week_start}}",
+          "totalSeconds": 10800,
+          "entryCount": 2
+        }
+      }
+    },
+    {
+      "name": "400 - weekStart missing",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "queryParams": {
+        "tzOffset": "0"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "400 - tzOffset out of range",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "queryParams": {
+        "weekStart": "{{var:time_week_start}}",
+        "tzOffset": "5000"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "queryParams": {
+        "weekStart": "2026-11-02"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

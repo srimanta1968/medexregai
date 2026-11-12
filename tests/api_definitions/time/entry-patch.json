@@ -1,0 +1,120 @@
+{
+  "requiresAuth": true,
+  "taskId": "e39bf66f-0168-47cb-ad67-4413518095e9",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "PATCH /api/time/entries/:entryId - edit an entry",
+  "description": "A consultant can start and stop a timer per task category in one click (F4.1 AC1); time is logged against the A3 activity codes: chase, find, version, map, trace, read, reconcile, tabulate, write, forms, attachments, client review (AC3). Body { activityCode?, projectId? (null for no project), startedAt?, endedAt?, note? }; marks the entry edited. Only the caller's own entries: anyone else's is 404. Needs projects:read.",
+  "endpoint": "/api/time/entries/:entryId",
+  "method": "PATCH",
+  "expectedStatus": 200,
+  "priority": 156,
+  "coversCriterion": [
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC1",
+    "0fa1e67b-32d9-469e-b954-6ab5f0dd6ecd#AC3",
+    "e39bf66f-0168-47cb-ad67-4413518095e9#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Nothing to update",
+      "when": "empty body, bad field or path id not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Time entry not found",
+      "when": "not one of the caller's entries"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant adds a note to an entry",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "pathParams": {
+        "entryId": "{{var:time_entry_id}}"
+      },
+      "payload": {
+        "note": "EO-12 summary table"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "activityCode": "tabulate",
+          "note": "EO-12 summary table",
+          "seconds": 7200
+        }
+      }
+    },
+    {
+      "name": "404 - someone else's entry",
+      "headers": {
+        "Authorization": "Bearer {{var:time_stopper_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "entryId": "{{var:time_entry_id}}"
+      },
+      "payload": {
+        "note": "x"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "400 - nothing to update",
+      "headers": {
+        "Authorization": "Bearer {{var:time_token}}"
+      },
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "entryId": "{{var:time_entry_id}}"
+      },
+      "payload": {},
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "fixture": "tests/setup_scripts/42_time_log.py",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "pathParams": {
+        "entryId": "{{var:time_entry_id}}"
+      },
+      "payload": {
+        "note": "x"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
