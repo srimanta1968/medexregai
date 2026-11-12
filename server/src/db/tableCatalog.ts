@@ -69,6 +69,8 @@ export const TABLE_CATALOG = {
   // F3.3 revision impact (migration 032).
   statement_sources: 'tenant',
   impact_actions: 'tenant',
+  // F3.4 dated records for the eQMS (migration 033).
+  record_exports: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
