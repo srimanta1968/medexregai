@@ -35,7 +35,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     description: 'Attachment checks, admin documents, eQMS record',
     phase: 2,
     scope: 'project',
-    built: false,
+    built: true,
   },
   { key: 'time', label: 'Time', description: 'One-click time log; pilot report', phase: 3, scope: 'firm', built: false },
   { key: 'usage', label: 'Usage', description: 'Per-client usage export for rebilling', phase: 3, scope: 'firm', permission: 'billing:manage', built: false },
