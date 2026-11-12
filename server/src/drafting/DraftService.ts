@@ -58,7 +58,9 @@ export interface Draft extends DraftVersion {
    * F3.6: the firm style sources this version was written with, and the firm's past wording
    * for the section as it stands now (empty when the firm has style sources off).
    */
-  style: { used: StyleSourceRef[]; precedents: DraftingStyle['precedents'] };
+  style: { used: StyleSourceRef[]; usedCount: number; precedents: DraftingStyle['precedents']; precedentCount: number };
+  /** F3.6: statements whose claims go beyond the Indications for Use or their cited source. */
+  claimCheck: { warned: number; generatedWarned: number; humanWarned: number };
 }
 
 /** An edited DOCX of one section is small; the JSON body limit (BODY_PARSER_LIMIT) bounds it too. */
@@ -145,6 +147,17 @@ async function statementsOf(orgId: string, draftId: string): Promise<DraftStatem
   }));
 }
 
+async function styleOf(orgId: string, sectionId: string, title: string, used: StyleSourceRef[]): Promise<Draft['style']> {
+  const { precedents } = await styleSourceService.forDrafting(orgId, sectionId, title);
+  return { used, usedCount: used.length, precedents, precedentCount: precedents.length };
+}
+
+function claimCheckOf(statements: DraftStatement[]): Draft['claimCheck'] {
+  const warned = statements.filter((st) => st.claimWarnings.length);
+  const generatedWarned = warned.filter((st) => st.origin === 'generated').length;
+  return { warned: warned.length, generatedWarned, humanWarned: warned.length - generatedWarned };
+}
+
 export const draftService = {
   /** Queue a generated draft of the section. One at a time per section. */
   async request(orgId: string, userId: string, projectSectionId: string): Promise<Draft> {
@@ -205,6 +218,7 @@ export const draftService = {
       [draftId, orgId, projectSectionId],
     );
     if (!r) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Draft not found');
+    const statements = r.status === 'ready' ? await statementsOf(orgId, r.id) : [];
     return {
       id: r.id,
       versionNo: r.version_no,
@@ -218,14 +232,12 @@ export const draftService = {
       error: r.error,
       createdBy: r.created_by_name,
       finishedAt: r.finished_at ? r.finished_at.toISOString() : null,
-      statements: r.status === 'ready' ? await statementsOf(orgId, r.id) : [],
+      statements,
       removed: r.removed_items,
       importSummary: r.import_summary,
       fdaCheck: r.status === 'ready' ? await draftFdaCheck(orgId, r.id) : null,
-      style: {
-        used: r.style_sources,
-        precedents: (await styleSourceService.forDrafting(orgId, s.sectionId, s.title)).precedents,
-      },
+      style: await styleOf(orgId, s.sectionId, s.title, r.style_sources),
+      claimCheck: claimCheckOf(statements),
     };
   },
 

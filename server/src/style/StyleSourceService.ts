@@ -298,7 +298,48 @@ export const styleSourceService = {
       precedents: precedents.map((p) => ({ id: p.id, sourceLabel: p.source_label, text: p.text })),
     };
   },
+
+  /** What drafting would use for one section of a project right now, for the draft screen. */
+  async forProjectSection(orgId: string, projectSectionId: string): Promise<SectionStyle> {
+    const [s] = await dataService.query<{ section_id: string; title: string; device_name: string }>(
+      { orgId },
+      'project_sections',
+      `SELECT ps.section_id, s.title, d.name AS device_name
+         FROM project_sections ps JOIN estar_sections s ON s.id = ps.section_id
+         JOIN projects p ON p.id = ps.project_id AND p.org_id = ps.org_id
+         JOIN devices d ON d.id = p.device_id AND d.org_id = p.org_id
+        WHERE ps.id = $1 AND ps.org_id = $2`,
+      [projectSectionId, orgId],
+    );
+    if (!s) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Section not found');
+    const { enabled } = await this.settings(orgId);
+    const style = await this.forDrafting(orgId, s.section_id, `${s.title} ${s.device_name}`);
+    // The section's template even when turned off, so the draft screen can turn it back on.
+    const [template] = await dataService.query<{ id: string; name: string; enabled: boolean }>(
+      { orgId },
+      'firm_templates',
+      'SELECT id, name, enabled FROM firm_templates WHERE org_id = $1 AND section_id = $2',
+      [orgId, s.section_id],
+    );
+    return {
+      enabled,
+      sectionId: s.section_id,
+      template: template ? { id: template.id, name: template.name, enabled: template.enabled, inUse: enabled && template.enabled } : null,
+      precedents: style.precedents,
+      precedentCount: style.precedents.length,
+    };
+  },
 };
+
+/** The firm style that applies to one project section now (F3.6 draft screen). */
+export interface SectionStyle {
+  enabled: boolean;
+  sectionId: string;
+  /** The firm's template for the section; inUse when both it and the firm switch are on. */
+  template: { id: string; name: string; enabled: boolean; inUse: boolean } | null;
+  precedents: DraftingStyle['precedents'];
+  precedentCount: number;
+}
 
 /** The entries recorded on a draft for the style it was written with. */
 export function styleRefs(style: DraftingStyle): StyleSourceRef[] {

@@ -124,3 +124,6 @@ server/.data/
 injection-report.json
 # Evaluation report (CI artifact)
 eval-report.json
+
+# Test fixture caches (test accounts reused between runs; see tests/setup_scripts/41_firm_style.py)
+tests/setup_scripts/.cache/

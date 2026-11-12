@@ -21,6 +21,11 @@ request a draft and wait until it is ready; export it and edit the Word XML.
 
 Needs the dev stack with docproc and the generation model (Ollama) running: drafting takes
 about 30-60 s on qwen2.5:3b. Fresh random names every run. Standard library only.
+
+The model-written draft takes close to the runner's 60 s limit for a setup script, so the
+firm's account is cached in tests/setup_scripts/.cache/ (git-ignored, test accounts only)
+and reused while its section still has a ready draft and the revised report; the edited
+Word file is made fresh from the latest export each run.
 """
 
 import base64
@@ -119,10 +124,53 @@ def wait_parsed(token, file_id):
         sys.exit(f'the source report was not read (parse status {status}); is docproc running?')
 
 
+CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache', '20_section_draft.json')
+
+
+def write(values):
+    if OUT:
+        with open(OUT, 'w', encoding='utf-8') as fh:
+            json.dump(values, fh)
+    else:
+        print(json.dumps({k: (v[:40] + '...' if len(v) > 40 else v) for k, v in values.items()}))
+
+
+def cached():
+    """The firm from an earlier run, while its section has a ready draft and the revised report."""
+    try:
+        with open(CACHE, encoding='utf-8') as fh:
+            c = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    status, payload = call('POST', '/api/auth/login', {'email': c['email'], 'password': c['password']})
+    if status != 200:
+        return None
+    token = payload['data']['token']
+    status, payload = call('GET', f"/api/file-versions/{c['revision_version_id']}/impact", None, token)
+    if status != 200:
+        return None
+    status, export = call('GET', f"/api/project-sections/{c['section_id']}/draft/export", None, token, raw=True)
+    if status != 200:
+        return None
+    return {
+        'draft_project_id': c['project_id'],
+        'revision_version_id': c['revision_version_id'],
+        'draft_token': token,
+        'draft_section_id': c['section_id'],
+        'draft_other_section_id': c['other_section_id'],
+        'draft_import_base64': base64.b64encode(edited(export)).decode('ascii'),
+    }
+
+
 def main():
+    reused = cached()
+    if reused:
+        write(reused)
+        return
+    email = f'fixture-drafter-{secrets.token_hex(6)}@example.test'
     owner = expect(*call('POST', '/api/auth/register', {
         'fullName': 'Fixture Drafter',
-        'email': f'fixture-drafter-{secrets.token_hex(6)}@example.test',
+        'email': email,
         'password': PASSWORD,
         'firmName': f'Fixture Drafting Firm {secrets.token_hex(4)}',
     }), 201, 'register')
@@ -175,11 +223,11 @@ def main():
         'draft_other_section_id': next(s['id'] for s in board['sections'] if s['sectionId'] == 'device_description'),
         'draft_import_base64': base64.b64encode(edited(export)).decode('ascii'),
     }
-    if OUT:
-        with open(OUT, 'w', encoding='utf-8') as fh:
-            json.dump(values, fh)
-    else:
-        print(json.dumps({k: (v[:40] + '...' if len(v) > 40 else v) for k, v in values.items()}))
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, 'w', encoding='utf-8') as fh:
+        json.dump({'email': email, 'password': PASSWORD, 'project_id': project['id'], 'section_id': section['id'],
+                   'other_section_id': values['draft_other_section_id'], 'revision_version_id': values['revision_version_id']}, fh)
+    write(values)
 
 
 if __name__ == '__main__':

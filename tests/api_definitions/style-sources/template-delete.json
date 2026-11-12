@@ -1,0 +1,102 @@
+{
+  "requiresAuth": true,
+  "taskId": "b3fcbe8e-822c-4e8a-9efd-507e81697eec",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "DELETE /api/templates/:templateId - delete a template",
+  "description": "Drafts can follow the firm's own templates and past wording, used only for that firm (F3.6 AC1); turning firm style sources off removes them from drafting within 1 hour and past wording never crosses tenants (F3.6 AC5). Removes the firm's template (204). Another firm's id is 404. Needs projects:write.",
+  "endpoint": "/api/templates/:templateId",
+  "method": "DELETE",
+  "expectedStatus": 204,
+  "priority": 136,
+  "coversCriterion": [
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC1",
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC5",
+    "b3fcbe8e-822c-4e8a-9efd-507e81697eec#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "templateId must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Template not found",
+      "when": "no such template in the caller's firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "404 - another firm's template",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "templateId": "{{var:other_template_id}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "Firm deletes its template",
+      "headers": {
+        "Authorization": "Bearer {{var:other_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "templateId": "{{var:other_template_id}}"
+      },
+      "expectedStatus": 204
+    },
+    {
+      "name": "400 - not a uuid",
+      "headers": {
+        "Authorization": "Bearer {{var:other_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "templateId": "{{static:not-a-uuid}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "pathParams": {
+        "templateId": "{{var:style_template_id}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

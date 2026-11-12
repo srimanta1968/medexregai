@@ -17,6 +17,11 @@ for the FDA check of the imported version.
 
 Needs the dev stack with docproc, the generation model (Ollama) and the FDA data service
 running. Fresh random names every run. Standard library only.
+
+The model-written draft plus the FDA check take close to the runner's 60 s limit for a setup
+script, so the firm's account is cached in tests/setup_scripts/.cache/ (git-ignored, test
+accounts only) and reused while its latest draft still has K942988 verified and K999999 not
+found; otherwise everything is built again.
 """
 
 import base64
@@ -33,6 +38,7 @@ import zipfile
 
 API = (os.environ.get('API_BASE_URL') or 'http://localhost:3000').rstrip('/')
 OUT = os.environ.get('SETUP_VARS_OUT')
+CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache', '40_draft_check.json')
 PASSWORD = 'Fx-' + secrets.token_urlsafe(18)
 
 REPORT = [
@@ -122,10 +128,53 @@ def wait_parsed(token, file_id):
         sys.exit(f'the source report was not read (parse status {status}); is docproc running?')
 
 
+def checked(current):
+    """The FDA check of a draft, when it found the predicate and flagged the missing K-number."""
+    check = (current or {}).get('fdaCheck') or {}
+    found = {r['kNumber']: r['status'] for r in check.get('references', [])}
+    return check.get('status') == 'done' and found.get(PREDICATE) == 'verified' and found.get(MISSING) == 'not_found'
+
+
+def cached():
+    """The firm from an earlier run, while its latest draft is still checked as this fixture promises."""
+    try:
+        with open(CACHE, encoding='utf-8') as fh:
+            c = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    status, payload = call('POST', '/api/auth/login', {'email': c['email'], 'password': c['password']})
+    if status != 200:
+        return None
+    token = payload['data']['token']
+    # A re-check queued by an earlier test run finishes in a few seconds.
+    for _ in range(10):
+        status, payload = call('GET', f"/api/project-sections/{c['section_id']}/draft", None, token)
+        current = (payload.get('data') or {}).get('draft') if status == 200 else None
+        if not current or current.get('origin') != 'imported':
+            return None
+        if checked(current):
+            return {'check_token': token, 'check_section_id': c['section_id'], 'check_empty_section_id': c['empty_section_id']}
+        time.sleep(2)
+    return None
+
+
+def write(values):
+    if OUT:
+        with open(OUT, 'w', encoding='utf-8') as fh:
+            json.dump(values, fh)
+    else:
+        print(json.dumps(values))
+
+
 def main():
+    reused = cached()
+    if reused:
+        write(reused)
+        return
+    email = f'fixture-checker-{secrets.token_hex(6)}@example.test'
     owner = expect(*call('POST', '/api/auth/register', {
         'fullName': 'Fixture Checker',
-        'email': f'fixture-checker-{secrets.token_hex(6)}@example.test',
+        'email': email,
         'password': PASSWORD,
         'firmName': f'Fixture Checking Firm {secrets.token_hex(4)}',
     }), 201, 'register')
@@ -184,11 +233,10 @@ def main():
         'check_section_id': section['id'],
         'check_empty_section_id': next(s['id'] for s in board['sections'] if s['sectionId'] == 'device_description'),
     }
-    if OUT:
-        with open(OUT, 'w', encoding='utf-8') as fh:
-            json.dump(values, fh)
-    else:
-        print(json.dumps(values))
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, 'w', encoding='utf-8') as fh:
+        json.dump({'email': email, 'password': PASSWORD, 'section_id': values['check_section_id'], 'empty_section_id': values['check_empty_section_id']}, fh)
+    write(values)
 
 
 if __name__ == '__main__':

@@ -327,3 +327,30 @@ export async function adminDocDocx(orgId: string, projectId: string, kind: Admin
   const safe = a.header.projectName.replace(/[^A-Za-z0-9 ()&,.-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Project';
   return { fileName: `${safe} - ${doc.title.replace(/[^A-Za-z0-9 ()&,.-]+/g, ' ')} ${a.preparedOn}.docx`, bytes, doc };
 }
+
+/** True when every signature field the document carries is blank (what the submitter signs by hand). */
+export function signaturesBlank(doc: AdminDoc): boolean {
+  return doc.blocks.every((b) => b.kind !== 'fields' || b.rows.every(([k, v]) => !SIGNATURE_FIELDS.includes(k) || v === ''));
+}
+
+export interface AdminDocSummary {
+  title: string;
+  openItems: string[];
+  openItemCount: number;
+  signatureFields: string[];
+  signaturesBlank: boolean;
+}
+
+/** The four documents as the board shows them, from one read of the project data. */
+export async function adminDocList(
+  orgId: string,
+  projectId: string,
+): Promise<{ projectId: string; preparedOn: string; classification: Classification | null; predicateCount: number; docs: Record<AdminDocKind, AdminDocSummary> }> {
+  const a = await adminData(orgId, projectId);
+  const docs = {} as Record<AdminDocKind, AdminDocSummary>;
+  for (const k of ADMIN_DOC_KINDS) {
+    const doc = buildAdminDoc(k, a);
+    docs[k] = { title: doc.title, openItems: doc.openItems, openItemCount: doc.openItems.length, signatureFields: doc.signatureFields, signaturesBlank: signaturesBlank(doc) };
+  }
+  return { projectId, preparedOn: a.preparedOn, classification: a.classification, predicateCount: a.predicates.length, docs };
+}

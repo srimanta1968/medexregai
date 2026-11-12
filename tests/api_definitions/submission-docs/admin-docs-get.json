@@ -1,0 +1,129 @@
+{
+  "requiresAuth": true,
+  "taskId": "b3fcbe8e-822c-4e8a-9efd-507e81697eec",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/admin-docs - the four administrative documents",
+  "description": "The 510(k) Summary, cover letter, FDA 3601 and Truthful and Accuracy statement are generated from project data with signature fields blank (F3.6 AC3). For summary_510k (the elements of 21 CFR 807.92), cover_letter, fda_3601 (a preparation sheet: Form FDA 3601 itself is created in FDA's MDUFA system, which assigns the payment identification number) and truthful_accurate (FDA's wording, 21 CFR 807.87(l)): title, openItems (what the project does not hold, written as [To be completed: ...]), openItemCount, signatureFields and signaturesBlank. Also the FDA classification of the device's product code and how many predicates are verified. Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/admin-docs",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 144,
+  "coversCriterion": [
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC3",
+    "b3fcbe8e-822c-4e8a-9efd-507e81697eec#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "projectId must be a valid id",
+      "when": "path id is not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project in the caller's firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant reviews the administrative documents",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "classification": {
+            "name": "Set, Administration, Intravascular",
+            "regulationNumber": "880.5440"
+          },
+          "docs": {
+            "summary_510k": {
+              "title": "510(k) Summary",
+              "signaturesBlank": true
+            },
+            "cover_letter": {
+              "title": "Cover letter",
+              "signaturesBlank": true
+            },
+            "fda_3601": {
+              "title": "FDA 3601 preparation sheet",
+              "signaturesBlank": true
+            },
+            "truthful_accurate": {
+              "title": "Truthful and Accurate statement",
+              "signaturesBlank": true,
+              "openItemCount": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "404 - another firm's project",
+      "headers": {
+        "Authorization": "Bearer {{var:other_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "400 - not a uuid",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

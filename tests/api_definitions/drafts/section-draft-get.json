@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "GET /api/project-sections/:sectionId/draft - the latest draft, its cited statements and what was removed",
-  "description": "A section draft with a citation on every statement (F3.2 AC1): the latest draft (or ?version=n) with each statement's citations (marker and a readable source label), its origin (generated, human_edited, human_added) and whether it is human-approved (AC4); uncited statements the gate removed are listed with the reason (AC2); plus every version. draft is null before the first request. Needs projects:read. F3.5: a ready draft carries fdaCheck, its predicate K-numbers checked against FDA data (verified / not_found / unavailable, recall and MAUDE flags, the statements that mention each).",
+  "description": "A section draft with a citation on every statement (F3.2 AC1): the latest draft (or ?version=n) with each statement's citations (marker and a readable source label), its origin (generated, human_edited, human_added) and whether it is human-approved (AC4); uncited statements the gate removed are listed with the reason (AC2); plus every version. draft is null before the first request. Needs projects:read. F3.5: a ready draft carries fdaCheck, its predicate K-numbers checked against FDA data (verified / not_found / unavailable, recall and MAUDE flags, the statements that mention each). F3.6: drafts can follow the firm's own templates and past wording (AC1): style.used lists the template and precedents a generated version was written with (style.usedCount), style.precedents the firm's wording for the section now. Device description shows precedent wording and warns when claims go beyond the IFU and the evidence (AC4): each statement's claimWarnings, counted in claimCheck { warned, generatedWarned, humanWarned }.",
   "endpoint": "/api/project-sections/:sectionId/draft",
   "method": "GET",
   "expectedStatus": 200,
@@ -18,7 +18,10 @@
     "4bb0c6e6-956d-41c0-a6ee-01496b331169#AC4",
     "91e7f58c-a5fa-49b6-a2f4-fc8bb115e36d#AC1",
     "9d6b89e3-d4e0-4774-baa3-594e89aaa63a#AC1",
-    "ed22ee74-cc16-4fb9-ba8d-f37dca76377f#AC1"
+    "ed22ee74-cc16-4fb9-ba8d-f37dca76377f#AC1",
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC1",
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC4",
+    "b3fcbe8e-822c-4e8a-9efd-507e81697eec#AC1"
   ],
   "dependsOn": [
     "POST /api/auth/register",
@@ -63,6 +66,32 @@
         "data": {
           "draft": {
             "status": "ready"
+          }
+        }
+      }
+    },
+    {
+      "name": "Draft written with firm style, edit with claims beyond the IFU and the evidence",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "sectionId": "{{var:style_section_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "draft": {
+            "status": "ready",
+            "origin": "imported",
+            "style": {
+              "precedentCount": 1
+            },
+            "claimCheck": {
+              "humanWarned": 2
+            }
           }
         }
       }

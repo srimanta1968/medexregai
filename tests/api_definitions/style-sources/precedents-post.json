@@ -1,0 +1,111 @@
+{
+  "requiresAuth": true,
+  "taskId": "b3fcbe8e-822c-4e8a-9efd-507e81697eec",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/precedents - add past wording",
+  "description": "Drafts can follow the firm's own templates and past wording, used only for that firm (F3.6 AC1); turning firm style sources off removes them from drafting within 1 hour and past wording never crosses tenants (F3.6 AC5). Body { sectionId, sourceLabel (1-200, where the wording came from), text (1-4000), enabled? }. Drafting offers up to three of the closest to the model as untagged style, never as a citable source. Needs projects:write.",
+  "endpoint": "/api/precedents",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 138,
+  "coversCriterion": [
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC1",
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC5",
+    "b3fcbe8e-822c-4e8a-9efd-507e81697eec#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "text is required",
+      "when": "unknown section, missing sourceLabel or text, or extra fields"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Firm adds Labeling wording",
+      "headers": {
+        "Authorization": "Bearer {{var:other_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "payload": {
+        "sectionId": "labeling",
+        "sourceLabel": "K000003, Labeling (fixture)",
+        "text": "The labeling includes the device label and the instructions for use."
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "sectionId": "labeling",
+          "sourceLabel": "K000003, Labeling (fixture)",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "400 - text missing",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "payload": {
+        "sectionId": "labeling",
+        "sourceLabel": "x"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "400 - not an eSTAR section",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "payload": {
+        "sectionId": "not_a_section",
+        "sourceLabel": "x",
+        "text": "x"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "payload": {
+        "sectionId": "labeling",
+        "sourceLabel": "x",
+        "text": "x"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}

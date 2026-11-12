@@ -1,0 +1,117 @@
+{
+  "requiresAuth": true,
+  "taskId": "b3fcbe8e-822c-4e8a-9efd-507e81697eec",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/admin-docs/:kind - one administrative document in Word",
+  "description": "The 510(k) Summary, cover letter, FDA 3601 and Truthful and Accuracy statement are generated from project data with signature fields blank (F3.6 AC3). kind: summary_510k | cover_letter | fda_3601 | truthful_accurate. A .docx built from the project data, with every Signature, Typed name, Title and Date field blank and the open items listed at the end; X-Open-Items gives their number. Needs projects:read; audited as admin_doc.generated.",
+  "endpoint": "/api/projects/:projectId/admin-docs/:kind",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 145,
+  "coversCriterion": [
+    "80537ab9-7bf2-419f-b19d-0e8f8e76968b#AC3",
+    "b3fcbe8e-822c-4e8a-9efd-507e81697eec#AC3"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "kind must be one of summary_510k, cover_letter, fda_3601, truthful_accurate",
+      "when": "unknown kind or path id not a UUID"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no such project in the caller's firm"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant downloads the Truthful and Accurate statement",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}",
+        "kind": "truthful_accurate"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Consultant downloads the 510(k) Summary",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}",
+        "kind": "summary_510k"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "400 - unknown kind",
+      "headers": {
+        "Authorization": "Bearer {{var:style_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}",
+        "kind": "design_history"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "404 - another firm's project",
+      "headers": {
+        "Authorization": "Bearer {{var:other_token}}"
+      },
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}",
+        "kind": "cover_letter"
+      },
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "headers": {},
+      "fixture": "tests/setup_scripts/41_firm_style.py",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "pathParams": {
+        "projectId": "{{var:style_project_id}}",
+        "kind": "cover_letter"
+      },
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
