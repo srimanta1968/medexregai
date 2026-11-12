@@ -58,6 +58,9 @@ export const TABLE_CATALOG = {
   // F2.2 version and duplicate groups (migration 027).
   file_revision_groups: 'tenant',
   file_revision_members: 'tenant',
+  // F2.3 extracted facts and problems (migration 028).
+  facts: 'tenant',
+  problems: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
