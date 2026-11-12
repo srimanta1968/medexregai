@@ -68,6 +68,22 @@
       }
     },
     {
+      "name": "400 - not a uuid",
+      "headers": {
+        "Authorization": "Bearer {{var:pilot_token}}"
+      },
+      "fixture": "tests/setup_scripts/43_pilot_report.py",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "pathParams": {
+        "projectId": "{{static:not-a-uuid}}"
+      },
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
       "name": "401 - missing bearer token",
       "headers": {},
       "testType": "negative",
