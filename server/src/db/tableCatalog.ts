@@ -73,6 +73,9 @@ export const TABLE_CATALOG = {
   record_exports: 'tenant',
   // F3.5 FDA checks of K-numbers in drafts (migration 034).
   draft_fda_checks: 'tenant',
+  // F3.6 firm templates and past wording (migration 035).
+  firm_templates: 'tenant',
+  firm_precedents: 'tenant',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 
