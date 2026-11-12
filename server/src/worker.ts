@@ -9,6 +9,7 @@ import { folderSync } from './connections/FolderSync';
 import { sectionClassifier } from './sorting/SectionClassifier';
 import { revisionDetector } from './sorting/RevisionDetector';
 import { problemEngine } from './problems/ProblemEngine';
+import { draftPending } from './drafting/SectionDrafter';
 import { trustService } from './trust/TrustService';
 
 /**
@@ -41,6 +42,8 @@ const INBOUND_EVERY_MS = 15 * 1000;
 const FOLDER_SYNC_EVERY_MS = 60 * 1000;
 /** F2.2: sort newly read files into eSTAR sections. */
 const SORT_EVERY_MS = 15 * 1000;
+/** Section drafts (F3.2) wait for a model call; check the queue often. */
+const DRAFT_EVERY_MS = 10 * 1000;
 const timers: NodeJS.Timeout[] = [];
 let ingestRunning = false;
 let evalRunning = false;
@@ -105,6 +108,21 @@ async function sortPass(): Promise<void> {
     console.error(`[worker] sorting pass failed: ${(err as Error).message}`);
   } finally {
     sortRunning = false;
+  }
+}
+
+let draftRunning = false;
+
+async function draftPass(): Promise<void> {
+  if (draftRunning) return;
+  draftRunning = true;
+  try {
+    const n = await draftPending();
+    if (n) console.info(`[worker] section drafts: ${n}`);
+  } catch (err) {
+    console.error(`[worker] drafting pass failed: ${(err as Error).message}`);
+  } finally {
+    draftRunning = false;
   }
 }
 
@@ -229,6 +247,7 @@ if (require.main === module) {
   timers.push(setInterval(() => void inboundPass(), INBOUND_EVERY_MS));
   timers.push(setInterval(() => void folderSyncPass(), FOLDER_SYNC_EVERY_MS));
   timers.push(setInterval(() => void sortPass(), SORT_EVERY_MS));
+  timers.push(setInterval(() => void draftPass(), DRAFT_EVERY_MS));
   if (config.docproc.serviceKey) {
     timers.push(setInterval(() => void ingestPass(), INGEST_EVERY_MS));
   } else {

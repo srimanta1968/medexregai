@@ -106,6 +106,47 @@ async function rerank(query: string, texts: string[]): Promise<number[] | null> 
   }
 }
 
+/** The citation marker for a chunk: one passage, or the run of passages it spans. */
+function chunkCitation(row: HitRow): string {
+  return row.start.ordinal === row.end.ordinal
+    ? `[C:${row.file_version_id}#${row.start.ordinal}]`
+    : `[C:${row.file_version_id}#${row.start.ordinal}-${row.end.ordinal}]`;
+}
+
+/**
+ * The first passages of the current version of each given file, in reading order, shaped
+ * like search hits. Used by the drafter (F3.2) for files filed under the section being drafted.
+ */
+export async function leadingChunks(input: { orgId: string; projectId: string; fileIds: string[]; perFile: number }): Promise<SearchHit[]> {
+  if (!input.fileIds.length) return [];
+  const rows = await dataService.query<HitRow>(
+    { orgId: input.orgId },
+    'chunks',
+    `SELECT * FROM (
+       SELECT ${HIT_COLUMNS}, row_number() OVER (PARTITION BY f.id ORDER BY s.ordinal) AS rn
+         FROM chunks c ${HIT_JOINS}
+        WHERE c.org_id = $1 AND c.project_id = $2 AND f.current_version_id = v.id AND f.id = ANY($3::uuid[])
+     ) x WHERE x.rn <= $4 ORDER BY x.file_name, (x.start->>'ordinal')::int`,
+    [input.orgId, input.projectId, input.fileIds, input.perFile],
+  );
+  return rows.map((row) => ({
+    chunkId: row.chunk_id,
+    fileId: row.file_id,
+    fileName: row.file_name,
+    fileVersionId: row.file_version_id,
+    versionNo: row.version_no,
+    current: row.current,
+    text: row.text,
+    sectionPath: row.section_path,
+    start: row.start,
+    end: row.end,
+    where: where(row.start, row.end),
+    citation: chunkCitation(row),
+    score: 0,
+    matchedBy: [],
+  }));
+}
+
 export async function hybridSearch(input: {
   orgId: string;
   projectId: string;
@@ -192,10 +233,7 @@ export async function hybridSearch(input: {
       start: row.start,
       end: row.end,
       where: where(row.start, row.end),
-      citation:
-        row.start.ordinal === row.end.ordinal
-          ? `[C:${row.file_version_id}#${row.start.ordinal}]`
-          : `[C:${row.file_version_id}#${row.start.ordinal}-${row.end.ordinal}]`,
+      citation: chunkCitation(row),
       score: Number(score.toFixed(6)),
       matchedBy: [...matchedBy],
     })),

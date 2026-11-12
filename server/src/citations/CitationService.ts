@@ -92,13 +92,21 @@ export interface GateRun extends GateResult {
 }
 
 /** Run the gate over generated text for a project and log the run. The gate has no off switch. */
-export async function runCitationGate(input: { orgId: string; userId?: string; projectId: string; route: string; text: string }): Promise<GateRun> {
+export async function runCitationGate(input: {
+  orgId: string;
+  userId?: string;
+  projectId: string;
+  route: string;
+  text: string;
+  /** Drafts: every statement must cite a source (see GateOptions). */
+  everyStatement?: boolean;
+}): Promise<GateRun> {
   const [project] = await dataService.query<{ id: string }>({ orgId: input.orgId }, 'projects', 'SELECT id FROM projects WHERE id = $1 AND org_id = $2', [
     input.projectId,
     input.orgId,
   ]);
   if (!project) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Project not found');
-  const result = await applyCitationGate(input.text, new ProjectSourceResolver(input.orgId, input.projectId));
+  const result = await applyCitationGate(input.text, new ProjectSourceResolver(input.orgId, input.projectId), { everyStatement: input.everyStatement });
   const [row] = await dataService.query<{ id: string }>(
     { orgId: input.orgId, userId: input.userId },
     'citation_gate_runs',

@@ -149,7 +149,15 @@ export function isFactual(sentence: string): boolean {
   return extractFacts(body).length > 0 || FACT_WORDS.test(body);
 }
 
-export async function applyCitationGate(text: string, resolver: SourceResolver): Promise<GateResult> {
+export interface GateOptions {
+  /**
+   * Drafts (F3.2): every statement must carry a citation, not only factual ones. Connective
+   * prose that cites nothing is removed and listed like any other unsupported statement.
+   */
+  everyStatement?: boolean;
+}
+
+export async function applyCitationGate(text: string, resolver: SourceResolver, options: GateOptions = {}): Promise<GateResult> {
   const paragraphs = text.replace(/\r\n/g, '\n').split(/\n{2,}/);
   const sentencesByParagraph = paragraphs.map((p) =>
     p.trim() ? (p.trim().startsWith('#') ? [p.trim()] : splitSentences(p.replace(/\n/g, ' ')).filter(Boolean)) : [],
@@ -173,6 +181,10 @@ export async function applyCitationGate(text: string, resolver: SourceResolver):
         continue;
       }
       const cites = parseCitations(sentence);
+      if (options.everyStatement && cites.length === 0) {
+        removed.push({ text: stripCitations(sentence), code: 'UNCITED', reason: 'Every statement in a draft must cite a source; this one cites none' });
+        continue;
+      }
       const verdict = check(sentence, cites, resolved);
       if ('code' in verdict) {
         removed.push({ text: stripCitations(sentence), ...verdict });
