@@ -68,7 +68,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     phase: 5,
     scope: 'firm',
     permission: 'billing:manage',
-    built: false,
+    built: true,
   },
   // Firm settings (E10) are not phase-gated: they exist from day one.
   {

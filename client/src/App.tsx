@@ -14,6 +14,7 @@ const PilotPage = lazy(() => import('./pages/PilotPage'));
 const ProductCodePage = lazy(() => import('./pages/ProductCodePage'));
 const IntroductionRequestPage = lazy(() => import('./pages/IntroductionRequestPage'));
 const IntroductionsPage = lazy(() => import('./pages/app/IntroductionsPage'));
+const BillingApiPage = lazy(() => import('./pages/app/BillingApiPage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -116,6 +117,7 @@ export default function App(): JSX.Element {
             <Route path="/app/usage" element={<UsagePage />} />
             <Route path="/app/portfolio" element={<PortfolioPage />} />
             <Route path="/app/introductions" element={<IntroductionsPage />} />
+            <Route path="/app/billing" element={<BillingApiPage />} />
             <Route path="/app/account/security" element={<AccountSecurityPage />} />
             <Route path="/app/trust-pack" element={<TrustPackPage />} />
             <Route path="/app/fda-lookup" element={<FdaLookupPage />} />

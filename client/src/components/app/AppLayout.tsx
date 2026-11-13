@@ -25,7 +25,7 @@ export function useNavigation(): Navigation | null {
 }
 
 /** Where each built firm-level item lives; everything else opens its "coming" page. */
-const FIRM_PATHS: Record<string, string> = { clients: '/app/clients', users: '/app', 'ai-settings': '/app/settings/ai', 'trust-pack': '/app/trust-pack', templates: '/app/templates', time: '/app/time', usage: '/app/usage', portfolio: '/app/portfolio', introductions: '/app/introductions' };
+const FIRM_PATHS: Record<string, string> = { clients: '/app/clients', users: '/app', 'ai-settings': '/app/settings/ai', 'trust-pack': '/app/trust-pack', templates: '/app/templates', time: '/app/time', usage: '/app/usage', portfolio: '/app/portfolio', introductions: '/app/introductions', billing: '/app/billing' };
 
 export function navPath(item: NavItem, projectId?: string): string {
   if (item.scope === 'project') {
