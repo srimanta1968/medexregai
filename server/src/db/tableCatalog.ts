@@ -89,6 +89,8 @@ export const TABLE_CATALOG = {
   fda_letters: 'tenant',
   fda_deficiencies: 'tenant',
   fda_deficiency_links: 'tenant',
+  // F5.2 substantial-equivalence comparison tables (migration 043).
+  se_comparisons: 'tenant',
   // F4.4 sign-in throttling and the authenticator-app second factor (migration 041).
   auth_attempts: 'platform',
   user_mfa: 'platform',

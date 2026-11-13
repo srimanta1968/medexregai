@@ -1,0 +1,204 @@
+{
+  "requiresAuth": true,
+  "taskId": "6e5368a1-c26e-4c0f-915c-9b9224348a99",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/projects/:projectId/se-comparisons - build a cited SE comparison",
+  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). Builds and saves the comparison of the subject device with a predicate 510(k) (kNumber). Rows: product code, device class and regulation number from FDA records and the subject device's record, compared deterministically (same or different; FDA's numeric class 2 reads as II); then indications for use, technology, materials, sterilization, shelf life, biocompatibility and performance testing, each with the best passage of the client's own files cited [C:<version>#<location>] and of the predicate's public 510(k) summary cited [R:<K-number>#<passage>], always 'review': MedexRegAI never decides substantial equivalence. 201; 409 COMPARISON_EXISTS when the project already has one with that predicate (rebuild it instead). Needs projects:write; audited as se_comparison.created. Fixture 49_predicates.py asserts both sides carry citations.",
+  "endpoint": "/api/projects/:projectId/se-comparisons",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 202,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC2",
+    "6e5368a1-c26e-4c0f-915c-9b9224348a99#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "projectId": "{{var:pr_project_id}}"
+  },
+  "timeoutMs": 30000,
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "kNumber must look like K123456",
+      "when": "kNumber missing or malformed"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "project not in the caller's firm, or the K-number is not in FDA's 510(k) data"
+    },
+    {
+      "status": 409,
+      "code": "COMPARISON_EXISTS",
+      "message": "This project already has a comparison with K262817",
+      "when": "a comparison with this predicate exists"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service cannot be reached",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the FDA data service stopped during the run."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Builds a comparison with a second predicate",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "payload": {
+        "kNumber": "{{var:pr_create_k_number}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "counts": {
+            "rows": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "409 - a comparison with this predicate exists",
+      "testType": "negative",
+      "coversErrorCase": "409|COMPARISON_EXISTS",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "COMPARISON_EXISTS"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "payload": {
+        "kNumber": "{{var:pr_k_number}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "400 - not a K-number",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "payload": {
+        "kNumber": "{{static:12345}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "404 - unknown K-number",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "payload": {
+        "kNumber": "{{static:K999999}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "403 - a reviewer cannot build comparisons",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "kNumber": "{{static:K262817}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "payload": {
+        "kNumber": "{{static:K262817}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "kNumber": "{{static:K262817}}"
+      }
+    }
+  ],
+  "payload": {
+    "kNumber": "{{var:pr_create_k_number}}"
+  }
+}

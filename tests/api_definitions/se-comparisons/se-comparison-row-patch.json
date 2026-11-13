@@ -1,0 +1,196 @@
+{
+  "requiresAuth": true,
+  "taskId": "6e5368a1-c26e-4c0f-915c-9b9224348a99",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "PATCH /api/se-comparisons/:comparisonId/rows/:rowKey - the consultant's edit of a row",
+  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). Edits one row: subject or predicate text (citations are kept; the consultant keeps them true), the comparison (same, different, review) or a note. The row is marked edited and survives a rebuild. Needs projects:write; audited as se_comparison.row_edited.",
+  "endpoint": "/api/se-comparisons/:comparisonId/rows/:rowKey",
+  "method": "PATCH",
+  "expectedStatus": 200,
+  "priority": 204,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC2",
+    "6e5368a1-c26e-4c0f-915c-9b9224348a99#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "comparisonId": "{{var:pr_comparison_id}}",
+    "rowKey": "{{static:indications}}"
+  },
+  "timeoutMs": 30000,
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "comparison must be same, different or review",
+      "when": "unknown value, too long, or nothing to change"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Row not found",
+      "when": "unknown row key, or the comparison is not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Consultant marks the indications row different with a note",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}",
+        "rowKey": "{{static:indications}}"
+      },
+      "payload": {
+        "comparison": "{{static:different}}",
+        "note": "{{static:Narrower indication: gravity and pump infusion only.}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "counts": {
+            "edited": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "404 - unknown row",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}",
+        "rowKey": "{{static:colour}}"
+      },
+      "payload": {
+        "note": "{{static:x}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "400 - unknown comparison value",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}",
+        "rowKey": "{{static:indications}}"
+      },
+      "payload": {
+        "comparison": "{{static:equivalent}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "400 - nothing to change",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}",
+        "rowKey": "{{static:indications}}"
+      },
+      "payload": {},
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "403 - a reviewer cannot edit",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{static:00000000-0000-4000-8000-000000000000}}",
+        "rowKey": "{{static:indications}}"
+      },
+      "payload": {
+        "note": "{{static:x}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "comparisonId": "{{static:00000000-0000-4000-8000-000000000000}}",
+        "rowKey": "{{static:indications}}"
+      },
+      "payload": {
+        "note": "{{static:x}}"
+      }
+    }
+  ],
+  "payload": {
+    "note": "{{static:Checked.}}"
+  },
+  "fieldEnums": {
+    "comparison": [
+      "same",
+      "different",
+      "review"
+    ],
+    "rowKey": [
+      "product_code",
+      "device_class",
+      "regulation",
+      "indications",
+      "technology",
+      "materials",
+      "sterilization",
+      "shelf_life",
+      "biocompatibility",
+      "performance"
+    ]
+  }
+}

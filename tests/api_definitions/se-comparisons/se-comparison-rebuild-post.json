@@ -1,0 +1,125 @@
+{
+  "requiresAuth": true,
+  "taskId": "6e5368a1-c26e-4c0f-915c-9b9224348a99",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/se-comparisons/:comparisonId/rebuild - rebuild from the sources",
+  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). Rebuilds every row from the current client files and FDA data; rows the consultant edited are kept as they are. Needs projects:write; audited as se_comparison.rebuilt.",
+  "endpoint": "/api/se-comparisons/:comparisonId/rebuild",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 205,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC2",
+    "6e5368a1-c26e-4c0f-915c-9b9224348a99#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "comparisonId": "{{var:pr_comparison_id}}"
+  },
+  "timeoutMs": 30000,
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Comparison not found",
+      "when": "comparison is not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service cannot be reached",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the FDA data service stopped during the run."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Rebuilds the comparison",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "payload": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "counts": {
+            "rows": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "404 - another firm's comparison",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "payload": {},
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "403 - a reviewer cannot rebuild",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {},
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "comparisonId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {}
+    }
+  ],
+  "payload": {}
+}

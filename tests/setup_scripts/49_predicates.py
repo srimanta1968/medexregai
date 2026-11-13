@@ -1,5 +1,5 @@
 # @fixture scope=tenant tier=api reason="predicate similarity needs the subject device's indications and description read from a client file, in a fresh firm, so each session makes them through the app's own APIs"
-# @exports pr_token, pr_project_id, pr_k_number
+# @exports pr_token, pr_project_id, pr_k_number, pr_comparison_id, pr_delete_comparison_id, pr_create_k_number
 """
 Provision, through MedexRegAI's own HTTP APIs, a project for F5.2 predicate search:
 
@@ -83,7 +83,23 @@ def main():
     if not computed:
         sys.exit('no candidate had a computed similarity (are 510(k) summaries indexed in fda-data?)')
 
-    values = {'pr_token': token, 'pr_project_id': project['id'], 'pr_k_number': k_number}
+    # SE comparisons: one built against the summary-indexed predicate (for get, edit, rebuild and
+    # export), one to delete; a third K-number from the keyword page is left for the create case.
+    others = [c['kNumber'] for c in page['items'] if c['kNumber'] != k_number]
+    if len(others) < 2:
+        sys.exit('the keyword search returned too few candidates for the comparison cases')
+    comparison = expect(*call('POST', f"/api/projects/{project['id']}/se-comparisons", {'kNumber': k_number}, token), 201, 'SE comparison')
+    by_key = {r['key']: r for r in comparison['rows']}
+    if by_key['product_code']['comparison'] not in ('same', 'different') or by_key['indications']['comparison'] != 'review':
+        sys.exit('structured rows must be compared and text rows left for review')
+    if not any(c.get('marker', '').startswith('[R:') for r in comparison['rows'] for c in r['predicate']['citations'] if c.get('marker')):
+        sys.exit('no predicate cell cites the 510(k) summary')
+    if not any((c.get('marker') or '').startswith('[C:') for r in comparison['rows'] for c in r['subject']['citations']):
+        sys.exit("no subject cell cites the client's files")
+    doomed = expect(*call('POST', f"/api/projects/{project['id']}/se-comparisons", {'kNumber': others[0]}, token), 201, 'SE comparison to delete')
+
+    values = {'pr_token': token, 'pr_project_id': project['id'], 'pr_k_number': k_number, 'pr_comparison_id': comparison['id'],
+              'pr_delete_comparison_id': doomed['id'], 'pr_create_k_number': others[1]}
     if OUT:
         with open(OUT, 'w', encoding='utf-8') as fh:
             json.dump(values, fh)

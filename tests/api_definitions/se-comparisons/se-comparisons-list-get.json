@@ -1,0 +1,93 @@
+{
+  "requiresAuth": true,
+  "taskId": "6e5368a1-c26e-4c0f-915c-9b9224348a99",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/se-comparisons - a project's SE comparisons",
+  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). The project's comparison tables, newest first, each with its predicate, rows and counts (same, different, review, edited). Needs projects:read.",
+  "endpoint": "/api/projects/:projectId/se-comparisons",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 201,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC2",
+    "6e5368a1-c26e-4c0f-915c-9b9224348a99#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "projectId": "{{var:pr_project_id}}"
+  },
+  "timeoutMs": 30000,
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "project is not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role has projects:read."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Lists the two comparisons built by the fixture",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ]
+}
