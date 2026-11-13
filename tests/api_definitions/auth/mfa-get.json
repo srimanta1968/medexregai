@@ -1,0 +1,72 @@
+{
+  "requiresAuth": true,
+  "taskId": "3d97cbcb-19e4-4e2a-abb5-5db12738acd0",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "GET /api/auth/mfa - two-step sign-in status",
+  "description": "F4.4 pre-test hardening (SOC 2 CC6-04), toward 'An external penetration test is passed before the first paid live project'. The signed-in user's two-step sign-in status: enabled, setup pending, and recovery codes left. Never returns the secret.",
+  "endpoint": "/api/auth/mfa",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 186,
+  "coversCriterion": [
+    "0f388230-24e7-4721-bf25-346b65312095#AC1",
+    "3d97cbcb-19e4-4e2a-abb5-5db12738acd0#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "A user with MFA on",
+      "fixture": "tests/setup_scripts/45_auth_security.py",
+      "headers": {
+        "Authorization": "Bearer {{var:mfa_user_token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "enabled": true,
+          "pending": false
+        }
+      }
+    },
+    {
+      "name": "A user who never set it up",
+      "fixture": "tests/setup_scripts/45_auth_security.py",
+      "headers": {
+        "Authorization": "Bearer {{var:mfa_plain_token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "enabled": false,
+          "recoveryCodesLeft": 0
+        }
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  }
+}

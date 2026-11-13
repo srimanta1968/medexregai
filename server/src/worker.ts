@@ -11,6 +11,7 @@ import { revisionDetector } from './sorting/RevisionDetector';
 import { problemEngine } from './problems/ProblemEngine';
 import { checkPendingDrafts } from './drafting/DraftChecker';
 import { usageService } from './usage/UsageService';
+import { authThrottle } from './services/AuthThrottle';
 import { draftPending } from './drafting/SectionDrafter';
 import { trustService } from './trust/TrustService';
 
@@ -126,6 +127,8 @@ async function draftPass(): Promise<void> {
     if (c) console.info(`[worker] draft FDA checks: ${c}`);
     // F4.3: daily usage per client and project, from the usage events of the last two days.
     await usageService.rollupRecent();
+    // F4.4: sign-in attempts are only needed for a day.
+    await authThrottle.prune();
   } catch (err) {
     console.error(`[worker] drafting pass failed: ${(err as Error).message}`);
   } finally {

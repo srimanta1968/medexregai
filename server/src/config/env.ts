@@ -90,6 +90,8 @@ export interface AppConfig {
   logLevel: string;
   logFormat: string;
   rateLimit: { windowMs: number; maxRequests: number };
+  /** F4.4 sign-in throttling: failed attempts allowed per account and per IP address in 15 minutes. */
+  authThrottle: { accountFailures: number; ipFailures: number };
   /** Express "trust proxy" setting: how many proxy hops to trust for the client IP. */
   trustProxy: string | number;
   /** FDA data comes from the fda-data service (ADR-017), never from this app's database. */
@@ -431,6 +433,10 @@ export function loadConfig(env: Env): AppConfig {
     rateLimit: {
       windowMs: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_WINDOW_MS', '900000'), 'RATE_LIMIT_WINDOW_MS'),
       maxRequests: parsePositiveInt(optionalEnv(env, 'RATE_LIMIT_MAX_REQUESTS', '300'), 'RATE_LIMIT_MAX_REQUESTS'),
+    },
+    authThrottle: {
+      accountFailures: parsePositiveInt(optionalEnv(env, 'AUTH_ACCOUNT_FAILURE_LIMIT', '10'), 'AUTH_ACCOUNT_FAILURE_LIMIT'),
+      ipFailures: parsePositiveInt(optionalEnv(env, 'AUTH_IP_FAILURE_LIMIT', '100'), 'AUTH_IP_FAILURE_LIMIT'),
     },
     bodyLimit: optionalEnv(env, 'BODY_PARSER_LIMIT', '1mb'),
     features: parseFeatureFlags(env),

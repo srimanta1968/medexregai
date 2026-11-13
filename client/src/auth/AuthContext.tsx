@@ -33,7 +33,10 @@ interface AuthState {
   session: Session | null;
   /** True until the stored session has been restored (or found absent). */
   restoring: boolean;
-  login(email: string, password: string): Promise<void>;
+  /** Password sign-in. Resolves to a challenge token when the account has two-step sign-in on. */
+  login(email: string, password: string): Promise<{ mfaToken: string } | null>;
+  /** Second step: the challenge token and a code from the authenticator app (or a recovery code). */
+  verifyMfa(mfaToken: string, code: string): Promise<void>;
   register(input: RegisterInput): Promise<void>;
   /** Adopt a session issued elsewhere (invite acceptance). */
   adopt(session: Session): void;
@@ -113,8 +116,18 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, [refresh]);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<void> => {
-      apply(await apiRequest<Session>('/api/auth/login', { method: 'POST', body: { email, password } }));
+    async (email: string, password: string): Promise<{ mfaToken: string } | null> => {
+      const result = await apiRequest<Session | { mfaRequired: true; mfaToken: string }>('/api/auth/login', { method: 'POST', body: { email, password } });
+      if ('mfaRequired' in result) return { mfaToken: result.mfaToken };
+      apply(result);
+      return null;
+    },
+    [apply]
+  );
+
+  const verifyMfa = useCallback(
+    async (mfaToken: string, code: string): Promise<void> => {
+      apply(await apiRequest<Session>('/api/auth/mfa/verify', { method: 'POST', body: { mfaToken, code } }));
     },
     [apply]
   );
@@ -160,8 +173,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   );
 
   const value = useMemo<AuthState>(
-    () => ({ session, restoring, login, register, adopt: apply, logout, authedRequest }),
-    [session, restoring, login, register, apply, logout, authedRequest]
+    () => ({ session, restoring, login, verifyMfa, register, adopt: apply, logout, authedRequest }),
+    [session, restoring, login, verifyMfa, register, apply, logout, authedRequest]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

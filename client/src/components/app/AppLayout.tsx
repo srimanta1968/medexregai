@@ -104,7 +104,9 @@ export default function AppLayout(): JSX.Element {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <TimerWidget />
-              <span className="hidden text-slate-600 md:inline">{session?.user.fullName}</span>
+              <Link to="/app/account/security" className="hidden text-slate-600 hover:underline md:inline" title="Sign-in security">
+                {session?.user.fullName}
+              </Link>
               <button type="button" onClick={onSignOut} className="rounded-md border border-slate-300 px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">
                 Sign out
               </button>

@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { z } from 'zod';
+import { authThrottle } from '../services/AuthThrottle';
+import { AppError } from '../utils/AppError';
 import { config } from '../config/env';
 import { SSO_COOKIE, SsoError, ssoService } from '../services/SsoService';
 
@@ -80,7 +82,14 @@ ssoRouter.post(
   '/api/auth/sso/exchange',
   handle(async (req, res) => {
     const { code } = exchangeSchema.parse(req.body);
-    res.status(200).json({ success: true, data: await ssoService.exchange(code) });
+    // F4.4: guessing one-time codes is throttled per IP address.
+    await authThrottle.check('sso_exchange', req.ip);
+    try {
+      res.status(200).json({ success: true, data: await ssoService.exchange(code) });
+    } catch (err) {
+      if (err instanceof AppError && err.status === 401) await authThrottle.record('sso_exchange', req.ip, undefined, true);
+      throw err;
+    }
   })
 );
 

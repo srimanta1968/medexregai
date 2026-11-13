@@ -1,0 +1,76 @@
+{
+  "requiresAuth": true,
+  "taskId": "3d97cbcb-19e4-4e2a-abb5-5db12738acd0",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "POST /api/auth/mfa/setup - start two-step sign-in setup",
+  "description": "F4.4 pre-test hardening (SOC 2 CC6-04), toward 'An external penetration test is passed before the first paid live project'. Starts (or restarts) setup: a new TOTP secret in base32 and an otpauth:// link for an authenticator app, shown once and stored encrypted (AES-256-GCM). MFA stays off until POST /api/auth/mfa/enable confirms a code. 409 when MFA is already on. Audited as auth.mfa_setup_started (the secret is never logged).",
+  "endpoint": "/api/auth/mfa/setup",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 187,
+  "coversCriterion": [
+    "0f388230-24e7-4721-bf25-346b65312095#AC1",
+    "3d97cbcb-19e4-4e2a-abb5-5db12738acd0#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 409,
+      "code": "MFA_ALREADY_ENABLED",
+      "message": "Two-step sign-in is already on",
+      "when": "MFA is already on"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "A user without MFA gets a secret",
+      "fixture": "tests/setup_scripts/45_auth_security.py",
+      "headers": {
+        "Authorization": "Bearer {{var:mfa_plain_token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      },
+      "payload": {}
+    },
+    {
+      "name": "409 - already on",
+      "testType": "negative",
+      "coversErrorCase": "409|MFA_ALREADY_ENABLED",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "MFA_ALREADY_ENABLED"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:mfa_user_token}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py",
+      "payload": {}
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {}
+    }
+  ],
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "payload": {}
+}

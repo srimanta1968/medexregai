@@ -69,5 +69,5 @@ Feature: F0.2 Clients, devices and submissions
     And I click "IS-200 Traditional 510(k)"
     Then I should see "Traditional 510(k)"
     When I click "Problems"
-    Then I should see "Missing items and contradictions."
-    And I should see "This screen is being built for phase 1."
+    Then I should see "Check again"
+    And I should see "Every finding shows its sources"

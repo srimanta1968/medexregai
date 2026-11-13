@@ -23,7 +23,7 @@ Review the register monthly and at each release. Change a status only with a poi
 evidence. Evidence that lives outside the repository (screenshots, tickets, signed policies) goes
 in the evidence store (TO CONFIRM: location) under the control id.
 
-Summary (2026-11-12): 18 in place (one inherited from AWS), 12 partial, 14 not started, out of 44.
+Summary (2026-11-12): 19 in place (one inherited from AWS), 12 partial, 13 not started, out of 44.
 
 ---
 
@@ -73,8 +73,8 @@ Summary (2026-11-12): 18 in place (one inherited from AWS), 12 partial, 14 not s
 | CC6-01 | Tenant isolation: every query on client data runs in one firm's context | Partial | Enforced in the application: DataService checks every table against server/src/db/tableCatalog.ts and sets app.org_id per transaction. Database row-level security policies are not yet created (planned F8.1). Until then isolation rests on application code alone | Engineering |
 | CC6-02 | Role-based permissions within a firm (owner, admin, editor, reviewer, viewer) | In place | server/src/middleware/authorize.ts; 403 cases in tests/api_definitions/** | Engineering |
 | CC6-03 | Passwords stored as salted hashes; short-lived access tokens | In place | bcryptjs; JWT_EXPIRES_IN default 15m with refresh tokens (server/src/config/env.ts) | Engineering |
-| CC6-04 | Multi-factor authentication for customer accounts, or SSO with the firm's identity provider | Partial | SSO sign-in exists (server/src/routes/sso.ts); no MFA for password accounts | Engineering |
-| CC6-05 | Login throttling or lockout against password guessing | Not started | No rate limiting on auth routes found | Engineering |
+| CC6-04 | Multi-factor authentication for customer accounts, or SSO with the firm's identity provider | Partial | Two-step sign-in with an authenticator app (TOTP) and one-time recovery codes for password accounts (server/src/services/MfaService.ts, /app/account/security); SSO sign-in uses the provider's own checks. Gap: MFA is optional; decide whether to require it for owners and admins | Engineering |
+| CC6-05 | Login throttling or lockout against password guessing | In place | Postgres-backed throttle across instances (server/src/services/AuthThrottle.ts): 10 failed sign-ins per account or 100 per IP in 15 minutes give 429 before the password is checked; password reset, SSO code exchange and MFA codes also limited | Engineering |
 | CC6-06 | Staff access to production: individual accounts, MFA, least privilege, removed on leaving | Not started | AWS IAM roles exist in Terraform for services; human access policy not written | Founder |
 | CC6-07 | Quarterly review of who has production and admin access | Not started | | Founder |
 | CC6-08 | Encryption at rest for database, object store and logs, with managed keys rotated yearly | In place | aws_kms_key.platform with enable_key_rotation; RDS storage_encrypted; S3 SSE-KMS (infra/terraform/modules/platform/data.tf, compute.tf) | Engineering |

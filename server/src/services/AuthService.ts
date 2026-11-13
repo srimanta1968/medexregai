@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { randomBytes, randomUUID } from 'crypto';
 import { config } from '../config/env';
+import { MfaChallenge, mfaService } from './MfaService';
 import { AppError, ErrorCodes } from '../utils/AppError';
 import { dataService, Tx } from './DataService';
 import { mailService } from './MailService';
@@ -144,7 +145,11 @@ export class AuthService {
     return session;
   }
 
-  async login(input: { email: string; password: string }): Promise<AuthSession> {
+  /**
+   * Password sign-in. With two-step sign-in on (F4.4), a correct password gives a short-lived
+   * challenge instead of a session; completeMfa trades it, with a code, for the session.
+   */
+  async login(input: { email: string; password: string }): Promise<AuthSession | MfaChallenge> {
     return dataService.transaction({}, async (tx) => {
       const rows = await tx.query<{ id: string; email: string; full_name: string; status: string; password_hash: string | null }>(
         'user_profiles',
@@ -163,10 +168,33 @@ export class AuthService {
       if (!membership) {
         throw new AppError(403, ErrorCodes.NO_ACTIVE_MEMBERSHIP, 'This account is not an active member of any firm');
       }
+      if (await mfaService.isEnabled(row.id)) return mfaService.challenge(row.id);
       await tx.query('user_profiles', 'UPDATE user_profiles SET last_login_at = now() WHERE user_id = $1', [row.id]);
       return issueSession(
         tx,
         { id: row.id, email: row.email, fullName: row.full_name },
+        { id: membership.org_id, name: membership.org_name, slug: membership.org_slug },
+        membership.role
+      );
+    });
+  }
+
+  /** Second step of password sign-in: the challenge's user, after a correct code, gets a session. */
+  async completeMfa(userId: string): Promise<AuthSession> {
+    return dataService.transaction({}, async (tx) => {
+      const users = await tx.query<{ email: string; full_name: string; status: string }>(
+        'user_profiles',
+        'SELECT email, full_name, status FROM user_profiles WHERE user_id = $1',
+        [userId]
+      );
+      const membership = await primaryMembership(tx, userId);
+      if (!users[0] || users[0].status !== 'active' || !membership) {
+        throw new AppError(401, ErrorCodes.INVALID_MFA_TOKEN, 'The sign-in step has expired. Sign in again.');
+      }
+      await tx.query('user_profiles', 'UPDATE user_profiles SET last_login_at = now() WHERE user_id = $1', [userId]);
+      return issueSession(
+        tx,
+        { id: userId, email: users[0].email, fullName: users[0].full_name },
         { id: membership.org_id, name: membership.org_name, slug: membership.org_slug },
         membership.role
       );

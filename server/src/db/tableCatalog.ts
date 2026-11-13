@@ -85,6 +85,9 @@ export const TABLE_CATALOG = {
   // F4.3 usage per client and project (migration 040).
   usage_events: 'tenant',
   usage_daily: 'tenant',
+  // F4.4 sign-in throttling and the authenticator-app second factor (migration 041).
+  auth_attempts: 'platform',
+  user_mfa: 'platform',
   platform_eval_runs: 'platform',
 } as const satisfies Record<string, TableScope>;
 

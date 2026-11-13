@@ -1,0 +1,118 @@
+{
+  "requiresAuth": false,
+  "taskId": "3d97cbcb-19e4-4e2a-abb5-5db12738acd0",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "POST /api/auth/mfa/verify - second step of password sign-in",
+  "description": "F4.4 pre-test hardening (pentest scope section 7; SOC 2 CC6-04), toward 'An external penetration test is passed before the first paid live project'. When an account has two-step sign-in on, POST /api/auth/login answers with a challenge (mfaRequired, mfaToken valid 5 minutes, its own JWT audience so it is never an access token). This trades the challenge and a 6-digit authenticator code (TOTP, RFC 6238), or a one-time recovery code, for a session. Codes work once. 5 wrong codes per user in 15 minutes: 429 RATE_LIMITED. Public: the challenge token is the credential.",
+  "endpoint": "/api/auth/mfa/verify",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 185,
+  "coversCriterion": [
+    "0f388230-24e7-4721-bf25-346b65312095#AC1",
+    "3d97cbcb-19e4-4e2a-abb5-5db12738acd0#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 401,
+      "code": "INVALID_MFA_CODE",
+      "message": "The code is not correct or has already been used",
+      "when": "wrong code, a code already used, or a used recovery code"
+    },
+    {
+      "status": 401,
+      "code": "INVALID_MFA_TOKEN",
+      "message": "The sign-in step has expired. Sign in again.",
+      "when": "challenge token invalid, expired or of another kind"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "code is required",
+      "when": "code missing, too short or too long"
+    },
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "message": "Too many attempts. Try again in 15 minutes.",
+      "when": "5 wrong codes for this user (or the IP limit) in 15 minutes"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "A recovery code completes sign-in",
+      "fixture": "tests/setup_scripts/45_auth_security.py",
+      "payload": {
+        "mfaToken": "{{var:mfa_token}}",
+        "code": "{{var:mfa_recovery_code}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "401 - the same recovery code again",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_MFA_CODE",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_MFA_CODE"
+      },
+      "payload": {
+        "mfaToken": "{{var:mfa_token}}",
+        "code": "{{var:mfa_recovery_code}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py"
+    },
+    {
+      "name": "401 - wrong code",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_MFA_CODE",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_MFA_CODE"
+      },
+      "payload": {
+        "mfaToken": "{{var:mfa_token}}",
+        "code": "{{static:000000}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py"
+    },
+    {
+      "name": "401 - an access token is not a challenge",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_MFA_TOKEN",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_MFA_TOKEN"
+      },
+      "payload": {
+        "mfaToken": "{{var:mfa_user_token}}",
+        "code": "{{static:000000}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py"
+    },
+    {
+      "name": "400 - code missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "mfaToken": "{{var:mfa_token}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py"
+    }
+  ],
+  "payload": {
+    "mfaToken": "{{var:mfa_token}}",
+    "code": "{{var:mfa_recovery_code}}"
+  }
+}

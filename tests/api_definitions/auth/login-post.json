@@ -1,6 +1,6 @@
 {
   "name": "POST /api/auth/login - sign in",
-  "description": "Signs in with email and password and returns a new access token (data.token) and refresh token for the user's firm. Wrong password and unknown email return the same 401 INVALID_CREDENTIALS so accounts cannot be probed. 403 NO_ACTIVE_MEMBERSHIP when the account belongs to no active firm. Covers: a user can log in.",
+  "description": "Signs in with email and password and returns a new access token (data.token) and refresh token for the user's firm. Wrong password and unknown email return the same 401 INVALID_CREDENTIALS so accounts cannot be probed. 403 NO_ACTIVE_MEMBERSHIP when the account belongs to no active firm. Covers: a user can log in. F4.4: after 10 wrong passwords for an account (or 100 from one IP address) in 15 minutes, sign-in answers 429 RATE_LIMITED before the password is checked, so even the right password is refused until the window passes; a successful sign-in clears the account's count. With two-step sign-in on, a correct password returns {mfaRequired, mfaToken, expiresIn} instead of a session (see POST /api/auth/mfa/verify).",
   "endpoint": "/api/auth/login",
   "method": "POST",
   "requiresAuth": false,
@@ -11,7 +11,9 @@
   "testability": "auto",
   "coversCriterion": [
     "ea7bf6cb-a1f4-450f-b884-9b7a5b3b9f58#AC3",
-    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2"
+    "bfeba90f-3255-44a6-82d4-d53b3b5ef5d9#AC2",
+    "0f388230-24e7-4721-bf25-346b65312095#AC1",
+    "3d97cbcb-19e4-4e2a-abb5-5db12738acd0#AC1"
   ],
   "dependsOn": [
     "POST /api/auth/register"
@@ -40,6 +42,12 @@
       "when": "no active firm membership (needs a deactivated membership, not reproducible by request alone)",
       "reproducible": false,
       "notReproducibleReason": "Needs an account whose every membership is deactivated; no API removes or deactivates members until member management (F10.2)."
+    },
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "message": "Too many attempts. Try again in 15 minutes.",
+      "when": "10 failed sign-ins for the account, or 100 from the IP address, in 15 minutes"
     }
   ],
   "testCases": [
@@ -87,6 +95,20 @@
         "email": "{{static:nope}}",
         "password": "{{static:Correct-Horse-Battery-9}}"
       }
+    },
+    {
+      "name": "429 - account locked after 10 wrong passwords, even with the right one",
+      "testType": "negative",
+      "coversErrorCase": "429|RATE_LIMITED",
+      "expectedStatus": 429,
+      "expectedError": {
+        "code": "RATE_LIMITED"
+      },
+      "payload": {
+        "email": "{{var:throttled_email}}",
+        "password": "{{var:throttled_password}}"
+      },
+      "fixture": "tests/setup_scripts/45_auth_security.py"
     }
   ]
 }
