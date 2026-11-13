@@ -39,7 +39,7 @@ const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const updateBody = z
   .object({
     status: z.enum(SECTION_STATUSES as unknown as [SectionStatus, ...SectionStatus[]], {
-      errorMap: () => ({ message: `status must be one of ${SECTION_STATUSES.join(', ')}` }),
+      error: `status must be one of ${SECTION_STATUSES.join(', ')}`,
     }).optional(),
     reviewerId: uuid('reviewerId').nullable().optional(),
     note: z.string().trim().max(1000, 'note must be at most 1000 characters').optional(),

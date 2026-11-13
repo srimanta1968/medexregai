@@ -47,11 +47,11 @@ const ctx = (req: Request) => {
   const { orgId, userId } = requireAuth(req);
   return { orgId, userId };
 };
-const activityCode = z.string({ required_error: 'activityCode is required' }).regex(/^[a-z_]{2,20}$/, 'activityCode is not an activity code');
+const activityCode = z.string({ error: (iss) => (iss.input === undefined ? 'activityCode is required' : undefined) }).regex(/^[a-z_]{2,20}$/, 'activityCode is not an activity code');
 const projectId = z.string().uuid('projectId must be a valid id').nullable();
 const instant = (field: string) =>
   z
-    .string({ required_error: `${field} is required` })
+    .string({ error: (iss) => (iss.input === undefined ? `${field} is required` : undefined) })
     .datetime({ offset: true, message: `${field} must be an ISO 8601 date-time` });
 const note = z.string().trim().max(500, 'note must be at most 500 characters').nullable();
 const entryId = (req: Request) => parse(z.string().uuid('entryId must be a valid id'), req.params.entryId);
@@ -70,7 +70,7 @@ const listQuery = z.object({
   cursor: z.string().max(200).optional(),
 });
 const summaryQuery = z.object({
-  weekStart: z.string({ required_error: 'weekStart is required' }).regex(/^\d{4}-\d{2}-\d{2}$/, 'weekStart must be a date (YYYY-MM-DD)').refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)), 'weekStart must be a real date'),
+  weekStart: z.string({ error: (iss) => (iss.input === undefined ? 'weekStart is required' : undefined) }).regex(/^\d{4}-\d{2}-\d{2}$/, 'weekStart must be a date (YYYY-MM-DD)').refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)), 'weekStart must be a real date'),
   tzOffset: z.coerce.number().int().min(-840, 'tzOffset must be between -840 and 840 minutes').max(840, 'tzOffset must be between -840 and 840 minutes').optional(),
 });
 
@@ -156,7 +156,7 @@ timeRouter.get(
 const exportQuery = z.object({
   from: instant('from'),
   to: instant('to'),
-  scope: z.enum(['mine', 'firm'], { errorMap: () => ({ message: 'scope must be mine or firm' }) }).optional(),
+  scope: z.enum(['mine', 'firm'], { error: 'scope must be mine or firm' }).optional(),
 });
 
 timeRouter.get(

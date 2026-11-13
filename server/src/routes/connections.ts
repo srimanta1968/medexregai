@@ -52,7 +52,7 @@ const startBody = z
 const linkBody = z
   .object({
     connectionId: uuid('connectionId'),
-    folder: z.string({ required_error: 'folder is required' }).trim().min(1, 'folder is required').max(1024, 'folder must be at most 1024 characters'),
+    folder: z.string({ error: (iss) => (iss.input === undefined ? 'folder is required' : undefined) }).trim().min(1, 'folder is required').max(1024, 'folder must be at most 1024 characters'),
   })
   .strict();
 

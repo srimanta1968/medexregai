@@ -15,11 +15,11 @@ const handle =
     fn(req, res).catch(next);
   };
 
-const email = z.string({ required_error: 'email is required' }).trim().toLowerCase().max(254).email('email must be a valid email address');
+const email = z.string({ error: (iss) => (iss.input === undefined ? 'email is required' : undefined) }).trim().toLowerCase().max(254).email('email must be a valid email address');
 
 const createInviteSchema = z.object({
   email,
-  role: z.string({ required_error: 'role is required' }),
+  role: z.string({ error: (iss) => (iss.input === undefined ? 'role is required' : undefined) }),
 });
 
 const listSchema = z.object({
@@ -32,7 +32,7 @@ const tokenParam = z.string().min(20, 'invitation link is invalid').max(200, 'in
 const acceptSchema = z.object({
   fullName: z.string().trim().min(1).max(200).optional(),
   password: z
-    .string({ required_error: 'password is required' })
+    .string({ error: (iss) => (iss.input === undefined ? 'password is required' : undefined) })
     .min(12, 'password must be at least 12 characters')
     .refine((p) => Buffer.byteLength(p, 'utf8') <= 72, 'password must be at most 72 bytes'),
 });

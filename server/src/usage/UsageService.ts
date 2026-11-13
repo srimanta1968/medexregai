@@ -171,5 +171,5 @@ export function usageCsv(s: UsageSummary): string {
     for (const p of c.projects) rows.push([c.clientName, p.projectName, p.filesRead, p.unitsRead, p.draftsGenerated, s.from, s.to]);
     rows.push([c.clientName, `All ${c.projectCount} project${c.projectCount === 1 ? '' : 's'}`, c.filesRead, c.unitsRead, c.draftsGenerated, s.from, s.to]);
   }
-  return `﻿${rows.map((r) => r.map(cell).join(',')).join('\r\n')}\r\n`;
+  return String.fromCharCode(0xfeff) + `${rows.map((r) => r.map(cell).join(',')).join('\r\n')}\r\n`;
 }

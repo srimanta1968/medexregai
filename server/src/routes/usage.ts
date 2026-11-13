@@ -36,7 +36,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 
 const date = (field: string) =>
   z
-    .string({ required_error: `${field} is required` })
+    .string({ error: (iss) => (iss.input === undefined ? `${field} is required` : undefined) })
     .regex(/^\d{4}-\d{2}-\d{2}$/, `${field} must be a date (YYYY-MM-DD)`)
     .refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)), `${field} must be a real date`);
 const usageQuery = z.object({

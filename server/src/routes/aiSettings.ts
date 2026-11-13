@@ -44,16 +44,16 @@ const handle =
 
 const id = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const route = z.enum(AI_ROUTES as unknown as [AiRoute, ...AiRoute[]], {
-  errorMap: () => ({ message: `routes must be some of ${AI_ROUTES.join(', ')}` }),
+  error: `routes must be some of ${AI_ROUTES.join(', ')}`,
 });
 
 const providerCreate = z
   .object({
-    name: z.string({ required_error: 'name is required' }).trim().min(1, 'name is required').max(80, 'name must be at most 80 characters'),
-    kind: z.enum(['openai_compatible', 'anthropic'], { errorMap: () => ({ message: 'kind must be openai_compatible or anthropic' }) }),
-    baseUrl: z.string({ required_error: 'baseUrl is required' }).trim().max(500, 'baseUrl must be at most 500 characters'),
-    generationModel: z.string({ required_error: 'generationModel is required' }).trim().min(1, 'generationModel is required').max(128),
-    apiKey: z.string({ required_error: 'apiKey is required' }).min(8, 'apiKey looks too short').max(500, 'apiKey is too long'),
+    name: z.string({ error: (iss) => (iss.input === undefined ? 'name is required' : undefined) }).trim().min(1, 'name is required').max(80, 'name must be at most 80 characters'),
+    kind: z.enum(['openai_compatible', 'anthropic'], { error: 'kind must be openai_compatible or anthropic' }),
+    baseUrl: z.string({ error: (iss) => (iss.input === undefined ? 'baseUrl is required' : undefined) }).trim().max(500, 'baseUrl must be at most 500 characters'),
+    generationModel: z.string({ error: (iss) => (iss.input === undefined ? 'generationModel is required' : undefined) }).trim().min(1, 'generationModel is required').max(128),
+    apiKey: z.string({ error: (iss) => (iss.input === undefined ? 'apiKey is required' : undefined) }).min(8, 'apiKey looks too short').max(500, 'apiKey is too long'),
   })
   .strict();
 

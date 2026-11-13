@@ -43,15 +43,18 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 
 const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const packKey = z.enum(Object.keys(PACKS) as [PackKey, ...PackKey[]], {
-  errorMap: () => ({ message: `pack must be one of ${Object.keys(PACKS).join(', ')}` }),
+  error: `pack must be one of ${Object.keys(PACKS).join(', ')}`,
 });
 const dataUseBody = z
-  .object({
-    productImprovement: z.boolean({ required_error: 'productImprovement is required', invalid_type_error: 'productImprovement must be true or false' }),
-  })
-  .strict('Only productImprovement can be changed; AI training on client data is never allowed');
+  .object(
+    {
+      productImprovement: z.boolean({ error: (iss) => (iss.input === undefined ? 'productImprovement is required' : 'productImprovement must be true or false') }),
+    },
+    { error: (iss) => (iss.code === 'unrecognized_keys' ? 'Only productImprovement can be changed; AI training on client data is never allowed' : undefined) },
+  )
+  .strict();
 const deletionBody = z
-  .object({ confirmName: z.string({ required_error: 'confirmName is required' }).trim().min(1, 'confirmName is required').max(200) })
+  .object({ confirmName: z.string({ error: (iss) => (iss.input === undefined ? 'confirmName is required' : undefined) }).trim().min(1, 'confirmName is required').max(200) })
   .strict();
 const listQuery = z.object({ limit: z.coerce.number().int().min(1).max(50).optional(), cursor: z.string().max(200).optional() });
 

@@ -11,7 +11,7 @@ const handle =
     fn(req, res).catch(next);
   };
 
-const exchangeSchema = z.object({ code: z.string({ required_error: 'code is required' }).min(20, 'code is invalid').max(200, 'code is invalid') });
+const exchangeSchema = z.object({ code: z.string({ error: (iss) => (iss.input === undefined ? 'code is required' : undefined) }).min(20, 'code is invalid').max(200, 'code is invalid') });
 
 const cookieOptions = (maxAgeMs: number) => ({
   httpOnly: true,
@@ -84,10 +84,10 @@ ssoRouter.post(
   })
 );
 
-const signupCode = z.object({ code: z.string({ required_error: 'code is required' }).min(20, 'code is invalid').max(200, 'code is invalid') });
+const signupCode = z.object({ code: z.string({ error: (iss) => (iss.input === undefined ? 'code is required' : undefined) }).min(20, 'code is invalid').max(200, 'code is invalid') });
 const signupComplete = signupCode.extend({
-  fullName: z.string({ required_error: 'fullName is required' }).trim().min(1, 'fullName is required').max(200),
-  firmName: z.string({ required_error: 'firmName is required' }).trim().min(1, 'firmName is required').max(200),
+  fullName: z.string({ error: (iss) => (iss.input === undefined ? 'fullName is required' : undefined) }).trim().min(1, 'fullName is required').max(200),
+  firmName: z.string({ error: (iss) => (iss.input === undefined ? 'firmName is required' : undefined) }).trim().min(1, 'firmName is required').max(200),
 });
 
 /** Public: details for the "create your firm workspace" page after a provider sign-in. */

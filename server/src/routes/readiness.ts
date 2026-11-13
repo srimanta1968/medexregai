@@ -38,7 +38,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 const projectId = (req: Request): string => parse(z.string().uuid('projectId must be a valid id'), req.params.projectId);
 const templateBody = z
   .object({
-    template: z.enum(ESTAR_TEMPLATE_KEYS as [string, ...string[]], { errorMap: () => ({ message: `template must be one of ${ESTAR_TEMPLATE_KEYS.join(', ')}` }) }),
+    template: z.enum(ESTAR_TEMPLATE_KEYS as [string, ...string[]], { error: `template must be one of ${ESTAR_TEMPLATE_KEYS.join(', ')}` }),
   })
   .strict();
 

@@ -38,7 +38,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 
 const projectId = (req: Request): string => parse(z.string().uuid('projectId must be a valid id'), req.params.projectId);
-const kind = z.enum(ADMIN_DOC_KINDS as [AdminDocKind, ...AdminDocKind[]], { errorMap: () => ({ message: `kind must be one of ${ADMIN_DOC_KINDS.join(', ')}` }) });
+const kind = z.enum(ADMIN_DOC_KINDS as [AdminDocKind, ...AdminDocKind[]], { error: `kind must be one of ${ADMIN_DOC_KINDS.join(', ')}` });
 
 function sendFile(res: Response, fileName: string, contentType: string, bytes: Buffer, headers: Record<string, string> = {}): void {
   res.set('Content-Type', contentType);

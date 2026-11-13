@@ -341,7 +341,7 @@ export function pilotCsv(r: PilotReport): string {
     ['drafted_sections', 'Drafted sections (write + tabulate + reconcile)', r.draftedSections.actualHours.toFixed(2), r.draftedSections.baselineHours?.toFixed(2) ?? null, pctCell(r.draftedSections.reduction)],
     ['whole_project', 'Whole project', r.wholeProject.actualHours.toFixed(2), r.wholeProject.baselineHours?.toFixed(2) ?? null, pctCell(r.wholeProject.reduction)],
   ];
-  return `﻿${rows.map((row) => row.map(cell).join(',')).join('\r\n')}\r\n`;
+  return String.fromCharCode(0xfeff) + `${rows.map((row) => row.map(cell).join(',')).join('\r\n')}\r\n`;
 }
 
 /** The RA lead signs the report as it stands now: name from the profile, the numbers' SHA-256 kept. */

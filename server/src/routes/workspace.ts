@@ -18,7 +18,7 @@ const handle =
 const guard = (permission: Permission) => [authenticate, requirePermission(permission)];
 
 const id = (what: string) => z.string().uuid(`${what} must be a valid id`);
-const name = z.string({ required_error: 'name is required' }).trim().min(1, 'name is required').max(200, 'name must be at most 200 characters');
+const name = z.string({ error: (iss) => (iss.input === undefined ? 'name is required' : undefined) }).trim().min(1, 'name is required').max(200, 'name must be at most 200 characters');
 const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
   cursor: z.string().max(200).optional(),

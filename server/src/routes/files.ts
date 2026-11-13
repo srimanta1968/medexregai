@@ -29,14 +29,14 @@ const listQuery = z.object({
   cursor: z.string().max(200).optional(),
 });
 const phiDecision = z
-  .object({ decision: z.enum(['redacted', 'accepted'], { errorMap: () => ({ message: 'decision must be redacted or accepted' }) }) })
+  .object({ decision: z.enum(['redacted', 'accepted'], { error: 'decision must be redacted or accepted' }) })
   .strict();
 
 const jsonUpload = z
   .object({
-    fileName: z.string({ required_error: 'fileName is required' }).min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
+    fileName: z.string({ error: (iss) => (iss.input === undefined ? 'fileName is required' : undefined) }).min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
     contentBase64: z
-      .string({ required_error: 'contentBase64 is required' })
+      .string({ error: (iss) => (iss.input === undefined ? 'contentBase64 is required' : undefined) })
       .min(1, 'contentBase64 is required')
       .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'contentBase64 must be base64'),
     mimeType: z.string().max(127).nullish(),
@@ -98,8 +98,8 @@ filesRouter.get(
 );
 
 const passageQuery = z.object({
-  from: z.coerce.number({ invalid_type_error: 'from must be a passage number' }).int().min(0, 'from must be 0 or more'),
-  to: z.coerce.number({ invalid_type_error: 'to must be a passage number' }).int().min(0).optional(),
+  from: z.coerce.number({ error: (iss) => (iss.input === undefined ? undefined : 'from must be a passage number') }).int().min(0, 'from must be 0 or more'),
+  to: z.coerce.number({ error: (iss) => (iss.input === undefined ? undefined : 'to must be a passage number') }).int().min(0).optional(),
 });
 
 /** The passages a citation [C:<versionId>#from-to] points at, with context, for the source viewer. */

@@ -36,8 +36,8 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 
 const projectId = (req: Request): string => parse(z.string().uuid('projectId must be a valid id'), req.params.projectId);
-const kind = z.enum(RECORD_KINDS as unknown as [RecordKind, ...RecordKind[]], { errorMap: () => ({ message: `kind must be one of ${RECORD_KINDS.join(', ')}` }) });
-const formatQuery = z.object({ format: z.enum(['pdf', 'docx'], { errorMap: () => ({ message: 'format must be pdf or docx' }) }).optional() });
+const kind = z.enum(RECORD_KINDS as unknown as [RecordKind, ...RecordKind[]], { error: `kind must be one of ${RECORD_KINDS.join(', ')}` });
+const formatQuery = z.object({ format: z.enum(['pdf', 'docx'], { error: 'format must be pdf or docx' }).optional() });
 
 recordsRouter.get(
   '/api/projects/:projectId/records',

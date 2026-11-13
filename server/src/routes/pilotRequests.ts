@@ -5,7 +5,7 @@ import { AppError, ErrorCodes } from '../utils/AppError';
 
 const text = (field: string, min: number, max: number) =>
   z
-    .string({ required_error: `${field} is required` })
+    .string({ error: (iss) => (iss.input === undefined ? `${field} is required` : undefined) })
     .trim()
     .min(min, min === 1 ? `${field} is required` : `${field} must be at least ${min} characters`)
     .max(max, `${field} must be at most ${max} characters`);
@@ -13,7 +13,7 @@ const text = (field: string, min: number, max: number) =>
 export const pilotRequestSchema = z.object({
   name: text('name', 1, 200),
   workEmail: z
-    .string({ required_error: 'workEmail is required' })
+    .string({ error: (iss) => (iss.input === undefined ? 'workEmail is required' : undefined) })
     .trim()
     .toLowerCase()
     .max(254, 'workEmail is too long')

@@ -38,12 +38,12 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 
 const sectionId = (req: Request): string => parse(z.string().uuid('sectionId must be a valid id'), req.params.sectionId);
-const versionQuery = z.object({ version: z.coerce.number({ invalid_type_error: 'version must be a number' }).int().min(1, 'version must be 1 or more').optional() });
+const versionQuery = z.object({ version: z.coerce.number({ error: (iss) => (iss.input === undefined ? undefined : 'version must be a number') }).int().min(1, 'version must be 1 or more').optional() });
 const importBody = z
   .object({
-    fileName: z.string({ required_error: 'fileName is required' }).trim().min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
+    fileName: z.string({ error: (iss) => (iss.input === undefined ? 'fileName is required' : undefined) }).trim().min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
     contentBase64: z
-      .string({ required_error: 'contentBase64 is required' })
+      .string({ error: (iss) => (iss.input === undefined ? 'contentBase64 is required' : undefined) })
       .min(1, 'contentBase64 is required')
       .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'contentBase64 must be base64'),
   })

@@ -38,16 +38,16 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 
 const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const listQuery = z.object({
-  status: z.enum(['open', 'resolved', 'dismissed', 'all'], { errorMap: () => ({ message: 'status must be open, resolved, dismissed or all' }) }).optional(),
+  status: z.enum(['open', 'resolved', 'dismissed', 'all'], { error: 'status must be open, resolved, dismissed or all' }).optional(),
   limit: z.coerce.number().int('limit must be a whole number').min(1, 'limit must be at least 1').max(50, 'limit must be at most 50').optional(),
   cursor: z.string().max(200, 'cursor is invalid').optional(),
 });
 const decisionBody = z
   .object({
     decision: z.enum(DECISIONS as unknown as [Decision, ...Decision[]], {
-      errorMap: () => ({ message: `decision must be one of ${DECISIONS.join(', ')}` }),
+      error: `decision must be one of ${DECISIONS.join(', ')}`,
     }),
-    note: z.string({ required_error: 'note is required' }).trim().min(3, 'Add a short note explaining the decision').max(1000, 'note must be at most 1000 characters'),
+    note: z.string({ error: (iss) => (iss.input === undefined ? 'note is required' : undefined) }).trim().min(3, 'Add a short note explaining the decision').max(1000, 'note must be at most 1000 characters'),
   })
   .strict();
 

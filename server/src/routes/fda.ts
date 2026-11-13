@@ -90,7 +90,7 @@ fdaRouter.get(
   lookup((req) => {
     const p = z
       .object({
-        q: z.string({ required_error: 'q is required' }).trim().min(2, 'q must be at least 2 characters').max(500),
+        q: z.string({ error: (iss) => (iss.input === undefined ? 'q is required' : undefined) }).trim().min(2, 'q must be at least 2 characters').max(500),
         productCode: productCode.optional(),
         kNumber: kNumber.optional(),
         limit: z.coerce.number().int().min(1).max(50).default(10),

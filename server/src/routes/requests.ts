@@ -47,7 +47,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const item = z
   .object({
-    label: z.string({ required_error: 'Each item needs a label' }).trim().min(1, 'Each item needs a label').max(200, 'An item label is at most 200 characters'),
+    label: z.string({ error: (iss) => (iss.input === undefined ? 'Each item needs a label' : undefined) }).trim().min(1, 'Each item needs a label').max(200, 'An item label is at most 200 characters'),
     detail: z.string().trim().max(1000, 'Item details are at most 1000 characters').optional(),
     sectionId: z.string().trim().max(64).nullish(),
     gapRef: z.string().trim().max(100).nullish(),
@@ -56,11 +56,11 @@ const item = z
 const email = z.string().trim().email('recipientEmail must be an email address').max(320);
 const requestCreate = z
   .object({
-    title: z.string({ required_error: 'title is required' }).trim().min(1, 'title is required').max(200, 'title is at most 200 characters'),
+    title: z.string({ error: (iss) => (iss.input === undefined ? 'title is required' : undefined) }).trim().min(1, 'title is required').max(200, 'title is at most 200 characters'),
     message: z.string().max(5000, 'message is at most 5000 characters').optional(),
     recipientName: z.string().trim().max(200).nullish(),
     recipientEmail: email.nullish(),
-    items: z.array(item, { required_error: 'items is required' }).min(1, 'Add at least one item').max(50, 'At most 50 items per request'),
+    items: z.array(item, { error: (iss) => (iss.input === undefined ? 'items is required' : undefined) }).min(1, 'Add at least one item').max(50, 'At most 50 items per request'),
   })
   .strict();
 const requestUpdate = requestCreate.partial().refine((v) => Object.keys(v).length > 0, 'Nothing to update');
@@ -186,9 +186,9 @@ requestsRouter.get(
 
 const jsonUpload = z
   .object({
-    fileName: z.string({ required_error: 'fileName is required' }).min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
+    fileName: z.string({ error: (iss) => (iss.input === undefined ? 'fileName is required' : undefined) }).min(1, 'fileName is required').max(255, 'fileName must be at most 255 characters'),
     contentBase64: z
-      .string({ required_error: 'contentBase64 is required' })
+      .string({ error: (iss) => (iss.input === undefined ? 'contentBase64 is required' : undefined) })
       .min(1, 'contentBase64 is required')
       .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'contentBase64 must be base64'),
     mimeType: z.string().max(127).nullish(),

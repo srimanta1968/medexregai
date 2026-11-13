@@ -371,5 +371,5 @@ export function totalsCsv(rows: TotalRow[], scope: 'mine' | 'firm'): string {
     [r.clientName, r.projectName, ...(scope === 'firm' ? [r.person] : []), r.activityCode, r.activityLabel, (r.seconds / 3600).toFixed(2), r.entries].map(csvCell).join(','),
   );
   // Excel opens a UTF-8 CSV correctly only with the byte order mark.
-  return `﻿${[header.join(','), ...lines].join('\r\n')}\r\n`;
+  return String.fromCharCode(0xfeff) + `${[header.join(','), ...lines].join('\r\n')}\r\n`;
 }

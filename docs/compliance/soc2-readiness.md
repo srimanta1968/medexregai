@@ -23,7 +23,7 @@ Review the register monthly and at each release. Change a status only with a poi
 evidence. Evidence that lives outside the repository (screenshots, tickets, signed policies) goes
 in the evidence store (TO CONFIRM: location) under the control id.
 
-Summary at start (2026-11-12): 18 in place (one inherited from AWS), 11 partial, 15 not started, out of 44.
+Summary (2026-11-12): 18 in place (one inherited from AWS), 12 partial, 14 not started, out of 44.
 
 ---
 
@@ -92,7 +92,7 @@ Summary at start (2026-11-12): 18 in place (one inherited from AWS), 11 partial,
 | CC7-02 | Application and infrastructure logs kept for a set period | In place | CloudWatch log groups with retention_in_days = var.log_retention_days (compute.tf) | Engineering |
 | CC7-03 | AWS account activity logging and threat detection (CloudTrail, GuardDuty or equal) | Not started | Not in Terraform | Engineering |
 | CC7-04 | Alerts for abnormal operation reach a person | Partial | Docproc queue alarms (docproc.tf); AI cost alert email (OPS_ALERT_EMAIL); no paging or uptime alert | Engineering |
-| CC7-05 | Vulnerability management: dependency and image scanning, patch window | Not started | No scanning step in .github/workflows/ci.yml | Engineering |
+| CC7-05 | Vulnerability management: dependency and image scanning, patch window | Partial | CI job `dependencies`: npm audit (server, client) and pip-audit (docproc) fail the build on High or Critical; Dependabot weekly (.github/dependabot.yml). First run on 2026-11-12 found and fixed zod (High), react-router (Moderate), pypdf and starlette (docproc). Gap: container image scanning and a written patch window | Engineering |
 | CC7-06 | Incident response plan, tested yearly | Partial | Runbooks cover five scenarios (docs/ops/runbooks.md); no overall plan, severity scale or customer notice timeline | Founder |
 
 ## CC8 Change management

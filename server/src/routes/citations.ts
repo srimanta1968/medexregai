@@ -21,7 +21,7 @@ const handle =
 
 const checkBody = z
   .object({
-    text: z.string({ required_error: 'text is required' }).min(1, 'text is required').max(50_000, 'text must be at most 50,000 characters'),
+    text: z.string({ error: (iss) => (iss.input === undefined ? 'text is required' : undefined) }).min(1, 'text is required').max(50_000, 'text must be at most 50,000 characters'),
     route: z.enum([...AI_ROUTES, 'check'] as [string, ...string[]]).optional(),
   })
   .strict();

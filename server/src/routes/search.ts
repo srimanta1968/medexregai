@@ -15,7 +15,7 @@ const handle =
   };
 
 const searchQuery = z.object({
-  q: z.string({ required_error: 'q is required' }).trim().min(2, 'q must be at least 2 characters').max(500, 'q must be at most 500 characters'),
+  q: z.string({ error: (iss) => (iss.input === undefined ? 'q is required' : undefined) }).trim().min(2, 'q must be at least 2 characters').max(500, 'q must be at most 500 characters'),
   limit: z.coerce.number().int().min(1, 'limit must be 1-50').max(50, 'limit must be 1-50').optional(),
   includeSuperseded: z.enum(['true', 'false']).optional(),
 });

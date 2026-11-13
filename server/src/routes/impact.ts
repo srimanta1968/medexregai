@@ -39,9 +39,9 @@ const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const actionBody = z
   .object({
     itemKey: z
-      .string({ required_error: 'itemKey is required' })
+      .string({ error: (iss) => (iss.input === undefined ? 'itemKey is required' : undefined) })
       .regex(/^(draft|problem|request_item):[0-9a-f-]{36}$/i, 'itemKey must be draft:<id>, problem:<id> or request_item:<id>'),
-    action: z.enum(['redraft', 'recheck', 'mark_received', 'keep'], { errorMap: () => ({ message: 'action must be redraft, recheck, mark_received or keep' }) }),
+    action: z.enum(['redraft', 'recheck', 'mark_received', 'keep'], { error: 'action must be redraft, recheck, mark_received or keep' }),
   })
   .strict();
 

@@ -44,7 +44,7 @@ const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const sendersBody = z
   .object({
     allowedSenders: z
-      .array(z.string().max(320, 'A sender is at most 320 characters'), { required_error: 'allowedSenders is required' })
+      .array(z.string().max(320, 'A sender is at most 320 characters'), { error: (iss) => (iss.input === undefined ? 'allowedSenders is required' : undefined) })
       .max(50, 'At most 50 allowed senders'),
   })
   .strict();

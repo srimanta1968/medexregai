@@ -47,23 +47,23 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 
 const uuid = (what: string) => z.string().uuid(`${what} must be a valid id`);
 const sectionKey = z
-  .string({ required_error: 'sectionId is required' })
+  .string({ error: (iss) => (iss.input === undefined ? 'sectionId is required' : undefined) })
   .regex(/^[a-z][a-z0-9_]{1,39}$/, 'sectionId must be an eSTAR section id, such as device_description');
 const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
   cursor: z.string().max(200).optional(),
 });
-const enabled = z.boolean({ invalid_type_error: 'enabled must be true or false' });
-const templateName = z.string({ required_error: 'name is required' }).trim().min(1, 'name is required').max(200, 'name must be at most 200 characters');
-const templateBody = z.string({ required_error: 'body is required' }).trim().min(1, 'body is required').max(20000, 'body must be at most 20000 characters');
+const enabled = z.boolean({ error: (iss) => (iss.input === undefined ? undefined : 'enabled must be true or false') });
+const templateName = z.string({ error: (iss) => (iss.input === undefined ? 'name is required' : undefined) }).trim().min(1, 'name is required').max(200, 'name must be at most 200 characters');
+const templateBody = z.string({ error: (iss) => (iss.input === undefined ? 'body is required' : undefined) }).trim().min(1, 'body is required').max(20000, 'body must be at most 20000 characters');
 const sourceLabel = z
-  .string({ required_error: 'sourceLabel is required' })
+  .string({ error: (iss) => (iss.input === undefined ? 'sourceLabel is required' : undefined) })
   .trim()
   .min(1, 'sourceLabel is required')
   .max(200, 'sourceLabel must be at most 200 characters');
-const precedentText = z.string({ required_error: 'text is required' }).trim().min(1, 'text is required').max(4000, 'text must be at most 4000 characters');
+const precedentText = z.string({ error: (iss) => (iss.input === undefined ? 'text is required' : undefined) }).trim().min(1, 'text is required').max(4000, 'text must be at most 4000 characters');
 
-const settingsBody = z.object({ enabled: z.boolean({ required_error: 'enabled is required', invalid_type_error: 'enabled must be true or false' }) }).strict();
+const settingsBody = z.object({ enabled: z.boolean({ error: (iss) => (iss.input === undefined ? 'enabled is required' : 'enabled must be true or false') }) }).strict();
 const templateCreate = z.object({ sectionId: sectionKey, name: templateName, body: templateBody, enabled: enabled.optional() }).strict();
 const templateUpdate = z
   .object({ name: templateName.optional(), body: templateBody.optional(), enabled: enabled.optional() })

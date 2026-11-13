@@ -45,7 +45,7 @@ const baselineBody = z
     basis: z.string().trim().max(200, 'basis must be at most 200 characters').nullable().optional(),
     hours: z.record(
       z.string().regex(/^[a-z_]{2,20}$/, 'hours keys must be activity codes'),
-      z.number({ invalid_type_error: 'hours must be numbers' }).min(0, 'hours cannot be negative').max(10000, 'hours must be at most 10000'),
+      z.number({ error: (iss) => (iss.input === undefined ? undefined : 'hours must be numbers') }).min(0, 'hours cannot be negative').max(10000, 'hours must be at most 10000'),
     ),
   })
   .strict();
@@ -103,7 +103,7 @@ pilotRouter.get(
  */
 const signBody = z
   .object({
-    signerTitle: z.string({ required_error: 'signerTitle is required' }).trim().min(1, 'signerTitle is required').max(200, 'signerTitle must be at most 200 characters'),
+    signerTitle: z.string({ error: (iss) => (iss.input === undefined ? 'signerTitle is required' : undefined) }).trim().min(1, 'signerTitle is required').max(200, 'signerTitle must be at most 200 characters'),
     note: z.string().trim().max(1000, 'note must be at most 1000 characters').nullable().optional(),
   })
   .strict();
