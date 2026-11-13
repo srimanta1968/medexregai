@@ -1,0 +1,242 @@
+{
+  "requiresAuth": true,
+  "taskId": "00661b59-f9e4-48d3-a7f9-6316514a4d5b",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/projects/:projectId/predicates/search - candidate predicates",
+  "description": "Predicates can be searched by product code, keywords or semantic query (F5.2 AC1). mode=product_code (the subject device's code unless productCode is given), keyword (device name, optional productCode) or semantic (hybrid search over indexed public 510(k) summaries; each candidate carries the matched passage and its [R:] ref). Data from the fda-data service (FDA 510(k), classification and recall data). Each candidate has an IFU and a technology similarity to the subject device (word overlap with text from the client's own files: an estimate to sort candidates, 'unknown' when either side has no text) and recall flags: any linked recall is 'recall_linked', unchecked is 'unknown', only a checked candidate with no recalls is 'clean' (a recall-linked predicate is never shown as clean). Ranked clean, unknown, recall-linked, then by IFU and technology similarity. product_code and keyword pages are cursor-paged (nextCursor). Needs projects:read. Fixture 49_predicates.py asserts the flag rules and ranking on real FDA data.",
+  "endpoint": "/api/projects/:projectId/predicates/search",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 200,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC1",
+    "00661b59-f9e4-48d3-a7f9-6316514a4d5b#AC1",
+    "0dab1f18-1046-43bc-9599-ddf7e3c59f01#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "projectId": "{{var:pr_project_id}}"
+  },
+  "queryParams": {
+    "mode": "{{static:product_code}}"
+  },
+  "fieldEnums": {
+    "mode": [
+      "product_code",
+      "keyword",
+      "semantic"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "mode must be product_code, keyword or semantic",
+      "when": "mode missing or unknown, q missing for keyword/semantic, productCode not three letters, limit outside 1-20, or no product code for a product_code search"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "project not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role has projects:read."
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service cannot be reached",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the FDA data service stopped during the run."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "By the subject device's product code (FPA)",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:product_code}}",
+        "limit": 5
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "mode": "product_code",
+          "productCode": "FPA",
+          "subject": {
+            "deviceName": "IS-200 infusion set",
+            "productCode": "FPA",
+            "hasIfuText": true
+          }
+        }
+      }
+    },
+    {
+      "name": "By keyword",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:keyword}}",
+        "q": "{{static:infusion pump}}",
+        "limit": 5
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "mode": "keyword",
+          "query": "infusion pump"
+        }
+      }
+    },
+    {
+      "name": "By semantic query over 510(k) summaries",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:semantic}}",
+        "q": "{{static:catheter for vascular access}}",
+        "limit": 5
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "mode": "semantic"
+        }
+      }
+    },
+    {
+      "name": "400 - mode missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "q": "{{static:catheter}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "400 - keyword search without q",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:keyword}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "400 - product code not three letters",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:product_code}}",
+        "productCode": "{{static:FP1}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "mode": "{{static:keyword}}",
+        "q": "{{static:catheter}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "queryParams": {
+        "mode": "{{static:keyword}}",
+        "q": "{{static:catheter}}"
+      }
+    }
+  ],
+  "timeoutMs": 30000
+}
