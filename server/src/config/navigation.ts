@@ -59,7 +59,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     scope: 'project',
     built: true,
   },
-  { key: 'portfolio', label: 'Portfolio', description: 'All clients and projects at a glance', phase: 4, scope: 'firm', built: false },
+  { key: 'portfolio', label: 'Portfolio', description: 'All clients and projects at a glance', phase: 4, scope: 'firm', built: true },
   { key: 'introductions', label: 'Introductions', description: 'Opt-in client introductions for consultants', phase: 5, scope: 'firm', built: false },
   {
     key: 'billing',
