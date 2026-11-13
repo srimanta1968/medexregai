@@ -73,33 +73,50 @@ export function findLetterDate(text: string): string | null {
   return first?.value ?? null;
 }
 
-// Where the letter's closing text starts: nothing after it belongs to the last deficiency.
+// Where the letter's closing text starts (at a line start or after a sentence): nothing after
+// it belongs to the last deficiency.
 const CLOSING =
-  /^\s*(If you have any questions|Sincerely|The deficiencies identified above|Please submit your response|Your response (should|must)|We believe that the information|If the requested information is not received|This request for additional information)/im;
+  /(^|[.!?]\s+)(If you have any questions|Sincerely|The deficiencies identified above|Please submit your response|Your response (should|must)|We believe that the information|If the requested information is not received|This request for additional information)/im;
 
-/** Split letter text into FDA's numbered deficiencies (pure; exported for the tests). */
-export function splitDeficiencies(raw: string): { number: number; text: string }[] {
-  const text = raw.replace(/\r\n?/g, '\n');
-  const marks: { number: number; start: number; bodyStart: number }[] = [];
-  const re = /^[ \t]*(?:Deficiency\s+)?(\d{1,3})[.)][ \t]+(?=\S)/gim;
-  for (const m of text.matchAll(re)) {
-    marks.push({ number: Number(m[1]), start: m.index ?? 0, bodyStart: (m.index ?? 0) + m[0].length });
-  }
-  // The longest run 1, 2, 3 ...: numbered lines that break the sequence (a list inside a
-  // deficiency, a numbered address line) are part of the text around them.
-  let best: typeof marks = [];
+type Mark = { number: number; start: number; bodyStart: number };
+
+/** The longest run 1, 2, 3 ...: numbers that break the sequence stay in the text around them. */
+function longestRun(marks: Mark[]): Mark[] {
+  let best: Mark[] = [];
   for (let i = 0; i < marks.length; i++) {
     if (marks[i].number !== 1) continue;
     const run = [marks[i]];
     for (let j = i + 1; j < marks.length; j++) if (marks[j].number === run[run.length - 1].number + 1) run.push(marks[j]);
     if (run.length > best.length) best = run;
   }
+  return best;
+}
+
+function marksOf(text: string, re: RegExp, lead: (m: RegExpMatchArray) => number): Mark[] {
+  return [...text.matchAll(re)].map((m) => {
+    const start = (m.index ?? 0) + lead(m);
+    return { number: Number(m[2]), start, bodyStart: (m.index ?? 0) + m[0].length };
+  });
+}
+
+/** Split letter text into FDA's numbered deficiencies (pure; exported for the tests). */
+export function splitDeficiencies(raw: string): { number: number; text: string }[] {
+  const text = raw.replace(/\r\n?/g, '\n');
+  // Numbers at the start of a line (a list inside a deficiency or a numbered address line breaks
+  // the run and stays in the text) ...
+  let best = longestRun(marksOf(text, /^([ \t]*(?:Deficiency\s+)?)(\d{1,3})[.)][ \t]+(?=\S)/gim, (m) => m[1].length));
+  // ... or, for text pasted without its line breaks (often from a PDF), "1. Please ..." after a
+  // sentence or at the start, followed by a capital.
+  if (best.length < 2) {
+    const inline = longestRun(marksOf(text, /(^|[.:;!?]\s+)(\d{1,3})[.)]\s+(?=[A-Z(])/gm, (m) => m[1].length));
+    if (inline.length > best.length) best = inline;
+  }
   return best.map((m, k) => {
     const end = k + 1 < best.length ? best[k + 1].start : text.length;
     let body = text.slice(m.bodyStart, end);
     if (k === best.length - 1) {
       const close = CLOSING.exec(body);
-      if (close) body = body.slice(0, close.index);
+      if (close) body = body.slice(0, close.index + close[1].length);
     }
     return { number: m.number, text: body.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, MAX_ITEM) };
   });
