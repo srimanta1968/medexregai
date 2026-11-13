@@ -11,6 +11,7 @@ const ProductPage = lazy(() => import('./pages/ProductPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const SecurityPage = lazy(() => import('./pages/SecurityPage'));
 const PilotPage = lazy(() => import('./pages/PilotPage'));
+const ProductCodePage = lazy(() => import('./pages/ProductCodePage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -70,6 +71,8 @@ export default function App(): JSX.Element {
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/pilot" element={<PilotPage />} />
+            <Route path="/codes" element={<ProductCodePage />} />
+            <Route path="/codes/:code" element={<ProductCodePage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
