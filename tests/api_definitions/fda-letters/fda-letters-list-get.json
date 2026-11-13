@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "GET /api/projects/:projectId/fda-letters - a project's FDA letters",
-  "description": "An FDA AI or hold letter can be logged with deficiencies linked to sections and due dates (F5.1 AC1). The project's Additional Information requests and RTA hold letters, newest first: kind, FDA reference, issued, received and due dates, status, deficiency and answered counts, and daysLeft (calendar days to the due date while open; FDA allows 180 calendar days from the date of the request, with no extensions). Needs projects:read.",
+  "description": "An FDA AI or hold letter can be logged with deficiencies linked to sections and due dates (F5.1 AC1). The project's Additional Information requests and RTA hold letters, newest first: kind, FDA reference, issued, received and due dates, status, deficiency and answered counts, and daysLeft (calendar days to the due date while open; FDA allows 180 calendar days from the date of the request, with no extensions). Needs projects:read. Cursor-paged: limit 1-50 (default 50), nextCursor for the next page (F8.1).",
   "endpoint": "/api/projects/:projectId/fda-letters",
   "method": "GET",
   "expectedStatus": 200,
@@ -20,6 +20,12 @@
     "POST /api/auth/register"
   ],
   "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "limit must be 1-50",
+      "when": "limit outside 1-50, a bad cursor or an unknown query parameter"
+    },
     {
       "status": 404,
       "code": "NOT_FOUND",
@@ -61,6 +67,39 @@
       "expectedResponse": {
         "success": true
       }
+    },
+    {
+      "name": "First page of one (two exist: nextCursor set)",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "expectedStatus": 200,
+      "queryParams": {
+        "limit": 1
+      }
+    },
+    {
+      "name": "400 - limit above 50",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "queryParams": {
+        "limit": 51
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
     },
     {
       "name": "404 - another firm's project",

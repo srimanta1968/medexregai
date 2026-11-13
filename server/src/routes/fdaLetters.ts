@@ -118,12 +118,20 @@ const linksBody = z
   })
   .strict();
 
+/** List paging: at most 50 per page (F8.1). */
+const listQuery = z
+  .object({
+    limit: z.coerce.number().int().min(1, 'limit must be 1-50').max(50, 'limit must be 1-50').default(50),
+    cursor: z.string().max(200, 'cursor is invalid').optional(),
+  })
+  .strict();
+
 fdaLettersRouter.get(
   '/api/projects/:projectId/fda-letters',
   guard('projects:read'),
   handle(async (req, res) => {
     const { orgId } = requireAuth(req);
-    res.status(200).json({ success: true, data: { items: await fdaLetterService.list(orgId, param(req, 'projectId', 'projectId')) } });
+    res.status(200).json({ success: true, data: await fdaLetterService.list(orgId, param(req, 'projectId', 'projectId'), parse(listQuery, req.query)) });
   }),
 );
 
@@ -143,7 +151,7 @@ fdaLettersRouter.post(
     const { orgId } = requireAuth(req);
     const projectId = param(req, 'projectId', 'projectId');
     const body = parse(splitBody, req.body ?? {});
-    await fdaLetterService.list(orgId, projectId); // 404 for a project outside the firm
+    await fdaLetterService.assertProject(orgId, projectId); // 404 for a project outside the firm
     res.status(200).json({ success: true, data: await letterSplitter.propose(orgId, projectId, body) });
   }),
 );

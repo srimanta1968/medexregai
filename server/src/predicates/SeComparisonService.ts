@@ -2,6 +2,7 @@ import { fda } from '../fda/fdaService';
 import { hybridSearch } from '../retrieval/search';
 import { dataService } from '../services/DataService';
 import { AppError, ErrorCodes } from '../utils/AppError';
+import { decodeCursor, Page, toPage } from '../utils/pagination';
 
 /**
  * F5.2 substantial-equivalence (SE) comparison table builder (UI 2.0 §7.2).
@@ -193,14 +194,20 @@ export async function buildRows(orgId: string, projectId: string, kNumber: strin
 }
 
 export const seComparisonService = {
-  async list(orgId: string, projectId: string): Promise<SeComparison[]> {
+  /** Comparisons of a project, newest first, cursor-paged on (created_at, id). */
+  async list(orgId: string, projectId: string, opts: { limit: number; cursor?: string }): Promise<Page<SeComparison>> {
     const [p] = await dataService.query<{ id: string }>({ orgId }, 'projects', 'SELECT id FROM projects WHERE id = $1 AND org_id = $2', [projectId, orgId]);
     if (!p) throw new AppError(404, ErrorCodes.NOT_FOUND, 'Project not found');
-    const rows = await dataService.query<Row>({ orgId }, 'se_comparisons', `SELECT ${COLS} FROM se_comparisons WHERE org_id = $1 AND project_id = $2 ORDER BY created_at DESC`, [
-      orgId,
-      projectId,
-    ]);
-    return rows.map(view);
+    const c = decodeCursor(opts.cursor);
+    const rows = await dataService.query<Row & { id: string; created_at: Date }>(
+      { orgId },
+      'se_comparisons',
+      `SELECT ${COLS}, created_at FROM se_comparisons WHERE org_id = $1 AND project_id = $2
+          AND ($3::timestamptz IS NULL OR (created_at, id) < ($3::timestamptz, $4::uuid))
+        ORDER BY created_at DESC, id DESC LIMIT $5`,
+      [orgId, projectId, c.createdAt, c.id, opts.limit + 1],
+    );
+    return toPage<Row & { id: string; created_at: Date }, SeComparison>(rows, opts.limit, (r) => view(r));
   },
 
   async get(orgId: string, id: string): Promise<SeComparison> {

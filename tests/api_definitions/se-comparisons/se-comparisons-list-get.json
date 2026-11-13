@@ -7,7 +7,7 @@
     "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
   },
   "name": "GET /api/projects/:projectId/se-comparisons - a project's SE comparisons",
-  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). The project's comparison tables, newest first, each with its predicate, rows and counts (same, different, review, edited). Needs projects:read.",
+  "description": "An SE comparison table is built from subject and predicate summary with citations (F5.2 AC2). The project's comparison tables, newest first, each with its predicate, rows and counts (same, different, review, edited). Needs projects:read. Cursor-paged: limit 1-50 (default 50), nextCursor for the next page (F8.1).",
   "endpoint": "/api/projects/:projectId/se-comparisons",
   "method": "GET",
   "expectedStatus": 200,
@@ -24,6 +24,12 @@
   },
   "timeoutMs": 30000,
   "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "limit must be 1-50",
+      "when": "limit outside 1-50, a bad cursor or an unknown query parameter"
+    },
     {
       "status": 404,
       "code": "NOT_FOUND",
@@ -59,6 +65,39 @@
       "expectedResponse": {
         "success": true
       }
+    },
+    {
+      "name": "First page of one (two exist: nextCursor set)",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "expectedStatus": 200,
+      "queryParams": {
+        "limit": 1
+      }
+    },
+    {
+      "name": "400 - limit above 50",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:pr_project_id}}"
+      },
+      "queryParams": {
+        "limit": 51
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
     },
     {
       "name": "404 - another firm's project",

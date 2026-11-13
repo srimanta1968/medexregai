@@ -73,7 +73,7 @@ export function predicatesApi(request: Request, projectId: string) {
       if (params.cursor) qs.set('cursor', params.cursor);
       return request<SearchResult>(`${p}/predicates/search?${qs.toString()}`);
     },
-    comparisons: () => request<{ items: SeComparison[] }>(`${p}/se-comparisons`),
+    comparisons: () => request<{ items: SeComparison[]; nextCursor: string | null }>(`${p}/se-comparisons`),
     compare: (kNumber: string) => request<SeComparison>(`${p}/se-comparisons`, { method: 'POST', body: { kNumber } }),
     get: (id: string) => request<SeComparison>(c(id)),
     rebuild: (id: string) => request<SeComparison>(`${c(id)}/rebuild`, { method: 'POST', body: {} }),

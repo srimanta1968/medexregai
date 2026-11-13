@@ -1,5 +1,6 @@
 import { dataService, Tx } from '../services/DataService';
 import { AppError, ErrorCodes } from '../utils/AppError';
+import { decodeCursor, Page, toPage } from '../utils/pagination';
 import { addDays, RESPONSE_DAYS } from './LetterSplitter';
 
 /**
@@ -191,13 +192,29 @@ async function insertDeficiency(tx: Tx, orgId: string, letterId: string, project
 }
 
 export const fdaLetterService = {
-  async list(orgId: string, projectId: string): Promise<LetterSummary[]> {
+  /** Letters of a project, latest issued first, cursor-paged on (issued_on, id). */
+  async list(orgId: string, projectId: string, opts: { limit: number; cursor?: string }): Promise<Page<LetterSummary>> {
     await projectWorkspace(orgId, projectId);
-    const rows = await dataService.query<LetterRow>({ orgId }, 'fda_letters', `${LETTER_SELECT} WHERE l.org_id = $1 AND l.project_id = $2 ORDER BY l.issued_on DESC, l.created_at DESC`, [
-      orgId,
-      projectId,
-    ]);
-    return rows.map(toSummary);
+    const c = decodeCursor(opts.cursor);
+    const rows = await dataService.query<LetterRow>(
+      { orgId },
+      'fda_letters',
+      `${LETTER_SELECT} WHERE l.org_id = $1 AND l.project_id = $2
+          AND ($3::date IS NULL OR (l.issued_on, l.id) < ($3::date, $4::uuid))
+        ORDER BY l.issued_on DESC, l.id DESC LIMIT $5`,
+      [orgId, projectId, c.createdAt ? c.createdAt.slice(0, 10) : null, c.id, opts.limit + 1],
+    );
+    // The cursor carries the issue date in its time slot; the row itself is kept as it is.
+    return toPage(
+      rows.map((row) => ({ id: row.id, created_at: `${row.issued_on}T00:00:00.000Z`, row })),
+      opts.limit,
+      (x) => toSummary(x.row),
+    );
+  },
+
+  /** 404 unless the project is in the caller's firm. */
+  async assertProject(orgId: string, projectId: string): Promise<void> {
+    await projectWorkspace(orgId, projectId);
   },
 
   async get(orgId: string, letterId: string): Promise<LetterDetail> {

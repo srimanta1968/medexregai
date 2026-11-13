@@ -80,7 +80,7 @@ export function fdaLettersApi(request: Request, projectId: string) {
   const l = (id: string) => `/api/fda-letters/${encodeURIComponent(id)}`;
   const d = (id: string) => `/api/fda-deficiencies/${encodeURIComponent(id)}`;
   return {
-    list: () => request<{ items: LetterSummary[] }>(p),
+    list: () => request<{ items: LetterSummary[]; nextCursor: string | null }>(p),
     split: (body: { text?: string; fileVersionId?: string }) => request<Proposal>(`${p}/split`, { method: 'POST', body }),
     create: (body: NewLetter) => request<Letter>(p, { method: 'POST', body }),
     get: (id: string) => request<Letter>(l(id)),

@@ -92,7 +92,16 @@ predicatesRouter.get(
   guard('projects:read'),
   handle(async (req, res) => {
     const { orgId } = requireAuth(req);
-    res.status(200).json({ success: true, data: { items: await seComparisonService.list(orgId, idParam(req, 'projectId')) } });
+    const q = parse(
+      z
+        .object({
+          limit: z.coerce.number().int().min(1, 'limit must be 1-50').max(50, 'limit must be 1-50').default(50),
+          cursor: z.string().max(200, 'cursor is invalid').optional(),
+        })
+        .strict(),
+      req.query,
+    );
+    res.status(200).json({ success: true, data: await seComparisonService.list(orgId, idParam(req, 'projectId'), q) });
   }),
 );
 
