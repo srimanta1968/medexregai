@@ -8,7 +8,7 @@ sign in to this seeded account instead of uploading. Features that test uploadin
 requests/* until the runner can upload.
 
 Creates, once, through MedexRegAI's own HTTP APIs:
-  account   UI_SEED_EMAIL (default ui-seed@example.test) with the password from
+  account   UI_SEED_EMAIL (default: testCredentials.owner.email) with the password from
             tests/config/test-config.json testCredentials.owner (local test data only)
   client    Northbay Devices, device DC-100 catheter
   projects  DC-100 Traditional 510(k)  with tests/fixtures/ingest/bench-report.docx
@@ -70,7 +70,14 @@ def sign_in():
 def main():
     token = sign_in()
     clients = data(*call('GET', '/api/clients?limit=50', None, token), (200,), 'clients')
-    client = next((c for c in (clients.get('items') if isinstance(clients, dict) else clients) if c['name'] == CLIENT), None)
+    clients = clients.get('items') if isinstance(clients, dict) else clients
+    # The features open the client the switcher selects by default (the newest), so this
+    # account must hold no other client. A failed run that typed into the wrong field can add
+    # one; clients cannot be deleted, so seed a fresh account instead.
+    others = [c['name'] for c in clients if c['name'] != CLIENT]
+    if others:
+        sys.exit(f'{EMAIL} has other clients ({", ".join(others)}); set UI_SEED_EMAIL and testCredentials.owner.email to a new address')
+    client = next((c for c in clients if c['name'] == CLIENT), None)
     if not client:
         client = data(*call('POST', '/api/clients', {'name': CLIENT}, token), (201,), 'client')
     devices = data(*call('GET', f"/api/clients/{client['id']}/devices", None, token), (200,), 'devices')

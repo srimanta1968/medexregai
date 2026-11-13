@@ -85,7 +85,7 @@
       "${login:password}": "Uses registered if available, else default"
     },
     "owner": {
-      "email": "ui-seed@example.test",
+      "email": "ui-seed-owner@example.test",
       "_securityWaiver": "projexlight-ignore SEC-SECRET-03: local test account created by tests/ui_seed/seed_ui_account.py; not used in any shared environment",
       "password": "UiSeed-Local-Only-2026!",
       "description": "Owner of the seeded UI account (tests/ui_seed/seed_ui_account.py) for features that read already-parsed files; @login:owner"
