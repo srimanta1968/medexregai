@@ -24,6 +24,9 @@ export const TABLE_CATALOG = {
   sso_signups: 'platform',
   pilot_requests: 'platform',
   device_checks: 'platform',
+  // F6.2: the opt-in directory and visitors' requests are read across firms by routing.
+  firm_intro_settings: 'platform',
+  intro_requests: 'platform',
   // Distinct product codes of firms' devices (no firm or device identity), pushed to fda-data.
   device_product_codes: 'platform',
   memberships: 'tenant',
@@ -91,6 +94,7 @@ export const TABLE_CATALOG = {
   fda_deficiencies: 'tenant',
   fda_deficiency_links: 'tenant',
   // F5.2 substantial-equivalence comparison tables (migration 043).
+  introductions: 'tenant',
   se_comparisons: 'tenant',
   // F4.4 sign-in throttling and the authenticator-app second factor (migration 041).
   auth_attempts: 'platform',
