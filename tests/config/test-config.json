@@ -9,7 +9,7 @@
     "variables": "Reference variables in api_definitions as {{var:name}} (payload/headers/path/query) and {{baseUrl}}/{{apiUrl}} anywhere. Resolved at runtime AFTER {{cache:...}} dependency lookup. Put SAME-across-all-envs values in the top-level 'variables'; put values that DIFFER per environment in that environment's 'variables' (env overrides global on name clash)."
   },
   "variables": {
-    "_comment": "GLOBAL variables \u2014 apply to EVERY environment. Add values that are identical across environments (api_version, fixed header values, well-known sentinel IDs). Example: \"api_version\": \"v2\".",
+    "_comment": "GLOBAL variables — apply to EVERY environment. Add values that are identical across environments (api_version, fixed header values, well-known sentinel IDs). Example: \"api_version\": \"v2\".",
     "_example_api_version": "v2",
     "other_account_email": "",
     "reviewer_token": ""
@@ -20,7 +20,7 @@
       "apiUrl": "http://localhost:3000",
       "description": "Local development - localhost URLs are auto-translated to host.docker.internal in Docker",
       "variables": {
-        "_comment": "PER-ENVIRONMENT variables \u2014 override/extend the global ones for THIS env. Add values that differ per environment (seeded tenant_id/person_id/persona_id UUIDs from this env's DB). Example: \"tenant_id\": \"<dev-uuid>\".",
+        "_comment": "PER-ENVIRONMENT variables — override/extend the global ones for THIS env. Add values that differ per environment (seeded tenant_id/person_id/persona_id UUIDs from this env's DB). Example: \"tenant_id\": \"<dev-uuid>\".",
         "_example_tenant_id": "REPLACE_WITH_DEV_TENANT_UUID",
         "byo_provider_test_key": "sk-test-not-a-real-key-0000"
       },
@@ -83,6 +83,12 @@
       "${default:password}": "Default password from this config",
       "${login:email}": "Uses registered if available, else default",
       "${login:password}": "Uses registered if available, else default"
+    },
+    "owner": {
+      "email": "ui-seed@example.test",
+      "_securityWaiver": "projexlight-ignore SEC-SECRET-03: local test account created by tests/ui_seed/seed_ui_account.py; not used in any shared environment",
+      "password": "UiSeed-Local-Only-2026!",
+      "description": "Owner of the seeded UI account (tests/ui_seed/seed_ui_account.py) for features that read already-parsed files; @login:owner"
     }
   },
   "featureValidation": {
