@@ -1,0 +1,146 @@
+{
+  "requiresAuth": true,
+  "taskId": "7db52ad6-5534-4ccc-a66e-8386941e36dd",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/se-comparisons/:comparisonId/export - SE comparison as Word or Excel",
+  "description": "The SE comparison exports to Word and Excel (F5.2 AC3). format=docx: a Word document with the subject and predicate, the review status, the comparison table (attribute, subject, predicate, comparison) and a sources section giving every cell's source: client file, version and location [C:], the predicate's 510(k) summary page [R:], or the FDA database record. format=xlsx: one sheet with attribute, subject, subject source, predicate, predicate source, comparison, note and whether the consultant edited the row (text cells, never formulas). Rows still marked review say so; MedexRegAI does not determine substantial equivalence. Needs projects:read; audited as se_comparison.exported.",
+  "endpoint": "/api/se-comparisons/:comparisonId/export",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 207,
+  "coversCriterion": [
+    "34cf8e34-0e14-4774-9861-0a3050a15c73#AC3",
+    "7db52ad6-5534-4ccc-a66e-8386941e36dd#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "comparisonId": "{{var:pr_comparison_id}}"
+  },
+  "queryParams": {
+    "format": "{{static:docx}}"
+  },
+  "fieldEnums": {
+    "format": [
+      "docx",
+      "xlsx"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "format must be docx or xlsx",
+      "when": "format missing or unknown, or a malformed id"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Comparison not found",
+      "when": "the comparison is not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role has projects:read."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Exports to Word",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:docx}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Exports to Excel",
+      "fixture": "tests/setup_scripts/49_predicates.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:xlsx}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "400 - unknown format",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pr_token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:pdf}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "404 - another firm's comparison",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "comparisonId": "{{var:pr_comparison_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:docx}}"
+      },
+      "fixture": "tests/setup_scripts/49_predicates.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "comparisonId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "queryParams": {
+        "format": "{{static:docx}}"
+      }
+    }
+  ]
+}

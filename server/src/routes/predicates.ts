@@ -5,6 +5,7 @@ import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { predicateService } from '../predicates/PredicateService';
 import { seComparisonService } from '../predicates/SeComparisonService';
+import { exportSeComparison } from '../predicates/SeExport';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
 /**
@@ -149,5 +150,22 @@ predicatesRouter.delete(
     const { orgId } = requireAuth(req);
     await seComparisonService.remove(orgId, idParam(req, 'comparisonId'));
     res.status(204).end();
+  }),
+);
+
+//   GET    /api/se-comparisons/:comparisonId/export?format=docx|xlsx   the table with every cell's sources, for Word or Excel
+predicatesRouter.get(
+  '/api/se-comparisons/:comparisonId/export',
+  guard('projects:read'),
+  audit('se_comparison.exported', { targetType: 'se_comparison', targetId: fromParam('comparisonId'), metadata: (req) => ({ format: req.query.format ?? null }) }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const { format } = parse(z.object({ format: z.enum(['docx', 'xlsx'], { error: 'format must be docx or xlsx' }) }).strict(), req.query);
+    const out = await exportSeComparison(orgId, idParam(req, 'comparisonId'), format);
+    res.set('Content-Type', out.contentType);
+    res.set('Content-Disposition', `attachment; filename="${out.fileName}"`);
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition');
+    res.set('Cache-Control', 'no-store');
+    res.status(200).send(out.bytes);
   }),
 );
