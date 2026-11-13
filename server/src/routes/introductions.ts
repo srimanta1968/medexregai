@@ -143,15 +143,23 @@ introductionsRouter.get(
   }),
 );
 
-for (const decision of ['accept', 'decline'] as const) {
-  introductionsRouter.post(
-    `/api/introductions/:introductionId/${decision}`,
-    ...guard,
-    audit(`introduction.${decision === 'accept' ? 'accepted' : 'declined'}`, { targetType: 'introduction', targetId: fromParam('introductionId') }),
-    handle(async (req, res) => {
-      const { orgId, userId } = requireAuth(req);
-      res.set('Cache-Control', 'no-store');
-      res.status(200).json({ success: true, data: await introductionService.decide(orgId, userId, introId(req), decision) });
-    }),
-  );
-}
+const decide = (decision: 'accept' | 'decline') =>
+  handle(async (req, res) => {
+    const { orgId, userId } = requireAuth(req);
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, data: await introductionService.decide(orgId, userId, introId(req), decision) });
+  });
+
+introductionsRouter.post(
+  '/api/introductions/:introductionId/accept',
+  ...guard,
+  audit('introduction.accepted', { targetType: 'introduction', targetId: fromParam('introductionId') }),
+  decide('accept'),
+);
+
+introductionsRouter.post(
+  '/api/introductions/:introductionId/decline',
+  ...guard,
+  audit('introduction.declined', { targetType: 'introduction', targetId: fromParam('introductionId') }),
+  decide('decline'),
+);
