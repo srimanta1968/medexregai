@@ -4,11 +4,13 @@ import { audit, fromParam } from '../middleware/audit';
 import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { fdaLetterService } from '../fdaLetters/FdaLetterService';
+import { letterSplitter } from '../fdaLetters/LetterSplitter';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
 /**
  * F5.1 FDA letters (FR-14.23; UI 2.0 §7.1). Read: projects:read. Change: projects:write.
  *   GET    /api/projects/:projectId/fda-letters          letters, newest first, with deficiency counts and days left
+ *   POST   /api/projects/:projectId/fda-letters/split    propose deficiencies from the letter's text or file (saves nothing)
  *   POST   /api/projects/:projectId/fda-letters          save a letter with the deficiencies the consultant confirmed (201)
  *   GET    /api/fda-letters/:letterId                     one letter, its deficiencies and what each affects
  *   PATCH  /api/fda-letters/:letterId                     status, responded date, reference, received/due date, notes
@@ -120,6 +122,27 @@ fdaLettersRouter.get(
   handle(async (req, res) => {
     const { orgId } = requireAuth(req);
     res.status(200).json({ success: true, data: { items: await fdaLetterService.list(orgId, param(req, 'projectId', 'projectId')) } });
+  }),
+);
+
+const splitBody = z
+  .object({
+    text: z.string({ error: 'text must be text' }).max(200000, 'text must be at most 200000 characters').optional(),
+    fileVersionId: uuid('fileVersionId').optional(),
+  })
+  .strict()
+  .refine((b) => (b.text !== undefined && b.text.trim().length > 0) !== (b.fileVersionId !== undefined), 'Send either the letter text or its fileVersionId');
+
+/** Propose only: the consultant checks the split, then saves it with POST .../fda-letters. */
+fdaLettersRouter.post(
+  '/api/projects/:projectId/fda-letters/split',
+  guard('projects:write'),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const projectId = param(req, 'projectId', 'projectId');
+    const body = parse(splitBody, req.body ?? {});
+    await fdaLetterService.list(orgId, projectId); // 404 for a project outside the firm
+    res.status(200).json({ success: true, data: await letterSplitter.propose(orgId, projectId, body) });
   }),
 );
 

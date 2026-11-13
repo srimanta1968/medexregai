@@ -1,0 +1,179 @@
+{
+  "requiresAuth": true,
+  "taskId": "3dfb47de-0008-4728-9dcf-0124d12d0200",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/projects/:projectId/fda-letters/split - propose deficiencies from a letter",
+  "description": "A forwarded AI letter is split into numbered deficiencies the consultant confirms before saving, with a deadline clock (F5.1). Send the letter's text or the fileVersionId of the letter file in this project (uploaded or forwarded by email, once read). Returns a proposal and saves nothing: kind (rta_hold when the letter says Refuse to Accept, else ai_request), FDA reference (K/D/P number), the letter date and dueOn = letter date + 180 calendar days (FDA: a complete response within 180 calendar days of the date of the AI request, no extensions; an RTA hold also gives 180 calendar days; fda.gov, 510(k) Submission Process), and FDA's numbered deficiencies (sub-items stay in their deficiency; the closing text is dropped), each with a proposed eSTAR section and the cues behind it, up to three client files (never the letter itself) and the drafted statements citing them. The consultant edits it and saves with POST /api/projects/:projectId/fda-letters. Needs projects:write.",
+  "endpoint": "/api/projects/:projectId/fda-letters/split",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 198,
+  "coversCriterion": [
+    "af7a916c-8bab-433f-9dab-3ae83f278b73#AC2",
+    "3dfb47de-0008-4728-9dcf-0124d12d0200#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "projectId": "{{var:fl_project_id}}"
+  },
+  "payload": {
+    "text": "{{static:FICTIONAL TEST LETTER - NOT FROM FDA\nJune 2, 2026\nRe: K269999\n1. Please provide ECH residual results per ISO 10993-7.\n2. Please clarify the shelf-life claim:\n   a. the aging protocol;\n   b. the real-time aging timeline.\nIf you have any questions about this letter, please contact the lead reviewer.}}"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Send either the letter text or its fileVersionId",
+      "when": "both, neither, or a malformed id"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Letter file not found in this project",
+      "when": "the file version is not in this project, or the project is not in the caller's firm"
+    },
+    {
+      "status": 409,
+      "code": "FILE_NOT_READ",
+      "message": "The letter file has not been read yet. Try again when it shows as read.",
+      "when": "the letter file is still queued or being read",
+      "reproducible": false,
+      "notReproducibleReason": "A forwarded file is read within seconds; a test cannot hold it in the queue."
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Splits the forwarded letter file: AI request K269999, due 180 days after 2 June 2026",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "payload": {
+        "fileVersionId": "{{var:fl_letter_file_version_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "kind": "ai_request",
+          "fdaReference": "K269999",
+          "issuedOn": "2026-06-02",
+          "dueOn": "2026-11-29"
+        }
+      }
+    },
+    {
+      "name": "Splits pasted letter text",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "payload": {
+        "text": "{{static:FICTIONAL TEST LETTER - NOT FROM FDA\nJune 2, 2026\nRe: K269999\n1. Please provide ECH residual results per ISO 10993-7.\n2. Please clarify the shelf-life claim:\n   a. the aging protocol;\n   b. the real-time aging timeline.\nIf you have any questions about this letter, please contact the lead reviewer.}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "issuedOn": "2026-06-02",
+          "dueOn": "2026-11-29"
+        }
+      }
+    },
+    {
+      "name": "400 - neither text nor file",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "payload": {},
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "404 - the letter file is in another project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_other_project_id}}"
+      },
+      "payload": {
+        "fileVersionId": "{{var:fl_letter_file_version_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "payload": {
+        "text": "{{static:1. Provide data.}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "payload": {
+        "text": "{{static:1. Provide data.}}"
+      }
+    }
+  ]
+}

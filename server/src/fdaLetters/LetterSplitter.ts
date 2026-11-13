@@ -112,11 +112,11 @@ export function summarise(item: string): string {
   return sentence.length > 300 ? `${sentence.slice(0, 297).trimEnd()}...` : sentence;
 }
 
-async function letterText(orgId: string, projectId: string, fileVersionId: string): Promise<string> {
-  const [v] = await dataService.query<{ id: string; parse_status: string }>(
+async function letterText(orgId: string, projectId: string, fileVersionId: string): Promise<{ text: string; fileId: string }> {
+  const [v] = await dataService.query<{ id: string; parse_status: string; file_id: string }>(
     { orgId },
     'file_versions',
-    `SELECT v.id, v.parse_status FROM file_versions v JOIN files f ON f.id = v.file_id AND f.org_id = v.org_id
+    `SELECT v.id, v.parse_status, v.file_id FROM file_versions v JOIN files f ON f.id = v.file_id AND f.org_id = v.org_id
       WHERE v.id = $1 AND v.org_id = $2 AND f.project_id = $3`,
     [fileVersionId, orgId, projectId],
   );
@@ -128,7 +128,7 @@ async function letterText(orgId: string, projectId: string, fileVersionId: strin
     'SELECT text FROM source_locations WHERE file_version_id = $1 AND org_id = $2 ORDER BY ordinal',
     [fileVersionId, orgId],
   );
-  return rows.map((r) => r.text).join('\n');
+  return { text: rows.map((r) => r.text).join('\n'), fileId: v.file_id };
 }
 
 async function sectionTitles(): Promise<Map<string, string>> {
@@ -161,7 +161,8 @@ async function citingStatements(orgId: string, projectId: string, fileIds: strin
 export const letterSplitter = {
   /** Propose a letter from its text or from a letter file already in the project. */
   async propose(orgId: string, projectId: string, input: { text?: string; fileVersionId?: string }): Promise<LetterProposal> {
-    const raw = input.fileVersionId ? await letterText(orgId, projectId, input.fileVersionId) : (input.text ?? '');
+    const source = input.fileVersionId ? await letterText(orgId, projectId, input.fileVersionId) : { text: input.text ?? '', fileId: null };
+    const raw = source.text;
     const text = raw.slice(0, MAX_TEXT);
     const notes: string[] = [];
     if (raw.length > MAX_TEXT) notes.push(`Only the first ${MAX_TEXT.toLocaleString('en-US')} characters were read.`);
@@ -183,7 +184,8 @@ export const letterSplitter = {
       try {
         const hits = await hybridSearch({ orgId, projectId, query: item.text.slice(0, 400), limit: 8 });
         const seen = new Map<string, string>();
-        for (const h of hits.items) if (!seen.has(h.fileId) && seen.size < 3) seen.set(h.fileId, h.fileName);
+        // The letter's own file always matches its text; it is not what the deficiency concerns.
+        for (const h of hits.items) if (h.fileId !== source.fileId && !seen.has(h.fileId) && seen.size < 3) seen.set(h.fileId, h.fileName);
         files = [...seen].map(([id, name]) => ({ id, name }));
       } catch (err) {
         console.warn(`[fda-letters] file search for deficiency ${item.number} failed: ${(err as Error).message}`);
