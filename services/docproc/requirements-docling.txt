@@ -1,4 +1,4 @@
 # Full build: adds Docling layout analysis and OCR for scanned PDFs and images (several GB with PyTorch).
 # Models are downloaded at image build time and baked in; the sandbox has no network at run time.
 -r requirements.txt
-docling>=2.0,<3
+docling>=2.150.0,<3
