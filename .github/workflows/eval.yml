@@ -63,7 +63,7 @@ jobs:
       AI_EMBEDDING_MODEL: bge-m3
       AI_REQUEST_TIMEOUT_MS: "120000"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: An evaluation endpoint is configured
         run: |
           if [ -z "$AI_BASE_URL" ]; then
