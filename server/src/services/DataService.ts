@@ -48,6 +48,8 @@ export interface Tx {
    * (sign-up: create firm, then the owner's membership). Only allowed while no org
    * is set, so a transaction can never hop from one tenant to another.
    */
+  /** Set the person this transaction acts for (row-level security: their own memberships across firms). */
+  setUser(userId: string): Promise<void>;
   setOrg(orgId: string): Promise<void>;
   /**
    * Read a tenant row by a secret token before any org is known (invite links,
@@ -113,8 +115,18 @@ export class DataService {
           if (!/\btoken_hash\s*=\s*\$1(?!\d)/.test(sql)) {
             throw new Error('lookupByToken queries must filter on token_hash = $1');
           }
-          const result = await client.query<T>(sql, params);
-          return result.rows;
+          // Row-level security (migration 049) hides other firms' rows; a token lookup runs before the
+          // firm is known, so it alone may read across firms, for this one statement.
+          await client.query("SELECT set_config('app.rls_token_lookup', 'on', true)");
+          try {
+            const result = await client.query<T>(sql, params);
+            return result.rows;
+          } finally {
+            await client.query("SELECT set_config('app.rls_token_lookup', 'off', true)");
+          }
+        },
+        setUser: async (userId: string) => {
+          await client.query("SELECT set_config('app.user_id', $1, true)", [assertUuid(userId, 'userId')]);
         },
         setOrg: async (newOrgId: string) => {
           if (orgId) {

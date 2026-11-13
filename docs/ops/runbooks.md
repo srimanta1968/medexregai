@@ -197,3 +197,25 @@ agreement (TO CONFIRM).
 
 **Tell the firm.** Send the certificate when it completes, and remind them that backup copies
 expire on the date the certificate states.
+
+## 6. Database roles and row-level security (F8.1)
+
+Every tenant table has row-level security with FORCE (migrations 049, 050): a row is visible and
+writable only when its `org_id` equals the transaction's `app.org_id`, which `DataService` sets.
+Token lookups before the firm is known use a one-statement exception (`app.rls_token_lookup`), and a
+person may read their own memberships across firms (`app.user_id`). Superusers and roles with
+BYPASSRLS skip all of this, so:
+
+1. **The app never connects as the owner or a superuser.** Migration 049 creates `medexregai_app`
+   (NOLOGIN, NOBYPASSRLS) with read/write on all tables, including tables added later.
+2. **Give it a login once per environment**, as the owner:
+   `ALTER ROLE medexregai_app LOGIN PASSWORD '<generated>';`
+   Store the password in the secret store (prod: AWS Secrets Manager; dev: `server/.env`, gitignored).
+3. **App config:** `DB_USER=medexregai_app`, `DB_PASSWORD=<that password>`.
+   **Migrations:** `DB_MIGRATION_USER` / `DB_MIGRATION_PASSWORD` = the owner (RDS master user in AWS).
+4. **Check it** as `medexregai_app`: `SELECT count(*) FROM client_workspaces;` with no
+   `app.org_id` set must return 0, and `SET row_security = off` must fail.
+
+If the app ever returns no data at all after a deploy, check that `DB_USER` is not the owner (that
+would hide nothing) and that `app.org_id` is being set (that would hide everything).
+

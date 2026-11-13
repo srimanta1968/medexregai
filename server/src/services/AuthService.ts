@@ -73,6 +73,7 @@ export interface MembershipRow {
 
 /** The firm a user lands in after signing in: their oldest active membership in an active firm (multi-firm switching comes later). */
 export async function primaryMembership(tx: Tx, userId: string): Promise<MembershipRow | undefined> {
+  await tx.setUser(userId);
   const rows = await tx.query<MembershipRow>(
     'orgs',
     `SELECT o.id AS org_id, o.name AS org_name, o.slug AS org_slug, r.key AS role
