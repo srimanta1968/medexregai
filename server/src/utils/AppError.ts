@@ -87,4 +87,6 @@ export const ErrorCodes = {
   // F5.4 eSTAR XML (ADR-019): off until the Acrobat Pro import check passes; per-template mapping.
   ESTAR_XML_DISABLED: 'ESTAR_XML_DISABLED',
   TEMPLATE_NOT_SUPPORTED: 'TEMPLATE_NOT_SUPPORTED',
+  // F6.2: an introduction can be accepted or declined once.
+  INTRODUCTION_DECIDED: 'INTRODUCTION_DECIDED',
 } as const;

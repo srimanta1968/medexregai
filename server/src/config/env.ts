@@ -114,6 +114,8 @@ export interface AppConfig {
   deviceChecks: { perIpPerHour: number };
   /** F5.4 eSTAR XML export (ADR-019): off until the Acrobat Pro import check passes. */
   estarXml: { enabled: boolean };
+  /** F6.2 introduction requests accepted per hashed IP per hour. */
+  introductions: { perIpPerHour: number };
   /** Operator alerts (e.g. a project's AI usage passing 2x its estimate). */
   ops: { alertEmail: string | null };
   bodyLimit: string;
@@ -458,6 +460,9 @@ export function loadConfig(env: Env): AppConfig {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'DEVICE_CHECKS_PER_IP_PER_HOUR', '10'), 'DEVICE_CHECKS_PER_IP_PER_HOUR'),
     },
     estarXml: { enabled: optionalEnv(env, 'ESTAR_XML_EXPORT', 'false').toLowerCase() === 'true' },
+    introductions: {
+      perIpPerHour: parsePositiveInt(optionalEnv(env, 'INTRO_REQUESTS_PER_IP_PER_HOUR', '5'), 'INTRO_REQUESTS_PER_IP_PER_HOUR'),
+    },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
     devUploads: parseDevUploads(env, nodeEnv),
     connections: {

@@ -1,0 +1,179 @@
+{
+  "requiresAuth": false,
+  "taskId": "944991b0-597f-4388-b6b4-b514ba034cb8",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "timeoutMs": 30000,
+  "name": "POST /api/public/introduction-requests - a company asks to be introduced (opt-in routing)",
+  "description": "No sign-in. A device company asks to be introduced to a regulatory consultant: companyName, contactName, contactEmail, brief (20-2000 characters), optional productCode (its FDA medical specialty is then taken from FDA's classification) or specialty, pathway (510k, de_novo, pma, unsure), consent: true (required: the request may be shared with matched firms), and a hidden honeypot 'website'. Routing (F6.2 AC1): a company's request is offered only to firms that opted in and whose FDA medical specialties and pathways match (a firm listing none takes any); up to 3 firms, longest since their last offer first. Fixture 53_introductions.py proves it across three firms (opted in and matching, matching but not opted in, opted in but another specialty). Returns only the new id. INTRO_REQUESTS_PER_IP_PER_HOUR (default 5) per hashed IP, then 429.",
+  "endpoint": "/api/public/introduction-requests",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 230,
+  "coversCriterion": [
+    "a44bb850-46f5-44bd-920e-205427202979#AC1",
+    "944991b0-597f-4388-b6b4-b514ba034cb8#AC1"
+  ],
+  "payload": {
+    "companyName": "{{static:Optisight (FICTIONAL)}}",
+    "contactName": "{{static:Sam Okafor}}",
+    "contactEmail": "{{dynamic:email}}",
+    "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+    "pathway": "{{static:unsure}}",
+    "consent": true
+  },
+  "fieldEnums": {
+    "pathway": [
+      "510k",
+      "de_novo",
+      "pma",
+      "unsure"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "You must agree that your request may be shared with consultant firms",
+      "when": "consent missing or false, a required field missing, brief too short, bad email, product code or specialty, or an unknown field"
+    },
+    {
+      "status": 400,
+      "code": "REQUEST_REJECTED",
+      "message": "This request could not be accepted.",
+      "when": "the honeypot is filled"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Product code ZZZ is not in our copy of the FDA classification database",
+      "when": "unknown productCode"
+    },
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "message": "Too many requests. Please try again in an hour.",
+      "when": "too many requests from one IP",
+      "reproducible": false,
+      "notReproducibleReason": "Test environments raise INTRO_REQUESTS_PER_IP_PER_HOUR."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Company request with consent",
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:unsure}}",
+        "consent": true
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "Request with a product code (specialty from FDA)",
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:510k}}",
+        "consent": true,
+        "productCode": "{{static:FPA}}"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "400 - no consent",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:unsure}}",
+        "consent": false
+      }
+    },
+    {
+      "name": "400 - brief too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:need help}}",
+        "pathway": "{{static:unsure}}",
+        "consent": true
+      }
+    },
+    {
+      "name": "400 - unknown specialty code",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:unsure}}",
+        "consent": true,
+        "specialty": "{{static:ZZ}}"
+      }
+    },
+    {
+      "name": "400 - honeypot filled",
+      "testType": "negative",
+      "coversErrorCase": "400|REQUEST_REJECTED",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "REQUEST_REJECTED"
+      },
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:unsure}}",
+        "consent": true,
+        "website": "{{static:https://spam.example}}"
+      }
+    },
+    {
+      "name": "404 - unknown product code",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "payload": {
+        "companyName": "{{static:Optisight (FICTIONAL)}}",
+        "contactName": "{{static:Sam Okafor}}",
+        "contactEmail": "{{dynamic:email}}",
+        "brief": "{{static:FICTIONAL TEST DATA: a novel intraocular implant; we need a regulatory consultant.}}",
+        "pathway": "{{static:unsure}}",
+        "consent": true,
+        "productCode": "{{static:ZZZ}}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "requiresAuth": true,
+  "taskId": "944991b0-597f-4388-b6b4-b514ba034cb8",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/introductions/:introductionId - one introduction",
+  "description": "One introduction offered to the caller's firm; the company's contact appears only once accepted. Another firm gets 404. Needs firm:manage. Routing (F6.2 AC1): a company's request is offered only to firms that opted in and whose FDA medical specialties and pathways match (a firm listing none takes any); up to 3 firms, longest since their last offer first. Fixture 53_introductions.py proves it across three firms (opted in and matching, matching but not opted in, opted in but another specialty).",
+  "endpoint": "/api/introductions/:introductionId",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 234,
+  "coversCriterion": [
+    "a44bb850-46f5-44bd-920e-205427202979#AC1",
+    "944991b0-597f-4388-b6b4-b514ba034cb8#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "introductionId": "{{var:in_offered_id}}"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "introductionId must be a valid id",
+      "when": "malformed id"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Introduction not found",
+      "when": "not offered to the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks firm:manage (editors, reviewers, viewers)",
+      "reproducible": false,
+      "notReproducibleReason": "Fixture firms have only an owner."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Offered: brief without the company",
+      "fixture": "tests/setup_scripts/53_introductions.py",
+      "headers": {
+        "Authorization": "Bearer {{var:in_token}}"
+      },
+      "pathParams": {
+        "introductionId": "{{var:in_offered_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "offered",
+          "company": null,
+          "specialty": "OP",
+          "pathway": "pma"
+        }
+      }
+    },
+    {
+      "name": "Accepted: the company is shown",
+      "fixture": "tests/setup_scripts/53_introductions.py",
+      "headers": {
+        "Authorization": "Bearer {{var:in_token}}"
+      },
+      "pathParams": {
+        "introductionId": "{{var:in_decided_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "accepted"
+        }
+      }
+    },
+    {
+      "name": "404 - another firm's introduction",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/53_introductions.py",
+      "headers": {
+        "Authorization": "Bearer {{var:in_other_token}}"
+      },
+      "pathParams": {
+        "introductionId": "{{var:in_offered_id}}"
+      }
+    },
+    {
+      "name": "400 - malformed id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "introductionId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "introductionId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ]
+}
