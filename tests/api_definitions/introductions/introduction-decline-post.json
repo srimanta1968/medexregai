@@ -112,6 +112,22 @@
       "payload": {}
     },
     {
+      "name": "400 - malformed id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "introductionId": "{{static:not-a-uuid}}"
+      },
+      "payload": {}
+    },
+    {
       "name": "401 - missing bearer token",
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",

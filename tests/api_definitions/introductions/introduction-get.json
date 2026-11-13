@@ -66,8 +66,7 @@
         "data": {
           "status": "offered",
           "company": null,
-          "specialty": "OP",
-          "pathway": "pma"
+          "pathway": "de_novo"
         }
       }
     },

@@ -20,14 +20,14 @@
     "POST /api/auth/register"
   ],
   "payload": {
-    "optedIn": true,
+    "optedIn": false,
     "specialties": [
-      "OP"
+      "CV"
     ],
     "pathways": [
-      "pma"
+      "510k"
     ],
-    "profile": "{{static:Ophthalmic PMA specialists (fictional).}}"
+    "profile": "{{static:Cardio devices (fictional).}}"
   },
   "fieldEnums": {
     "specialties": [
