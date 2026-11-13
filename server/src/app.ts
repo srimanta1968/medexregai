@@ -38,6 +38,7 @@ import { portfolioRouter } from './routes/portfolio';
 import { publicCodesRouter } from './routes/publicCodes';
 import { estarXmlRouter } from './routes/estarXml';
 import { introductionsRouter } from './routes/introductions';
+import { apiKeysRouter } from './routes/apiKeys';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -139,6 +140,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(publicCodesRouter);
   app.use(estarXmlRouter);
   app.use(introductionsRouter);
+  app.use(apiKeysRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

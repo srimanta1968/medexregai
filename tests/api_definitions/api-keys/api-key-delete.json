@@ -1,0 +1,110 @@
+{
+  "requiresAuth": true,
+  "taskId": "49c3da4a-e317-4b13-bb85-1605493ff677",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "DELETE /api/api-keys/:keyId - revoke an API key",
+  "description": "Revoke a key at once (it then gets 401 everywhere); revoking a revoked key changes nothing. Needs firm:manage; audited. Keys are 'mrk_' + 32 random bytes; only the SHA-256 is stored and the secret is shown once. A key works ONLY on /api/v1 routes, each needing one scope (portfolio:read, fda:read); missing, unknown, revoked or expired keys get 401 INVALID_API_KEY, a key without the scope 403 INSUFFICIENT_SCOPE, and the app's own routes refuse keys. Fixture 54_api_keys.py proves the scoping across four keys.",
+  "endpoint": "/api/api-keys/:keyId",
+  "method": "DELETE",
+  "expectedStatus": 204,
+  "priority": 242,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC2",
+    "49c3da4a-e317-4b13-bb85-1605493ff677#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "keyId": "{{var:ak_delete_key_id}}"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "keyId must be a valid id",
+      "when": "malformed id"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "API key not found",
+      "when": "not the caller's firm's key"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks firm:manage",
+      "reproducible": false,
+      "notReproducibleReason": "Fixture firms have only an owner."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "not signed in"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Revoke a key",
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_token}}"
+      },
+      "pathParams": {
+        "keyId": "{{var:ak_delete_key_id}}"
+      },
+      "expectedStatus": 204
+    },
+    {
+      "name": "404 - another firm's key",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "keyId": "{{var:ak_delete_key_id}}"
+      }
+    },
+    {
+      "name": "400 - malformed id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "keyId": "{{static:not-a-uuid}}"
+      }
+    },
+    {
+      "name": "401 - not signed in",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "keyId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ]
+}

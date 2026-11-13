@@ -1,0 +1,130 @@
+{
+  "requiresAuth": true,
+  "taskId": "49c3da4a-e317-4b13-bb85-1605493ff677",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{var:ak_portfolio_key}}"
+  },
+  "name": "GET /api/v1/portfolio - the portfolio by API key (portfolio:read)",
+  "description": "Public API: the key's firm's portfolio (same data as the app's portfolio: totals and submissions with stage, next action, due date, risks). Scope portfolio:read. status and cursor as in the app. Keys are 'mrk_' + 32 random bytes; only the SHA-256 is stored and the secret is shown once. A key works ONLY on /api/v1 routes, each needing one scope (portfolio:read, fda:read); missing, unknown, revoked or expired keys get 401 INVALID_API_KEY, a key without the scope 403 INSUFFICIENT_SCOPE, and the app's own routes refuse keys. Fixture 54_api_keys.py proves the scoping across four keys.",
+  "endpoint": "/api/v1/portfolio",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 243,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC2",
+    "49c3da4a-e317-4b13-bb85-1605493ff677#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "queryParams": {},
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "status must be open, active, submitted, cleared, archived or all",
+      "when": "bad status, limit, cursor or unknown parameter"
+    },
+    {
+      "status": 401,
+      "code": "INVALID_API_KEY",
+      "message": "API key is missing, revoked, expired or not recognised",
+      "when": "no key, unknown, revoked or expired key, or a user JWT"
+    },
+    {
+      "status": 403,
+      "code": "INSUFFICIENT_SCOPE",
+      "message": "This API key does not have the portfolio:read scope",
+      "when": "the key lacks portfolio:read"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Portfolio with a portfolio:read key",
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_portfolio_key}}"
+      },
+      "queryParams": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "totals": {
+            "activeProjects": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "403 - fda:read key has no portfolio:read",
+      "testType": "negative",
+      "coversErrorCase": "403|INSUFFICIENT_SCOPE",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "INSUFFICIENT_SCOPE"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_fda_key}}"
+      },
+      "queryParams": {}
+    },
+    {
+      "name": "401 - revoked key",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_API_KEY",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_API_KEY"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_revoked_key}}"
+      },
+      "queryParams": {}
+    },
+    {
+      "name": "401 - a signed-in user's token is not an API key",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_API_KEY",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_API_KEY"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "queryParams": {}
+    },
+    {
+      "name": "401 - no key",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_API_KEY",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_API_KEY"
+      },
+      "headers": {},
+      "queryParams": {}
+    },
+    {
+      "name": "400 - unknown status",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_portfolio_key}}"
+      },
+      "queryParams": {
+        "status": "{{static:pending}}"
+      }
+    }
+  ]
+}

@@ -94,6 +94,8 @@ export const TABLE_CATALOG = {
   fda_deficiencies: 'tenant',
   fda_deficiency_links: 'tenant',
   // F5.2 substantial-equivalence comparison tables (migration 043).
+  // F6.3 scoped API keys (migration 047); looked up by token_hash before the org is known.
+  api_keys: 'tenant',
   introductions: 'tenant',
   se_comparisons: 'tenant',
   // F4.4 sign-in throttling and the authenticator-app second factor (migration 041).

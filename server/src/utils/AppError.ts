@@ -89,4 +89,7 @@ export const ErrorCodes = {
   TEMPLATE_NOT_SUPPORTED: 'TEMPLATE_NOT_SUPPORTED',
   // F6.2: an introduction can be accepted or declined once.
   INTRODUCTION_DECIDED: 'INTRODUCTION_DECIDED',
+  // F6.3 public API keys.
+  INVALID_API_KEY: 'INVALID_API_KEY',
+  INSUFFICIENT_SCOPE: 'INSUFFICIENT_SCOPE',
 } as const;

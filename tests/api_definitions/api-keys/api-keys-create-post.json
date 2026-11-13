@@ -1,0 +1,196 @@
+{
+  "requiresAuth": true,
+  "taskId": "49c3da4a-e317-4b13-bb85-1605493ff677",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/api-keys - create a scoped API key",
+  "description": "A firm can create API keys with scoped access (F6.3). Body: name, scopes (portfolio:read, fda:read; at least one), optional expiresInDays (1-730). Returns the key and its secret, shown this once. Needs firm:manage; audited. Keys are 'mrk_' + 32 random bytes; only the SHA-256 is stored and the secret is shown once. A key works ONLY on /api/v1 routes, each needing one scope (portfolio:read, fda:read); missing, unknown, revoked or expired keys get 401 INVALID_API_KEY, a key without the scope 403 INSUFFICIENT_SCOPE, and the app's own routes refuse keys. Fixture 54_api_keys.py proves the scoping across four keys.",
+  "endpoint": "/api/api-keys",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 241,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC2",
+    "49c3da4a-e317-4b13-bb85-1605493ff677#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "payload": {
+    "name": "{{static:Dashboard integration (test)}}",
+    "scopes": [
+      "portfolio:read"
+    ]
+  },
+  "fieldEnums": {
+    "scopes": [
+      "portfolio:read",
+      "fda:read"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Give the key at least one scope",
+      "when": "no name, no or unknown scope, bad expiresInDays, or an unknown field"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks firm:manage",
+      "reproducible": false,
+      "notReproducibleReason": "Fixture firms have only an owner."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "not signed in"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Portfolio key",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "name": "{{static:Dashboard integration (test)}}",
+        "scopes": [
+          "portfolio:read"
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "key": {
+            "scopes": [
+              "portfolio:read"
+            ],
+            "status": "active",
+            "expiresAt": null
+          }
+        }
+      }
+    },
+    {
+      "name": "Both scopes, expiring in 90 days",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "name": "{{static:Full read (test)}}",
+        "scopes": [
+          "fda:read",
+          "portfolio:read"
+        ],
+        "expiresInDays": 90
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "key": {
+            "scopes": [
+              "fda:read",
+              "portfolio:read"
+            ],
+            "status": "active"
+          }
+        }
+      }
+    },
+    {
+      "name": "400 - no scopes",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "name": "{{static:No scopes}}",
+        "scopes": []
+      }
+    },
+    {
+      "name": "400 - unknown scope",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "name": "{{static:Write}}",
+        "scopes": [
+          "projects:write"
+        ]
+      }
+    },
+    {
+      "name": "400 - name missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "scopes": [
+          "fda:read"
+        ]
+      }
+    },
+    {
+      "name": "400 - expiry too long",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "name": "{{static:Long}}",
+        "scopes": [
+          "fda:read"
+        ],
+        "expiresInDays": 1000
+      }
+    },
+    {
+      "name": "401 - not signed in",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {
+        "name": "{{static:x}}",
+        "scopes": [
+          "fda:read"
+        ]
+      }
+    }
+  ]
+}

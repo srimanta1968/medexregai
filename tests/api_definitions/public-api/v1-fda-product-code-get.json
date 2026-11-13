@@ -1,0 +1,142 @@
+{
+  "requiresAuth": true,
+  "taskId": "49c3da4a-e317-4b13-bb85-1605493ff677",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{var:ak_fda_key}}"
+  },
+  "name": "GET /api/v1/fda/product-codes/:code - FDA classification by API key (fda:read)",
+  "description": "Public API: FDA classification of a product code from the fda-data service (device name, class, regulation, specialty, clearance count, FDA link, data date). Scope fda:read. Keys are 'mrk_' + 32 random bytes; only the SHA-256 is stored and the secret is shown once. A key works ONLY on /api/v1 routes, each needing one scope (portfolio:read, fda:read); missing, unknown, revoked or expired keys get 401 INVALID_API_KEY, a key without the scope 403 INSUFFICIENT_SCOPE, and the app's own routes refuse keys. Fixture 54_api_keys.py proves the scoping across four keys.",
+  "endpoint": "/api/v1/fda/product-codes/:code",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 244,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC2",
+    "49c3da4a-e317-4b13-bb85-1605493ff677#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "code": "{{static:FPA}}"
+  },
+  "timeoutMs": 30000,
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "code must be a three-letter FDA product code",
+      "when": "not three letters"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Product code ZZZ is not in our copy of the FDA classification database",
+      "when": "unknown code"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "fda-data service down",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the fda-data service stopped."
+    },
+    {
+      "status": 401,
+      "code": "INVALID_API_KEY",
+      "message": "API key is missing, revoked, expired or not recognised",
+      "when": "no key, unknown, revoked or expired key, or a user JWT"
+    },
+    {
+      "status": 403,
+      "code": "INSUFFICIENT_SCOPE",
+      "message": "This API key does not have the fda:read scope",
+      "when": "the key lacks fda:read"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "FPA with an fda:read key",
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_fda_key}}"
+      },
+      "pathParams": {
+        "code": "{{static:FPA}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "productCode": "FPA",
+          "deviceClass": "2",
+          "regulationNumber": "880.5440"
+        }
+      }
+    },
+    {
+      "name": "403 - portfolio:read key has no fda:read",
+      "testType": "negative",
+      "coversErrorCase": "403|INSUFFICIENT_SCOPE",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "INSUFFICIENT_SCOPE"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_portfolio_key}}"
+      },
+      "pathParams": {
+        "code": "{{static:FPA}}"
+      }
+    },
+    {
+      "name": "404 - unknown code",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_fda_key}}"
+      },
+      "pathParams": {
+        "code": "{{static:ZZZ}}"
+      }
+    },
+    {
+      "name": "400 - not a code",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "fixture": "tests/setup_scripts/54_api_keys.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ak_fda_key}}"
+      },
+      "pathParams": {
+        "code": "{{static:F1}}"
+      }
+    },
+    {
+      "name": "401 - no key",
+      "testType": "negative",
+      "coversErrorCase": "401|INVALID_API_KEY",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "INVALID_API_KEY"
+      },
+      "headers": {},
+      "pathParams": {
+        "code": "{{static:FPA}}"
+      }
+    }
+  ]
+}
