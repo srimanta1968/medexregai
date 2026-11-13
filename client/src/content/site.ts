@@ -30,7 +30,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Security', to: '/security' },
   { label: 'Pilot programme', to: '/pilot' },
   { label: 'FDA product codes', to: '/codes' },
-  { label: 'FDA product codes', to: '/codes' },
   { label: 'FAQ', to: '/faq' },
   { label: 'About', to: '/about' },
 ];
