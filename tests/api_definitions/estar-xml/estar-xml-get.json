@@ -1,0 +1,191 @@
+{
+  "requiresAuth": true,
+  "taskId": "ae64c5c6-dee1-453c-a814-d96d0bc47055",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "timeoutMs": 30000,
+  "name": "GET /api/projects/:projectId/estar-xml - eSTAR XML data file (ADR-019)",
+  "description": "The XML mapping is versioned per eSTAR template (F5.4 AC2); the file is for Import Data in Adobe Acrobat Pro (AC1, pending the manual import check in docs/spikes/estar-xml/README.md). Built from the blank template's own data tree (server/src/estar/templates/<key>.skeleton.ts) with mapping <key>/<n> (server/src/estar/mappings/): US FDA, 510(k), the project's submission type, New Application/Submission (the form's import needs it), applicant company = client, correspondent = the requesting consultant and firm, one Device per model, IFU trade name, one PredicateReference per SE comparison. Saved codes are checked against the template's field catalog; attachments are never included (FDA). format=json returns the report: template, mapping version, importChecked (false until the Acrobat check passes), every filled field with its source, what to fill by hand and why (classification lists filled by the form's script, text, addresses, attachments), warnings. format=xml downloads the file (audited as estar_xml.exported). Needs projects:read; off unless ESTAR_XML_EXPORT=true. Fixture 52_estar_xml.py checks the XML keeps every template path and holds the right codes and copies.",
+  "endpoint": "/api/projects/:projectId/estar-xml",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 220,
+  "coversCriterion": [
+    "313ef090-146c-4c31-8ae2-c2526640c0e0#AC1",
+    "313ef090-146c-4c31-8ae2-c2526640c0e0#AC2",
+    "ae64c5c6-dee1-453c-a814-d96d0bc47055#AC1",
+    "ae64c5c6-dee1-453c-a814-d96d0bc47055#AC2"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "projectId": "{{var:ex_project_id}}"
+  },
+  "queryParams": {
+    "format": "{{static:json}}"
+  },
+  "fieldEnums": {
+    "format": [
+      "json",
+      "xml"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "format must be json or xml",
+      "when": "unknown format, an unknown query parameter or a malformed id"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "the project is not in the caller's firm"
+    },
+    {
+      "status": 409,
+      "code": "TEMPLATE_NOT_SUPPORTED",
+      "message": "eSTAR XML export supports nIVD-7.1; this project uses IVD-7.1.",
+      "when": "the project follows a template with no catalog and mapping yet"
+    },
+    {
+      "status": 403,
+      "code": "ESTAR_XML_DISABLED",
+      "message": "eSTAR XML export is turned off until the Acrobat Pro import check passes (ADR-019).",
+      "when": "ESTAR_XML_EXPORT is not true",
+      "reproducible": false,
+      "notReproducibleReason": "The test environment turns the export on."
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role has projects:read."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Report of what is filled and what to fill by hand",
+      "fixture": "tests/setup_scripts/52_estar_xml.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ex_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:ex_project_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:json}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "templateKey": "nIVD-7.1",
+          "templateDataVersion": "7.01",
+          "mappingVersion": "nIVD-7.1/1",
+          "importChecked": false
+        }
+      }
+    },
+    {
+      "name": "XML data file download",
+      "fixture": "tests/setup_scripts/52_estar_xml.py",
+      "headers": {
+        "Authorization": "Bearer {{var:ex_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:ex_project_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:xml}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "409 - template with no mapping (IVD-7.1)",
+      "testType": "negative",
+      "coversErrorCase": "409|TEMPLATE_NOT_SUPPORTED",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "TEMPLATE_NOT_SUPPORTED"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:ex_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:ex_ivd_project_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:json}}"
+      },
+      "fixture": "tests/setup_scripts/52_estar_xml.py"
+    },
+    {
+      "name": "400 - unknown format",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:ex_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:ex_project_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:pdf}}"
+      },
+      "fixture": "tests/setup_scripts/52_estar_xml.py"
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:ex_project_id}}"
+      },
+      "queryParams": {
+        "format": "{{static:json}}"
+      },
+      "fixture": "tests/setup_scripts/52_estar_xml.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "queryParams": {
+        "format": "{{static:json}}"
+      }
+    }
+  ]
+}

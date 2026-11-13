@@ -43,12 +43,20 @@ catalog per template version is the "versioned mapping" input for TK-4700.
 - `skeleton-nIVD-7.1.xml`: the blank template's own data tree (what an exporter fills in).
 - `sample-values-nIVD-7.1.json`: 17 FICTIONAL values (new 510(k), Traditional, US FDA, applicant,
   trade name, device description, indications, prescription use, one predicate).
+- `exporter-output-nIVD-7.1.xml`: real exporter output for a fictional project (see Manual check).
 - `sample-import-nIVD-7.1.xml`: the skeleton with those values, made by
   `scripts/estar/sample_import_xml.py`. Rich-text nodes carry an `html:` prefix for the xhtml
   namespace (the form writes the same namespace as a default namespace); a namespace-aware import
   treats them the same, and the manual check confirms it.
 
 ## Manual check (needs Adobe Acrobat Pro; about 15 minutes)
+
+Use **`exporter-output-nIVD-7.1.xml`**: a file made by the real exporter (TK-4700, mapping
+`nIVD-7.1/1`) for a FICTIONAL project (Special 510(k), two device models, two predicates from SE
+comparisons; client, firm and email are test data). It is what consultants will download, so it is
+the file to prove. `sample-import-nIVD-7.1.xml` (the spike's hand-made sample) can be tried too.
+The steps below name values from the sample; for the exporter file expect Special, models IS-200A
+and IS-200B, and the two predicates it lists.
 
 1. Download a fresh blank nIVD eSTAR 7.1 from FDA's eSTAR Program page (right-click, save link as).
    Confirm its SHA-256 matches the one above, or note the new one.

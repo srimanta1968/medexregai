@@ -84,4 +84,7 @@ export const ErrorCodes = {
   SECTION_STATUS_INVALID: 'SECTION_STATUS_INVALID',
   // F3.2: a section's draft is still being written.
   DRAFT_IN_PROGRESS: 'DRAFT_IN_PROGRESS',
+  // F5.4 eSTAR XML (ADR-019): off until the Acrobat Pro import check passes; per-template mapping.
+  ESTAR_XML_DISABLED: 'ESTAR_XML_DISABLED',
+  TEMPLATE_NOT_SUPPORTED: 'TEMPLATE_NOT_SUPPORTED',
 } as const;

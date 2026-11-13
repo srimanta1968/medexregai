@@ -12,6 +12,8 @@ export interface AuditTarget {
   projectId?: (req: Request, data: Record<string, unknown> | undefined) => string | undefined;
   workspaceId?: (req: Request, data: Record<string, unknown> | undefined) => string | undefined;
   metadata?: (req: Request, data: Record<string, unknown> | undefined) => Record<string, unknown>;
+  /** Record only when this returns true (e.g. a download, not its preview). Default: always. */
+  when?: (req: Request) => boolean;
 }
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
@@ -40,7 +42,7 @@ export function audit(action: string, target: AuditTarget) {
 
     res.on('finish', () => {
       const auth = req.auth;
-      if (!auth || res.statusCode < 200 || res.statusCode >= 300) {
+      if (!auth || res.statusCode < 200 || res.statusCode >= 300 || (target.when && !target.when(req))) {
         return;
       }
       auditService
