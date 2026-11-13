@@ -1,6 +1,6 @@
 # docproc core: Office and text-layer PDF parsing (no OCR). Pinned for reproducible sandbox images.
 fastapi==0.162.5
-uvicorn==0.40.0
+uvicorn==0.54.0
 pydantic==2.11.3
 python-docx==1.2.0
 openpyxl==3.1.5
