@@ -11,8 +11,8 @@ Creates, once, through MedexRegAI's own HTTP APIs:
   account   UI_SEED_EMAIL (default: testCredentials.owner.email) with the password from
             tests/config/test-config.json testCredentials.owner (local test data only)
   client    Northbay Devices, device DC-100 catheter
-  projects  DC-100 Traditional 510(k)  with tests/fixtures/ingest/bench-report.docx
-            DC-100 Injection check     with tests/fixtures/injection/injected-report.docx
+  projects  Seeded bench evidence   with tests/fixtures/ingest/bench-report.docx
+            Seeded injection check  with tests/fixtures/injection/injected-report.docx
 All files are FICTIONAL test data. Re-running changes nothing that already exists.
 
 Run before the UI features:  API_BASE_URL=http://localhost:3000 python tests/ui_seed/seed_ui_account.py
@@ -36,8 +36,8 @@ PASSWORD = os.environ.get('UI_SEED_PASSWORD', CRED['password'])
 
 CLIENT, DEVICE = 'Northbay Devices', 'DC-100 catheter'
 PROJECTS = {
-    'DC-100 Traditional 510(k)': os.path.join(ROOT, 'tests', 'fixtures', 'ingest', 'bench-report.docx'),
-    'DC-100 Injection check': os.path.join(ROOT, 'tests', 'fixtures', 'injection', 'injected-report.docx'),
+    'Seeded bench evidence': os.path.join(ROOT, 'tests', 'fixtures', 'ingest', 'bench-report.docx'),
+    'Seeded injection check': os.path.join(ROOT, 'tests', 'fixtures', 'injection', 'injected-report.docx'),
 }
 
 
@@ -71,12 +71,12 @@ def main():
     token = sign_in()
     clients = data(*call('GET', '/api/clients?limit=50', None, token), (200,), 'clients')
     clients = clients.get('items') if isinstance(clients, dict) else clients
-    # The features open the client the switcher selects by default (the newest), so this
-    # account must hold no other client. A failed run that typed into the wrong field can add
-    # one; clients cannot be deleted, so seed a fresh account instead.
-    others = [c['name'] for c in clients if c['name'] != CLIENT]
-    if others:
-        sys.exit(f'{EMAIL} has other clients ({", ".join(others)}); set UI_SEED_EMAIL and testCredentials.owner.email to a new address')
+    # The features open the client the switcher selects by default (the newest active one), so
+    # any other client (a failed run that typed into the wrong field can add one) is archived.
+    for c in clients:
+        if c['name'] != CLIENT and c.get('status') == 'active':
+            data(*call('PATCH', f"/api/clients/{c['id']}", {'status': 'archived'}, token), (200,), f"archive {c['name']}")
+            print(f"archived stray client {c['name']!r}")
     client = next((c for c in clients if c['name'] == CLIENT), None)
     if not client:
         client = data(*call('POST', '/api/clients', {'name': CLIENT}, token), (201,), 'client')

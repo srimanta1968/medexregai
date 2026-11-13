@@ -14,56 +14,124 @@
   "priority": 96,
   "coversCriterion": [
     "d20fdf5c-e441-4c80-8d1a-8c29f10d6edf#AC1",
-    "c2699c9b-ae5f-41a6-a590-6ea02048a4b5#AC1"
+    "c2699c9b-ae5f-41a6-a590-6ea02048a4b5#AC1",
+    "e3c38ed7-bce4-41de-b09d-829f71dc707d#AC1"
   ],
   "dependsOn": [
     "POST /api/auth/register",
     "POST /api/devices/:deviceId/projects"
   ],
   "fieldEnums": {
-    "mode": ["hybrid", "text"],
-    "includeSuperseded": ["true", "false"]
+    "mode": [
+      "hybrid",
+      "text"
+    ],
+    "includeSuperseded": [
+      "true",
+      "false"
+    ]
   },
   "errorCases": [
-    { "status": 401, "code": "UNAUTHORIZED", "message": "Missing bearer token", "when": "no Authorization header" },
-    { "status": 404, "code": "NOT_FOUND", "message": "Project not found", "when": "no project with this id in the firm" },
-    { "status": 400, "code": "VALIDATION_ERROR", "message": "q must be at least 2 characters", "when": "missing or short query, or limit outside 1-50" }
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "no project with this id in the firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "q must be at least 2 characters",
+      "when": "missing or short query, or limit outside 1-50"
+    }
   ],
   "testCases": [
     {
       "name": "Owner searches the project's passages",
-      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
-      "queryParams": { "q": "tensile force acceptance criterion", "limit": "10" },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "q": "tensile force acceptance criterion",
+        "limit": "10"
+      },
       "expectedStatus": 200,
-      "expectedResponse": { "success": true }
+      "expectedResponse": {
+        "success": true
+      }
+    },
+    {
+      "name": "Ranked passages for a query only the EO report answers (fixture asserts the top hit, its location and citation)",
+      "fixture": "tests/setup_scripts/48_retrieval.py",
+      "headers": {
+        "Authorization": "Bearer {{var:rt_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:rt_project_id}}"
+      },
+      "queryParams": {
+        "q": "{{var:rt_query}}",
+        "limit": 5
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "query": "ethylene chlorohydrin residual"
+        }
+      }
     },
     {
       "name": "400 - query too short",
       "testType": "negative",
       "coversErrorCase": "400|VALIDATION_ERROR",
-      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
-      "queryParams": { "q": "a" },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "q": "a"
+      },
       "expectedStatus": 400,
-      "expectedError": { "code": "VALIDATION_ERROR" }
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      }
     },
     {
       "name": "404 - unknown project",
       "testType": "negative",
       "coversErrorCase": "404|NOT_FOUND",
-      "pathParams": { "projectId": "{{static:00000000-0000-4000-8000-000000000000}}" },
-      "queryParams": { "q": "tensile" },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "queryParams": {
+        "q": "tensile"
+      },
       "expectedStatus": 404,
-      "expectedError": { "code": "NOT_FOUND" }
+      "expectedError": {
+        "code": "NOT_FOUND"
+      }
     },
     {
       "name": "401 - missing bearer token",
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",
       "headers": {},
-      "pathParams": { "projectId": "{{cache:projects.create.response.data.id}}" },
-      "queryParams": { "q": "tensile" },
+      "pathParams": {
+        "projectId": "{{cache:projects.create.response.data.id}}"
+      },
+      "queryParams": {
+        "q": "tensile"
+      },
       "expectedStatus": 401,
-      "expectedError": { "code": "UNAUTHORIZED" }
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      }
     }
   ]
 }

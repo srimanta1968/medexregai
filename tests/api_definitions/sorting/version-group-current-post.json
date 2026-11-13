@@ -54,13 +54,13 @@
   ],
   "testCases": [
     {
-      "name": "Consultant confirms the current version",
+      "name": "Consultant confirms rev A as current over the automatic rev B",
       "pathParams": {
-        "projectId": "{{cache:projects.create.response.data.id}}",
-        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+        "projectId": "{{var:vg_project_id}}",
+        "groupId": "{{var:vg_group_id}}"
       },
       "payload": {
-        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+        "fileId": "{{var:vg_file_id}}"
       },
       "expectedStatus": 200,
       "expectedResponse": {
@@ -68,7 +68,11 @@
         "data": {
           "status": "confirmed"
         }
-      }
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:vg_token}}"
+      },
+      "fixture": "tests/setup_scripts/47_version_groups.py"
     },
     {
       "name": "401 - missing bearer token",
@@ -80,12 +84,13 @@
       },
       "headers": {},
       "pathParams": {
-        "projectId": "{{cache:projects.create.response.data.id}}",
-        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+        "projectId": "{{var:vg_project_id}}",
+        "groupId": "{{var:vg_group_id}}"
       },
       "payload": {
-        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
-      }
+        "fileId": "{{var:vg_file_id}}"
+      },
+      "fixture": "tests/setup_scripts/47_version_groups.py"
     },
     {
       "name": "403 - reviewer cannot confirm",
@@ -100,11 +105,11 @@
       },
       "fixture": "tests/setup_scripts/10_auth_actors.py",
       "pathParams": {
-        "projectId": "{{cache:projects.create.response.data.id}}",
-        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+        "projectId": "{{var:vg_project_id}}",
+        "groupId": "{{var:vg_group_id}}"
       },
       "payload": {
-        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
+        "fileId": "{{var:vg_file_id}}"
       }
     },
     {
@@ -116,12 +121,16 @@
         "code": "VALIDATION_ERROR"
       },
       "pathParams": {
-        "projectId": "{{cache:projects.create.response.data.id}}",
-        "groupId": "{{cache:versionGroups.list.response.data.0.id}}"
+        "projectId": "{{var:vg_project_id}}",
+        "groupId": "{{var:vg_group_id}}"
       },
       "payload": {
-        "fileId": "{{dynamic:uuid}}"
-      }
+        "fileId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:vg_token}}"
+      },
+      "fixture": "tests/setup_scripts/47_version_groups.py"
     },
     {
       "name": "404 - unknown group (or project)",
@@ -132,12 +141,23 @@
         "code": "NOT_FOUND"
       },
       "pathParams": {
-        "projectId": "{{dynamic:uuid}}",
-        "groupId": "{{dynamic:uuid}}"
+        "projectId": "{{var:vg_project_id}}",
+        "groupId": "{{static:00000000-0000-4000-8000-000000000000}}"
       },
       "payload": {
-        "fileId": "{{cache:versionGroups.list.response.data.0.members.0.fileId}}"
-      }
+        "fileId": "{{var:vg_file_id}}"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:vg_token}}"
+      },
+      "fixture": "tests/setup_scripts/47_version_groups.py"
     }
-  ]
+  ],
+  "pathParams": {
+    "projectId": "{{var:vg_project_id}}",
+    "groupId": "{{var:vg_group_id}}"
+  },
+  "payload": {
+    "fileId": "{{var:vg_file_id}}"
+  }
 }

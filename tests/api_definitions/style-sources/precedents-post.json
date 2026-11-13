@@ -107,5 +107,8 @@
         "code": "UNAUTHORIZED"
       }
     }
-  ]
+  ],
+  "captureResponse": {
+    "precedents.create.response.data.id": "data.id"
+  }
 }

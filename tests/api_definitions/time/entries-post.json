@@ -133,5 +133,8 @@
         "code": "UNAUTHORIZED"
       }
     }
-  ]
+  ],
+  "captureResponse": {
+    "timeEntries.create.response.data.id": "data.id"
+  }
 }

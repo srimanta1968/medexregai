@@ -183,5 +183,12 @@
   },
   "payload": {
     "notes": "{{static:Checked.}}"
+  },
+  "fieldEnums": {
+    "status": [
+      "open",
+      "responded",
+      "closed"
+    ]
   }
 }

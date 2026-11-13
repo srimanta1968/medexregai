@@ -316,5 +316,18 @@
         "dueOn": "{{static:2026-10-15}}"
       }
     ]
+  },
+  "captureResponse": {
+    "fdaLetters.create.response.data.id": "data.id"
+  },
+  "fieldEnums": {
+    "kind": [
+      "ai_request",
+      "rta_hold"
+    ],
+    "deficiencies[].owner": [
+      "consultant",
+      "client"
+    ]
   }
 }

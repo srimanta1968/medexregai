@@ -2,7 +2,7 @@
   "requiresAuth": false,
   "taskId": "f95359c7-abcc-4c4c-b0e1-d26dc8c96067",
   "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
-  "testability": "auto",
+  "testability": "manual",
   "coversCriterion": [
     "717d5baf-5788-4106-9669-e387af1830b0#AC5",
     "f95359c7-abcc-4c4c-b0e1-d26dc8c96067#AC1"
@@ -61,8 +61,7 @@
       "expectedStatus": 202,
       "coversCriterion": [
         "717d5baf-5788-4106-9669-e387af1830b0#AC5"
-      ],
-      "capturesResponse": true
+      ]
     },
     {
       "name": "401 - no relay key",
@@ -76,7 +75,6 @@
       "payload": {}
     }
   ],
-  "captureResponse": {
-    "inbound.relay.response.data.queued.0": "data.queued.0"
-  }
+  "manualReason": "The relay posts a raw RFC 822 message with the server-side relay key; JSON test cases can send neither. Verified with a scripted relay: allowed sender stored, duplicate Message-ID stored once, stranger and DMARC-fail refused, executable refused, replaced and turned-off addresses answer 404.",
+  "skipReason": "The relay posts a raw RFC 822 message with the server-side relay key; JSON test cases can send neither. Verified with a scripted relay: allowed sender stored, duplicate Message-ID stored once, stranger and DMARC-fail refused, executable refused, replaced and turned-off addresses answer 404."
 }

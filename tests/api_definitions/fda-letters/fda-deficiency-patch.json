@@ -169,5 +169,18 @@
   },
   "payload": {
     "status": "{{static:ready}}"
+  },
+  "fieldEnums": {
+    "owner": [
+      "consultant",
+      "client"
+    ],
+    "status": [
+      "open",
+      "requested",
+      "drafting",
+      "ready",
+      "answered"
+    ]
   }
 }

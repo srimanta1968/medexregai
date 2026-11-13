@@ -121,5 +121,8 @@
         "code": "UNAUTHORIZED"
       }
     }
-  ]
+  ],
+  "captureResponse": {
+    "pilotSignoffs.create.response.data.signoffs.0.id": "data.signoffs.0.id"
+  }
 }

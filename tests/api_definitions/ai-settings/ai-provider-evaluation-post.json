@@ -170,5 +170,6 @@
       "payload": {}
     }
   ],
-  "manualReason": "The happy path needs a firm provider that passed a real connection test; automated runs only have the placeholder provider at https://example.com/v1 (its connection test is expected to fail), and the URL guard refuses local model servers. Executed 2026-11-11: answered 409 PROVIDER_NOT_TESTED as designed. Verify by hand with a working OpenAI-compatible endpoint."
+  "manualReason": "The happy path needs a firm provider that passed a real connection test; automated runs only have the placeholder provider at https://example.com/v1 (its connection test is expected to fail), and the URL guard refuses local model servers. Executed 2026-11-11: answered 409 PROVIDER_NOT_TESTED as designed. Verify by hand with a working OpenAI-compatible endpoint.",
+  "skipReason": "The happy path needs a firm provider that passed a real connection test; automated runs only have the placeholder provider at https://example.com/v1 (its connection test is expected to fail), and the URL guard refuses local model servers. Executed 2026-11-11: answered 409 PROVIDER_NOT_TESTED as designed. Verify by hand with a working OpenAI-compatible endpoint."
 }

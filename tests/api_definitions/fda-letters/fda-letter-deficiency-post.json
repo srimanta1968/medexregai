@@ -189,5 +189,14 @@
     "fdaText": "{{static:Please justify the sample size used for tensile testing.}}",
     "sectionId": "{{static:performance_testing}}",
     "owner": "{{static:client}}"
+  },
+  "captureResponse": {
+    "fdaDeficiencies.create.response.data.id": "data.id"
+  },
+  "fieldEnums": {
+    "owner": [
+      "consultant",
+      "client"
+    ]
   }
 }
