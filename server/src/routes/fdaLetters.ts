@@ -5,6 +5,7 @@ import { authenticate, requireAuth } from '../middleware/authenticate';
 import { Permission, requirePermission } from '../middleware/authorize';
 import { fdaLetterService } from '../fdaLetters/FdaLetterService';
 import { letterSplitter } from '../fdaLetters/LetterSplitter';
+import { responseSkeleton } from '../fdaLetters/ResponseSkeleton';
 import { AppError, ErrorCodes } from '../utils/AppError';
 
 /**
@@ -13,6 +14,7 @@ import { AppError, ErrorCodes } from '../utils/AppError';
  *   POST   /api/projects/:projectId/fda-letters/split    propose deficiencies from the letter's text or file (saves nothing)
  *   POST   /api/projects/:projectId/fda-letters          save a letter with the deficiencies the consultant confirmed (201)
  *   GET    /api/fda-letters/:letterId                     one letter, its deficiencies and what each affects
+ *   GET    /api/fda-letters/:letterId/response-skeleton  Word skeleton: one heading per deficiency, FDA's request, an empty response
  *   PATCH  /api/fda-letters/:letterId                     status, responded date, reference, received/due date, notes
  *   DELETE /api/fda-letters/:letterId                     (204)
  *   POST   /api/fda-letters/:letterId/deficiencies        add a deficiency missed in the split (201)
@@ -168,6 +170,21 @@ fdaLettersRouter.get(
   handle(async (req, res) => {
     const { orgId } = requireAuth(req);
     res.status(200).json({ success: true, data: await fdaLetterService.get(orgId, param(req, 'letterId', 'letterId')) });
+  }),
+);
+
+fdaLettersRouter.get(
+  '/api/fda-letters/:letterId/response-skeleton',
+  guard('projects:read'),
+  audit('fda_letter.skeleton_exported', { targetType: 'fda_letter', targetId: fromParam('letterId') }),
+  handle(async (req, res) => {
+    const { orgId } = requireAuth(req);
+    const out = await responseSkeleton(orgId, param(req, 'letterId', 'letterId'));
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.set('Content-Disposition', `attachment; filename="${out.fileName}"`);
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition');
+    res.set('Cache-Control', 'no-store');
+    res.status(200).send(out.bytes);
   }),
 );
 

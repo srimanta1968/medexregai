@@ -1,0 +1,109 @@
+{
+  "requiresAuth": true,
+  "taskId": "3ac3f166-1888-4185-bb37-19d83e4dd77d",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/fda-letters/:letterId/response-skeleton - Word response skeleton",
+  "description": "A Word response skeleton can be exported (F5.1 AC3). A DOCX for the letter: title by kind (AI request or RTA hold), device and client, FDA reference, letter date, response due date with FDA's rule (AI request: a complete response within 180 calendar days of the date of the request, no extensions beyond 180 days; RTA hold: 180 calendar days; fda.gov), then per deficiency in FDA's order: a heading with its eSTAR section, FDA's request as logged, an empty Response for the consultant to write, and the linked client files and drafted statements. Nothing is answered for the consultant; MedexRegAI never files. Needs projects:read; audited as fda_letter.skeleton_exported.",
+  "endpoint": "/api/fda-letters/:letterId/response-skeleton",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 199,
+  "coversCriterion": [
+    "af7a916c-8bab-433f-9dab-3ae83f278b73#AC3",
+    "3ac3f166-1888-4185-bb37-19d83e4dd77d#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "pathParams": {
+    "letterId": "{{var:fl_letter_id}}"
+  },
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Letter not found",
+      "when": "the letter is not in the caller's firm"
+    },
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "letterId must be a valid id",
+      "when": "letterId malformed"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Exports the AI request skeleton as Word",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "404 - another firm's letter",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - letterId is not an id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "letterId": "{{static:not-an-id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "letterId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ]
+}
