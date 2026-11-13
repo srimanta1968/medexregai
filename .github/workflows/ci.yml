@@ -72,7 +72,7 @@ jobs:
         run: npm run test:injection -- --require-docproc --report injection-report.json
       - name: Keep the injection report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prompt-injection-report
           path: server/injection-report.json
