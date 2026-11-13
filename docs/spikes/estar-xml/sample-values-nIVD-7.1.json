@@ -1,0 +1,19 @@
+{
+  "ApplicationType/ATRadioButton100": "1",
+  "ApplicationType/ATRadioButton050": "1",
+  "ApplicationType/USA/ATRadioButton110": "1",
+  "ApplicationType/USA/ATRadioButton115": "1",
+  "ApplicationType/ApplicationSubType/ATRadioButton130": "1",
+  "AdministrativeInformation/ApplicantInformation/ADTextField140": "Ana",
+  "AdministrativeInformation/ApplicantInformation/ADTextField130": "Lindqvist",
+  "AdministrativeInformation/ApplicantInformation/ADTextField160": "ana.lindqvist@example.test",
+  "AdministrativeInformation/ApplicantInformation/ADTextField210": "Northbay Devices (FICTIONAL TEST DATA)",
+  "DeviceDescription/Devices/Device/TradeName": "IS-200 infusion set",
+  "DeviceDescription/Devices/Device/Model": "IS-200",
+  "DeviceDescription/Description/DDTextField400": "FICTIONAL TEST DATA. The IS-200 is a single-use, sterile administration set consisting of a spike, a drip chamber, PVC tubing, a roller clamp, a needle-free Y-site and a male luer lock connector.",
+  "IndicationsForUse/SubandDevice/IUTextField130": "IS-200 infusion set",
+  "IndicationsForUse/Indications/IUTextField141": "FICTIONAL TEST DATA. The IS-200 infusion set is intended for the administration of intravenous fluids from a container to the vascular system of a patient by gravity or with an infusion pump.",
+  "IndicationsForUse/TypeOfUse/IUCheckBox111": "1",
+  "PredicatesSE/PredicateReference/ADTextField830": "K230022",
+  "PredicatesSE/PredicateReference/ADTextField840": "SIGMA Spectrum Infusion System"
+}
