@@ -39,7 +39,9 @@
       "status": 403,
       "code": "FORBIDDEN",
       "message": "Insufficient permissions",
-      "when": "caller lacks projects:read"
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role (owner, admin, editor, reviewer, viewer) has projects:read, so no account can be refused here."
     },
     {
       "status": 401,

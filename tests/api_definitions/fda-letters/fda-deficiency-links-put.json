@@ -128,6 +128,26 @@
       "fixture": "tests/setup_scripts/46_fda_letters.py"
     },
     {
+      "name": "403 - a reviewer cannot change FDA letters",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "pathParams": {
+        "deficiencyId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py",
+      "payload": {
+        "fileIds": [],
+        "statementIds": []
+      }
+    },
+    {
       "name": "401 - missing bearer token",
       "testType": "negative",
       "coversErrorCase": "401|UNAUTHORIZED",

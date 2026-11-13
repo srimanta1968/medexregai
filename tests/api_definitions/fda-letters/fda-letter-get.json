@@ -36,7 +36,9 @@
       "status": 403,
       "code": "FORBIDDEN",
       "message": "Insufficient permissions",
-      "when": "caller lacks projects:read"
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role (owner, admin, editor, reviewer, viewer) has projects:read, so no account can be refused here."
     },
     {
       "status": 401,
@@ -80,6 +82,22 @@
       },
       "pathParams": {
         "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - letterId is not an id",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "letterId": "{{static:not-an-id}}"
       },
       "fixture": "tests/setup_scripts/46_fda_letters.py"
     },
