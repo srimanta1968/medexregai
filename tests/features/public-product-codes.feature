@@ -36,3 +36,11 @@ Feature: F6.1 Public product-code pages
     Given I navigate to "/codes/ZZZ"
     Then I should see "Product code ZZZ is not in our copy of the FDA classification database"
     And I should see "Look up"
+
+  @scenario_type:UI @ui_test @portal:web
+  @scenario_id:760c8667-608d-45e4-95b1-d21e9efb30c8
+  Scenario: The site menu links to the product-code lookup
+    Given I navigate to "/"
+    When I click "FDA product codes"
+    Then I should see "See what FDA has cleared under a product code"
+    And I should see "Look up"
