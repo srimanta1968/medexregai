@@ -80,7 +80,7 @@ jobs:
         run: npm run eval -- --no-record --report eval-report.json --note "CI ${{ github.sha }}"
       - name: Keep the evaluation report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-report
           path: server/eval-report.json
