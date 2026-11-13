@@ -113,7 +113,8 @@ def main():
     if status != 200 or not body['data']['duplicate']:
         fail('a resent event is recognised as a duplicate', body)
     send(event('checkout.session.completed', session))  # a second event for the same payment
-    status, body = send(event('checkout.session.completed', {**session, 'id': f'cs_test_fixture_{secrets.token_hex(6)}'}), secret='whsec_wrong')
+    # Signed with a different key than the server's (the real one reversed): must be refused.
+    status, body = send(event('checkout.session.completed', {**session, 'id': f'cs_test_fixture_{secrets.token_hex(6)}'}), SECRET[::-1])
     if status != 400 or body.get('error', {}).get('code') != 'INVALID_SIGNATURE':
         fail('a bad signature is refused', body)
     b = expect(*call('GET', '/api/billing', None, token), 200, 'billing after purchase')
