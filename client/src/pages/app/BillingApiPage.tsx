@@ -3,7 +3,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
-import { ApiKey, apiKeysApi, ApiScope, SCOPES } from '../../lib/apiKeysApi';
+import { useSearchParams } from 'react-router-dom';
+import { ApiKey, apiKeysApi, ApiScope, Billing, billingApi, money, SCOPES } from '../../lib/apiKeysApi';
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
 const chip = 'rounded-full border px-3 py-1 text-sm font-medium';
@@ -14,13 +15,17 @@ const when = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() :
 
 /**
  * F6.3 Billing and API (UI 2.0 §3). API keys: create a key with chosen read scopes (the secret is
- * shown once), see each key's scopes, last use and status, and revoke it. Plans and credits come
- * with the payment provider integration and are not available yet.
+ * shown once), see each key's scopes, last use and status, and revoke it. Plans and credits: the
+ * offer comes from Stripe; buying opens Stripe Checkout; the plan and balance follow Stripe's webhook.
  */
 export default function BillingApiPage(): JSX.Element {
   const { authedRequest } = useAuth();
   const api = useMemo(() => apiKeysApi(authedRequest), [authedRequest]);
-  usePageMeta({ title: 'Billing and API', description: 'API keys for the MedexRegAI public API.' });
+  const bill = useMemo(() => billingApi(authedRequest), [authedRequest]);
+  const [params] = useSearchParams();
+  const [billing, setBilling] = useState<Billing | null>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  usePageMeta({ title: 'Billing and API', description: 'Plans, credits and API keys.' });
 
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
   const [name, setName] = useState('');
@@ -38,6 +43,24 @@ export default function BillingApiPage(): JSX.Element {
       .catch((err: unknown) => setError(msg(err, 'Could not load API keys.')));
   }, [api]);
   useEffect(load, [load]);
+  useEffect(() => {
+    bill
+      .get()
+      .then(setBilling)
+      .catch((err: unknown) => setBillingError(msg(err, 'Billing is not available right now.')));
+  }, [bill]);
+
+  const buy = async (priceId: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const { url } = await bill.checkout(priceId);
+      window.location.assign(url);
+    } catch (err) {
+      setError(msg(err, 'Could not open the payment page.'));
+      setBusy(false);
+    }
+  };
 
   const create = async (e: FormEvent) => {
     e.preventDefault();
@@ -83,10 +106,59 @@ export default function BillingApiPage(): JSX.Element {
       </div>
 
       <section className={`${card} mt-6`} aria-labelledby="plans-title">
-        <h2 id="plans-title" className="text-lg font-semibold text-slate-900">
-          Plans and credits
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">Self-serve plans and credits are not available yet. During the pilot, billing is agreed with us directly.</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="plans-title" className="text-lg font-semibold text-slate-900">
+            Plans and credits
+          </h2>
+          {billing?.testMode && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">Stripe test mode: no real charges</span>}
+        </div>
+        {params.get('checkout') === 'success' && (
+          <p role="status" className="mt-2 text-sm text-emerald-800">
+            Payment received by Stripe. Your plan or credits update as soon as Stripe confirms it.
+          </p>
+        )}
+        {params.get('checkout') === 'cancelled' && <p className="mt-2 text-sm text-slate-600">Payment cancelled. Nothing was charged.</p>}
+        {billingError && <p className="mt-2 text-sm text-slate-600">{billingError}</p>}
+        {billing && (
+          <>
+            <p className="mt-2 text-sm text-slate-800">
+              Plan: <strong>{billing.plan ? `${billing.plan.key} (${billing.plan.status ?? 'unknown'})` : 'none'}</strong> · Credit balance:{' '}
+              <strong>{billing.creditBalance}</strong>
+            </p>
+            {billing.catalog.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-600">No plans or credit packs are offered yet.</p>
+            ) : (
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                {billing.catalog.map((c) => (
+                  <li key={c.priceId} className="rounded-lg border border-slate-200 p-3">
+                    <p className="font-medium text-slate-900">{c.name}</p>
+                    <p className="text-sm text-slate-600">
+                      {money(c.amount, c.currency)}
+                      {c.interval ? ` per ${c.interval}` : ''}
+                      {c.credits ? ` for ${c.credits} credits` : ''}
+                    </p>
+                    <button type="button" className={`${primary} mt-2`} disabled={busy} onClick={() => void buy(c.priceId)}>
+                      {c.kind === 'plan' ? `Choose ${c.name}` : `Buy ${c.credits} credits`}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {billing.ledger.length > 0 && (
+              <>
+                <h3 className="mt-4 text-sm font-semibold text-slate-900">Credit history</h3>
+                <ul className="mt-1 space-y-0.5 text-sm text-slate-700">
+                  {billing.ledger.map((l) => (
+                    <li key={l.id}>
+                      {when(l.createdAt)} · {l.delta > 0 ? `+${l.delta}` : l.delta} · {l.note ?? l.reason}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <p className="mt-3 text-xs text-slate-500">Payment is taken by Stripe on its own page; MedexRegAI never sees your card details.</p>
+          </>
+        )}
       </section>
 
       <section className={`${card} mt-6`} aria-labelledby="keys-title">
