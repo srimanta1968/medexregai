@@ -8,17 +8,17 @@ import { FdaDataset } from '../sync/records';
  * own public record so a consultant can check it at the source.
  */
 
-const PMN_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=';
-const DENOVO_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/denovo.cfm?ID=';
-const CLASSIFICATION_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPCD/classification.cfm?ID=';
-const RECALL_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=';
+export const PMN_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm?ID=';
+export const DENOVO_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/denovo.cfm?ID=';
+export const CLASSIFICATION_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPCD/classification.cfm?ID=';
+export const RECALL_URL = 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfRES/res.cfm?id=';
 
 const RECALL_LIMIT = 20;
 
 const iso = (d: Date | string | null): string | null => (d === null ? null : typeof d === 'string' ? d.slice(0, 10) : d.toISOString().slice(0, 10));
 
 /** openFDA's own last_updated date of the most recent successful load of each dataset. */
-async function asOf(datasets: FdaDataset[]): Promise<Record<string, string | null>> {
+export async function asOf(datasets: FdaDataset[]): Promise<Record<string, string | null>> {
   const rows = await qRead<{ dataset: string; as_of: string | null }>(
     `SELECT d.dataset,
             (SELECT source_last_updated::text FROM fda_sync_runs r

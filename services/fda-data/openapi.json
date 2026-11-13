@@ -651,6 +651,109 @@
         }
       }
     },
+    "/v1/product-codes/{code}/stats": {
+      "get": {
+        "operationId": "getProductCodeStats",
+        "summary": "Clearance and recall statistics for a product code over the last N years (FDA data only)",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            },
+            "example": "FPA"
+          },
+          {
+            "name": "years",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProductCodeStats"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed parameter (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked API key (UNAUTHORIZED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Key lacks the fda:read scope (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not in the FDA copy (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Client rate limit exceeded (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/flags/{kNumber}": {
       "get": {
         "operationId": "getFlags",
@@ -1751,6 +1854,241 @@
               "null"
             ],
             "format": "date"
+          }
+        }
+      },
+      "ProductCodeStats": {
+        "type": "object",
+        "properties": {
+          "productCode": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviceClass": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "regulationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "window": {
+            "type": "object",
+            "properties": {
+              "years": {
+                "type": "integer"
+              },
+              "from": {
+                "type": "string",
+                "format": "date"
+              },
+              "to": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "clearances": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "thirdPartyReviewed": {
+                "type": "integer"
+              },
+              "byYear": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "year": {
+                      "type": "integer"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "byType": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "receiptToDecisionDays": {
+                "type": "object",
+                "description": "Calendar days from FDA receipt to decision, including time on hold; not FDA review days.",
+                "properties": {
+                  "basis": {
+                    "type": "string"
+                  },
+                  "n": {
+                    "type": "integer"
+                  },
+                  "p25": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "median": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "p75": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                }
+              },
+              "latest": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kNumber": {
+                      "type": "string"
+                    },
+                    "applicant": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "deviceName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "decisionDate": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "clearanceType": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fdaUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "recalls": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "description": "Recall events (res_event_number); one event can cover many products"
+              },
+              "products": {
+                "type": "integer",
+                "description": "Recalled product rows"
+              },
+              "open": {
+                "type": "integer",
+                "description": "Events whose FDA recall status starts with Open"
+              },
+              "topRootCauses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cause": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "latest": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productResNumber": {
+                      "type": "string"
+                    },
+                    "recallStatus": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "dateInitiated": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "recallingFirm": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "reasonForRecall": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "rootCause": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fdaUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "sources": {
+            "type": "object"
           }
         }
       },

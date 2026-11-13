@@ -23,6 +23,7 @@ export const TABLE_CATALOG = {
   sso_handoffs: 'platform',
   sso_signups: 'platform',
   pilot_requests: 'platform',
+  device_checks: 'platform',
   // Distinct product codes of firms' devices (no firm or device identity), pushed to fda-data.
   device_product_codes: 'platform',
   memberships: 'tenant',

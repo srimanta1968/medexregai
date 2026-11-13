@@ -1,0 +1,107 @@
+{
+  "name": "GET /api/public/product-codes/:code - public product-code page (FDA data only)",
+  "description": "A public page per product code is served using FDA data only (F6.1 AC1). No sign-in. Returns the product code's FDA classification (device name, class with openFDA's labels, regulation number, medical specialty, implant and life-sustaining flags) and its likely pathway from openFDA submission_type_id (1 510(k), 2 PMA, 3 Contact ODE shown as 'Contact FDA', 4 510(k) exempt), plus statistics over the last 5 years from the fda-data service: clearances in total, per year and per clearance type, third-party reviews, calendar days from FDA receipt to decision (quartiles; includes time on hold, not FDA review days), the 10 latest clearances with FDA links, recall events (one event can cover many products) with how many have an FDA status of open and the top root causes, and each source's dataset date. Nothing from any firm is read. Cache-Control: public, max-age=3600. Fixture 51_public_codes.py checks the figures add up on real data; FPA, FRN and DQY were cross-checked against api.fda.gov.",
+  "endpoint": "/api/public/product-codes/:code",
+  "method": "GET",
+  "requiresAuth": false,
+  "expectedStatus": 200,
+  "priority": 215,
+  "taskId": "fd78698f-6631-4ec4-8a3b-c56953c800e1",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "timeoutMs": 30000,
+  "coversCriterion": [
+    "6063e5f0-b02d-40d4-9242-3d41b4326277#AC1",
+    "fd78698f-6631-4ec4-8a3b-c56953c800e1#AC1"
+  ],
+  "pathParams": {
+    "code": "{{var:pc_code}}"
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "code must be a three-letter FDA product code",
+      "when": "code is not three letters"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Product code ZZZ is not in our copy of the FDA classification database",
+      "when": "unknown product code"
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service is down",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the fda-data service stopped."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "FPA page with 5-year statistics",
+      "fixture": "tests/setup_scripts/51_public_codes.py",
+      "pathParams": {
+        "code": "{{var:pc_code}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "productCode": "FPA",
+          "classLabel": "Class II",
+          "regulationNumber": "880.5440",
+          "pathway": {
+            "label": "510(k)"
+          },
+          "stats": {
+            "window": {
+              "years": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Lower-case code is accepted",
+      "pathParams": {
+        "code": "{{static:frn}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "productCode": "FRN",
+          "classLabel": "Class II"
+        }
+      }
+    },
+    {
+      "name": "400 - not a three-letter code",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "pathParams": {
+        "code": "{{static:F1}}"
+      }
+    },
+    {
+      "name": "404 - unknown product code",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/51_public_codes.py",
+      "pathParams": {
+        "code": "{{var:pc_unknown_code}}"
+      }
+    }
+  ]
+}

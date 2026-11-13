@@ -110,6 +110,8 @@ export interface AppConfig {
     /** Optional: who gets an email when a pilot request arrives. */
     notifyEmail: string | null;
   };
+  /** F6.1 free device checks accepted per hashed IP per hour. */
+  deviceChecks: { perIpPerHour: number };
   /** Operator alerts (e.g. a project's AI usage passing 2x its estimate). */
   ops: { alertEmail: string | null };
   bodyLimit: string;
@@ -449,6 +451,9 @@ export function loadConfig(env: Env): AppConfig {
     pilot: {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'PILOT_REQUESTS_PER_IP_PER_HOUR', '5'), 'PILOT_REQUESTS_PER_IP_PER_HOUR'),
       notifyEmail: optionalEnv(env, 'PILOT_NOTIFY_EMAIL', '') || null,
+    },
+    deviceChecks: {
+      perIpPerHour: parsePositiveInt(optionalEnv(env, 'DEVICE_CHECKS_PER_IP_PER_HOUR', '10'), 'DEVICE_CHECKS_PER_IP_PER_HOUR'),
     },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
     devUploads: parseDevUploads(env, nodeEnv),

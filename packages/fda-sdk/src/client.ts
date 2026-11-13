@@ -6,6 +6,7 @@ import type {
   Meta,
   Page,
   ProductCode,
+  ProductCodeStats,
   Recall,
   RecallParams,
   Search510kParams,
@@ -118,6 +119,11 @@ export class FdaClient {
 
   getProductCode(code: string): Promise<ProductCode> {
     return this.get(`/v1/product-codes/${encodeURIComponent(code)}`);
+  }
+
+  /** Clearance and recall statistics for a product code over the last `years` (1-10, default 5). */
+  getProductCodeStats(code: string, years = 5): Promise<ProductCodeStats> {
+    return this.get(`/v1/product-codes/${encodeURIComponent(code)}/stats?years=${years}`);
   }
 
   getFlags(kNumber: string): Promise<Flags> {

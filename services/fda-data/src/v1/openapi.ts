@@ -179,6 +179,24 @@ export const openapi = {
         },
       },
     },
+    '/v1/product-codes/{code}/stats': {
+      get: {
+        operationId: 'getProductCodeStats',
+        summary: 'Clearance and recall statistics for a product code over the last N years (FDA data only)',
+        parameters: [
+          pathParam('code', CODE, 'FPA'),
+          { name: 'years', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 10, default: 5 } },
+        ],
+        responses: {
+          '200': {
+            description: 'OK',
+            ...json(ok({ $ref: '#/components/schemas/ProductCodeStats' })),
+          },
+          ...errors,
+          ...notFound,
+        },
+      },
+    },
     '/v1/flags/{kNumber}': {
       get: {
         operationId: 'getFlags',
@@ -423,6 +441,62 @@ export const openapi = {
           fdaUrl: str,
           dataAsOf: ndate,
           clearancesAsOf: ndate,
+        },
+      },
+      ProductCodeStats: {
+        type: 'object',
+        properties: {
+          productCode: str,
+          deviceName: nstr,
+          deviceClass: nstr,
+          regulationNumber: nstr,
+          window: { type: 'object', properties: { years: int, from: { type: 'string', format: 'date' }, to: { type: 'string', format: 'date' } } },
+          clearances: {
+            type: 'object',
+            properties: {
+              total: int,
+              thirdPartyReviewed: int,
+              byYear: { type: 'array', items: { type: 'object', properties: { year: int, count: int } } },
+              byType: { type: 'array', items: { type: 'object', properties: { type: nstr, count: int } } },
+              receiptToDecisionDays: {
+                type: 'object',
+                description: 'Calendar days from FDA receipt to decision, including time on hold; not FDA review days.',
+                properties: { basis: str, n: int, p25: nint, median: nint, p75: nint },
+              },
+              latest: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { kNumber: str, applicant: nstr, deviceName: nstr, decisionDate: ndate, clearanceType: nstr, fdaUrl: str },
+                },
+              },
+            },
+          },
+          recalls: {
+            type: 'object',
+            properties: {
+              total: { type: 'integer', description: 'Recall events (res_event_number); one event can cover many products' },
+              products: { type: 'integer', description: 'Recalled product rows' },
+              open: { type: 'integer', description: 'Events whose FDA recall status starts with Open' },
+              topRootCauses: { type: 'array', items: { type: 'object', properties: { cause: str, count: int } } },
+              latest: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    productResNumber: str,
+                    recallStatus: nstr,
+                    dateInitiated: ndate,
+                    recallingFirm: nstr,
+                    reasonForRecall: nstr,
+                    rootCause: nstr,
+                    fdaUrl: nstr,
+                  },
+                },
+              },
+            },
+          },
+          sources: { type: 'object' },
         },
       },
       Recall: {

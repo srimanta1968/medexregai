@@ -1,0 +1,165 @@
+{
+  "name": "POST /api/public/device-checks - free device check from the product-code page",
+  "description": "A visitor can run a free device check from the product-code page (F6.1). No sign-in; FDA data only, no AI. Body: productCode, description (10-2000 characters), contactConsent (default false), email (required when contactConsent), and a hidden honeypot 'website' that people leave empty. Returns the code's class, regulation and likely pathway, the five most recent-first clearances under the code whose device names best match the description (share of the device name's words found in the description; high, medium or low; an estimate to start predicate research, not a finding of substantial equivalence), recall events with FDA status open and root causes, receipt-to-decision days, sources, and whether the visitor asked to be contacted. Stored: product code, time and an HMAC of the IP for rate limiting; the email and description only with consent (enforced by a database CHECK). DEVICE_CHECKS_PER_IP_PER_HOUR (default 10) per hashed IP, then 429 RATE_LIMITED with Retry-After.",
+  "endpoint": "/api/public/device-checks",
+  "method": "POST",
+  "requiresAuth": false,
+  "expectedStatus": 201,
+  "priority": 216,
+  "taskId": "4c48042c-c09b-4bc3-9a33-d3dd113ddad7",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "timeoutMs": 30000,
+  "coversCriterion": [
+    "6063e5f0-b02d-40d4-9242-3d41b4326277#AC2",
+    "4c48042c-c09b-4bc3-9a33-d3dd113ddad7#AC1"
+  ],
+  "payload": {
+    "productCode": "{{static:FPA}}",
+    "description": "{{static:FICTIONAL TEST DATA. Single-use sterile intravascular administration set with a spike, drip chamber and roller clamp.}}",
+    "contactConsent": false
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Describe your device in at least 10 characters",
+      "when": "missing or short description, bad product code, consent without email, malformed email or an unknown field"
+    },
+    {
+      "status": 400,
+      "code": "REQUEST_REJECTED",
+      "message": "This request could not be accepted.",
+      "when": "the honeypot field is filled"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Product code ZZZ is not in our copy of the FDA classification database",
+      "when": "unknown product code"
+    },
+    {
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "message": "Too many checks. Please try again in an hour.",
+      "when": "too many checks from one IP in an hour",
+      "reproducible": false,
+      "notReproducibleReason": "Test environments raise DEVICE_CHECKS_PER_IP_PER_HOUR so suites do not trip it."
+    },
+    {
+      "status": 503,
+      "code": "FDA_UNAVAILABLE",
+      "message": "FDA data is unavailable right now. Try again shortly.",
+      "when": "the fda-data service is down",
+      "reproducible": false,
+      "notReproducibleReason": "Needs the fda-data service stopped."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Check without contact consent",
+      "fixture": "tests/setup_scripts/51_public_codes.py",
+      "payload": {
+        "productCode": "{{var:pc_code}}",
+        "description": "{{static:FICTIONAL TEST DATA. Single-use sterile intravascular administration set with a spike, drip chamber and roller clamp.}}",
+        "contactConsent": false
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "productCode": "FPA",
+          "pathway": {
+            "label": "510(k)"
+          },
+          "contacted": false
+        }
+      }
+    },
+    {
+      "name": "Check with contact consent and email",
+      "payload": {
+        "productCode": "{{static:FRN}}",
+        "description": "{{static:FICTIONAL TEST DATA. A large-volume infusion pump for hospital use.}}",
+        "contactConsent": true,
+        "email": "{{dynamic:email}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "productCode": "FRN",
+          "contacted": true
+        }
+      }
+    },
+    {
+      "name": "400 - description too short",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "productCode": "{{static:FPA}}",
+        "description": "{{static:pump}}"
+      }
+    },
+    {
+      "name": "400 - consent without email",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "productCode": "{{static:FPA}}",
+        "description": "{{static:FICTIONAL TEST DATA. An administration set.}}",
+        "contactConsent": true
+      }
+    },
+    {
+      "name": "400 - not a product code",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "payload": {
+        "productCode": "{{static:12}}",
+        "description": "{{static:FICTIONAL TEST DATA. An administration set.}}"
+      }
+    },
+    {
+      "name": "400 - honeypot filled",
+      "testType": "negative",
+      "coversErrorCase": "400|REQUEST_REJECTED",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "REQUEST_REJECTED"
+      },
+      "payload": {
+        "productCode": "{{static:FPA}}",
+        "description": "{{static:FICTIONAL TEST DATA. An administration set.}}",
+        "website": "{{static:https://spam.example}}"
+      }
+    },
+    {
+      "name": "404 - unknown product code",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "fixture": "tests/setup_scripts/51_public_codes.py",
+      "payload": {
+        "productCode": "{{var:pc_unknown_code}}",
+        "description": "{{static:FICTIONAL TEST DATA. An administration set.}}"
+      }
+    }
+  ]
+}

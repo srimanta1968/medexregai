@@ -6,6 +6,7 @@ import { eventCounts, meta, recalls, search510k, udi } from './catalog';
 import { lookups } from './lookups';
 import { openapi } from './openapi';
 import { searchSummaries, summaryPassages } from './summaries';
+import { productCodeStats } from './stats';
 
 /**
  * fda-data /v1 read API (ADR-017). Every route needs a service key with fda:read.
@@ -135,6 +136,18 @@ v1ReadRouter.get(
   '/v1/product-codes/:code',
   guard,
   read((req) => lookups.productCode(productCode.parse(req.params.code))),
+);
+
+/** Clearance and recall statistics for a product code over the last `years` (1-10, default 5); FDA data only (F6.1). */
+v1ReadRouter.get(
+  '/v1/product-codes/:code/stats',
+  guard,
+  read((req) =>
+    productCodeStats(
+      productCode.parse(req.params.code),
+      z.object({ years: z.coerce.number().int().min(1, 'years must be 1-10').max(10, 'years must be 1-10').default(5) }).parse(req.query).years,
+    ),
+  ),
 );
 
 /** Recall and MAUDE flags for a K-number. */
