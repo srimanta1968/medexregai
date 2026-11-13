@@ -14,8 +14,12 @@ const dotenv = require('dotenv');
 const appEnv = dotenv.config({ path: path.join(__dirname, '..', '..', '..', 'server', '.env'), processEnv: {} }).parsed || {};
 const env = { ...process.env };
 if (!env.FDA_DATABASE_URL) {
+  // fda_db is not under the app's row-level-security role (medexregai_app has no rights there), so
+  // when server/.env has the owner login for migrations, the FDA service uses that one.
+  const owner = appEnv.DB_MIGRATION_USER ? { USER: appEnv.DB_MIGRATION_USER, PASSWORD: appEnv.DB_MIGRATION_PASSWORD || '' } : {};
   for (const k of ['HOST', 'PORT', 'USER', 'PASSWORD']) {
-    if (!env[`FDA_DB_${k}`] && appEnv[`DB_${k}`]) env[`FDA_DB_${k}`] = appEnv[`DB_${k}`];
+    const v = owner[k] !== undefined ? owner[k] : appEnv[`DB_${k}`];
+    if (!env[`FDA_DB_${k}`] && v) env[`FDA_DB_${k}`] = v;
   }
   env.FDA_DB_NAME = env.FDA_DB_NAME || 'fda_db';
 }
