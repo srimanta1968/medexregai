@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { EstarXmlSection } from '../../components/app/EstarXmlSection';
 import { FormMessage } from '../../components/auth/AuthUi';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { ApiError } from '../../lib/api';
@@ -180,6 +181,8 @@ export default function ProjectReadinessPage(): JSX.Element {
               {formatBytes(readiness.rules.maxTotalBytes)} in total via the CDRH Portal; zip files are rejected. We read GB as 10⁹ bytes, the stricter reading.
             </p>
           </section>
+
+          <EstarXmlSection projectId={projectId} templateKey={readiness.template.key} />
 
           <section className={card} aria-labelledby="records-title">
             <h2 id="records-title" className="text-lg font-semibold text-slate-900">
