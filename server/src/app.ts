@@ -39,6 +39,7 @@ import { publicCodesRouter } from './routes/publicCodes';
 import { estarXmlRouter } from './routes/estarXml';
 import { introductionsRouter } from './routes/introductions';
 import { apiKeysRouter } from './routes/apiKeys';
+import { billingRouter } from './routes/billing';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -96,7 +97,15 @@ export function createApp(appConfig: AppConfig): Application {
   // Upload-link tokens are credentials: never write them to access logs (F2.4).
   morgan.token('url', (req: Request) => (req.originalUrl || req.url).replace(/\/u\/[^/?#]+/, '/u/[token]'));
   app.use(morgan(appConfig.logFormat));
-  app.use(express.json({ limit: appConfig.bodyLimit }));
+  app.use(
+    express.json({
+      limit: appConfig.bodyLimit,
+      // Stripe signs the exact bytes it sends: keep them for the webhook route only.
+      verify: (req, _res, buf) => {
+        if ((req as Request).originalUrl?.startsWith('/api/billing/stripe/webhook')) (req as Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: appConfig.bodyLimit }));
 
   // Liveness probe for Docker, load balancers and the ProjexLight test runner.
@@ -141,6 +150,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(estarXmlRouter);
   app.use(introductionsRouter);
   app.use(apiKeysRouter);
+  app.use(billingRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

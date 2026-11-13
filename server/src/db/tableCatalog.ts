@@ -27,6 +27,8 @@ export const TABLE_CATALOG = {
   // F6.2: the opt-in directory and visitors' requests are read across firms by routing.
   firm_intro_settings: 'platform',
   intro_requests: 'platform',
+  // F6.3: Stripe webhook events already handled (no firm data).
+  stripe_events: 'platform',
   // Distinct product codes of firms' devices (no firm or device identity), pushed to fda-data.
   device_product_codes: 'platform',
   memberships: 'tenant',
@@ -94,6 +96,9 @@ export const TABLE_CATALOG = {
   fda_deficiencies: 'tenant',
   fda_deficiency_links: 'tenant',
   // F5.2 substantial-equivalence comparison tables (migration 043).
+  // F6.3 billing (migration 048): plan and credits per firm, credit movements.
+  firm_billing: 'tenant',
+  credit_ledger: 'tenant',
   // F6.3 scoped API keys (migration 047); looked up by token_hash before the org is known.
   api_keys: 'tenant',
   introductions: 'tenant',

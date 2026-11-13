@@ -116,6 +116,8 @@ export interface AppConfig {
   estarXml: { enabled: boolean };
   /** F6.2 introduction requests accepted per hashed IP per hour. */
   introductions: { perIpPerHour: number };
+  /** F6.3 Stripe (empty = billing off). Use test keys (sk_test_) outside production. */
+  stripe: { secretKey: string; webhookSecret: string };
   /** Operator alerts (e.g. a project's AI usage passing 2x its estimate). */
   ops: { alertEmail: string | null };
   bodyLimit: string;
@@ -463,6 +465,7 @@ export function loadConfig(env: Env): AppConfig {
     introductions: {
       perIpPerHour: parsePositiveInt(optionalEnv(env, 'INTRO_REQUESTS_PER_IP_PER_HOUR', '5'), 'INTRO_REQUESTS_PER_IP_PER_HOUR'),
     },
+    stripe: { secretKey: optionalEnv(env, 'STRIPE_SECRET_KEY', ''), webhookSecret: optionalEnv(env, 'STRIPE_WEBHOOK_SECRET', '') },
     ops: { alertEmail: optionalEnv(env, 'OPS_ALERT_EMAIL', '') || null },
     devUploads: parseDevUploads(env, nodeEnv),
     connections: {

@@ -1,0 +1,91 @@
+{
+  "requiresAuth": true,
+  "taskId": "65235334-1568-44b4-a483-6c64505a5962",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "timeoutMs": 30000,
+  "name": "GET /api/billing - plan, credits and what can be bought",
+  "description": "The firm's plan (key, Stripe price, subscription status, period end), credit balance, last 20 credit movements, the catalog of plans and credit packs, and whether Stripe is in test mode. Needs billing:manage (owners). Prices live in Stripe: the catalog is every active Stripe price tagged metadata app=medexregai with kind=plan (recurring) or kind=credits (one-time, metadata credits). Payment happens on Stripe Checkout (card data never reaches MedexRegAI); Stripe's signed webhook then sets the plan or adds the credits, once per event and once per payment. Dev uses Stripe TEST mode. Fixture 55_billing.py proves the purchase, duplicate, bad-signature, plan and cancel paths with signed test events.",
+  "endpoint": "/api/billing",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 250,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC1",
+    "65235334-1568-44b4-a483-6c64505a5962#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 503,
+      "code": "BILLING_UNAVAILABLE",
+      "message": "Billing is not set up on this server (STRIPE_SECRET_KEY is empty).",
+      "when": "Stripe keys not configured",
+      "reproducible": false,
+      "notReproducibleReason": "The test environment has Stripe test keys."
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks billing:manage (only owners have it)",
+      "reproducible": false,
+      "notReproducibleReason": "Fixture firms have only an owner."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "not signed in"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "A new firm: no plan, no credits, a test-mode catalog",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "plan": null,
+          "creditBalance": 0,
+          "testMode": true
+        }
+      }
+    },
+    {
+      "name": "After a purchase and a cancelled plan (fixture)",
+      "fixture": "tests/setup_scripts/55_billing.py",
+      "headers": {
+        "Authorization": "Bearer {{var:bl_token}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "creditBalance": 10,
+          "plan": {
+            "status": "canceled"
+          }
+        }
+      }
+    },
+    {
+      "name": "401 - not signed in",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {}
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "requiresAuth": false,
+  "taskId": "65235334-1568-44b4-a483-6c64505a5962",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "name": "POST /api/billing/stripe/webhook - Stripe events (signed)",
+  "description": "Stripe's webhook, authenticated by the Stripe-Signature header over the raw body (no sign-in). checkout.session.completed (paid credits -> credits added once per payment; subscription -> plan set) and customer.subscription.updated/deleted (status, period end, canceled). Each event id is handled once (a resend returns duplicate: true). A valid signature needs the webhook secret at send time, so the success paths are proved by fixture 55_billing.py; these cases prove refusals. Prices live in Stripe: the catalog is every active Stripe price tagged metadata app=medexregai with kind=plan (recurring) or kind=credits (one-time, metadata credits). Payment happens on Stripe Checkout (card data never reaches MedexRegAI); Stripe's signed webhook then sets the plan or adds the credits, once per event and once per payment. Dev uses Stripe TEST mode. Fixture 55_billing.py proves the purchase, duplicate, bad-signature, plan and cancel paths with signed test events.",
+  "endpoint": "/api/billing/stripe/webhook",
+  "method": "POST",
+  "expectedStatus": 200,
+  "priority": 252,
+  "coversCriterion": [
+    "ecedaab8-630c-4976-bf61-48e6ddac19ee#AC1",
+    "65235334-1568-44b4-a483-6c64505a5962#AC1"
+  ],
+  "payload": {
+    "id": "{{static:evt_test_unsigned}}",
+    "type": "{{static:checkout.session.completed}}",
+    "data": {
+      "object": {}
+    }
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "INVALID_SIGNATURE",
+      "message": "Stripe signature did not verify",
+      "when": "missing or wrong Stripe-Signature, or a body changed after signing"
+    },
+    {
+      "status": 503,
+      "code": "BILLING_UNAVAILABLE",
+      "message": "Billing webhooks are not set up (STRIPE_WEBHOOK_SECRET is empty).",
+      "when": "no webhook secret configured",
+      "reproducible": false,
+      "notReproducibleReason": "The test environment has a webhook secret."
+    }
+  ],
+  "testCases": [
+    {
+      "name": "400 - no Stripe-Signature header",
+      "testType": "negative",
+      "coversErrorCase": "400|INVALID_SIGNATURE",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "INVALID_SIGNATURE"
+      },
+      "headers": {},
+      "payload": {
+        "id": "{{static:evt_test_unsigned}}",
+        "type": "{{static:checkout.session.completed}}",
+        "data": {
+          "object": {}
+        }
+      }
+    },
+    {
+      "name": "400 - a forged signature",
+      "testType": "negative",
+      "coversErrorCase": "400|INVALID_SIGNATURE",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "INVALID_SIGNATURE"
+      },
+      "headers": {
+        "Stripe-Signature": "{{static:t=1700000000,v1=0000000000000000000000000000000000000000000000000000000000000000}}"
+      },
+      "payload": {
+        "id": "{{static:evt_test_forged}}",
+        "type": "{{static:checkout.session.completed}}",
+        "data": {
+          "object": {}
+        }
+      }
+    }
+  ]
+}
