@@ -2,9 +2,7 @@ import { createHash } from 'crypto';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { PoolClient } from 'pg';
-import { Pool } from 'pg';
-import { databaseConfig } from '../config/database';
-import { closePool, getPool } from '../services/DataService';
+import { closePool, withOwnerClient } from '../services/DataService';
 
 export interface MigrationFile {
   version: number;
@@ -94,12 +92,10 @@ async function ensureHistoryTable(client: PoolClient): Promise<void> {
  */
 export async function runMigrations(dir: string = MIGRATIONS_DIR): Promise<MigrationFile[]> {
   const files = loadMigrationFiles(dir);
-  // The app connects as a restricted role under row-level security (migration 049); DDL runs as the
-  // table owner when DB_MIGRATION_USER is set.
-  const ownerPool = process.env.DB_MIGRATION_USER
-    ? new Pool({ ...databaseConfig, user: process.env.DB_MIGRATION_USER, password: process.env.DB_MIGRATION_PASSWORD ?? '', min: 0, max: 1 })
-    : null;
-  const client = await (ownerPool ?? getPool()).connect();
+  return withOwnerClient((client) => applyMigrations(client, files));
+}
+
+async function applyMigrations(client: PoolClient, files: MigrationFile[]): Promise<MigrationFile[]> {
   try {
     await client.query('SELECT pg_advisory_lock($1)', [ADVISORY_LOCK_KEY]);
     await ensureHistoryTable(client);
@@ -136,12 +132,7 @@ export async function runMigrations(dir: string = MIGRATIONS_DIR): Promise<Migra
     }
     return plan.pending;
   } finally {
-    try {
-      await client.query('SELECT pg_advisory_unlock($1)', [ADVISORY_LOCK_KEY]);
-    } finally {
-      client.release();
-      if (ownerPool) await ownerPool.end();
-    }
+    await client.query('SELECT pg_advisory_unlock($1)', [ADVISORY_LOCK_KEY]);
   }
 }
 

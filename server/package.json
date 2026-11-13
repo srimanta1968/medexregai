@@ -9,6 +9,7 @@
     "test": "jest",
     "lint": "eslint src tests",
     "db:migrate": "ts-node --transpile-only src/db/migrate.ts",
+    "db:checks": "ts-node --transpile-only src/db/scaleChecks.ts",
     "typecheck": "tsc --noEmit -p .",
     "eval": "ts-node --transpile-only src/ai/eval/cli.ts",
     "test:injection": "ts-node --transpile-only src/ai/guard/injectionSuite.ts",

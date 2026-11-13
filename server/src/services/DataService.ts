@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { databaseConfig } from '../config/database';
 import { assertCatalogTable, CatalogTable, tableScope } from '../db/tableCatalog';
 
@@ -18,6 +18,36 @@ export function getPool(): Pool {
     });
   }
   return pool;
+}
+
+/**
+ * Run `fn` on one connection as the table owner (migrations and the schema checks in
+ * db/scaleChecks.ts). The app connects as a restricted role under row-level security (migration
+ * 049); the owner is DB_MIGRATION_USER when set, else DB_USER. Never use this for request handling.
+ */
+export async function withOwnerClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const ownerPool = process.env.DB_MIGRATION_USER
+    ? new Pool({ ...databaseConfig, user: process.env.DB_MIGRATION_USER, password: process.env.DB_MIGRATION_PASSWORD ?? '', min: 0, max: 1 })
+    : null;
+  const client = await (ownerPool ?? getPool()).connect();
+  try {
+    return await fn(client);
+  } finally {
+    client.release();
+    if (ownerPool) await ownerPool.end();
+  }
+}
+
+/** One statement on an owner session (see withOwnerSession). */
+export type OwnerQuery = <R extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[]) => Promise<QueryResult<R>>;
+
+/**
+ * Like withOwnerClient, but hands `fn` only a statement runner bound to that one connection, so
+ * operational checks (db/scaleChecks.ts) never hold a raw client. Transactions and SET LOCAL stay on
+ * the same connection across calls.
+ */
+export async function withOwnerSession<T>(fn: (run: OwnerQuery) => Promise<T>): Promise<T> {
+  return withOwnerClient((client) => fn((sql, params) => client.query(sql, params)));
 }
 
 /** Close the pool (scripts and graceful shutdown). Never throws. */
@@ -43,13 +73,13 @@ export interface QueryContext {
 /** A query handle bound to one transaction and one context. */
 export interface Tx {
   query<T extends QueryResultRow>(table: CatalogTable, sql: string, params?: unknown[]): Promise<T[]>;
+  /** Set the person this transaction acts for (row-level security: their own memberships across firms). */
+  setUser(userId: string): Promise<void>;
   /**
    * Enter an org context mid-transaction, for flows that create the org itself
    * (sign-up: create firm, then the owner's membership). Only allowed while no org
    * is set, so a transaction can never hop from one tenant to another.
    */
-  /** Set the person this transaction acts for (row-level security: their own memberships across firms). */
-  setUser(userId: string): Promise<void>;
   setOrg(orgId: string): Promise<void>;
   /**
    * Read a tenant row by a secret token before any org is known (invite links,

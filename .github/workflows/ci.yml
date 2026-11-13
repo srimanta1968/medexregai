@@ -81,6 +81,8 @@ jobs:
         run: npm run db:migrate
       - name: Migrations are idempotent
         run: npm run db:migrate
+      - name: Row-level security, pagination and index checks (F8.1)
+        run: npm run db:checks
       - run: npm run build
 
   client:
