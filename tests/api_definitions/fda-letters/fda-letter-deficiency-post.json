@@ -1,0 +1,172 @@
+{
+  "requiresAuth": true,
+  "taskId": "37cb380d-5c35-4456-96a5-eb8650b72bfc",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/fda-letters/:letterId/deficiencies - add a deficiency",
+  "description": "An FDA AI or hold letter can be logged with deficiencies linked to sections and due dates (F5.1 AC1). Adds a deficiency missed when the letter was split, with FDA's number (unique on the letter: 409 DUPLICATE_NUMBER), summary, text, eSTAR section, owner, due date and links. 201. Needs projects:write; audited as fda_deficiency.added.",
+  "endpoint": "/api/fda-letters/:letterId/deficiencies",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 195,
+  "coversCriterion": [
+    "af7a916c-8bab-433f-9dab-3ae83f278b73#AC1",
+    "37cb380d-5c35-4456-96a5-eb8650b72bfc#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "issuedOn must be a date (YYYY-MM-DD)",
+      "when": "a field is missing, malformed or out of range, or a link is to another project"
+    },
+    {
+      "status": 409,
+      "code": "DUPLICATE_NUMBER",
+      "message": "Deficiency 1 is already on this letter",
+      "when": "the number is already used on the letter"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Letter not found",
+      "when": "letter is not in the caller's firm"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Adds deficiency 3 on bench performance",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "payload": {
+        "number": 3,
+        "summary": "{{static:Justify the tensile sample size}}",
+        "fdaText": "{{static:Please justify the sample size used for tensile testing.}}",
+        "sectionId": "{{static:performance_testing}}",
+        "owner": "{{static:client}}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "number": 3,
+          "owner": "client",
+          "status": "open"
+        }
+      }
+    },
+    {
+      "name": "409 - number 1 is already on the letter",
+      "testType": "negative",
+      "coversErrorCase": "409|DUPLICATE_NUMBER",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "DUPLICATE_NUMBER"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "number": 1,
+        "summary": "{{static:Again}}",
+        "fdaText": "{{static:Again}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - summary missing",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "number": 9,
+        "fdaText": "{{static:Text}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "404 - another firm's letter",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "number": 9,
+        "summary": "{{static:S}}",
+        "fdaText": "{{static:T}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {
+        "number": 9,
+        "summary": "{{static:S}}",
+        "fdaText": "{{static:T}}"
+      },
+      "pathParams": {
+        "letterId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ],
+  "pathParams": {
+    "letterId": "{{var:fl_letter_id}}"
+  },
+  "payload": {
+    "number": 3,
+    "summary": "{{static:Justify the tensile sample size}}",
+    "fdaText": "{{static:Please justify the sample size used for tensile testing.}}",
+    "sectionId": "{{static:performance_testing}}",
+    "owner": "{{static:client}}"
+  }
+}

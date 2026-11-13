@@ -1,0 +1,87 @@
+{
+  "requiresAuth": true,
+  "taskId": "37cb380d-5c35-4456-96a5-eb8650b72bfc",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "DELETE /api/fda-letters/:letterId - delete a letter",
+  "description": "An FDA AI or hold letter can be logged with deficiencies linked to sections and due dates (F5.1 AC1). Deletes a letter with its deficiencies and links (the client files and drafts stay). 204. Needs projects:write; audited as fda_letter.deleted.",
+  "endpoint": "/api/fda-letters/:letterId",
+  "method": "DELETE",
+  "expectedStatus": 204,
+  "priority": 194,
+  "coversCriterion": [
+    "af7a916c-8bab-433f-9dab-3ae83f278b73#AC1",
+    "37cb380d-5c35-4456-96a5-eb8650b72bfc#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Letter not found",
+      "when": "letter is not in the caller's firm"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Deletes the RTA hold letter",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_delete_letter_id}}"
+      },
+      "expectedStatus": 204
+    },
+    {
+      "name": "404 - another firm's letter",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "pathParams": {
+        "letterId": "{{var:fl_letter_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "pathParams": {
+        "letterId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ],
+  "pathParams": {
+    "letterId": "{{var:fl_delete_letter_id}}"
+  }
+}

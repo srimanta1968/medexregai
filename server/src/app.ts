@@ -32,6 +32,7 @@ import { submissionDocsRouter } from './routes/submissionDocs';
 import { timeRouter } from './routes/time';
 import { pilotRouter } from './routes/pilot';
 import { usageRouter } from './routes/usage';
+import { fdaLettersRouter } from './routes/fdaLetters';
 import { AppError, ErrorCodes } from './utils/AppError';
 
 export interface HealthResponse {
@@ -127,6 +128,7 @@ export function createApp(appConfig: AppConfig): Application {
   app.use(timeRouter);
   app.use(pilotRouter);
   app.use(usageRouter);
+  app.use(fdaLettersRouter);
 
   app.use((_req: Request, res: Response<ErrorResponse>): void => {
     res.status(404).json({ success: false, error: { code: ErrorCodes.NOT_FOUND, message: 'Route not found' } });

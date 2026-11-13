@@ -1,0 +1,320 @@
+{
+  "requiresAuth": true,
+  "taskId": "37cb380d-5c35-4456-96a5-eb8650b72bfc",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "POST /api/projects/:projectId/fda-letters - save a letter with its confirmed deficiencies",
+  "description": "An FDA AI or hold letter can be logged with deficiencies linked to sections and due dates (F5.1 AC1). Saves a letter (kind ai_request or rta_hold, FDA reference, issuedOn, optional receivedOn, the letter's file version) with the deficiencies the consultant confirmed, each with FDA's number, a summary, FDA's text, an optional eSTAR section, owner, due date and linked client files and drafted statements of this project. dueOn defaults to issuedOn + 180 calendar days: FDA must receive a complete response within 180 calendar days of the date of an AI request, and an RTA hold gives 180 calendar days (fda.gov, 510(k) Submission Process). Numbers must be unique (409 DUPLICATE_NUMBER). Needs projects:write; audited as fda_letter.created.",
+  "endpoint": "/api/projects/:projectId/fda-letters",
+  "method": "POST",
+  "expectedStatus": 201,
+  "priority": 191,
+  "coversCriterion": [
+    "af7a916c-8bab-433f-9dab-3ae83f278b73#AC1",
+    "37cb380d-5c35-4456-96a5-eb8650b72bfc#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "issuedOn must be a date (YYYY-MM-DD)",
+      "when": "a field is missing, malformed or out of range, or a link is to another project"
+    },
+    {
+      "status": 409,
+      "code": "DUPLICATE_NUMBER",
+      "message": "Deficiency 1 appears twice",
+      "when": "two deficiencies share a number"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:write (reviewers and viewers)"
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Project not found",
+      "when": "project is not in the caller's firm"
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Saves an AI request with two deficiencies; due 180 days after the letter date",
+      "fixture": "tests/setup_scripts/46_fda_letters.py",
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "fdaReference": "{{static:K269999}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "fileVersionId": "{{var:fl_letter_file_version_id}}",
+        "deficiencies": [
+          {
+            "number": 1,
+            "summary": "{{static:Provide ECH residual results}}",
+            "fdaText": "{{static:Please provide ECH residual results per ISO 10993-7.}}",
+            "sectionId": "{{static:sterility}}",
+            "fileIds": [
+              "{{var:fl_file_id}}"
+            ]
+          },
+          {
+            "number": 2,
+            "summary": "{{static:Provide the cytotoxicity report}}",
+            "fdaText": "{{static:Please provide the full cytotoxicity report.}}",
+            "owner": "{{static:client}}",
+            "dueOn": "{{static:2026-10-15}}"
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "kind": "ai_request",
+          "dueOn": "2026-11-29",
+          "deficiencyCount": 2,
+          "status": "open"
+        }
+      }
+    },
+    {
+      "name": "409 - the same deficiency number twice",
+      "testType": "negative",
+      "coversErrorCase": "409|DUPLICATE_NUMBER",
+      "expectedStatus": 409,
+      "expectedError": {
+        "code": "DUPLICATE_NUMBER"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": [
+          {
+            "number": 1,
+            "summary": "{{static:A}}",
+            "fdaText": "{{static:A}}"
+          },
+          {
+            "number": 1,
+            "summary": "{{static:B}}",
+            "fdaText": "{{static:B}}"
+          }
+        ]
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - a linked file from another project",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": [
+          {
+            "number": 1,
+            "summary": "{{static:A}}",
+            "fdaText": "{{static:A}}",
+            "fileIds": [
+              "{{var:fl_other_file_id}}"
+            ]
+          }
+        ]
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - not an eSTAR section",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": [
+          {
+            "number": 1,
+            "summary": "{{static:A}}",
+            "fdaText": "{{static:A}}",
+            "sectionId": "{{static:no_such_section}}"
+          }
+        ]
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - due date before the letter date",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "kind": "{{static:rta_hold}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "dueOn": "{{static:2026-05-01}}",
+        "deficiencies": []
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "400 - unknown kind",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:fl_token}}"
+      },
+      "payload": {
+        "kind": "{{static:approval}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": []
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "403 - a reviewer cannot log letters",
+      "testType": "negative",
+      "coversErrorCase": "403|FORBIDDEN",
+      "expectedStatus": 403,
+      "expectedError": {
+        "code": "FORBIDDEN"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:reviewer_token}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": []
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/10_auth_actors.py"
+    },
+    {
+      "name": "404 - another firm's project",
+      "testType": "negative",
+      "coversErrorCase": "404|NOT_FOUND",
+      "expectedStatus": 404,
+      "expectedError": {
+        "code": "NOT_FOUND"
+      },
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": []
+      },
+      "pathParams": {
+        "projectId": "{{var:fl_project_id}}"
+      },
+      "fixture": "tests/setup_scripts/46_fda_letters.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "payload": {
+        "kind": "{{static:ai_request}}",
+        "issuedOn": "{{static:2026-06-02}}",
+        "deficiencies": []
+      },
+      "pathParams": {
+        "projectId": "{{static:00000000-0000-4000-8000-000000000000}}"
+      }
+    }
+  ],
+  "pathParams": {
+    "projectId": "{{var:fl_project_id}}"
+  },
+  "payload": {
+    "kind": "{{static:ai_request}}",
+    "fdaReference": "{{static:K269999}}",
+    "issuedOn": "{{static:2026-06-02}}",
+    "fileVersionId": "{{var:fl_letter_file_version_id}}",
+    "deficiencies": [
+      {
+        "number": 1,
+        "summary": "{{static:Provide ECH residual results}}",
+        "fdaText": "{{static:Please provide ECH residual results per ISO 10993-7.}}",
+        "sectionId": "{{static:sterility}}",
+        "fileIds": [
+          "{{var:fl_file_id}}"
+        ]
+      },
+      {
+        "number": 2,
+        "summary": "{{static:Provide the cytotoxicity report}}",
+        "fdaText": "{{static:Please provide the full cytotoxicity report.}}",
+        "owner": "{{static:client}}",
+        "dueOn": "{{static:2026-10-15}}"
+      }
+    ]
+  }
+}
