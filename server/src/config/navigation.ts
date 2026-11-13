@@ -49,7 +49,7 @@ export const NAV_CATALOG: readonly NavItemDef[] = [
     description: 'Additional Information letters split into tracked deficiencies',
     phase: 4,
     scope: 'project',
-    built: false,
+    built: true,
   },
   {
     key: 'predicates',

@@ -33,6 +33,7 @@ const TimeLogPage = lazy(() => import('./pages/app/TimeLogPage'));
 const UsagePage = lazy(() => import('./pages/app/UsagePage'));
 const AccountSecurityPage = lazy(() => import('./pages/app/AccountSecurityPage'));
 const ProjectPilotReportPage = lazy(() => import('./pages/app/ProjectPilotReportPage'));
+const ProjectFdaLettersPage = lazy(() => import('./pages/app/ProjectFdaLettersPage'));
 const TrustPackPage = lazy(() => import('./pages/app/TrustPackPage'));
 const ProjectConnectPage = lazy(() => import('./pages/app/ProjectConnectPage'));
 const ProjectProblemsPage = lazy(() => import('./pages/app/ProjectProblemsPage'));
@@ -98,6 +99,7 @@ export default function App(): JSX.Element {
             <Route path="/app/projects/:projectId/changes" element={<ProjectChangesPage />} />
             <Route path="/app/projects/:projectId/readiness" element={<ProjectReadinessPage />} />
             <Route path="/app/projects/:projectId/pilot-report" element={<ProjectPilotReportPage />} />
+            <Route path="/app/projects/:projectId/fda-letters" element={<ProjectFdaLettersPage />} />
             <Route path="/app/projects/:projectId/:section" element={<ComingSoonPage />} />
             <Route path="/app/settings/ai" element={<AiSettingsPage />} />
             <Route path="/app/templates" element={<FirmTemplatesPage />} />
