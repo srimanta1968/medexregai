@@ -76,6 +76,13 @@ and IS-200B, and the two predicates it lists.
    catalog's saved values for the chosen specialty are known) to see whether runtime-filled lists
    keep imported values.
 
+Then compare automatically (TK-4702):
+
+    python scripts/estar/compare_roundtrip.py docs/spikes/estar-xml/exporter-output-nIVD-7.1.xml <the XML Acrobat exported> --json roundtrip.json
+
+It lists every mapped field and repeat count as OK or LOST and exits 1 if anything was lost.
+Mark each field `verified` or `failed` in `server/src/estar/mappings/nIVD-7.1.ts` from that list.
+
 Record the result in ADR-019. If steps 2 to 4 pass, the exporter is approved for the fields that
 round-trip; fields that fail (for example runtime-filled lists) are left out of the mapping and
 listed for the consultant to fill by hand.
