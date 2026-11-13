@@ -313,6 +313,14 @@ export default function ProductCodePage(): JSX.Element {
 
           <DeviceCheck page={page} />
 
+          <p className="mt-6 text-sm text-slate-700">
+            Need help with a submission?{' '}
+            <Link to={`/introductions?productCode=${page.productCode}`} className="font-medium text-brand-700 hover:underline">
+              Ask to be introduced to a regulatory consultant
+            </Link>
+            .
+          </p>
+
           <section className="mt-10 text-xs text-slate-500" aria-label="Sources">
             <h2 className="font-semibold text-slate-700">Sources</h2>
             <ul className="mt-1 space-y-0.5">
