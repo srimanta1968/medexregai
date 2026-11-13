@@ -1,0 +1,205 @@
+{
+  "requiresAuth": true,
+  "taskId": "315523e2-460c-4c16-bcd8-f0cdc2b4c76e",
+  "sprintId": "aed7ad96-9852-4c09-8cd7-d557960c2c58",
+  "testability": "auto",
+  "headers": {
+    "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+  },
+  "name": "GET /api/portfolio - every submission with status, risks and due dates",
+  "description": "A portfolio dashboard lists all submissions with status, risks and due dates (F5.3 AC1), with totals for active projects, open client requests, open high problems and running FDA clocks (open FDA letters) plus overdue projects. Each row: client, device, project, status, stage (fda_letter, waiting_on_client, drafting, submitted, cleared, archived), the next action, the due date that matters (an open FDA letter's response date, otherwise the project's target date) with days left and overdue, counts (high and medium problems, open client requests, open letters, deficiencies not ready) and risks with a level. Sorted soonest due first, undated last; cursor-paged (nextCursor). status=open (default: active and submitted), active, submitted, cleared, archived or all; clientId narrows to one client. Totals always cover the open projects. Needs projects:read; firm-scoped. Fixture 50_portfolio.py asserts the totals, order, each row's stage, next action, due date and risks, the status filter and paging on a firm with an FDA letter, an overdue project, an open client request and a cleared project.",
+  "endpoint": "/api/portfolio",
+  "method": "GET",
+  "expectedStatus": 200,
+  "priority": 210,
+  "coversCriterion": [
+    "a9989cf7-a469-42a2-81d9-13fef57ed378#AC1",
+    "a9989cf7-a469-42a2-81d9-13fef57ed378#AC2",
+    "315523e2-460c-4c16-bcd8-f0cdc2b4c76e#AC1"
+  ],
+  "dependsOn": [
+    "POST /api/auth/register"
+  ],
+  "queryParams": {},
+  "fieldEnums": {
+    "status": [
+      "open",
+      "active",
+      "submitted",
+      "cleared",
+      "archived",
+      "all"
+    ]
+  },
+  "errorCases": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "status must be open, active, submitted, cleared, archived or all",
+      "when": "unknown status, malformed clientId, limit outside 1-50, an unknown query parameter or an invalid cursor"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN",
+      "message": "Insufficient permissions",
+      "when": "caller lacks projects:read",
+      "reproducible": false,
+      "notReproducibleReason": "Every firm role has projects:read."
+    },
+    {
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Missing bearer token",
+      "when": "no Authorization header"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Open submissions with totals",
+      "fixture": "tests/setup_scripts/50_portfolio.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "totals": {
+            "activeProjects": 3,
+            "openRequests": 1,
+            "highProblems": 0,
+            "fdaClocksRunning": 1,
+            "overdue": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "One client, cleared only",
+      "fixture": "tests/setup_scripts/50_portfolio.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "status": "{{static:cleared}}",
+        "clientId": "{{var:pf_client_id}}"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "nextCursor": null
+        }
+      }
+    },
+    {
+      "name": "Every status, two per page",
+      "fixture": "tests/setup_scripts/50_portfolio.py",
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "status": "{{static:all}}",
+        "limit": 2
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "A new firm has an empty portfolio",
+      "headers": {
+        "Authorization": "Bearer {{cache:auth.register.response.data.token}}"
+      },
+      "queryParams": {},
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "totals": {
+            "activeProjects": 0,
+            "openRequests": 0,
+            "highProblems": 0,
+            "fdaClocksRunning": 0,
+            "overdue": 0
+          },
+          "nextCursor": null
+        }
+      }
+    },
+    {
+      "name": "400 - unknown status",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "status": "{{static:pending}}"
+      },
+      "fixture": "tests/setup_scripts/50_portfolio.py"
+    },
+    {
+      "name": "400 - limit above 50",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "limit": 51
+      },
+      "fixture": "tests/setup_scripts/50_portfolio.py"
+    },
+    {
+      "name": "400 - invalid cursor",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "cursor": "{{static:bm90LWEtY3Vyc29y}}"
+      },
+      "fixture": "tests/setup_scripts/50_portfolio.py"
+    },
+    {
+      "name": "400 - malformed clientId",
+      "testType": "negative",
+      "coversErrorCase": "400|VALIDATION_ERROR",
+      "expectedStatus": 400,
+      "expectedError": {
+        "code": "VALIDATION_ERROR"
+      },
+      "headers": {
+        "Authorization": "Bearer {{var:pf_token}}"
+      },
+      "queryParams": {
+        "clientId": "{{static:not-a-uuid}}"
+      },
+      "fixture": "tests/setup_scripts/50_portfolio.py"
+    },
+    {
+      "name": "401 - missing bearer token",
+      "testType": "negative",
+      "coversErrorCase": "401|UNAUTHORIZED",
+      "expectedStatus": 401,
+      "expectedError": {
+        "code": "UNAUTHORIZED"
+      },
+      "headers": {},
+      "queryParams": {}
+    }
+  ]
+}
