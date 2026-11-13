@@ -28,6 +28,24 @@ variable "acm_certificate_arn" {
   default     = ""
 }
 
+variable "origin_domain" {
+  description = "Hostname CloudFront uses to reach the load balancer over HTTPS (a CNAME or alias to the ALB, output alb_dns_name), e.g. origin.app.example.com. Empty = CloudFront to ALB over HTTP (dev only)."
+  type        = string
+  default     = ""
+}
+
+variable "origin_certificate_arn" {
+  description = "ACM certificate in this module's region covering origin_domain, for the ALB HTTPS listener. Required when origin_domain is set."
+  type        = string
+  default     = ""
+}
+
+variable "require_origin_https" {
+  description = "Refuse to plan unless CloudFront reaches the ALB over HTTPS (set true in staging and production)."
+  type        = bool
+  default     = false
+}
+
 variable "vpc_cidr" {
   type    = string
   default = "10.40.0.0/16"

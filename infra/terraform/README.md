@@ -40,7 +40,7 @@ After the first apply:
 
 - The API still requires static `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`; on AWS it must use the task role instead.
 - The worker entrypoint (`dist/worker.js`), Dockerfiles and the docproc image arrive with the CI/CD and worker tasks.
-- CloudFront talks to the ALB over HTTP inside AWS; add an ALB certificate and switch the origin to HTTPS before production traffic.
+- CloudFront reaches the ALB over HTTPS (TLS 1.2+) when `origin_domain` and `origin_certificate_arn` are set: create a hostname such as `origin.app.example.com` as a CNAME (or Route 53 alias) to the `alb_dns_name` output, and an ACM certificate for it in the ALB's region. Staging and production refuse to plan without them (`require_origin_https`); dev may run without (HTTP to the ALB). The ALB to API tasks hop stays HTTP inside the VPC.
 
 ## fda-data service (ADR-017)
 

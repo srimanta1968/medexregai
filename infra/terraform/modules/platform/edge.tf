@@ -3,6 +3,13 @@
 # /api/* to the ALB. The ALB accepts only CloudFront (managed prefix list) carrying
 # the shared origin-verify header.
 
+# F4.4 (SOC 2 CC6-09): with origin_domain set, CloudFront reaches the ALB over HTTPS (TLS 1.2+)
+# on 443 and the ALB accepts nothing else from CloudFront. ALB to API tasks stays HTTP inside the VPC.
+locals {
+  origin_https = var.origin_domain != ""
+  origin_port  = local.origin_https ? 443 : 80
+}
+
 resource "random_password" "origin_verify" {
   length  = 40
   special = false
@@ -21,10 +28,10 @@ resource "aws_security_group" "alb" {
 resource "aws_vpc_security_group_ingress_rule" "alb_from_cloudfront" {
   security_group_id = aws_security_group.alb.id
   prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
-  from_port         = 80
-  to_port           = 80
+  from_port         = local.origin_port
+  to_port           = local.origin_port
   ip_protocol       = "tcp"
-  description       = "HTTP from CloudFront origin-facing ranges"
+  description       = local.origin_https ? "HTTPS from CloudFront origin-facing ranges" : "HTTP from CloudFront origin-facing ranges"
 }
 
 resource "aws_vpc_security_group_egress_rule" "alb_to_api" {
@@ -132,8 +139,31 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+resource "aws_lb_listener" "https" {
+  count             = local.origin_https ? 1 : 0
+  load_balancer_arn = aws_lb.api.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.origin_certificate_arn
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "application/json"
+      message_body = "{\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Direct access is not allowed\"}}"
+      status_code  = "403"
+    }
+  }
+  lifecycle {
+    precondition {
+      condition     = var.origin_certificate_arn != ""
+      error_message = "origin_certificate_arn is required when origin_domain is set."
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "from_cloudfront" {
-  listener_arn = aws_lb_listener.http.arn
+  listener_arn = local.origin_https ? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn
   priority     = 10
   condition {
     http_header {
@@ -217,11 +247,11 @@ resource "aws_cloudfront_distribution" "web" {
 
   origin {
     origin_id   = "api"
-    domain_name = aws_lb.api.dns_name
+    domain_name = local.origin_https ? var.origin_domain : aws_lb.api.dns_name
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "http-only"
+      origin_protocol_policy = local.origin_https ? "https-only" : "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
       origin_read_timeout    = 60
     }
@@ -273,6 +303,10 @@ resource "aws_cloudfront_distribution" "web" {
     precondition {
       condition     = var.app_domain == "" || var.acm_certificate_arn != ""
       error_message = "acm_certificate_arn is required when app_domain is set."
+    }
+    precondition {
+      condition     = !var.require_origin_https || local.origin_https
+      error_message = "This environment requires HTTPS from CloudFront to the load balancer: set origin_domain and origin_certificate_arn."
     }
   }
 }

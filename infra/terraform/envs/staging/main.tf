@@ -43,6 +43,16 @@ variable "acm_certificate_arn" {
   default = ""
 }
 
+variable "origin_domain" {
+  type    = string
+  default = ""
+}
+
+variable "origin_certificate_arn" {
+  type    = string
+  default = ""
+}
+
 variable "image_tag" {
   type    = string
   default = "latest"
@@ -55,7 +65,11 @@ module "platform" {
   region              = var.region
   app_domain          = var.app_domain
   acm_certificate_arn = var.acm_certificate_arn
-  image_tag           = var.image_tag
+  # F4.4: CloudFront to load balancer over HTTPS (required here).
+  origin_domain          = var.origin_domain
+  origin_certificate_arn = var.origin_certificate_arn
+  require_origin_https   = true
+  image_tag              = var.image_tag
 
   vpc_cidr           = "10.41.0.0/16"
   az_count           = 2

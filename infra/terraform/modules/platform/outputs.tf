@@ -63,3 +63,8 @@ output "fda_service_url" {
 output "fda_ecr_repository" {
   value = aws_ecr_repository.fda.repository_url
 }
+
+output "alb_dns_name" {
+  description = "Point origin_domain (CNAME or Route 53 alias) here."
+  value       = aws_lb.api.dns_name
+}
