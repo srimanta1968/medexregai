@@ -61,7 +61,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --ci
       # Prompt-injection test set (F7.5, NFR-16): a failure blocks the build and so the release.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -120,7 +120,7 @@ jobs:
       - name: Client runtime dependencies
         working-directory: client
         run: npm audit --omit=dev --audit-level=high
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: docproc Python dependencies
