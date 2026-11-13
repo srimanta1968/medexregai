@@ -15,6 +15,7 @@
 #                   server/.env points at by default; switch DB_PORT=5433 to use this one)
 #   redis    6379   s3 (SeaweedFS S3 API) 9000   ollama 11434
 #   docproc  4200   (127.0.0.1 only, through docproc-gateway)
+#   pgbouncer 6432  (only with --profile pgbouncer)
 #
 # docproc parses client files in a sandbox (F7.2, ADR-013): it sits alone on an
 # internal network with no route out, so a hostile file cannot call anywhere.
@@ -44,6 +45,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+    networks: [app_network]
+
+  pgbouncer:
+    # F8.1 connection pooler, as in AWS (transaction mode). Opt-in, to test the app behind it:
+    #   docker compose --profile pgbouncer up -d pgbouncer
+    # then in server/.env: DB_HOST=localhost DB_PORT=6432 DB_SSL=false, and keep migrations direct
+    # with DB_MIGRATION_HOST=localhost DB_MIGRATION_PORT=5433 (their advisory lock needs a session).
+    # Needs APP_DB_PASSWORD (the medexregai_app password) in the root .env.
+    profiles: ["pgbouncer"]
+    build:
+      context: ./infra/docker/pgbouncer
+      args:
+        RDS_CA_URL: ""   # local only: no RDS bundle, server TLS off
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-medexregai_db}
+      APP_DB_USER: medexregai_app
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD (medexregai_app) in .env}
+      SERVER_TLS_SSLMODE: disable
+    ports:
+      - "${PGBOUNCER_HOST_PORT:-6432}:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     networks: [app_network]
 

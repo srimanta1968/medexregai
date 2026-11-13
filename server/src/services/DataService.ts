@@ -24,10 +24,25 @@ export function getPool(): Pool {
  * Run `fn` on one connection as the table owner (migrations and the schema checks in
  * db/scaleChecks.ts). The app connects as a restricted role under row-level security (migration
  * 049); the owner is DB_MIGRATION_USER when set, else DB_USER. Never use this for request handling.
+ *
+ * Migrations hold a session advisory lock, which a transaction-mode pooler (PgBouncer) would break,
+ * so DB_MIGRATION_HOST / DB_MIGRATION_PORT / DB_MIGRATION_SSL point straight at Postgres when the
+ * app's DB_HOST is the pooler.
  */
 export async function withOwnerClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const ownerPool = process.env.DB_MIGRATION_USER
-    ? new Pool({ ...databaseConfig, user: process.env.DB_MIGRATION_USER, password: process.env.DB_MIGRATION_PASSWORD ?? '', min: 0, max: 1 })
+  const env = process.env;
+  const direct = env.DB_MIGRATION_USER || env.DB_MIGRATION_HOST;
+  const ownerPool = direct
+    ? new Pool({
+        ...databaseConfig,
+        host: env.DB_MIGRATION_HOST || databaseConfig.host,
+        port: env.DB_MIGRATION_PORT ? Number(env.DB_MIGRATION_PORT) : databaseConfig.port,
+        ssl: env.DB_MIGRATION_SSL === undefined ? databaseConfig.ssl : env.DB_MIGRATION_SSL === 'true' ? { rejectUnauthorized: true } : false,
+        user: env.DB_MIGRATION_USER || databaseConfig.user,
+        password: env.DB_MIGRATION_USER ? (env.DB_MIGRATION_PASSWORD ?? '') : databaseConfig.password,
+        min: 0,
+        max: 1,
+      })
     : null;
   const client = await (ownerPool ?? getPool()).connect();
   try {

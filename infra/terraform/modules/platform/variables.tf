@@ -238,3 +238,39 @@ variable "fda_embedding_model" {
   type        = string
   default     = "bge-m3"
 }
+
+# --- PgBouncer (pgbouncer.tf) -------------------------------------------------------------------
+
+variable "pgbouncer_count" {
+  description = "PgBouncer tasks (2+ for availability)."
+  type        = number
+  default     = 2
+}
+
+variable "pgbouncer_cpu" {
+  type    = number
+  default = 256
+}
+
+variable "pgbouncer_memory" {
+  type    = number
+  default = 512
+}
+
+variable "pgbouncer_default_pool_size" {
+  description = "Server connections per PgBouncer task for the app database/user pair."
+  type        = number
+  default     = 20
+}
+
+variable "pgbouncer_max_db_connections" {
+  description = "Hard cap of RDS connections per PgBouncer task; count x this must stay well under RDS max_connections."
+  type        = number
+  default     = 40
+}
+
+variable "pgbouncer_max_client_conn" {
+  description = "Client connections each PgBouncer task accepts (sum of api/worker pool sizes across tasks)."
+  type        = number
+  default     = 1000
+}

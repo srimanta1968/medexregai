@@ -47,18 +47,20 @@ resource "aws_db_subnet_group" "main" {
 
 resource "aws_security_group" "db" {
   name        = "${local.name}-db"
-  description = "PostgreSQL from app tasks only"
+  description = "PostgreSQL from app tasks only" # unchanged on purpose: a new description replaces the group; ingress is PgBouncer + migrations (pgbouncer.tf)
   vpc_id      = aws_vpc.main.id
 }
 
+# Direct access only for the one-off migrate task (runs on the api security group); api and worker
+# traffic goes through PgBouncer (pgbouncer.tf), and docproc never touches the database.
 resource "aws_vpc_security_group_ingress_rule" "db_from_tasks" {
-  for_each                     = local.services
+  for_each                     = toset(["api"])
   security_group_id            = aws_security_group.db.id
   referenced_security_group_id = aws_security_group.task[each.key].id
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
-  description                  = "PostgreSQL from ${each.key}"
+  description                  = "PostgreSQL from migrations (api security group)"
 }
 
 resource "aws_db_parameter_group" "pg16" {

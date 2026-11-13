@@ -9,6 +9,7 @@ state file.
 | Network | VPC, public / private / isolated subnets per AZ | Isolated subnets have no internet route; docproc runs there (ADR-013) and reaches AWS via VPC endpoints |
 | Compute | ECS Fargate (ARM64): `api`, `worker`, `docproc` | api behind an ALB; api scales on CPU; docproc keeps one warm task and scales on the ingest queue depth the worker logs (docproc.tf); worker bounded, its queue-depth scaling arrives with F8 |
 | Database | RDS PostgreSQL 16 (pgvector available) | Master password managed by RDS in Secrets Manager; `rds.force_ssl=1`; Multi-AZ in production |
+| Pooling | PgBouncer on ECS (`pgbouncer.tf`), transaction mode | api and worker connect as `medexregai_app` (row-level security) through `pgbouncer.<env>.internal:6432`; PgBouncer verifies RDS over TLS; migrations run as the one-off `migrate` task straight to RDS with the master login |
 | Cache | ElastiCache Redis 7.1 | TLS + AUTH token (Secrets Manager); replica + failover in production |
 | Files | S3 client bucket | Versioned, TLS-only, SSE-KMS; per-tenant KMS keys created by the API at onboarding, tagged `medexregai:tenant` |
 | Edge | CloudFront | SPA from S3 plus `/api/*` to the ALB on one origin; the ALB accepts only CloudFront with a secret header |
@@ -32,11 +33,14 @@ terraform apply -var-file=dev.tfvars      # creates billable AWS resources
 
 After the first apply:
 
-1. Push images to the ECR repositories in the `platform.ecr_repositories` output.
+1. Push images to the ECR repositories in the `platform.ecr_repositories` output (`pgbouncer` is built from `infra/docker/pgbouncer`).
+   Run the `platform.migrate_task_definition` task, then give `medexregai_app` its password from `platform.app_db_secret_arn` (docs/ops/runbooks.md section 6).
 2. Put SSO client secrets and `AI_API_KEY` into the `platform.app_secret_arn` secret.
 3. Upload `client/dist` to `platform.web_bucket` and invalidate CloudFront.
 
 ## Known gaps (tracked, not yet in the app)
+
+- The `migrate` task connects to RDS with `DB_MIGRATION_SSL=true` (certificate verified); Node does not trust the Amazon RDS CA by default, so the api image must ship the RDS bundle and set `NODE_EXTRA_CA_CERTS` (with the Dockerfiles). App traffic is unaffected: PgBouncer verifies RDS with the bundle in its image.
 
 - The API still requires static `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`; on AWS it must use the task role instead.
 - The worker entrypoint (`dist/worker.js`), Dockerfiles and the docproc image arrive with the CI/CD and worker tasks.

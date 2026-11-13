@@ -210,7 +210,8 @@ BYPASSRLS skip all of this, so:
    (NOLOGIN, NOBYPASSRLS) with read/write on all tables, including tables added later.
 2. **Give it a login once per environment**, as the owner:
    `ALTER ROLE medexregai_app LOGIN PASSWORD '<generated>';`
-   Store the password in the secret store (prod: AWS Secrets Manager; dev: `server/.env`, gitignored).
+   In AWS the password is already generated: Terraform output `app_db_secret_arn` (key `password`);
+   run the statement after the first `migrate` task. Dev: put it in `server/.env` (gitignored).
 3. **App config:** `DB_USER=medexregai_app`, `DB_PASSWORD=<that password>`.
    **Migrations:** `DB_MIGRATION_USER` / `DB_MIGRATION_PASSWORD` = the owner (RDS master user in AWS).
 4. **Check it** as `medexregai_app`: `SELECT count(*) FROM client_workspaces;` with no
@@ -218,4 +219,25 @@ BYPASSRLS skip all of this, so:
 
 If the app ever returns no data at all after a deploy, check that `DB_USER` is not the owner (that
 would hide nothing) and that `app.org_id` is being set (that would hide everything).
+
+### Connection pooling (PgBouncer)
+
+In AWS the api and worker connect to PgBouncer (`pgbouncer.<env>.internal:6432`, transaction mode),
+not to RDS; PgBouncer holds at most `pgbouncer_count x pgbouncer_max_db_connections` RDS connections
+and verifies RDS over TLS. Transaction mode is safe here because every per-request setting is
+transaction-local. Rules that keep it safe:
+
+- **Never** `SET` (session) or `set_config(..., false)`, session advisory locks, `LISTEN`, or named
+  prepared statements in app code; use `SET LOCAL`, `set_config(..., true)`,
+  `pg_advisory_xact_lock`.
+- **Migrations go direct**: the `migrate` task (`migrate_task_definition` output) uses
+  `DB_MIGRATION_HOST` = the RDS address; their advisory lock needs a real session.
+- **Budget**: keep `pgbouncer_count x pgbouncer_max_db_connections` plus headroom for migrations
+  and operators under RDS `max_connections`; raise `pgbouncer_default_pool_size` before adding
+  app tasks if `cl_waiting` grows (PgBouncer logs pool stats every 60 s).
+- **Symptoms**: "no more connections allowed (max_client_conn)" means raise
+  `pgbouncer_max_client_conn` or lower `DB_POOL_MAX`; "query_wait_timeout" means the pool is too
+  small for the load or a slow query holds connections.
+
+Local: `docker compose --profile pgbouncer up -d pgbouncer` (see docker-compose.yml).
 

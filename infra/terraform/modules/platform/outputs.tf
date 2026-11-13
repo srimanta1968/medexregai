@@ -17,7 +17,17 @@ output "client_bucket" {
 }
 
 output "ecr_repositories" {
-  value = { for k, r in aws_ecr_repository.svc : k => r.repository_url }
+  value = merge({ for k, r in aws_ecr_repository.svc : k => r.repository_url }, { pgbouncer = aws_ecr_repository.pgbouncer.repository_url })
+}
+
+output "migrate_task_definition" {
+  description = "Run once per deploy, before api/worker roll out (see pgbouncer.tf)."
+  value       = aws_ecs_task_definition.migrate.arn
+}
+
+output "app_db_secret_arn" {
+  description = "medexregai_app login; give the role this password once (docs/ops/runbooks.md section 6)."
+  value       = aws_secretsmanager_secret.app_db.arn
 }
 
 output "ecs_cluster" {

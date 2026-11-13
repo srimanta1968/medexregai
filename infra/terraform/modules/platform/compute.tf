@@ -94,6 +94,7 @@ data "aws_iam_policy_document" "execution_secrets" {
       aws_secretsmanager_secret.redis_auth.arn,
       aws_db_instance.main.master_user_secret[0].secret_arn,
       aws_secretsmanager_secret.docproc.arn,
+      aws_secretsmanager_secret.app_db.arn,
     ]
   }
   statement {
@@ -233,10 +234,11 @@ locals {
     { name = "AWS_REGION", value = var.region },
     { name = "APP_BASE_URL", value = local.public_base_url },
     { name = "CORS_ORIGIN", value = local.public_base_url },
-    { name = "DB_HOST", value = aws_db_instance.main.address },
-    { name = "DB_PORT", value = tostring(aws_db_instance.main.port) },
+    # Through PgBouncer (pgbouncer.tf); PgBouncer verifies RDS over TLS. The app hop stays in the VPC.
+    { name = "DB_HOST", value = "pgbouncer.${aws_service_discovery_private_dns_namespace.internal.name}" },
+    { name = "DB_PORT", value = "6432" },
     { name = "DB_NAME", value = aws_db_instance.main.db_name },
-    { name = "DB_SSL", value = "true" },
+    { name = "DB_SSL", value = "false" },
     { name = "REDIS_URL", value = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379" },
     { name = "S3_ENDPOINT", value = "https://s3.${var.region}.amazonaws.com" },
     { name = "S3_REGION", value = var.region },
@@ -247,10 +249,12 @@ locals {
     { name = "FDA_SERVICE_URL", value = "http://fda-api.${aws_service_discovery_private_dns_namespace.internal.name}:4100" },
   ]
 
+  # Owner (RDS master) credentials: only the one-off migrate task (pgbouncer.tf) gets them.
   db_secret = aws_db_instance.main.master_user_secret[0].secret_arn
   common_secrets = [
-    { name = "DB_USER", valueFrom = "${local.db_secret}:username::" },
-    { name = "DB_PASSWORD", valueFrom = "${local.db_secret}:password::" },
+    # The restricted app role: row-level security applies (migration 049, never the RDS master).
+    { name = "DB_USER", valueFrom = "${aws_secretsmanager_secret.app_db.arn}:username::" },
+    { name = "DB_PASSWORD", valueFrom = "${aws_secretsmanager_secret.app_db.arn}:password::" },
     { name = "JWT_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:JWT_SECRET::" },
     { name = "ENCRYPTION_KEY", valueFrom = "${aws_secretsmanager_secret.app.arn}:ENCRYPTION_KEY::" },
     { name = "REDIS_AUTH_TOKEN", valueFrom = aws_secretsmanager_secret.redis_auth.arn },
