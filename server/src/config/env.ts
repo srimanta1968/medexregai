@@ -36,9 +36,25 @@ export interface StorageSettings {
   endpoint: string;
   region: string;
   bucket: string;
-  accessKeyId: string;
-  secretAccessKey: string;
+  /** Static keys for local S3 (SeaweedFS). Unset in AWS: the task role's credentials are used. */
+  accessKeyId: string | null;
+  secretAccessKey: string | null;
   forcePathStyle: boolean;
+  /**
+   * F8.1 encryption of client files: 'tenant' = SSE-KMS with each firm's own KMS key (AWS);
+   * 'none' = the bucket's default (local SeaweedFS has no KMS).
+   */
+  kms: 'tenant' | 'none';
+  /** Environment name for tenant key tags and aliases (must match Terraform's var.environment). */
+  environment: string;
+}
+
+function parseStorageKms(value: string, nodeEnv: string): StorageSettings['kms'] {
+  if (value !== 'tenant' && value !== 'none') throw new Error(`STORAGE_KMS must be tenant or none, got "${value}"`);
+  if (value === 'none' && nodeEnv === 'production' && (process.env.STORAGE_DRIVER ?? 'fs') === 's3') {
+    throw new Error('STORAGE_KMS=tenant is required in production with STORAGE_DRIVER=s3: every firm keeps its files under its own KMS key');
+  }
+  return value;
 }
 
 export interface LlmSettings {
@@ -420,9 +436,11 @@ export function loadConfig(env: Env): AppConfig {
       endpoint: requireEnv(env, 'S3_ENDPOINT'),
       region: optionalEnv(env, 'S3_REGION', 'us-east-1'),
       bucket: requireEnv(env, 'S3_BUCKET'),
-      accessKeyId: requireEnv(env, 'S3_ACCESS_KEY_ID'),
-      secretAccessKey: requireEnv(env, 'S3_SECRET_ACCESS_KEY'),
+      accessKeyId: optionalEnv(env, 'S3_ACCESS_KEY_ID', '') || null,
+      secretAccessKey: optionalEnv(env, 'S3_SECRET_ACCESS_KEY', '') || null,
       forcePathStyle: optionalEnv(env, 'S3_FORCE_PATH_STYLE', 'true') === 'true',
+      kms: parseStorageKms(optionalEnv(env, 'STORAGE_KMS', 'none'), nodeEnv),
+      environment: optionalEnv(env, 'APP_ENVIRONMENT', 'development'),
     },
     llm: {
       provider: parseLlmProvider(optionalEnv(env, 'AI_PROVIDER', 'ollama')),

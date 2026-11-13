@@ -1,4 +1,9 @@
 import { createHash } from 'crypto';
+import { KMSClient } from '@aws-sdk/client-kms';
+import { S3Client } from '@aws-sdk/client-s3';
+import { config } from '../config/env';
+import { S3ObjectStore } from './s3ObjectStore';
+import { KmsTenantKeys } from './tenantKeys';
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { dirname, join, resolve, sep } from 'path';
 
@@ -7,8 +12,9 @@ import { dirname, join, resolve, sep } from 'path';
  * linked files are deleted after processing (ADR-010), keeping only hash, text and
  * locations in the database.
  *
- * Drivers: "fs" (local disk, development and tests) here; the S3 driver with a
- * per-tenant prefix and KMS key is F8.1, selected by STORAGE_DRIVER=s3.
+ * Drivers: "fs" (local disk, development and tests) here; "s3" (s3ObjectStore.ts, F8.1)
+ * keeps every object under orgs/<firm id>/ and, with STORAGE_KMS=tenant, encrypts it with
+ * that firm's own KMS key (tenantKeys.ts).
  */
 export interface ObjectStore {
   put(key: string, bytes: Uint8Array): Promise<void>;
@@ -102,13 +108,27 @@ export class FsObjectStore implements ObjectStore {
 
 let shared: ObjectStore | null = null;
 
-/** The configured store. STORAGE_DRIVER=fs (default) keeps objects under STORAGE_FS_ROOT. */
+/**
+ * The configured store. STORAGE_DRIVER=fs (default) keeps objects under STORAGE_FS_ROOT;
+ * STORAGE_DRIVER=s3 uses S3_* (SeaweedFS locally, AWS S3 in production) and, with STORAGE_KMS=tenant,
+ * encrypts each firm's objects with its own KMS key (F8.1).
+ */
 export function objectStore(): ObjectStore {
   if (shared) return shared;
   const driver = (process.env.STORAGE_DRIVER ?? 'fs').trim();
-  if (driver !== 'fs') {
-    throw new Error(`STORAGE_DRIVER=${driver} is not available yet: the S3 driver with per-tenant keys arrives with F8.1. Use STORAGE_DRIVER=fs.`);
+  if (driver === 's3') {
+    shared = s3StoreFromConfig();
+    return shared;
   }
+  if (driver !== 'fs') throw new Error(`STORAGE_DRIVER must be fs or s3, got "${driver}"`);
   shared = new FsObjectStore(process.env.STORAGE_FS_ROOT || join(__dirname, '..', '..', '.data', 'objects'));
   return shared;
+}
+
+function s3StoreFromConfig(): ObjectStore {
+  const s = config.storage;
+  const credentials = s.accessKeyId && s.secretAccessKey ? { accessKeyId: s.accessKeyId, secretAccessKey: s.secretAccessKey } : undefined; // else the task role
+  const s3 = new S3Client({ region: s.region, endpoint: s.endpoint, forcePathStyle: s.forcePathStyle, credentials });
+  const keys = s.kms === 'tenant' ? new KmsTenantKeys(new KMSClient({ region: s.region }), s.environment) : null;
+  return new S3ObjectStore(s3, s.bucket, keys);
 }

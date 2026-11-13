@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
+    "@aws-sdk/client-kms": "3.1160.0",
+    "@aws-sdk/client-s3": "3.1160.0",
     "@medexregai/fda-sdk": "file:../packages/fda-sdk",
     "@xmldom/xmldom": "0.9.12",
     "bcryptjs": "^2.4.3",

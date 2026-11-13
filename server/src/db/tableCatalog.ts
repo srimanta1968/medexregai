@@ -77,6 +77,8 @@ export const TABLE_CATALOG = {
   impact_actions: 'tenant',
   // F3.4 dated records for the eQMS (migration 033).
   record_exports: 'tenant',
+  // F8.1: each firm's KMS key for its S3 objects.
+  org_storage_keys: 'tenant',
   // F3.5 FDA checks of K-numbers in drafts (migration 034).
   draft_fda_checks: 'tenant',
   // F3.6 firm templates and past wording (migration 035).

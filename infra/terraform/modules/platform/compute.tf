@@ -244,6 +244,10 @@ locals {
     { name = "S3_REGION", value = var.region },
     { name = "S3_BUCKET", value = aws_s3_bucket.client.bucket },
     { name = "S3_FORCE_PATH_STYLE", value = "false" },
+    # F8.1: client files in S3, each firm's under its own KMS key (server/src/storage/tenantKeys.ts;
+    # created by the api, IAM in api_tenant_keys / task_data). No static S3 keys: the task role is used.
+    { name = "STORAGE_DRIVER", value = "s3" },
+    { name = "STORAGE_KMS", value = "tenant" },
     { name = "LOG_FORMAT", value = "json" },
     { name = "TRUST_PROXY", value = "2" }, # CloudFront + ALB
     { name = "FDA_SERVICE_URL", value = "http://fda-api.${aws_service_discovery_private_dns_namespace.internal.name}:4100" },

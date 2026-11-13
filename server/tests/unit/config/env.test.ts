@@ -116,7 +116,7 @@ describe('loadConfig', () => {
 describe('server/.env.example stays in step with the code', () => {
   it('marks at least the known secrets as REQUIRED', () => {
     expect(REQUIRED_IN_EXAMPLE).toEqual(
-      expect.arrayContaining(['DB_PASSWORD', 'JWT_SECRET', 'ENCRYPTION_KEY', 'S3_SECRET_ACCESS_KEY'])
+      expect.arrayContaining(['DB_PASSWORD', 'JWT_SECRET', 'ENCRYPTION_KEY'])
     );
   });
 

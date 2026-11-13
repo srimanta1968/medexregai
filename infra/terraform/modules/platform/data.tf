@@ -240,6 +240,15 @@ resource "aws_s3_bucket_policy" "client_tls_only" {
       Action    = "s3:*"
       Resource  = [aws_s3_bucket.client.arn, "${aws_s3_bucket.client.arn}/*"]
       Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      },
+      {
+        # F8.1: every client file is written with SSE-KMS (the app names the firm's own key).
+        Sid       = "DenyUploadsWithoutKms"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:PutObject"
+        Resource  = "${aws_s3_bucket.client.arn}/*"
+        Condition = { StringNotEquals = { "s3:x-amz-server-side-encryption" = "aws:kms" } }
     }]
   })
 }

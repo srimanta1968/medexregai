@@ -11,7 +11,7 @@ state file.
 | Database | RDS PostgreSQL 16 (pgvector available) | Master password managed by RDS in Secrets Manager; `rds.force_ssl=1`; Multi-AZ in production |
 | Pooling | PgBouncer on ECS (`pgbouncer.tf`), transaction mode | api and worker connect as `medexregai_app` (row-level security) through `pgbouncer.<env>.internal:6432`; PgBouncer verifies RDS over TLS; migrations run as the one-off `migrate` task straight to RDS with the master login |
 | Cache | ElastiCache Redis 7.1 | TLS + AUTH token (Secrets Manager); replica + failover in production |
-| Files | S3 client bucket | Versioned, TLS-only, SSE-KMS; per-tenant KMS keys created by the API at onboarding, tagged `medexregai:tenant` |
+| Files | S3 client bucket | Versioned, TLS-only; every object SSE-KMS under its firm's own KMS key (created by the API on the firm's first upload, tagged `medexregai:tenant`, rotation on, recorded in `org_storage_keys`); keys under `orgs/<firm id>/`; uploads without KMS are refused by bucket policy; the API uses the task role, no static keys |
 | Edge | CloudFront | SPA from S3 plus `/api/*` to the ALB on one origin; the ALB accepts only CloudFront with a secret header |
 
 | | dev | staging | production |
@@ -42,7 +42,6 @@ After the first apply:
 
 - The `migrate` task connects to RDS with `DB_MIGRATION_SSL=true` (certificate verified); Node does not trust the Amazon RDS CA by default, so the api image must ship the RDS bundle and set `NODE_EXTRA_CA_CERTS` (with the Dockerfiles). App traffic is unaffected: PgBouncer verifies RDS with the bundle in its image.
 
-- The API still requires static `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`; on AWS it must use the task role instead.
 - The worker entrypoint (`dist/worker.js`), Dockerfiles and the docproc image arrive with the CI/CD and worker tasks.
 - CloudFront reaches the ALB over HTTPS (TLS 1.2+) when `origin_domain` and `origin_certificate_arn` are set: create a hostname such as `origin.app.example.com` as a CNAME (or Route 53 alias) to the `alb_dns_name` output, and an ACM certificate for it in the ALB's region. Staging and production refuse to plan without them (`require_origin_https`); dev may run without (HTTP to the ALB). The ALB to API tasks hop stays HTTP inside the VPC.
 
